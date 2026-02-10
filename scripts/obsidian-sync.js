@@ -50,11 +50,37 @@ function parseFrontmatter(content) {
   const body = content.slice(match[0].length).trim();
   const frontmatter = {};
 
-  for (const line of rawFm.split('\n')) {
+  const lines = rawFm.split('\n');
+  let currentKey = null;
+  let currentList = null;
+
+  for (const line of lines) {
+    // YAML 列表项 (  - value)
+    const listMatch = line.match(/^\s+-\s+(.+)/);
+    if (listMatch && currentKey) {
+      if (!currentList) currentList = [];
+      currentList.push(listMatch[1].trim().replace(/^["']|["']$/g, ''));
+      continue;
+    }
+
+    // 保存之前的列表
+    if (currentKey && currentList) {
+      frontmatter[currentKey] = currentList;
+      currentKey = null;
+      currentList = null;
+    }
+
     const colonIdx = line.indexOf(':');
     if (colonIdx === -1) continue;
     const key = line.slice(0, colonIdx).trim();
     let value = line.slice(colonIdx + 1).trim();
+
+    // 空值（可能是 YAML 列表的开始）
+    if (value === '') {
+      currentKey = key;
+      currentList = null;
+      continue;
+    }
 
     // 数组 [a, b, c]
     if (value.startsWith('[') && value.endsWith(']')) {
@@ -68,7 +94,14 @@ function parseFrontmatter(content) {
       value = value.replace(/^["']|["']$/g, '');
     }
 
+    currentKey = null;
+    currentList = null;
     frontmatter[key] = value;
+  }
+
+  // 处理最后一个列表
+  if (currentKey && currentList) {
+    frontmatter[currentKey] = currentList;
   }
 
   return { frontmatter, body };
@@ -78,8 +111,7 @@ function hasPublishTag(frontmatter, body) {
   const tags = frontmatter.tags || [];
   if (Array.isArray(tags) && tags.includes('publish')) return true;
   if (typeof tags === 'string' && tags.includes('publish')) return true;
-  // 也检查行内 #publish 标签
-  if (body.includes('#publish')) return true;
+  return false;
   return false;
 }
 
@@ -260,7 +292,7 @@ function main() {
 
     const category = getCategory(frontmatter);
     const title = frontmatter.title || path.basename(filePath, '.md');
-    const date = frontmatter.date || new Date().toISOString().split('T')[0];
+    const date = frontmatter.date || frontmatter.created || new Date().toISOString().split('T')[0];
 
     console.log(`✅ 同步: ${title} → ${category}/`);
 
