@@ -1,0 +1,68 @@
+---
+/**
+ * 标签页 — 展示某个标签下的所有文章
+ */
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PostCard from '@/components/PostCard.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const allCollections = await Promise.all([
+    getCollection('journal', ({ data }) => !data.draft),
+    getCollection('tech', ({ data }) => !data.draft),
+    getCollection('learning', ({ data }) => !data.draft),
+    getCollection('life', ({ data }) => !data.draft),
+  ]);
+
+  const allPosts = allCollections.flat();
+
+  // 收集所有标签
+  const tagSet = new Set<string>();
+  for (const post of allPosts) {
+    for (const tag of post.data.tags) {
+      tagSet.add(tag);
+    }
+  }
+
+  return [...tagSet].map(tag => ({
+    params: { tag },
+    props: {
+      tag,
+      posts: allPosts
+        .filter(p => p.data.tags.includes(tag))
+        .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf()),
+    },
+  }));
+}
+
+const { tag, posts } = Astro.props;
+---
+
+<BaseLayout title={`#${tag}`}>
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100">
+      🏷️ #{tag}
+    </h1>
+    <p class="text-slate-500 dark:text-slate-400 mt-1">
+      共 {posts.length} 篇文章
+    </p>
+  </div>
+
+  {posts.length > 0 ? (
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {posts.map((post: any) => (
+        <PostCard
+          title={post.data.title}
+          description={post.data.description}
+          date={post.data.date}
+          category={post.data.category}
+          tags={post.data.tags}
+          cover={post.data.cover}
+          slug={post.id}
+        />
+      ))}
+    </div>
+  ) : (
+    <p class="text-slate-400 text-center py-12">该标签下暂无文章。</p>
+  )}
+</BaseLayout>

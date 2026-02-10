@@ -1,0 +1,33 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PostCard from '@/components/PostCard.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('journal', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<BaseLayout title="日记 & 计划复盘">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100">📓 日记 & 计划复盘</h1>
+    <p class="text-slate-500 dark:text-slate-400 mt-1">记录每日思考、计划执行与阶段复盘</p>
+  </div>
+
+  {posts.length > 0 ? (
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {posts.map(post => (
+        <PostCard
+          title={post.data.title}
+          description={post.data.description}
+          date={post.data.date}
+          category={post.data.category}
+          tags={post.data.tags}
+          cover={post.data.cover}
+          slug={post.id}
+        />
+      ))}
+    </div>
+  ) : (
+    <p class="text-slate-400 text-center py-12">暂无文章，快去 Obsidian 添加 #publish 标签吧！</p>
+  )}
+</BaseLayout>

@@ -1,0 +1,18 @@
+{
+  "name": "openingcloud-blog",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "sync": "node scripts/obsidian-sync.js",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@tailwindcss/typography": "^0.5.19",
+    "@tailwindcss/vite": "^4.0.0",
+    "astro": "^5.5.0",
+    "tailwindcss": "^4.0.0"
+  }
+}

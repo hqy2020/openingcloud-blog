@@ -1,0 +1,25 @@
+---
+/**
+ * 照片瀑布流组件（生活记录用）
+ */
+interface Props {
+  images: { src: string; alt: string }[];
+}
+
+const { images } = Astro.props;
+---
+
+{images.length > 0 && (
+  <div class="columns-2 md:columns-3 gap-4 space-y-4">
+    {images.map(img => (
+      <div class="break-inside-avoid overflow-hidden rounded-xl">
+        <img
+          src={img.src}
+          alt={img.alt}
+          class="w-full hover:scale-105 transition-transform duration-300 cursor-pointer"
+          loading="lazy"
+        />
+      </div>
+    ))}
+  </div>
+)}
