@@ -2,7 +2,7 @@ import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  site: 'https://openingcloud.com',
+  site: 'https://openingcloud-blog.hqy200091.workers.dev',
   vite: {
     plugins: [tailwindcss()],
   },
