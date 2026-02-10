@@ -1,0 +1,6 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "openingcloud-blog",
+  "compatibility_date": "2026-02-10",
+  "pages_build_output_dir": "dist"
+}
