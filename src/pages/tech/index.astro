@@ -1,33 +1,26 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import PostCard from '@/components/PostCard.astro';
+import MagazineLayout from '@/components/MagazineLayoutWrapper.astro';
 import { getCollection } from 'astro:content';
 
 const posts = (await getCollection('tech', ({ data }) => !data.draft))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+const postsForLayout = posts.map(post => ({
+  title: post.data.title,
+  description: post.data.description,
+  date: post.data.date,
+  category: post.data.category,
+  tags: post.data.tags,
+  cover: post.data.cover,
+  slug: post.id,
+}));
 ---
 
-<BaseLayout title="技术博客">
-  <div class="mb-6">
-    <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100">💻 技术博客</h1>
-    <p class="text-slate-500 dark:text-slate-400 mt-1">Java · AI · Agent — 技术分享与实战记录</p>
-  </div>
-
-  {posts.length > 0 ? (
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {posts.map(post => (
-        <PostCard
-          title={post.data.title}
-          description={post.data.description}
-          date={post.data.date}
-          category={post.data.category}
-          tags={post.data.tags}
-          cover={post.data.cover}
-          slug={post.id}
-        />
-      ))}
-    </div>
-  ) : (
-    <p class="text-slate-400 text-center py-12">暂无文章，快去 Obsidian 添加 #publish 标签吧！</p>
-  )}
+<BaseLayout title="技术博客" sidebar={false}>
+  <MagazineLayout
+    posts={postsForLayout}
+    title="技术博客"
+    subtitle="Java · AI · Agent — 技术分享与实战记录"
+  />
 </BaseLayout>

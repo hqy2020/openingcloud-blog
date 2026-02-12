@@ -1,50 +1,28 @@
 ---
 /**
- * 首页 — 电影感 Hero + 生活指标 + 弧形分类 + 特色文章 + 时间线预览
+ * 首页 — 全宽沉浸式: Hero + BentoGrid + 生活指标 + 时间线预览
  */
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import HeroSection from '@/components/HeroSection.astro';
-import LifeIndicators from '@/components/LifeIndicators.astro';
-import ArcCategories from '@/components/ArcCategories.astro';
-import FeaturedArticles from '@/components/FeaturedArticles.astro';
+import { HeroSection } from '@/react/sections/HeroSection';
+import BentoGridWrapper from '@/components/BentoGridWrapper.astro';
+import LifeIndicatorsWrapper from '@/components/LifeIndicatorsWrapper.astro';
 import TimelinePreview from '@/components/TimelinePreview.astro';
-import { getCollection } from 'astro:content';
-
-const allCollections = await Promise.all([
-  getCollection('journal', ({ data }) => !data.draft),
-  getCollection('tech', ({ data }) => !data.draft),
-  getCollection('learning', ({ data }) => !data.draft),
-  getCollection('life', ({ data }) => !data.draft),
-]);
-
-const allPosts = allCollections.flat()
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
-  .slice(0, 10);
-
-const postsForFeatured = allPosts.map(post => ({
-  title: post.data.title,
-  description: post.data.description,
-  date: post.data.date,
-  category: post.data.category,
-  tags: post.data.tags,
-  cover: post.data.cover,
-  slug: post.id,
-}));
 ---
 
-<BaseLayout title="首页" sidebar={true}>
-  <!-- Section A: Hero -->
-  <HeroSection />
+<BaseLayout title="首页" sidebar={false} fullWidth={true}>
+  <!-- Hero -->
+  <HeroSection client:load />
 
-  <!-- Section B: 本周生活指标 -->
-  <LifeIndicators />
+  <!-- Bento Grid -->
+  <BentoGridWrapper />
 
-  <!-- Section C: 弧形分类卡片 -->
-  <ArcCategories />
+  <!-- 生活指标 -->
+  <div class="max-w-6xl mx-auto px-4 py-8">
+    <LifeIndicatorsWrapper />
+  </div>
 
-  <!-- Section D: 特色文章 -->
-  <FeaturedArticles posts={postsForFeatured} />
-
-  <!-- Section E: 人生路线预览 -->
-  <TimelinePreview />
+  <!-- 时间线预览 -->
+  <div class="max-w-6xl mx-auto px-4 py-8">
+    <TimelinePreview />
+  </div>
 </BaseLayout>

@@ -8,7 +8,7 @@ interface Props {
   image?: string;
 }
 
-const { title, description = '启云的个人博客 — 技术、学习、生活', image } = Astro.props;
+const { title, description = 'openingClouds — 技术、效率、生活', image } = Astro.props;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 ---
 
@@ -26,7 +26,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai&display=swap" rel="stylesheet" />
-    <title>{title} | 启云博客</title>
+    <title>{title} | openingClouds</title>
     <ViewTransitions />
 
     <!-- 暗色模式初始化（避免闪烁） -->
@@ -39,7 +39,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
   <body class="min-h-screen flex flex-col">
     <slot />
 
-    <!-- 滚动渐入 IntersectionObserver -->
+    <!-- 滚动渐入 IntersectionObserver (兜底 data-animate 元素) -->
     <script is:inline>
     (function initScrollReveal() {
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -52,7 +52,6 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
         });
       }, { rootMargin: '0px 0px -60px 0px', threshold: 0.1 });
       document.querySelectorAll('[data-animate]').forEach(function(el) { observer.observe(el); });
-      // Re-init after View Transitions navigation
       document.addEventListener('astro:page-load', function() {
         document.querySelectorAll('[data-animate]:not(.is-visible)').forEach(function(el) { observer.observe(el); });
       });

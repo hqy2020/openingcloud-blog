@@ -1,11 +1,11 @@
 ---
 /**
- * 基础布局 — 导航栏 + 内容区（可选侧边栏） + 页脚
+ * 基础布局 — 滚动渐变背景 + 导航栏 + 内容区（可选侧边栏） + 页脚
  */
 import Head from './Head.astro';
-import Navbar from '@/components/Navbar.astro';
-import Sidebar from '@/components/Sidebar.astro';
-import Footer from '@/components/Footer.astro';
+import Navbar from '@/react/layout/Navbar';
+import SidebarWrapper from '@/components/SidebarWrapper.astro';
+import FooterWrapper from '@/components/FooterWrapper.astro';
 import BlogPet from '@/components/BlogPet.astro';
 import AdminEntry from '@/components/AdminEntry.astro';
 
@@ -14,28 +14,59 @@ interface Props {
   description?: string;
   image?: string;
   sidebar?: boolean;
+  fullWidth?: boolean;
 }
 
-const { title, description, image, sidebar = true } = Astro.props;
+const { title, description, image, sidebar = true, fullWidth = false } = Astro.props;
 ---
 
 <Head title={title} description={description} image={image}>
-  <Navbar />
-  <main class="flex-1 max-w-6xl mx-auto px-4 py-8 w-full">
-    {sidebar ? (
-      <div class="flex flex-col lg:flex-row gap-8">
-        <div class="flex-1 min-w-0">
-          <slot />
-        </div>
-        <div class="w-full lg:w-72 shrink-0">
-          <Sidebar />
-        </div>
-      </div>
-    ) : (
+  <!-- 滚动渐变背景层 -->
+  <div class="scroll-gradient-bg" id="scroll-gradient"></div>
+
+  <Navbar client:load currentPath={Astro.url.pathname} />
+  {fullWidth ? (
+    <main class="flex-1 w-full">
       <slot />
-    )}
-  </main>
-  <Footer />
+    </main>
+  ) : (
+    <main class="flex-1 max-w-6xl mx-auto px-4 py-8 w-full">
+      {sidebar ? (
+        <div class="flex flex-col lg:flex-row gap-8">
+          <div class="flex-1 min-w-0">
+            <slot />
+          </div>
+          <div class="w-full lg:w-72 shrink-0">
+            <SidebarWrapper />
+          </div>
+        </div>
+      ) : (
+        <slot />
+      )}
+    </main>
+  )}
+  <FooterWrapper />
   {!Astro.url.pathname.startsWith('/admin') && <BlogPet />}
   {!Astro.url.pathname.startsWith('/admin') && <AdminEntry />}
 </Head>
+
+<script>
+  // 滚动渐变背景联动
+  function initScrollGradient() {
+    const bg = document.getElementById('scroll-gradient');
+    if (!bg) return;
+
+    function onScroll() {
+      const scrollY = window.scrollY || document.documentElement.scrollTop;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = docHeight > 0 ? Math.min(scrollY / docHeight, 1) : 0;
+      bg.style.backgroundPosition = `0% ${progress * 100}%`;
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
+
+  initScrollGradient();
+  document.addEventListener('astro:after-swap', initScrollGradient);
+</script>

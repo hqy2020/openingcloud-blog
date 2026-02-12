@@ -1,10 +1,12 @@
 ---
 /**
- * 文章详情布局
+ * 文章详情布局 — 阅读进度条 + 封面视差 + 自动目录 + View Transition
  */
 import Head from './Head.astro';
-import Navbar from '@/components/Navbar.astro';
-import Footer from '@/components/Footer.astro';
+import Navbar from '@/react/layout/Navbar';
+import FooterWrapper from '@/components/FooterWrapper.astro';
+import BlogPet from '@/components/BlogPet.astro';
+import AdminEntry from '@/components/AdminEntry.astro';
 
 interface Props {
   title: string;
@@ -20,7 +22,7 @@ const { title, description, date, category, tags = [], cover } = Astro.props;
 const categoryLabels: Record<string, string> = {
   journal: '📓 日记',
   tech: '💻 技术',
-  learning: '📚 学习',
+  learning: '📚 效率',
   life: '📷 生活',
 };
 
@@ -32,30 +34,48 @@ const formattedDate = new Date(date).toLocaleDateString('zh-CN', {
 ---
 
 <Head title={title} description={description} image={cover}>
-  <Navbar />
-  <main class="flex-1 max-w-3xl mx-auto px-4 py-8 w-full">
+  <!-- 阅读进度条 -->
+  <div class="reading-progress" id="reading-progress"></div>
+
+  <!-- 滚动渐变背景层 -->
+  <div class="scroll-gradient-bg"></div>
+
+  <Navbar client:load currentPath={Astro.url.pathname} />
+
+  <main class="flex-1 w-full">
     <article>
-      <!-- 文章头部 -->
-      <header class="mb-8">
-        {cover && (
+      <!-- 封面区 -->
+      {cover && (
+        <div class="relative h-64 md:h-96 overflow-hidden" id="post-cover-wrap">
           <img
             src={cover}
             alt={title}
-            class="w-full h-64 md:h-80 object-cover rounded-xl mb-6"
+            class="w-full h-full object-cover"
+            id="post-cover-img"
+            style="view-transition-name: post-cover"
           />
-        )}
+          <div class="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent dark:from-bg-dark"></div>
+        </div>
+      )}
+
+      <!-- 文章头部 -->
+      <header class="max-w-3xl mx-auto px-4 -mt-8 relative z-10 mb-8" data-animate="fade-up">
         <div class="flex items-center gap-3 mb-4">
           <a
             href={`/${category}/`}
-            class="text-sm font-medium px-3 py-1 rounded-full bg-grass-50 text-grass-600 dark:bg-grass-700/20 dark:text-grass-300"
+            class="text-sm font-medium px-3 py-1 rounded-full bg-grass-50 text-grass-600 dark:bg-grass-700/20 dark:text-grass-300 hover:bg-grass-100 dark:hover:bg-grass-700/30 transition-colors"
           >
             {categoryLabels[category] || category}
           </a>
           <time class="text-sm text-slate-400" datetime={date.toISOString()}>
             {formattedDate}
           </time>
+          <span class="text-sm text-slate-400" id="reading-time"></span>
         </div>
-        <h1 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-slate-50 leading-tight">
+        <h1
+          class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-slate-50 leading-tight font-display"
+          style="view-transition-name: post-title"
+        >
           {title}
         </h1>
         {description && (
@@ -63,42 +83,157 @@ const formattedDate = new Date(date).toLocaleDateString('zh-CN', {
         )}
       </header>
 
-      <!-- 文章正文 -->
-      <div class="prose prose-slate dark:prose-invert max-w-none
-        prose-headings:scroll-mt-20
-        prose-a:text-primary-500 prose-a:no-underline hover:prose-a:underline
-        prose-img:rounded-xl prose-img:shadow-md
-        prose-pre:bg-slate-900 prose-pre:text-slate-100
-        prose-code:before:content-none prose-code:after:content-none">
-        <slot />
-      </div>
+      <!-- 正文 + 目录 -->
+      <div class="max-w-6xl mx-auto px-4 flex gap-8">
+        <!-- 正文 -->
+        <div class="max-w-3xl mx-auto flex-1 min-w-0">
+          <div id="article-content" class="prose prose-slate dark:prose-invert max-w-none
+            prose-headings:scroll-mt-20
+            prose-a:text-primary-500 prose-a:no-underline hover:prose-a:underline
+            prose-img:rounded-xl prose-img:shadow-md
+            prose-pre:bg-slate-900 prose-pre:text-slate-100
+            prose-code:before:content-none prose-code:after:content-none">
+            <slot />
+          </div>
 
-      <!-- 标签 -->
-      {tags.length > 0 && (
-        <div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
-          <div class="flex flex-wrap gap-2">
-            {tags.map(tag => (
-              <a
-                href={`/tags/${tag}/`}
-                class="text-sm px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-grass-50 hover:text-grass-600 dark:hover:bg-grass-700/20 dark:hover:text-grass-300 transition-colors"
-              >
-                #{tag}
-              </a>
-            ))}
+          <!-- 标签 -->
+          {tags.length > 0 && (
+            <div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
+              <div class="flex flex-wrap gap-2">
+                {tags.map(tag => (
+                  <a
+                    href={`/tags/${tag}/`}
+                    class="text-sm px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-grass-50 hover:text-grass-600 dark:hover:bg-grass-700/20 dark:hover:text-grass-300 transition-colors"
+                  >
+                    #{tag}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <!-- 返回 -->
+          <div class="mt-8 mb-12">
+            <a
+              href={`/${category}/`}
+              class="inline-flex items-center gap-1 text-sm text-primary-500 hover:text-primary-600 transition-colors"
+            >
+              ← 返回{categoryLabels[category]?.slice(2) || '列表'}
+            </a>
           </div>
         </div>
-      )}
 
-      <!-- 返回 -->
-      <div class="mt-8">
-        <a
-          href={`/${category}/`}
-          class="inline-flex items-center gap-1 text-sm text-primary-500 hover:text-primary-600 transition-colors"
-        >
-          ← 返回{categoryLabels[category]?.slice(2) || '列表'}
-        </a>
+        <!-- 桌面端目录 -->
+        <aside class="hidden xl:block w-56 shrink-0">
+          <nav id="toc" class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto text-sm space-y-1">
+            <h4 class="font-semibold text-slate-700 dark:text-slate-300 mb-3 text-xs uppercase tracking-wider">目录</h4>
+          </nav>
+        </aside>
       </div>
     </article>
   </main>
-  <Footer />
+
+  <FooterWrapper />
+  <BlogPet />
+  <AdminEntry />
 </Head>
+
+<script>
+  function initPostLayout() {
+    initReadingProgress();
+    initCoverParallax();
+    initTOC();
+    initReadingTime();
+  }
+
+  function initReadingProgress() {
+    const bar = document.getElementById('reading-progress');
+    if (!bar) return;
+
+    function updateProgress() {
+      const scrollY = window.scrollY || document.documentElement.scrollTop;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = docHeight > 0 ? Math.min(scrollY / docHeight, 1) : 0;
+      bar.style.transform = `scaleX(${progress})`;
+    }
+
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    updateProgress();
+  }
+
+  function initCoverParallax() {
+    const img = document.getElementById('post-cover-img') as HTMLElement;
+    const wrap = document.getElementById('post-cover-wrap');
+    if (!img || !wrap) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    function onScroll() {
+      const rect = wrap!.getBoundingClientRect();
+      const wrapHeight = wrap!.offsetHeight;
+      // Only apply parallax when cover is visible
+      if (rect.bottom < 0) return;
+      const progress = Math.max(0, -rect.top / wrapHeight);
+      img.style.transform = `translateY(${progress * 80}px)`;
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
+
+  function initTOC() {
+    const toc = document.getElementById('toc');
+    const content = document.getElementById('article-content');
+    if (!toc || !content) return;
+
+    const headings = content.querySelectorAll('h2, h3');
+    if (headings.length === 0) return;
+
+    headings.forEach((h, i) => {
+      if (!h.id) h.id = `heading-${i}`;
+    });
+
+    headings.forEach(h => {
+      const a = document.createElement('a');
+      a.href = `#${h.id}`;
+      a.textContent = h.textContent || '';
+      a.className = `block py-1 text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors truncate ${
+        h.tagName === 'H3' ? 'pl-3 text-xs' : 'font-medium'
+      }`;
+      a.setAttribute('data-toc-link', h.id);
+      toc.appendChild(a);
+    });
+
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            toc.querySelectorAll('[data-toc-link]').forEach(link => {
+              link.classList.remove('!text-primary-500', '!dark:text-primary-400');
+            });
+            const active = toc.querySelector(`[data-toc-link="${entry.target.id}"]`);
+            if (active) {
+              active.classList.add('!text-primary-500', '!dark:text-primary-400');
+            }
+          }
+        });
+      },
+      { rootMargin: '-80px 0px -70% 0px', threshold: 0 }
+    );
+
+    headings.forEach(h => observer.observe(h));
+  }
+
+  function initReadingTime() {
+    const content = document.getElementById('article-content');
+    const el = document.getElementById('reading-time');
+    if (!content || !el) return;
+    const text = content.textContent || '';
+    const cjkChars = (text.match(/[\u4e00-\u9fff]/g) || []).length;
+    const words = text.replace(/[\u4e00-\u9fff]/g, '').split(/\s+/).filter(Boolean).length;
+    const minutes = Math.ceil(cjkChars / 400 + words / 200);
+    el.textContent = `· ${minutes} 分钟阅读`;
+  }
+
+  initPostLayout();
+  document.addEventListener('astro:after-swap', initPostLayout);
+</script>

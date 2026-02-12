@@ -1,10 +1,11 @@
 ---
 export const prerender = false;
 /**
- * 人生路线 — 公开时间线页面
- * 按年份分组的垂直时间轴，支持分类筛选
+ * 人生路线 — 横向卷轴时间线（React 版）
  */
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import { HorizontalTimeline } from '@/react/sections/HorizontalTimeline';
+import { FadeIn } from '@/react/motion/FadeIn';
 
 interface TimelineNode {
   id: number;
@@ -31,184 +32,27 @@ try {
   // Table may not exist yet
 }
 
-// Group by year
-const yearGroups = new Map<string, TimelineNode[]>();
-nodes.forEach(n => {
-  const year = n.start_date.slice(0, 4);
-  if (!yearGroups.has(year)) yearGroups.set(year, []);
-  yearGroups.get(year)!.push(n);
-});
-const years = [...yearGroups.keys()].sort();
-
-const typeConfig: Record<string, { icon: string; label: string; color: string; bg: string }> = {
-  career:   { icon: '💼', label: '职业', color: 'border-primary-400', bg: 'bg-primary-50 dark:bg-primary-900/20' },
-  learning: { icon: '📚', label: '学习', color: 'border-grass-400', bg: 'bg-grass-50 dark:bg-grass-900/20' },
-  health:   { icon: '💪', label: '健康', color: 'border-sun-400', bg: 'bg-sun-50 dark:bg-sun-900/20' },
-  family:   { icon: '🏠', label: '家庭', color: 'border-primary-300', bg: 'bg-primary-50 dark:bg-primary-900/10' },
-};
-
-const impactSize: Record<string, string> = {
-  high: 'w-5 h-5',
-  medium: 'w-4 h-4',
-  low: 'w-3 h-3',
-};
+// Serialize tags from JSON string to array
+const serializedNodes = nodes.map(n => ({
+  ...n,
+  tags: JSON.parse(n.tags || '[]') as string[],
+}));
 ---
 
-<BaseLayout title="人生路线" sidebar={false}>
-  <div class="max-w-3xl mx-auto">
-    <!-- Header -->
-    <div class="text-center mb-10" data-animate="fade-up">
-      <h1 class="text-3xl font-bold mb-2">🗺️ 人生路线</h1>
+<BaseLayout title="人生路线" sidebar={false} fullWidth={true}>
+  <div class="text-center py-10">
+    <FadeIn client:load>
+      <h1 class="text-3xl font-bold mb-2 font-display">🗺️ 人生路线</h1>
       <p class="text-slate-500 dark:text-slate-400 text-sm">一步一个脚印，记录成长轨迹</p>
-    </div>
-
-    {nodes.length === 0 ? (
-      <div class="text-center py-16 text-slate-400">
-        <p class="text-lg mb-2">暂无时间线数据</p>
-        <p class="text-sm">在后台<a href="/admin/timeline" class="text-primary-500 hover:underline">添加人生节点</a>后，这里会展示时间轴</p>
-      </div>
-    ) : (
-      <>
-        <!-- Filters -->
-        <div class="flex flex-wrap items-center justify-center gap-2 mb-8" data-animate="fade-up">
-          <button class="timeline-filter active px-3 py-1.5 text-sm rounded-full border border-slate-200 dark:border-slate-700 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-medium transition-colors cursor-pointer" data-type="all">
-            全部
-          </button>
-          {Object.entries(typeConfig).map(([type, config]) => (
-            <button class="timeline-filter px-3 py-1.5 text-sm rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors cursor-pointer" data-type={type}>
-              {config.icon} {config.label}
-            </button>
-          ))}
-        </div>
-
-        <!-- Year slider -->
-        {years.length > 2 && (
-          <div class="flex items-center justify-center gap-3 mb-8 text-sm" data-animate="fade-up">
-            <span class="text-slate-400">{years[0]}</span>
-            <input
-              type="range"
-              id="year-slider"
-              min="0"
-              max={String(years.length - 1)}
-              value={String(years.length - 1)}
-              class="w-48 accent-primary-500"
-            />
-            <span class="text-slate-400">{years[years.length - 1]}</span>
-            <span id="year-display" class="ml-2 font-bold text-primary-500">{years[years.length - 1]}</span>
-          </div>
-        )}
-
-        <!-- Timeline -->
-        <div id="timeline-container" class="relative">
-          <!-- Vertical line -->
-          <div class="absolute left-6 md:left-1/2 top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-slate-700 -translate-x-1/2"></div>
-
-          {years.map((year, yi) => (
-            <div class="timeline-year-group" data-year={year}>
-              <!-- Year marker -->
-              <div class="relative flex items-center justify-center mb-6" data-animate="fade-up">
-                <div class="relative z-10 bg-primary-500 text-white px-4 py-1.5 rounded-full font-bold text-sm shadow-md">
-                  {year}
-                </div>
-              </div>
-
-              {yearGroups.get(year)!.map((node, ni) => {
-                const config = typeConfig[node.type] || typeConfig.career;
-                const isLeft = ni % 2 === 0;
-                const tags = JSON.parse(node.tags || '[]') as string[];
-                return (
-                  <div
-                    class:list={['timeline-node relative flex items-start gap-4 mb-8', `md:${isLeft ? 'flex-row' : 'flex-row-reverse'}`, 'flex-row']}
-                    data-type={node.type}
-                    data-animate="fade-up"
-                  >
-                    {/* Node dot */}
-                    <div class="absolute left-6 md:left-1/2 -translate-x-1/2 z-10 mt-4">
-                      <div class:list={[
-                        'rounded-full border-3 bg-white dark:bg-slate-800',
-                        config.color,
-                        impactSize[node.impact] || 'w-4 h-4',
-                      ]}></div>
-                    </div>
-
-                    {/* Content card */}
-                    <div class:list={[
-                      'ml-12 md:ml-0 md:w-[calc(50%-2rem)] bg-white dark:bg-slate-800 rounded-xl p-4 border-l-4 shadow-soft hover:shadow-soft-md transition-shadow',
-                      config.color,
-                      isLeft ? 'md:mr-auto' : 'md:ml-auto',
-                    ]}>
-                      <div class="flex items-center gap-2 mb-1">
-                        <span class="text-lg">{config.icon}</span>
-                        <h3 class="font-bold text-base">{node.title}</h3>
-                      </div>
-                      <div class="text-xs text-slate-400 mb-2">
-                        {node.start_date}{node.end_date ? ` ~ ${node.end_date}` : ' ~ 至今'}
-                        {node.phase && <span class="ml-2 bg-slate-100 dark:bg-slate-700 rounded-full px-2 py-0.5">{node.phase}</span>}
-                      </div>
-                      {node.cover && (
-                        <img src={node.cover} alt={node.title} class="w-full h-32 object-cover rounded-lg mb-2" loading="lazy" />
-                      )}
-                      {node.description && (
-                        <p class="text-sm text-slate-600 dark:text-slate-400 line-clamp-3">{node.description}</p>
-                      )}
-                      {tags.length > 0 && (
-                        <div class="flex flex-wrap gap-1 mt-2">
-                          {tags.map((tag: string) => (
-                            <span class="text-xs bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-full px-2 py-0.5">
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-      </>
-    )}
+    </FadeIn>
   </div>
+
+  {serializedNodes.length === 0 ? (
+    <div class="text-center py-16 text-slate-400 max-w-3xl mx-auto">
+      <p class="text-lg mb-2">暂无时间线数据</p>
+      <p class="text-sm">在后台<a href="/admin/timeline" class="text-primary-500 hover:underline">添加人生节点</a>后，这里会展示时间轴</p>
+    </div>
+  ) : (
+    <HorizontalTimeline client:load nodes={serializedNodes} />
+  )}
 </BaseLayout>
-
-<script is:inline>
-(function() {
-  // Type filter
-  document.querySelectorAll('.timeline-filter').forEach(btn => {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.timeline-filter').forEach(b => {
-        b.classList.remove('active', 'bg-primary-50', 'dark:bg-primary-900/20', 'text-primary-600', 'dark:text-primary-400', 'font-medium');
-        b.classList.add('text-slate-600', 'dark:text-slate-400');
-      });
-      this.classList.add('active', 'bg-primary-50', 'dark:bg-primary-900/20', 'text-primary-600', 'dark:text-primary-400', 'font-medium');
-      this.classList.remove('text-slate-600', 'dark:text-slate-400');
-
-      var type = this.dataset.type;
-      document.querySelectorAll('.timeline-node').forEach(function(node) {
-        if (type === 'all' || node.dataset.type === type) {
-          node.style.display = '';
-        } else {
-          node.style.display = 'none';
-        }
-      });
-    });
-  });
-
-  // Year slider
-  var slider = document.getElementById('year-slider');
-  var display = document.getElementById('year-display');
-  var groups = document.querySelectorAll('.timeline-year-group');
-
-  if (slider && display && groups.length > 0) {
-    slider.addEventListener('input', function() {
-      var idx = parseInt(this.value);
-      var target = groups[idx];
-      if (target) {
-        display.textContent = target.dataset.year;
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    });
-  }
-})();
-</script>

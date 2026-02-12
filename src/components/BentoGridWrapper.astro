@@ -1,0 +1,50 @@
+---
+/**
+ * BentoGrid Astro wrapper — 获取数据后传入 React 组件
+ */
+import { getCollection } from 'astro:content';
+import { BentoGrid } from '@/react/sections/BentoGrid';
+
+const allCollections = await Promise.all([
+  getCollection('journal', ({ data }) => !data.draft),
+  getCollection('tech', ({ data }) => !data.draft),
+  getCollection('learning', ({ data }) => !data.draft),
+  getCollection('life', ({ data }) => !data.draft),
+]);
+
+const allPosts = allCollections.flat()
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 6);
+
+const categories = [
+  { key: 'journal', label: '日记', icon: '📓', desc: '日记 & 计划复盘', gradient: 'from-primary-100 to-primary-50 dark:from-primary-900/30 dark:to-slate-800', count: allCollections[0].length },
+  { key: 'tech', label: '技术', icon: '💻', desc: 'Java · AI · Agent', gradient: 'from-grass-100 to-grass-50 dark:from-grass-700/20 dark:to-slate-800', count: allCollections[1].length },
+  { key: 'learning', label: '效率', icon: '📚', desc: '效率方法 & 认知', gradient: 'from-sun-100 to-sun-50 dark:from-sun-600/20 dark:to-slate-800', count: allCollections[2].length },
+  { key: 'life', label: '生活', icon: '📷', desc: '照片 & 随记', gradient: 'from-purple-100 to-primary-50 dark:from-purple-900/20 dark:to-slate-800', count: allCollections[3].length },
+];
+
+const featured = allPosts[0] ? {
+  title: allPosts[0].data.title,
+  description: allPosts[0].data.description,
+  date: allPosts[0].data.date.toISOString(),
+  category: allPosts[0].data.category,
+  cover: allPosts[0].data.cover,
+  slug: allPosts[0].id,
+} : null;
+
+const restPosts = allPosts.slice(1, 5).map(post => ({
+  title: post.data.title,
+  description: post.data.description,
+  date: post.data.date.toISOString(),
+  category: post.data.category,
+  cover: post.data.cover,
+  slug: post.id,
+}));
+---
+
+<BentoGrid
+  client:visible
+  featured={featured}
+  categories={categories}
+  restPosts={restPosts}
+/>

@@ -55,14 +55,18 @@
   /* 柔和阴影 */
   --shadow-soft: 0 2px 15px -3px rgba(0, 0, 0, 0.06), 0 2px 6px -4px rgba(0, 0, 0, 0.04);
   --shadow-soft-md: 0 4px 25px -5px rgba(0, 0, 0, 0.08), 0 4px 10px -6px rgba(0, 0, 0, 0.04);
+  --shadow-glow: 0 0 20px rgba(58, 154, 255, 0.15);
+  --shadow-glow-lg: 0 0 40px rgba(58, 154, 255, 0.2);
 
-  /* 云朵浮动动画 */
-  --animate-float-cloud: float-cloud 8s ease-in-out infinite;
+  /* Glow 颜色 */
+  --color-glow-blue: rgba(58, 154, 255, 0.15);
+  --color-glow-purple: rgba(139, 92, 246, 0.15);
 
-  @keyframes float-cloud {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-8px); }
-  }
+  /* Bento 间距 */
+  --spacing-bento: 1.25rem;
+
+  /* 缓动函数 */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* 基础样式 */
@@ -158,7 +162,7 @@ h1, h2, h3 {
   background: var(--color-primary-700);
 }
 
-/* 滚动渐入动效 */
+/* 滚动渐入动效 (IntersectionObserver fallback) */
 [data-animate="fade-up"] {
   opacity: 0;
   transform: translateY(16px);
@@ -176,4 +180,76 @@ h1, h2, h3 {
     transform: none;
     transition: none;
   }
+}
+
+/* 编辑式大标题 */
+.text-editorial-xl {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+/* 滚动渐变背景 */
+.scroll-gradient-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    var(--color-bg-light) 0%,
+    var(--color-primary-50) 40%,
+    var(--color-bg-light) 100%
+  );
+  background-size: 100% 200%;
+  transition: background-position 0.3s ease;
+}
+.dark .scroll-gradient-bg {
+  background: linear-gradient(
+    180deg,
+    var(--color-bg-dark) 0%,
+    #0c1729 40%,
+    var(--color-bg-dark) 100%
+  );
+  background-size: 100% 200%;
+}
+
+/* 阅读进度条 */
+.reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  z-index: 100;
+  background: linear-gradient(90deg, var(--color-primary-400), var(--color-primary-600));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.1s linear;
+}
+
+/* View Transition keyframes */
+@keyframes slide-in-from-right {
+  from { transform: translateX(30px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slide-out-to-left {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(-30px); opacity: 0; }
+}
+
+/* View Transition 自定义动画 */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root) {
+  animation: slide-out-to-left 0.25s var(--ease-out-expo) both;
+}
+
+::view-transition-new(root) {
+  animation: slide-in-from-right 0.25s var(--ease-out-expo) both;
 }
