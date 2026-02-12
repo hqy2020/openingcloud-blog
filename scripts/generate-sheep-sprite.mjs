@@ -1,364 +1,457 @@
 #!/usr/bin/env node
 /**
  * 生成 oneko 格式的小绵羊像素精灵图 (256×128, 8列×4行, 每帧32×32)
+ * 基于 Codex 设计方案：黑脸绵羊，大圆润白色蓬松身体，粉色耳朵
  *
- * 精灵图布局 (col, row) — 与 BlogPet.astro spriteSets 对应:
- * Row 0: (0,0)scratchWallN-1 (1,0)NW-1   (2,0)sleeping-1 (3,0)E-1        (4,0)scratchWallW-1 (5,0)scratchSelf-1 (6,0)scratchSelf-2 (7,0)scratchSelf-3
- * Row 1: (0,1)scratchWallN-2 (1,1)NW-2   (2,1)sleeping-2 (3,1)E-2        (4,1)scratchWallW-2 (5,1)SE-1         (6,1)SW-2          (7,1)scratchWallS-1
- * Row 2: (0,2)NE-1           (1,2)N-1    (2,2)scratchWallE-1 (3,2)tired  (4,2)W-1            (5,2)SE-2         (6,2)scratchWallS-2 (7,2)S-2
- * Row 3: (0,3)NE-2           (1,3)N-2    (2,3)scratchWallE-2 (3,3)idle   (4,3)W-2            (5,3)SW-1         (6,3)S-1           (7,3)alert
+ * 精灵图布局与 BlogPet.astro spriteSets 完全对应
  */
 
 import sharp from 'sharp';
 
-const COLS = 8;
-const ROWS = 4;
-const F = 32;
-const WIDTH = COLS * F;
-const HEIGHT = ROWS * F;
+const COLS = 8, ROWS = 4, F = 32;
+const W = COLS * F, H = ROWS * F;
+const buf = Buffer.alloc(W * H * 4, 0);
 
-const buf = Buffer.alloc(WIDTH * HEIGHT * 4, 0);
+// ─── 调色板 ───
+const C = {
+  wool_hi:    [0xFF, 0xFF, 0xFF, 0xFF],
+  wool_mid:   [0xF4, 0xF6, 0xF8, 0xFF],
+  wool_shade: [0xDD, 0xE3, 0xE8, 0xFF],
+  wool_out:   [0xCC, 0xD5, 0xDD, 0xFF],
+  face_dark:  [0x1F, 0x21, 0x26, 0xFF],
+  face_deep:  [0x11, 0x13, 0x18, 0xFF],
+  ear_pink:   [0xF6, 0xA8, 0xB7, 0xFF],
+  ear_out:    [0xE0, 0x90, 0xA0, 0xFF],
+  nose_gray:  [0x3A, 0x3D, 0x45, 0xFF],
+  eye_white:  [0xFF, 0xFF, 0xFF, 0xFF],
+  shadow:     [0xC9, 0xD1, 0xD9, 0x60],
+  sleep_z:    [0xB9, 0xC8, 0xFF, 0xFF],
+  tail:       [0xF0, 0xF3, 0xF6, 0xFF],
+};
 
-// --- 颜色 ---
-const W  = [255, 255, 255, 255];   // 羊毛白
-const WS = [215, 218, 228, 255];   // 羊毛阴影
-const WD = [195, 198, 210, 255];   // 羊毛深阴影
-const FK = [255, 225, 205, 255];   // 脸肤色
-const EY = [35, 35, 45, 255];      // 眼
-const HL = [255, 255, 255, 255];   // 眼高光
-const NS = [240, 140, 140, 255];   // 鼻子粉
-const ER = [255, 195, 185, 255];   // 耳朵
-const LG = [170, 160, 150, 255];   // 腿
-const BL = [255, 175, 175, 100];   // 腮红
-const ZZ = [140, 170, 255, 200];   // 睡眠Z
-const AL = [255, 80, 80, 255];     // 警觉!
-const TR = null;                    // 透明(skip)
-
+// ─── 基础绘图 ───
 function px(x, y, c) {
-  if (!c || x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return;
-  const i = (y * WIDTH + x) * 4;
-  if (c[3] < 255 && c[3] > 0) {
-    // alpha blend
-    const a = c[3] / 255;
-    buf[i]     = Math.round(buf[i] * (1 - a) + c[0] * a);
-    buf[i + 1] = Math.round(buf[i + 1] * (1 - a) + c[1] * a);
-    buf[i + 2] = Math.round(buf[i + 2] * (1 - a) + c[2] * a);
-    buf[i + 3] = Math.min(255, buf[i + 3] + c[3]);
-  } else {
-    buf[i] = c[0]; buf[i+1] = c[1]; buf[i+2] = c[2]; buf[i+3] = c[3];
-  }
+  x = Math.round(x); y = Math.round(y);
+  if (x < 0 || x >= W || y < 0 || y >= H) return;
+  const i = (y * W + x) * 4;
+  buf[i] = c[0]; buf[i+1] = c[1]; buf[i+2] = c[2]; buf[i+3] = c[3];
 }
 
-// 帧内像素
-function fp(col, row, x, y, c) { px(col * F + x, row * F + y, c); }
-
-// 画一行像素 (数组中 null=跳过)
-function row(col, r, y, x0, colors) {
-  for (let i = 0; i < colors.length; i++) {
-    if (colors[i]) fp(col, r, x0 + i, y, colors[i]);
-  }
-}
-
-// 填充矩形
-function rect(col, r, x, y, w, h, c) {
+function rect(x, y, w, h, c) {
   for (let dy = 0; dy < h; dy++)
     for (let dx = 0; dx < w; dx++)
-      fp(col, r, x + dx, y + dy, c);
+      px(x + dx, y + dy, c);
 }
 
-// 画圆（填充）
-function circle(col, r, cx, cy, radius, c) {
-  for (let dy = -radius; dy <= radius; dy++)
-    for (let dx = -radius; dx <= radius; dx++)
-      if (dx * dx + dy * dy <= radius * radius)
-        fp(col, r, cx + dx, cy + dy, c);
-}
-
-// 画椭圆（填充）
-function ellipse(col, r, cx, cy, rx, ry, c) {
+function ellipse(cx, cy, rx, ry, c) {
   for (let dy = -ry; dy <= ry; dy++)
     for (let dx = -rx; dx <= rx; dx++)
-      if ((dx * dx) / (rx * rx) + (dy * dy) / (ry * ry) <= 1)
-        fp(col, r, cx + dx, cy + dy, c);
+      if ((dx*dx)/(rx*rx) + (dy*dy)/(ry*ry) <= 1)
+        px(cx + dx, cy + dy, c);
 }
 
-// ============================================================
-// 绘制函数
-// ============================================================
+function circle(cx, cy, r, c) { ellipse(cx, cy, r, r, c); }
 
-/**
- * 正面朝下的绵羊（idle/S方向基础）
- */
-function sheepFront(c, r, opts = {}) {
-  const { eyesClosed = false, legOff = 0, oy = 0 } = opts;
-
-  // 身体羊毛（大圆）
-  ellipse(c, r, 16, 16 + oy, 9, 7, W);
-  // 阴影底部
-  ellipse(c, r, 16, 20 + oy, 8, 3, WS);
-
-  // 头顶蓬松毛卷
-  row(c, r, 8 + oy, 12, [TR, W, TR, W, TR, W, TR, W]);
-  row(c, r, 9 + oy, 11, [W, W, W, W, W, W, W, W, W, W]);
-
-  // 脸
-  rect(c, r, 12, 13 + oy, 8, 7, FK);
-  // 圆角
-  fp(c, r, 12, 13 + oy, TR); fp(c, r, 19, 13 + oy, TR);
-  fp(c, r, 12, 19 + oy, TR); fp(c, r, 19, 19 + oy, TR);
-
-  // 耳朵
-  rect(c, r, 10, 13 + oy, 2, 3, ER);
-  rect(c, r, 20, 13 + oy, 2, 3, ER);
-
-  // 眼睛
-  if (eyesClosed) {
-    row(c, r, 15 + oy, 13, [TR, EY, EY, TR, TR, EY, EY]);
-  } else {
-    fp(c, r, 14, 15 + oy, EY); fp(c, r, 14, 16 + oy, EY);
-    fp(c, r, 18, 15 + oy, EY); fp(c, r, 18, 16 + oy, EY);
-    // 高光
-    fp(c, r, 14, 15 + oy, HL);
-    fp(c, r, 18, 15 + oy, HL);
-    // 实际眼睛（2x2 带高光）
-    fp(c, r, 13, 15 + oy, EY); fp(c, r, 14, 15 + oy, EY);
-    fp(c, r, 13, 16 + oy, EY); fp(c, r, 14, 16 + oy, EY);
-    fp(c, r, 17, 15 + oy, EY); fp(c, r, 18, 15 + oy, EY);
-    fp(c, r, 17, 16 + oy, EY); fp(c, r, 18, 16 + oy, EY);
-    fp(c, r, 13, 15 + oy, HL); fp(c, r, 17, 15 + oy, HL);
-  }
-
-  // 腮红
-  fp(c, r, 12, 17 + oy, BL); fp(c, r, 11, 17 + oy, BL);
-  fp(c, r, 20, 17 + oy, BL); fp(c, r, 19, 17 + oy, BL);
-
-  // 鼻/嘴
-  fp(c, r, 15, 18 + oy, NS); fp(c, r, 16, 18 + oy, NS);
-
-  // 腿（4条）
-  const ly = 22 + oy;
-  // 左前
-  fp(c, r, 11, ly + legOff, LG); fp(c, r, 11, ly + 1 + legOff, LG);
-  fp(c, r, 12, ly + legOff, LG); fp(c, r, 12, ly + 1 + legOff, LG);
-  // 左后
-  fp(c, r, 14, ly - legOff, LG); fp(c, r, 14, ly + 1 - legOff, LG);
-  fp(c, r, 15, ly - legOff, LG); fp(c, r, 15, ly + 1 - legOff, LG);
-  // 右后
-  fp(c, r, 17, ly + legOff, LG); fp(c, r, 17, ly + 1 + legOff, LG);
-  fp(c, r, 18, ly + legOff, LG); fp(c, r, 18, ly + 1 + legOff, LG);
-  // 右前
-  fp(c, r, 20, ly - legOff, LG); fp(c, r, 20, ly + 1 - legOff, LG);
-  fp(c, r, 21, ly - legOff, LG); fp(c, r, 21, ly + 1 - legOff, LG);
-}
-
-/**
- * 背面朝上的绵羊（N方向）
- */
-function sheepBack(c, r, opts = {}) {
-  const { legOff = 0, oy = 0 } = opts;
-
-  // 身体羊毛
-  ellipse(c, r, 16, 16 + oy, 9, 7, W);
-  ellipse(c, r, 16, 20 + oy, 8, 3, WS);
-
-  // 头顶毛卷
-  row(c, r, 8 + oy, 12, [TR, W, TR, W, TR, W, TR, W]);
-  row(c, r, 9 + oy, 11, [W, W, W, W, W, W, W, W, W, W]);
-
-  // 耳朵（从后面看）
-  rect(c, r, 10, 12 + oy, 2, 2, ER);
-  rect(c, r, 20, 12 + oy, 2, 2, ER);
-
-  // 小尾巴
-  fp(c, r, 15, 22 + oy, W); fp(c, r, 16, 22 + oy, W);
-  fp(c, r, 15, 23 + oy, WS); fp(c, r, 16, 23 + oy, WS);
-
-  // 腿
-  const ly = 22 + oy;
-  fp(c, r, 11, ly + legOff, LG); fp(c, r, 11, ly + 1 + legOff, LG);
-  fp(c, r, 12, ly + legOff, LG); fp(c, r, 12, ly + 1 + legOff, LG);
-  fp(c, r, 20, ly - legOff, LG); fp(c, r, 20, ly + 1 - legOff, LG);
-  fp(c, r, 21, ly - legOff, LG); fp(c, r, 21, ly + 1 - legOff, LG);
-}
-
-/**
- * 侧面绵羊（E/W方向）
- */
-function sheepSide(c, r, right = true, opts = {}) {
-  const { legOff = 0, oy = 0 } = opts;
-  // 身体
-  ellipse(c, r, 16, 16 + oy, 10, 6, W);
-  ellipse(c, r, 16, 20 + oy, 9, 3, WS);
-
-  if (right) {
-    // 朝右：头在右侧
-    // 头
-    rect(c, r, 21, 12 + oy, 6, 7, FK);
-    fp(c, r, 21, 12 + oy, TR); fp(c, r, 26, 12 + oy, TR);
-    fp(c, r, 21, 18 + oy, TR); fp(c, r, 26, 18 + oy, TR);
-    // 耳
-    fp(c, r, 25, 10 + oy, ER); fp(c, r, 26, 10 + oy, ER);
-    fp(c, r, 25, 11 + oy, ER); fp(c, r, 26, 11 + oy, ER);
-    // 眼
-    fp(c, r, 24, 14 + oy, EY); fp(c, r, 24, 15 + oy, EY);
-    fp(c, r, 24, 14 + oy, HL);
-    // 鼻
-    fp(c, r, 25, 17 + oy, NS);
-    // 腮红
-    fp(c, r, 22, 16 + oy, BL);
-    // 头顶毛
-    fp(c, r, 22, 11 + oy, W); fp(c, r, 23, 10 + oy, W); fp(c, r, 24, 11 + oy, W);
-  } else {
-    // 朝左：头在左侧
-    rect(c, r, 5, 12 + oy, 6, 7, FK);
-    fp(c, r, 5, 12 + oy, TR); fp(c, r, 10, 12 + oy, TR);
-    fp(c, r, 5, 18 + oy, TR); fp(c, r, 10, 18 + oy, TR);
-    // 耳
-    fp(c, r, 5, 10 + oy, ER); fp(c, r, 6, 10 + oy, ER);
-    fp(c, r, 5, 11 + oy, ER); fp(c, r, 6, 11 + oy, ER);
-    // 眼
-    fp(c, r, 7, 14 + oy, EY); fp(c, r, 7, 15 + oy, EY);
-    fp(c, r, 7, 14 + oy, HL);
-    // 鼻
-    fp(c, r, 6, 17 + oy, NS);
-    // 腮红
-    fp(c, r, 9, 16 + oy, BL);
-    // 头顶毛
-    fp(c, r, 7, 11 + oy, W); fp(c, r, 8, 10 + oy, W); fp(c, r, 9, 11 + oy, W);
-  }
-
-  // 腿（侧面显示前后两条）
-  const ly = 22 + oy;
-  if (right) {
-    fp(c, r, 19, ly + legOff, LG); fp(c, r, 19, ly + 1 + legOff, LG);
-    fp(c, r, 20, ly + legOff, LG); fp(c, r, 20, ly + 1 + legOff, LG);
-    fp(c, r, 12, ly - legOff, LG); fp(c, r, 12, ly + 1 - legOff, LG);
-    fp(c, r, 13, ly - legOff, LG); fp(c, r, 13, ly + 1 - legOff, LG);
-  } else {
-    fp(c, r, 11, ly + legOff, LG); fp(c, r, 11, ly + 1 + legOff, LG);
-    fp(c, r, 12, ly + legOff, LG); fp(c, r, 12, ly + 1 + legOff, LG);
-    fp(c, r, 19, ly - legOff, LG); fp(c, r, 19, ly + 1 - legOff, LG);
-    fp(c, r, 20, ly - legOff, LG); fp(c, r, 20, ly + 1 - legOff, LG);
-  }
-}
-
-/**
- * 对角线方向（混合正/侧面）
- */
-function sheepDiag(c, r, dirX, dirY, opts = {}) {
-  const { legOff = 0 } = opts;
-  // dirX: 1=right, -1=left; dirY: -1=up, 1=down
-  if (dirY < 0) {
-    // 向上 — 偏背面
-    sheepBack(c, r, { legOff, oy: -1 });
-    // 添加一侧的耳朵突出表示方向
-    if (dirX > 0) {
-      fp(c, r, 22, 13, ER); fp(c, r, 23, 13, ER);
-    } else {
-      fp(c, r, 8, 13, ER); fp(c, r, 9, 13, ER);
+// Outline only (for fluffy edge)
+function ellipseOutline(cx, cy, rx, ry, c) {
+  for (let dy = -ry; dy <= ry; dy++)
+    for (let dx = -rx; dx <= rx; dx++) {
+      const d = (dx*dx)/(rx*rx) + (dy*dy)/(ry*ry);
+      if (d <= 1 && d > 0.7) px(cx + dx, cy + dy, c);
     }
-  } else {
-    // 向下 — 偏正面
-    sheepFront(c, r, { legOff, oy: -1 });
-    // 身体略偏移表示方向
+}
+
+// ─── 绵羊部件绘图 ───
+
+// 蓬松身体（带云朵状凸起）
+function woolBody(ox, oy, cx, cy, rx, ry) {
+  const ax = ox + cx, ay = oy + cy;
+
+  // Ground shadow
+  ellipse(ax, ay + ry + 1, rx - 2, 1, C.shadow);
+
+  // Main body
+  ellipse(ax, ay, rx, ry, C.wool_mid);
+
+  // Fluffy bumps around the outline
+  const bumpAngles = [0, 0.4, 0.8, 1.2, 1.8, 2.4, 2.8, 3.4, 3.8, 4.4, 5.0, 5.5];
+  for (const a of bumpAngles) {
+    const bx = Math.round(ax + Math.cos(a) * (rx + 0.5));
+    const by = Math.round(ay + Math.sin(a) * (ry + 0.5));
+    circle(bx, by, 2, C.wool_mid);
+  }
+
+  // Shade on bottom-right quadrant
+  for (let dy = 1; dy <= ry; dy++)
+    for (let dx = 1; dx <= rx; dx++) {
+      const d = (dx*dx)/(rx*rx) + (dy*dy)/(ry*ry);
+      if (d <= 1 && d > 0.55) px(ax + dx, ay + dy, C.wool_shade);
+    }
+
+  // Outline for definition
+  ellipseOutline(ax, ay, rx + 1, ry + 1, C.wool_out);
+
+  // Highlight on top-left
+  circle(ax - Math.round(rx * 0.3), ay - Math.round(ry * 0.4), 2, C.wool_hi);
+  px(ax - Math.round(rx * 0.1), ay - Math.round(ry * 0.5), C.wool_hi);
+}
+
+// 黑脸 (direction: 'front', 'left', 'right', 'back', 'hidden')
+function face(ox, oy, fx, fy, dir, eyeState) {
+  const ax = ox + fx, ay = oy + fy;
+  if (dir === 'back') {
+    // Just show ears poking up, no face
+    return;
+  }
+
+  // Face shape
+  const fw = dir === 'front' ? 9 : 7;
+  const fh = dir === 'front' ? 8 : 7;
+  ellipse(ax, ay, Math.round(fw/2), Math.round(fh/2), C.face_dark);
+
+  if (dir === 'front' || dir === 'left' || dir === 'right') {
+    // Eyes
+    if (eyeState === 'open') {
+      if (dir === 'front') {
+        px(ax - 2, ay - 1, C.eye_white);
+        px(ax + 2, ay - 1, C.eye_white);
+      } else if (dir === 'left') {
+        px(ax - 1, ay - 1, C.eye_white);
+      } else {
+        px(ax + 1, ay - 1, C.eye_white);
+      }
+    } else if (eyeState === 'half') {
+      // Half-closed: just a line
+      if (dir === 'front') {
+        px(ax - 2, ay - 1, C.nose_gray);
+        px(ax + 2, ay - 1, C.nose_gray);
+      }
+    }
+    // Nose
+    px(ax, ay + 1, C.nose_gray);
   }
 }
 
-// ============================================================
-// 填入每个帧
-// ============================================================
+// 粉色耳朵
+function ears(ox, oy, ex, ey, dir) {
+  const ax = ox + ex, ay = oy + ey;
+  if (dir === 'front') {
+    // Two ears spread
+    rect(ax - 5, ay, 2, 2, C.ear_out);
+    px(ax - 4, ay + 1, C.ear_pink);
+    rect(ax + 4, ay, 2, 2, C.ear_out);
+    px(ax + 4, ay + 1, C.ear_pink);
+  } else if (dir === 'left') {
+    rect(ax - 2, ay - 1, 2, 2, C.ear_out);
+    px(ax - 1, ay, C.ear_pink);
+  } else if (dir === 'right') {
+    rect(ax + 1, ay - 1, 2, 2, C.ear_out);
+    px(ax + 1, ay, C.ear_pink);
+  } else if (dir === 'back') {
+    rect(ax - 4, ay, 2, 3, C.ear_out);
+    px(ax - 3, ay + 1, C.ear_pink);
+    rect(ax + 3, ay, 2, 3, C.ear_out);
+    px(ax + 3, ay + 1, C.ear_pink);
+  } else if (dir === 'alert') {
+    // Tall upright ears
+    rect(ax - 5, ay - 2, 2, 4, C.ear_out);
+    px(ax - 4, ay - 1, C.ear_pink);
+    px(ax - 4, ay, C.ear_pink);
+    rect(ax + 4, ay - 2, 2, 4, C.ear_out);
+    px(ax + 4, ay - 1, C.ear_pink);
+    px(ax + 4, ay, C.ear_pink);
+  }
+}
 
-// idle (3,3)
-sheepFront(3, 3, { oy: -2 });
+// 腿 (4条短黑腿桩)
+// legPhase: 0=standing, 1=walk1(front-left+back-right forward), 2=walk2(front-right+back-left forward)
+function legs(ox, oy, lx, ly, dir, phase) {
+  const ax = ox + lx, ay = oy + ly;
+  const legW = 2, legH = 3;
 
-// alert (7,3) — 正面 + 感叹号
-sheepFront(7, 3, { oy: -2 });
-fp(7, 3, 25, 6, AL); fp(7, 3, 25, 7, AL); fp(7, 3, 25, 8, AL);
-fp(7, 3, 25, 10, AL);
+  if (dir === 'front') {
+    const spread = 4;
+    const lift1 = phase === 1 ? -1 : 0;
+    const lift2 = phase === 2 ? -1 : 0;
+    rect(ax - spread - 1, ay + lift1, legW, legH - lift1, C.face_dark);
+    rect(ax - 1, ay + lift2, legW, legH - lift2, C.face_dark);
+    rect(ax + 1, ay + lift1, legW, legH - lift1, C.face_dark);
+    rect(ax + spread, ay + lift2, legW, legH - lift2, C.face_dark);
+  } else if (dir === 'side-left' || dir === 'side-right') {
+    // Side view: 2 visible legs
+    const shift = phase === 1 ? -2 : phase === 2 ? 2 : 0;
+    const shift2 = phase === 1 ? 2 : phase === 2 ? -2 : 0;
+    rect(ax - 2 + shift, ay, legW, legH, C.face_dark);
+    rect(ax + 2 + shift2, ay, legW, legH, C.face_dark);
+  } else if (dir === 'back') {
+    const spread = 3;
+    const lift1 = phase === 1 ? -1 : 0;
+    const lift2 = phase === 2 ? -1 : 0;
+    rect(ax - spread, ay + lift1, legW, legH - lift1, C.face_dark);
+    rect(ax + spread - 1, ay + lift2, legW, legH - lift2, C.face_dark);
+  } else if (dir === 'diag') {
+    // Diagonal: 3 visible legs, one partially hidden
+    const lift1 = phase === 1 ? -1 : 0;
+    const lift2 = phase === 2 ? -1 : 0;
+    rect(ax - 3, ay + lift1, legW, legH - lift1, C.face_dark);
+    rect(ax, ay + lift2, legW, legH - lift2, C.face_dark);
+    rect(ax + 3, ay + lift1, legW, legH - lift1, C.face_dark);
+  }
+}
 
-// tired (3,2) — 闭眼
-sheepFront(3, 2, { oy: -2, eyesClosed: true });
+// 小尾巴
+function tail(ox, oy, tx, ty) {
+  circle(ox + tx, oy + ty, 2, C.tail);
+  px(ox + tx, oy + ty, C.wool_hi);
+}
 
-// sleeping (2,0) (2,1) — 闭眼 + zzz
-sheepFront(2, 0, { oy: -1, eyesClosed: true });
-fp(2, 0, 24, 6, ZZ); fp(2, 0, 25, 5, ZZ);
-fp(2, 0, 26, 6, ZZ);
+// 睡觉 zzZ
+function sleepZ(ox, oy, x, y, size) {
+  const ax = ox + x, ay = oy + y;
+  if (size >= 1) {
+    px(ax, ay, C.sleep_z);
+    px(ax+1, ay-1, C.sleep_z);
+    px(ax, ay-1, C.sleep_z);
+  }
+  if (size >= 2) {
+    px(ax+3, ay-3, C.sleep_z);
+    px(ax+4, ay-4, C.sleep_z);
+    px(ax+5, ay-4, C.sleep_z);
+    px(ax+3, ay-4, C.sleep_z);
+  }
+}
 
-sheepFront(2, 1, { oy: -1, eyesClosed: true });
-fp(2, 1, 23, 7, ZZ); fp(2, 1, 24, 6, ZZ); fp(2, 1, 25, 7, ZZ);
-fp(2, 1, 25, 4, ZZ); fp(2, 1, 26, 3, ZZ); fp(2, 1, 27, 4, ZZ);
+// ─── 完整绵羊组合函数 ───
 
-// E (3,0) (3,1) — 向右走
-sheepSide(3, 0, true, { legOff: 0, oy: -1 });
-sheepSide(3, 1, true, { legOff: -1, oy: -1 });
+function sheepSide(col, row, faceDir, phase) {
+  const ox = col * F, oy = row * F;
+  const isLeft = faceDir === 'left';
 
-// W (4,2) (4,3) — 向左走
-sheepSide(4, 2, false, { legOff: 0, oy: -1 });
-sheepSide(4, 3, false, { legOff: -1, oy: -1 });
+  woolBody(ox, oy, 16, 16, 11, 9);
 
-// N (1,2) (1,3) — 向上走
-sheepBack(1, 2, { legOff: 0, oy: -2 });
-sheepBack(1, 3, { legOff: -1, oy: -2 });
+  const fx = isLeft ? 8 : 23;
+  face(ox, oy, fx, 14, isLeft ? 'left' : 'right', 'open');
+  ears(ox, oy, fx, 9, isLeft ? 'left' : 'right');
 
-// S (6,3) (7,2) — 向下走
-sheepFront(6, 3, { legOff: 0, oy: -2 });
-sheepFront(7, 2, { legOff: -1, oy: -2 });
+  legs(ox, oy, 16, 24, 'side-' + (isLeft ? 'left' : 'right'), phase);
 
-// NE (0,2) (0,3)
-sheepDiag(0, 2, 1, -1, { legOff: 0 });
-sheepDiag(0, 3, 1, -1, { legOff: -1 });
+  if (isLeft) tail(ox, oy, 27, 16);
+  else tail(ox, oy, 5, 16);
+}
 
-// NW (1,0) (1,1)
-sheepDiag(1, 0, -1, -1, { legOff: 0 });
-sheepDiag(1, 1, -1, -1, { legOff: -1 });
+function sheepFront(col, row, phase) {
+  const ox = col * F, oy = row * F;
 
-// SE (5,1) (5,2)
-sheepDiag(5, 1, 1, 1, { legOff: 0 });
-sheepDiag(5, 2, 1, 1, { legOff: -1 });
+  woolBody(ox, oy, 16, 15, 11, 9);
+  face(ox, oy, 16, 17, 'front', 'open');
+  ears(ox, oy, 16, 9, 'front');
+  legs(ox, oy, 16, 23, 'front', phase);
+}
 
-// SW (5,3) (6,1)
-sheepDiag(5, 3, -1, 1, { legOff: 0 });
-sheepDiag(6, 1, -1, 1, { legOff: -1 });
+function sheepBack(col, row, phase) {
+  const ox = col * F, oy = row * F;
 
-// scratchWallN (0,0) (0,1) — 背面+抬蹄
-sheepBack(0, 0, { oy: -2 });
-fp(0, 0, 14, 8, LG); fp(0, 0, 15, 7, LG);
-sheepBack(0, 1, { oy: -2 });
-fp(0, 1, 17, 8, LG); fp(0, 1, 18, 7, LG);
+  woolBody(ox, oy, 16, 15, 11, 9);
+  face(ox, oy, 16, 12, 'back', 'open');
+  ears(ox, oy, 16, 8, 'back');
+  legs(ox, oy, 16, 23, 'back', phase);
+  tail(ox, oy, 16, 24);
+}
 
-// scratchWallS (7,1) (6,2) — 正面+抬蹄
-sheepFront(7, 1, { oy: -2 });
-fp(7, 1, 11, 24, LG); fp(7, 1, 12, 25, LG);
-sheepFront(6, 2, { oy: -2 });
-fp(6, 2, 20, 24, LG); fp(6, 2, 21, 25, LG);
+function sheepDiag(col, row, dx, dy, phase) {
+  const ox = col * F, oy = row * F;
 
-// scratchWallE (2,2) (2,3) — 侧面朝右+前蹄抬起
-sheepSide(2, 2, true, { oy: -1 });
-fp(2, 2, 26, 12, LG); fp(2, 2, 27, 11, LG);
-sheepSide(2, 3, true, { oy: -1 });
-fp(2, 3, 26, 11, LG); fp(2, 3, 27, 12, LG);
+  // Body shifts slightly in movement direction
+  const bodyCx = 16 + dx * 1;
+  const bodyCy = 15 + dy * 1;
+  woolBody(ox, oy, bodyCx, bodyCy, 11, 9);
 
-// scratchWallW (4,0) (4,1) — 侧面朝左+前蹄抬起
-sheepSide(4, 0, false, { oy: -1 });
-fp(4, 0, 5, 12, LG); fp(4, 0, 4, 11, LG);
-sheepSide(4, 1, false, { oy: -1 });
-fp(4, 1, 5, 11, LG); fp(4, 1, 4, 12, LG);
+  // Face position based on direction
+  const fx = 16 + dx * 6;
+  const fy = 14 + dy * 3;
+  const fDir = dx < 0 ? 'left' : dx > 0 ? 'right' : 'front';
+  face(ox, oy, fx, fy, fDir, 'open');
+  ears(ox, oy, fx, fy - 5, fDir);
 
-// scratchSelf (5,0) (6,0) (7,0) — 正面+后脚挠身体
-sheepFront(5, 0, { oy: -2 });
-fp(5, 0, 22, 16, LG); fp(5, 0, 23, 15, LG); fp(5, 0, 23, 16, LG);
-sheepFront(6, 0, { oy: -2 });
-fp(6, 0, 22, 15, LG); fp(6, 0, 23, 14, LG); fp(6, 0, 23, 15, LG);
-sheepFront(7, 0, { oy: -2 });
-fp(7, 0, 22, 14, LG); fp(7, 0, 23, 13, LG); fp(7, 0, 23, 14, LG);
+  legs(ox, oy, bodyCx, 23, 'diag', phase);
 
-// ============================================================
-// 输出
-// ============================================================
-const output = 'public/pets/oneko-sheep.png';
+  // Tail on opposite side of face
+  if (dx !== 0) tail(ox, oy, 16 - dx * 10, bodyCy + 1);
+}
 
-await sharp(buf, {
-  raw: { width: WIDTH, height: HEIGHT, channels: 4 },
-}).png().toFile(output);
+function sheepIdle(col, row) {
+  const ox = col * F, oy = row * F;
 
-console.log(`✅ 小绵羊精灵图已生成: ${output} (${WIDTH}×${HEIGHT})`);
+  woolBody(ox, oy, 16, 15, 12, 9);
+  face(ox, oy, 16, 17, 'front', 'open');
+  ears(ox, oy, 16, 9, 'front');
+  legs(ox, oy, 16, 23, 'front', 0);
+}
+
+function sheepSleep(col, row, phase) {
+  const ox = col * F, oy = row * F;
+
+  // Curled up body - wider and lower
+  const bx = phase === 1 ? 16 : 17;
+  const by = phase === 1 ? 18 : 19;
+  woolBody(ox, oy, bx, by, 12, 8);
+
+  // Face tucked into body
+  const fx = phase === 1 ? 14 : 15;
+  face(ox, oy, fx, 20, 'front', 'closed');
+
+  // Tiny legs barely visible
+  rect(ox + 10, oy + 25, 2, 2, C.face_dark);
+  rect(ox + 20, oy + 25, 2, 2, C.face_dark);
+
+  // zzZ
+  sleepZ(ox, oy, 24, phase === 1 ? 8 : 6, phase);
+}
+
+function sheepTired(col, row) {
+  const ox = col * F, oy = row * F;
+
+  // Body sinks 1px
+  woolBody(ox, oy, 16, 16, 11, 9);
+  face(ox, oy, 16, 18, 'front', 'half');
+  // Droopy ears
+  rect(ox + 9, oy + 12, 2, 2, C.ear_out);
+  px(ox + 10, oy + 13, C.ear_pink);
+  rect(ox + 21, oy + 12, 2, 2, C.ear_out);
+  px(ox + 21, oy + 13, C.ear_pink);
+  legs(ox, oy, 16, 24, 'front', 0);
+}
+
+function sheepAlert(col, row) {
+  const ox = col * F, oy = row * F;
+
+  // Body slightly raised
+  woolBody(ox, oy, 16, 14, 11, 9);
+  face(ox, oy, 16, 16, 'front', 'open');
+  ears(ox, oy, 16, 7, 'alert');
+  legs(ox, oy, 16, 22, 'front', 0);
+
+  // Wide eyes (extra highlight)
+  px(ox + 14, oy + 14, C.eye_white);
+  px(ox + 13, oy + 14, C.eye_white);
+  px(ox + 18, oy + 14, C.eye_white);
+  px(ox + 19, oy + 14, C.eye_white);
+}
+
+function sheepScratchSelf(col, row, phase) {
+  const ox = col * F, oy = row * F;
+
+  // Body jitters based on phase
+  const jx = phase === 1 ? -1 : 1;
+  woolBody(ox, oy, 16 + jx, 15, 11, 9);
+  face(ox, oy, 16 + jx, 17, 'front', 'open');
+  ears(ox, oy, 16 + jx, 9, 'front');
+
+  // One hind leg raised to scratch
+  rect(ox + 10, oy + 23, 2, 3, C.face_dark);
+  rect(ox + 20, oy + 23, 2, 3, C.face_dark);
+  // Raised scratching leg
+  rect(ox + 22 + jx, oy + 19, 2, 2, C.face_dark);
+}
+
+function sheepScratchWall(col, row, wallDir, phase) {
+  const ox = col * F, oy = row * F;
+
+  if (wallDir === 'N') {
+    woolBody(ox, oy, 16, 17, 11, 8);
+    face(ox, oy, 16, 12, 'back', 'open');
+    ears(ox, oy, 16, 8, 'back');
+    // Front legs reaching up
+    const ly = phase === 1 ? 3 : 5;
+    const ly2 = phase === 1 ? 5 : 3;
+    rect(ox + 12, oy + ly, 2, 4, C.face_dark);
+    rect(ox + 18, oy + ly2, 2, 4, C.face_dark);
+    // Hind legs standing
+    rect(ox + 12, oy + 24, 2, 3, C.face_dark);
+    rect(ox + 18, oy + 24, 2, 3, C.face_dark);
+  } else if (wallDir === 'S') {
+    woolBody(ox, oy, 16, 14, 11, 8);
+    face(ox, oy, 16, 17, 'front', 'open');
+    ears(ox, oy, 16, 9, 'front');
+    // Hind legs kicking toward bottom
+    const ly = phase === 1 ? 26 : 24;
+    const ly2 = phase === 1 ? 24 : 26;
+    rect(ox + 11, oy + ly, 2, 31 - ly, C.face_dark);
+    rect(ox + 19, oy + ly2, 2, 31 - ly2, C.face_dark);
+    // Front legs standing
+    rect(ox + 13, oy + 22, 2, 3, C.face_dark);
+    rect(ox + 17, oy + 22, 2, 3, C.face_dark);
+  } else if (wallDir === 'E') {
+    woolBody(ox, oy, 14, 15, 10, 9);
+    face(ox, oy, 22, 14, 'right', 'open');
+    ears(ox, oy, 22, 9, 'right');
+    // Front legs reaching right
+    const lx = phase === 1 ? 27 : 25;
+    const lx2 = phase === 1 ? 25 : 27;
+    rect(ox + lx, oy + 14, 4, 2, C.face_dark);
+    rect(ox + lx2, oy + 18, 4, 2, C.face_dark);
+    rect(ox + 12, oy + 24, 2, 3, C.face_dark);
+    rect(ox + 17, oy + 24, 2, 3, C.face_dark);
+  } else if (wallDir === 'W') {
+    woolBody(ox, oy, 18, 15, 10, 9);
+    face(ox, oy, 9, 14, 'left', 'open');
+    ears(ox, oy, 9, 9, 'left');
+    // Front legs reaching left
+    const lx = phase === 1 ? 1 : 3;
+    const lx2 = phase === 1 ? 3 : 1;
+    rect(ox + lx, oy + 14, 4, 2, C.face_dark);
+    rect(ox + lx2, oy + 18, 4, 2, C.face_dark);
+    rect(ox + 15, oy + 24, 2, 3, C.face_dark);
+    rect(ox + 20, oy + 24, 2, 3, C.face_dark);
+  }
+}
+
+// ─── 生成所有 32 帧 ───
+// 布局严格对应 BlogPet.astro 中的 spriteSets
+
+// Row 0
+sheepScratchWall(0, 0, 'N', 1);  // [0,0] scratchWallN-1
+sheepDiag(1, 0, -1, -1, 1);       // [1,0] NW walk1
+sheepSleep(2, 0, 1);              // [2,0] sleep1
+sheepSide(3, 0, 'right', 1);      // [3,0] E walk1
+sheepScratchWall(4, 0, 'W', 1);  // [4,0] scratchWallW-1
+sheepScratchSelf(5, 0, 1);        // [5,0] scratchSelf-1
+sheepScratchSelf(6, 0, 2);        // [6,0] scratchSelf-2
+sheepScratchSelf(7, 0, 1);        // [7,0] scratchSelf-3 (repeat variant)
+
+// Row 1
+sheepScratchWall(0, 1, 'N', 2);  // [0,1] scratchWallN-2
+sheepDiag(1, 1, -1, -1, 2);       // [1,1] NW walk2
+sheepSleep(2, 1, 2);              // [2,1] sleep2
+sheepSide(3, 1, 'right', 2);      // [3,1] E walk2
+sheepScratchWall(4, 1, 'W', 2);  // [4,1] scratchWallW-2
+sheepDiag(5, 1, 1, 1, 1);         // [5,1] SE walk1
+sheepDiag(6, 1, -1, 1, 2);        // [6,1] SW walk2
+sheepScratchWall(7, 1, 'S', 1);  // [7,1] scratchWallS-1
+
+// Row 2
+sheepDiag(0, 2, 1, -1, 1);        // [0,2] NE walk1
+sheepBack(1, 2, 1);                // [1,2] N walk1
+sheepScratchWall(2, 2, 'E', 1);  // [2,2] scratchWallE-1
+sheepTired(3, 2);                  // [3,2] tired
+sheepSide(4, 2, 'left', 1);       // [4,2] W walk1
+sheepDiag(5, 2, 1, 1, 2);         // [5,2] SE walk2
+sheepScratchWall(6, 2, 'S', 2);  // [6,2] scratchWallS-2
+sheepFront(7, 2, 2);              // [7,2] S walk2
+
+// Row 3
+sheepDiag(0, 3, 1, -1, 2);        // [0,3] NE walk2
+sheepBack(1, 3, 2);                // [1,3] N walk2
+sheepScratchWall(2, 3, 'E', 2);  // [2,3] scratchWallE-2
+sheepIdle(3, 3);                   // [3,3] idle
+sheepSide(4, 3, 'left', 2);       // [4,3] W walk2
+sheepDiag(5, 3, -1, 1, 1);        // [5,3] SW walk1
+sheepFront(6, 3, 1);              // [6,3] S walk1
+sheepAlert(7, 3);                  // [7,3] alert
+
+// ─── 输出 PNG ───
+sharp(buf, { raw: { width: W, height: H, channels: 4 } })
+  .png()
+  .toFile('public/pets/oneko-sheep.png')
+  .then(() => console.log('✅ oneko-sheep.png generated (256×128, 32 frames)'))
+  .catch(err => console.error('❌', err));
