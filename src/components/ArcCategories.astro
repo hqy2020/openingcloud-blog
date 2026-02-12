@@ -1,0 +1,43 @@
+---
+/**
+ * 弧形分类卡片 — 4个分类沿弧线排列
+ */
+import { getCollection } from 'astro:content';
+
+const collections = await Promise.all([
+  getCollection('journal', ({ data }) => !data.draft),
+  getCollection('tech', ({ data }) => !data.draft),
+  getCollection('learning', ({ data }) => !data.draft),
+  getCollection('life', ({ data }) => !data.draft),
+]);
+
+const categories = [
+  { key: 'journal', label: '日记', icon: '📓', desc: '日记 & 计划复盘', color: 'from-primary-100 to-primary-50 dark:from-primary-900/30 dark:to-primary-900/10', accent: 'text-primary-500', count: collections[0].length },
+  { key: 'tech', label: '技术', icon: '💻', desc: 'Java · AI · Agent', color: 'from-grass-100 to-grass-50 dark:from-grass-700/20 dark:to-grass-700/10', accent: 'text-grass-500', count: collections[1].length },
+  { key: 'learning', label: '学习', icon: '📚', desc: '学习方法 & 认知', color: 'from-sun-100 to-sun-50 dark:from-sun-600/20 dark:to-sun-600/10', accent: 'text-sun-500', count: collections[2].length },
+  { key: 'life', label: '生活', icon: '📷', desc: '照片 & 随记', color: 'from-primary-100 to-primary-50 dark:from-primary-900/20 dark:to-primary-900/10', accent: 'text-primary-400', count: collections[3].length },
+];
+---
+
+<section class="mb-10">
+  <div class="flex justify-center">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 w-full max-w-3xl">
+      {categories.map((cat, i) => (
+        <a
+          href={`/${cat.key}/`}
+          class:list={[
+            'group relative block rounded-2xl p-5 bg-gradient-to-br border border-white/60 dark:border-slate-700/40 shadow-soft hover:shadow-soft-md transition-all duration-300 hover:-translate-y-1 text-center',
+            cat.color,
+          ]}
+          style={`transform: translateY(${Math.abs(i - 1.5) * 6}px);`}
+          data-animate="fade-up"
+        >
+          <span class="text-3xl block mb-2">{cat.icon}</span>
+          <h3 class:list={['font-bold text-lg', cat.accent]}>{cat.label}</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{cat.desc}</p>
+          <span class="mt-2 inline-block text-xs bg-white/60 dark:bg-slate-800/60 rounded-full px-2 py-0.5 text-slate-500 dark:text-slate-400">{cat.count} 篇</span>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>

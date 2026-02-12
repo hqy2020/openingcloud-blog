@@ -18,7 +18,7 @@ const totalTags = new Set(allCollections.flat().flatMap(p => p.data.tags)).size;
 <aside class="space-y-6">
   <!-- 作者卡片 -->
   <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 text-center">
-    <div class="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-3xl text-white mb-3">
+    <div class="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-primary-300 to-primary-500 flex items-center justify-center text-3xl text-white mb-3">
       ☁️
     </div>
     <h2 class="font-bold text-lg text-slate-800 dark:text-slate-100">启云</h2>
@@ -26,15 +26,15 @@ const totalTags = new Set(allCollections.flat().flatMap(p => p.data.tags)).size;
 
     <div class="flex justify-center gap-6 mt-4 text-center">
       <div>
-        <div class="text-lg font-bold text-primary-500">{totalPosts}</div>
+        <div class="text-lg font-bold text-sun-400">{totalPosts}</div>
         <div class="text-xs text-slate-400">文章</div>
       </div>
       <div>
-        <div class="text-lg font-bold text-primary-500">4</div>
+        <div class="text-lg font-bold text-sun-400">4</div>
         <div class="text-xs text-slate-400">分类</div>
       </div>
       <div>
-        <div class="text-lg font-bold text-primary-500">{totalTags}</div>
+        <div class="text-lg font-bold text-sun-400">{totalTags}</div>
         <div class="text-xs text-slate-400">标签</div>
       </div>
     </div>

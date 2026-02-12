@@ -1,10 +1,13 @@
 ---
 /**
- * 首页 — 分类导航 + 最新文章
+ * 首页 — 电影感 Hero + 生活指标 + 弧形分类 + 特色文章 + 时间线预览
  */
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import CategoryNav from '@/components/CategoryNav.astro';
-import PostCard from '@/components/PostCard.astro';
+import HeroSection from '@/components/HeroSection.astro';
+import LifeIndicators from '@/components/LifeIndicators.astro';
+import ArcCategories from '@/components/ArcCategories.astro';
+import FeaturedArticles from '@/components/FeaturedArticles.astro';
+import TimelinePreview from '@/components/TimelinePreview.astro';
 import { getCollection } from 'astro:content';
 
 const allCollections = await Promise.all([
@@ -17,39 +20,31 @@ const allCollections = await Promise.all([
 const allPosts = allCollections.flat()
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
   .slice(0, 10);
+
+const postsForFeatured = allPosts.map(post => ({
+  title: post.data.title,
+  description: post.data.description,
+  date: post.data.date,
+  category: post.data.category,
+  tags: post.data.tags,
+  cover: post.data.cover,
+  slug: post.id,
+}));
 ---
 
-<BaseLayout title="首页">
-  <!-- Hero -->
-  <div class="mb-8 p-6 rounded-xl bg-gradient-to-r from-primary-500/10 to-primary-300/10 dark:from-primary-900/20 dark:to-primary-700/10 border border-primary-200/50 dark:border-primary-800/30">
-    <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">
-      ☁️ 启云的博客
-    </h1>
-    <p class="text-slate-500 dark:text-slate-400">
-      技术 · 学习 · 生活 — 记录成长的每一步
-    </p>
-  </div>
+<BaseLayout title="首页" sidebar={true}>
+  <!-- Section A: Hero -->
+  <HeroSection />
 
-  <!-- 分类导航 -->
-  <section class="mb-8">
-    <CategoryNav />
-  </section>
+  <!-- Section B: 本周生活指标 -->
+  <LifeIndicators />
 
-  <!-- 最新文章 -->
-  <section>
-    <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100 mb-4">📝 最新文章</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {allPosts.map(post => (
-        <PostCard
-          title={post.data.title}
-          description={post.data.description}
-          date={post.data.date}
-          category={post.data.category}
-          tags={post.data.tags}
-          cover={post.data.cover}
-          slug={post.id}
-        />
-      ))}
-    </div>
-  </section>
+  <!-- Section C: 弧形分类卡片 -->
+  <ArcCategories />
+
+  <!-- Section D: 特色文章 -->
+  <FeaturedArticles posts={postsForFeatured} />
+
+  <!-- Section E: 人生路线预览 -->
+  <TimelinePreview />
 </BaseLayout>

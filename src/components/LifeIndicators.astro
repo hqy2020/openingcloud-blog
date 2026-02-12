@@ -1,0 +1,48 @@
+---
+/**
+ * 生活指标条 — 展示本周生活数据（模拟数据，Phase 3 接入真实数据）
+ */
+interface Props {
+  stats?: {
+    steps: number;
+    sleep: number;
+    focus: number;
+    exercise: number;
+  };
+}
+
+const { stats } = Astro.props;
+
+const data = stats ?? { steps: 7520, sleep: 7.2, focus: 4.5, exercise: 35 };
+
+const indicators = [
+  { icon: '👟', label: '步数', value: data.steps.toLocaleString(), unit: '步', color: 'text-primary-500' },
+  { icon: '😴', label: '睡眠', value: data.sleep.toFixed(1), unit: 'h', color: 'text-grass-500' },
+  { icon: '🎯', label: '专注', value: data.focus.toFixed(1), unit: 'h', color: 'text-sun-400' },
+  { icon: '🏃', label: '运动', value: String(data.exercise), unit: 'min', color: 'text-primary-400' },
+];
+---
+
+<section class="mb-8">
+  <h2 class="text-sm font-medium text-slate-400 dark:text-slate-500 mb-3 uppercase tracking-wider">本周生活</h2>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    {indicators.map(item => (
+      <div class="bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-200/60 dark:border-slate-700/60 shadow-soft group hover:shadow-soft-md transition-shadow">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-lg">{item.icon}</span>
+          <span class="text-xs text-slate-400 dark:text-slate-500">{item.label}</span>
+        </div>
+        <div class="flex items-baseline gap-1">
+          <span class:list={['text-xl font-bold', item.color]}>{item.value}</span>
+          <span class="text-xs text-slate-400">{item.unit}</span>
+        </div>
+        <!-- 迷你趋势线占位 -->
+        <div class="mt-2 h-4">
+          <svg class="w-full h-4 text-slate-200 dark:text-slate-700" viewBox="0 0 60 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <polyline points="0,12 10,8 20,10 30,6 40,9 50,4 60,7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </div>
+      </div>
+    ))}
+  </div>
+</section>

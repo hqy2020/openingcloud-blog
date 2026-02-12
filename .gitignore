@@ -3,10 +3,13 @@ node_modules/
 
 # Build output
 dist/
+bundled/
 
 # Environment
 .env
-.env.*
+.env.local
+.env.production
+.dev.vars
 
 # Editor
 .vscode/
@@ -18,3 +21,9 @@ Thumbs.db
 
 # Astro
 .astro/
+
+# Wrangler
+.wrangler/
+
+# CCB
+.ccb/

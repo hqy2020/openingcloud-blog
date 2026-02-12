@@ -6,6 +6,8 @@ import Head from './Head.astro';
 import Navbar from '@/components/Navbar.astro';
 import Sidebar from '@/components/Sidebar.astro';
 import Footer from '@/components/Footer.astro';
+import BlogPet from '@/components/BlogPet.astro';
+import AdminEntry from '@/components/AdminEntry.astro';
 
 interface Props {
   title: string;
@@ -34,4 +36,6 @@ const { title, description, image, sidebar = true } = Astro.props;
     )}
   </main>
   <Footer />
+  {!Astro.url.pathname.startsWith('/admin') && <BlogPet />}
+  {!Astro.url.pathname.startsWith('/admin') && <AdminEntry />}
 </Head>

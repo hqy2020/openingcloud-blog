@@ -1,0 +1,65 @@
+---
+/**
+ * 特色文章区 — 大卡 + 不对称双栏
+ */
+interface Props {
+  posts: Array<{
+    title: string;
+    description?: string;
+    date: Date;
+    category: string;
+    tags?: string[];
+    cover?: string;
+    slug: string;
+  }>;
+}
+
+const { posts } = Astro.props;
+const featured = posts[0];
+const rest = posts.slice(1, 5);
+
+const categoryLabels: Record<string, string> = {
+  journal: '📓 日记', tech: '💻 技术', learning: '📚 学习', life: '📷 生活',
+};
+
+function formatDate(d: Date) {
+  return new Date(d).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+---
+
+<section class="mb-10" data-animate="fade-up">
+  <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100 mb-5 font-display">最新文章</h2>
+
+  {featured && (
+    <a href={`/posts/${featured.slug}/`} class="group block mb-6 bg-white dark:bg-slate-800 rounded-2xl shadow-soft hover:shadow-soft-md border border-slate-200/60 dark:border-slate-700/60 overflow-hidden transition-all duration-300 hover:-translate-y-0.5">
+      <div class="md:flex">
+        {featured.cover && (
+          <div class="md:w-2/5 overflow-hidden">
+            <img src={featured.cover} alt={featured.title} class="w-full h-48 md:h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+          </div>
+        )}
+        <div class:list={['p-6 flex flex-col justify-center', featured.cover ? 'md:w-3/5' : 'w-full']}>
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-grass-50 text-grass-600 dark:bg-grass-700/20 dark:text-grass-300">{categoryLabels[featured.category] || featured.category}</span>
+            <time class="text-xs text-slate-400">{formatDate(featured.date)}</time>
+          </div>
+          <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100 group-hover:text-primary-500 transition-colors mb-2 line-clamp-2">{featured.title}</h3>
+          {featured.description && <p class="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">{featured.description}</p>}
+        </div>
+      </div>
+    </a>
+  )}
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {rest.map(post => (
+      <a href={`/posts/${post.slug}/`} class="group block bg-white dark:bg-slate-800 rounded-xl p-4 shadow-soft hover:shadow-soft-md border border-slate-200/60 dark:border-slate-700/60 transition-all duration-300 hover:-translate-y-0.5" data-animate="fade-up">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-grass-50 text-grass-600 dark:bg-grass-700/20 dark:text-grass-300">{categoryLabels[post.category] || post.category}</span>
+          <time class="text-xs text-slate-400">{formatDate(post.date)}</time>
+        </div>
+        <h3 class="font-semibold text-slate-800 dark:text-slate-100 group-hover:text-primary-500 transition-colors line-clamp-2 mb-1">{post.title}</h3>
+        {post.description && <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">{post.description}</p>}
+      </a>
+    ))}
+  </div>
+</section>

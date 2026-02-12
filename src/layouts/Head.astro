@@ -1,5 +1,6 @@
 ---
 import '@/styles/global.css';
+import { ViewTransitions } from 'astro:transitions';
 
 interface Props {
   title: string;
@@ -22,7 +23,11 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     <meta property="og:description" content={description} />
     {image && <meta property="og:image" content={new URL(image, Astro.site)} />}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai&display=swap" rel="stylesheet" />
     <title>{title} | 启云博客</title>
+    <ViewTransitions />
 
     <!-- 暗色模式初始化（避免闪烁） -->
     <script is:inline>
@@ -33,5 +38,25 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
   </head>
   <body class="min-h-screen flex flex-col">
     <slot />
+
+    <!-- 滚动渐入 IntersectionObserver -->
+    <script is:inline>
+    (function initScrollReveal() {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { rootMargin: '0px 0px -60px 0px', threshold: 0.1 });
+      document.querySelectorAll('[data-animate]').forEach(function(el) { observer.observe(el); });
+      // Re-init after View Transitions navigation
+      document.addEventListener('astro:page-load', function() {
+        document.querySelectorAll('[data-animate]:not(.is-visible)').forEach(function(el) { observer.observe(el); });
+      });
+    })();
+    </script>
   </body>
 </html>

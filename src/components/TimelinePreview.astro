@@ -1,0 +1,46 @@
+---
+/**
+ * 人生路线预览 — 3个里程碑 + CTA
+ * Phase 3 会从 D1 读取真实数据
+ */
+
+const milestones = [
+  { year: '2020', title: '大学入学', type: 'learning', icon: '🎓' },
+  { year: '2023', title: '第一份实习', type: 'career', icon: '💼' },
+  { year: '2025', title: '启云博客上线', type: 'career', icon: '🚀' },
+];
+
+const typeColors: Record<string, string> = {
+  career: 'bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300',
+  learning: 'bg-grass-50 text-grass-600 dark:bg-grass-700/20 dark:text-grass-300',
+  health: 'bg-sun-100 text-sun-600 dark:bg-sun-600/20 dark:text-sun-300',
+  family: 'bg-primary-50 text-primary-500 dark:bg-primary-900/20 dark:text-primary-400',
+};
+---
+
+<section class="mb-10" data-animate="fade-up">
+  <div class="flex items-center justify-between mb-5">
+    <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100 font-display">人生路线</h2>
+    <a href="/timeline/" class="text-sm text-primary-500 hover:text-primary-600 transition-colors">
+      查看完整时间线 →
+    </a>
+  </div>
+
+  <div class="relative">
+    <!-- 水平连接线 -->
+    <div class="absolute top-8 left-0 right-0 h-0.5 bg-slate-200 dark:bg-slate-700 hidden md:block"></div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {milestones.map(m => (
+        <div class="relative bg-white dark:bg-slate-800 rounded-xl p-5 shadow-soft border border-slate-200/60 dark:border-slate-700/60 text-center group hover:shadow-soft-md transition-all duration-300">
+          <!-- 节点圆点 -->
+          <div class="hidden md:block absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-primary-400 border-2 border-white dark:border-slate-800 z-10"></div>
+          <span class="text-2xl mb-2 block">{m.icon}</span>
+          <span class="text-xs text-slate-400 dark:text-slate-500">{m.year}</span>
+          <h3 class="font-semibold text-slate-800 dark:text-slate-100 mt-1">{m.title}</h3>
+          <span class:list={['mt-2 inline-block text-xs rounded-full px-2 py-0.5', typeColors[m.type]]}>{m.type}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

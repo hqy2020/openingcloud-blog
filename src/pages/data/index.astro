@@ -1,0 +1,308 @@
+---
+export const prerender = false;
+/**
+ * 生活数据可视化 — GitHub 热力图 + 趋势折线 + 雷达图
+ * 从 D1 diary_entries 表读取数据，通过 JSON 传递到客户端图表
+ */
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+let dailyData: Array<{ date: string; steps: number | null; sleep_hours: number | null; focus_hours: number | null; exercise_minutes: number | null; mood: number | null }> = [];
+let weeklyAvg: Record<string, number> = {};
+
+try {
+  const db = Astro.locals.runtime.env.BLOG_DB;
+  const rows = await db
+    .prepare('SELECT date, steps, sleep_hours, focus_hours, exercise_minutes, mood FROM diary_entries WHERE date >= date(\'now\', \'-128 days\') ORDER BY date ASC')
+    .all();
+  dailyData = rows.results as typeof dailyData;
+
+  const stats = await db
+    .prepare('SELECT AVG(steps) as steps, AVG(sleep_hours) as sleep, AVG(focus_hours) as focus, AVG(exercise_minutes) as exercise, AVG(mood) as mood FROM diary_entries WHERE date >= date(\'now\', \'-30 days\')')
+    .first<Record<string, number>>();
+  if (stats) weeklyAvg = stats;
+} catch {
+  // Table may not exist yet
+}
+---
+
+<BaseLayout title="生活数据" sidebar={false}>
+  <div class="max-w-4xl mx-auto space-y-10">
+    <div class="text-center" data-animate="fade-up">
+      <h1 class="text-3xl font-bold mb-2">📊 生活数据</h1>
+      <p class="text-slate-500 dark:text-slate-400 text-sm">记录每一天，量化成长轨迹</p>
+    </div>
+
+    <!-- 热力图 -->
+    <section data-animate="fade-up">
+      <h2 class="text-lg font-bold mb-3">习惯热力图</h2>
+      <div class="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200/60 dark:border-slate-700/60 shadow-soft overflow-x-auto">
+        <svg id="heatmap" class="w-full" style="min-width: 640px;"></svg>
+        <div class="flex items-center justify-end gap-2 mt-3 text-xs text-slate-400">
+          <span>少</span>
+          <span class="inline-block w-3 h-3 rounded-sm bg-slate-200 dark:bg-slate-700"></span>
+          <span class="inline-block w-3 h-3 rounded-sm bg-grass-200"></span>
+          <span class="inline-block w-3 h-3 rounded-sm bg-grass-400"></span>
+          <span class="inline-block w-3 h-3 rounded-sm bg-grass-600"></span>
+          <span class="inline-block w-3 h-3 rounded-sm bg-grass-700"></span>
+          <span>多</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 趋势图 + 雷达图 -->
+    <div class="grid md:grid-cols-2 gap-6">
+      <section data-animate="fade-up">
+        <h2 class="text-lg font-bold mb-3">趋势变化</h2>
+        <div class="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200/60 dark:border-slate-700/60 shadow-soft">
+          <canvas id="trend-chart" height="240"></canvas>
+        </div>
+      </section>
+      <section data-animate="fade-up">
+        <h2 class="text-lg font-bold mb-3">近 30 天综合画像</h2>
+        <div class="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200/60 dark:border-slate-700/60 shadow-soft">
+          <canvas id="radar-chart" height="240"></canvas>
+        </div>
+      </section>
+    </div>
+
+    {dailyData.length === 0 && (
+      <div class="text-center py-12 text-slate-400">
+        <p class="text-lg mb-2">暂无日记数据</p>
+        <p class="text-sm">在后台<a href="/admin/diary" class="text-primary-500 hover:underline">录入日记数据</a>后，这里会展示可视化图表</p>
+      </div>
+    )}
+  </div>
+
+  <script type="application/json" id="diary-data" set:html={JSON.stringify({ daily: dailyData, avg: weeklyAvg })} />
+</BaseLayout>
+
+<script>
+  import { Chart, registerables } from 'chart.js';
+  Chart.register(...registerables);
+
+  const raw = document.getElementById('diary-data')?.textContent;
+  if (!raw) throw new Error('Missing diary data');
+  const { daily, avg } = JSON.parse(raw) as {
+    daily: Array<{ date: string; steps: number | null; sleep_hours: number | null; focus_hours: number | null; exercise_minutes: number | null; mood: number | null }>;
+    avg: Record<string, number>;
+  };
+
+  // ─── Heatmap ───
+  function renderHeatmap() {
+    const svg = document.getElementById('heatmap');
+    if (!svg) return;
+
+    const cellSize = 14;
+    const gap = 3;
+    const dayLabels = ['一', '', '三', '', '五', '', '日'];
+    const today = new Date();
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - 127);
+
+    // Adjust to start on Monday
+    const dayOfWeek = startDate.getDay();
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    startDate.setDate(startDate.getDate() + mondayOffset);
+
+    // Map data by date
+    const dataMap = new Map<string, number>();
+    daily.forEach(d => {
+      let score = 0;
+      let count = 0;
+      if (d.mood != null) { score += d.mood / 5; count++; }
+      if (d.steps != null) { score += Math.min(d.steps / 10000, 1); count++; }
+      if (d.sleep_hours != null) { score += Math.min(d.sleep_hours / 8, 1); count++; }
+      if (d.focus_hours != null) { score += Math.min(d.focus_hours / 6, 1); count++; }
+      if (count > 0) dataMap.set(d.date, score / count);
+    });
+
+    const colors = ['#e2e8f0', '#dcf0dc', '#8ecc8e', '#5e8e58', '#375a35'];
+    const darkColors = ['#334155', '#2d4a2d', '#3d6b3d', '#4a8a4a', '#5eaa5e'];
+    const isDark = document.documentElement.classList.contains('dark');
+    const palette = isDark ? darkColors : colors;
+
+    const weeks = Math.ceil(135 / 7);
+    const labelW = 24;
+    const svgW = labelW + weeks * (cellSize + gap);
+    const svgH = 7 * (cellSize + gap) + 20;
+    svg.setAttribute('viewBox', `0 0 ${svgW} ${svgH}`);
+    svg.setAttribute('height', String(svgH));
+    svg.innerHTML = '';
+
+    // Day labels
+    dayLabels.forEach((label, i) => {
+      if (!label) return;
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', '0');
+      text.setAttribute('y', String(i * (cellSize + gap) + cellSize - 1));
+      text.setAttribute('font-size', '10');
+      text.setAttribute('fill', isDark ? '#94a3b8' : '#94a3b8');
+      text.textContent = label;
+      svg.appendChild(text);
+    });
+
+    // Cells
+    const d = new Date(startDate);
+    for (let week = 0; week < weeks; week++) {
+      for (let day = 0; day < 7; day++) {
+        if (d > today) break;
+        const dateStr = d.toISOString().split('T')[0];
+        const value = dataMap.get(dateStr);
+        const level = value == null ? 0 : Math.min(Math.floor(value * 4) + 1, 4);
+
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', String(labelW + week * (cellSize + gap)));
+        rect.setAttribute('y', String(day * (cellSize + gap)));
+        rect.setAttribute('width', String(cellSize));
+        rect.setAttribute('height', String(cellSize));
+        rect.setAttribute('rx', '2');
+        rect.setAttribute('fill', palette[level]);
+
+        const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        title.textContent = `${dateStr}: ${value != null ? (value * 100).toFixed(0) + '%' : '无数据'}`;
+        rect.appendChild(title);
+        svg.appendChild(rect);
+
+        d.setDate(d.getDate() + 1);
+      }
+    }
+
+    // Month labels
+    const m = new Date(startDate);
+    let lastMonth = -1;
+    for (let week = 0; week < weeks; week++) {
+      const weekDate = new Date(startDate);
+      weekDate.setDate(weekDate.getDate() + week * 7);
+      if (weekDate.getMonth() !== lastMonth) {
+        lastMonth = weekDate.getMonth();
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', String(labelW + week * (cellSize + gap)));
+        text.setAttribute('y', String(7 * (cellSize + gap) + 14));
+        text.setAttribute('font-size', '10');
+        text.setAttribute('fill', isDark ? '#94a3b8' : '#94a3b8');
+        text.textContent = (weekDate.getMonth() + 1) + '月';
+        svg.appendChild(text);
+      }
+    }
+  }
+
+  // ─── Trend Chart ───
+  function renderTrendChart() {
+    const ctx = (document.getElementById('trend-chart') as HTMLCanvasElement)?.getContext('2d');
+    if (!ctx || daily.length === 0) return;
+
+    const isDark = document.documentElement.classList.contains('dark');
+    const textColor = isDark ? '#94a3b8' : '#64748b';
+    const gridColor = isDark ? 'rgba(148,163,184,0.1)' : 'rgba(100,116,139,0.1)';
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: daily.map(d => d.date.slice(5)),
+        datasets: [
+          {
+            label: '睡眠 (h)',
+            data: daily.map(d => d.sleep_hours),
+            borderColor: '#8EC9FF',
+            backgroundColor: 'rgba(142,201,255,0.1)',
+            tension: 0.3,
+            fill: true,
+            pointRadius: 0,
+          },
+          {
+            label: '专注 (h)',
+            data: daily.map(d => d.focus_hours),
+            borderColor: '#FF9F3A',
+            backgroundColor: 'rgba(255,159,58,0.1)',
+            tension: 0.3,
+            fill: true,
+            pointRadius: 0,
+          },
+          {
+            label: '心情',
+            data: daily.map(d => d.mood),
+            borderColor: '#7AA874',
+            backgroundColor: 'rgba(122,168,116,0.1)',
+            tension: 0.3,
+            fill: true,
+            pointRadius: 0,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { intersect: false, mode: 'index' },
+        plugins: {
+          legend: { labels: { color: textColor, usePointStyle: true, padding: 16, font: { size: 11 } } },
+        },
+        scales: {
+          x: { ticks: { color: textColor, maxTicksLimit: 10, font: { size: 10 } }, grid: { color: gridColor } },
+          y: { ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } },
+        },
+      },
+    });
+  }
+
+  // ─── Radar Chart ───
+  function renderRadarChart() {
+    const ctx = (document.getElementById('radar-chart') as HTMLCanvasElement)?.getContext('2d');
+    if (!ctx) return;
+
+    const isDark = document.documentElement.classList.contains('dark');
+    const textColor = isDark ? '#94a3b8' : '#64748b';
+    const gridColor = isDark ? 'rgba(148,163,184,0.15)' : 'rgba(100,116,139,0.15)';
+
+    // Normalize averages to 0-100 scale
+    const norm = {
+      steps: avg.steps ? Math.min((avg.steps / 10000) * 100, 100) : 0,
+      sleep: avg.sleep ? Math.min((avg.sleep / 8) * 100, 100) : 0,
+      focus: avg.focus ? Math.min((avg.focus / 6) * 100, 100) : 0,
+      exercise: avg.exercise ? Math.min((avg.exercise / 60) * 100, 100) : 0,
+      mood: avg.mood ? (avg.mood / 5) * 100 : 0,
+    };
+
+    new Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels: ['步数', '睡眠', '专注', '运动', '心情'],
+        datasets: [{
+          label: '近 30 天均值',
+          data: [norm.steps, norm.sleep, norm.focus, norm.exercise, norm.mood],
+          backgroundColor: 'rgba(58,154,255,0.15)',
+          borderColor: '#3A9AFF',
+          borderWidth: 2,
+          pointBackgroundColor: '#3A9AFF',
+          pointRadius: 4,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          r: {
+            beginAtZero: true,
+            max: 100,
+            ticks: { stepSize: 25, color: textColor, backdropColor: 'transparent', font: { size: 9 } },
+            pointLabels: { color: textColor, font: { size: 12 } },
+            grid: { color: gridColor },
+            angleLines: { color: gridColor },
+          },
+        },
+      },
+    });
+  }
+
+  // Init
+  renderHeatmap();
+  renderTrendChart();
+  renderRadarChart();
+
+  // Re-render on View Transitions navigation
+  document.addEventListener('astro:page-load', () => {
+    renderHeatmap();
+    renderTrendChart();
+    renderRadarChart();
+  });
+</script>

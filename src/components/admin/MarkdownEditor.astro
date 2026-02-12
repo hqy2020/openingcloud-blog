@@ -1,0 +1,214 @@
+---
+// MarkdownEditor.astro — 左右分栏 Markdown 编辑器（实时预览 + 工具栏 + 图片上传）
+interface Props {
+  content?: string;
+}
+
+const { content = '' } = Astro.props;
+---
+
+<!-- 工具栏 -->
+<div class="flex flex-wrap gap-1 mb-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-t-lg border border-b-0 border-gray-300 dark:border-gray-600">
+  <button type="button" data-action="h1" class="toolbar-btn" title="一级标题">H1</button>
+  <button type="button" data-action="h2" class="toolbar-btn" title="二级标题">H2</button>
+  <button type="button" data-action="h3" class="toolbar-btn" title="三级标题">H3</button>
+  <span class="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1 self-center"></span>
+  <button type="button" data-action="bold" class="toolbar-btn" title="加粗"><b>B</b></button>
+  <button type="button" data-action="italic" class="toolbar-btn" title="斜体"><i>I</i></button>
+  <button type="button" data-action="code" class="toolbar-btn" title="行内代码">&lt;/&gt;</button>
+  <button type="button" data-action="codeblock" class="toolbar-btn" title="代码块">```</button>
+  <span class="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1 self-center"></span>
+  <button type="button" data-action="link" class="toolbar-btn" title="链接">🔗</button>
+  <button type="button" data-action="ul" class="toolbar-btn" title="无序列表">• List</button>
+  <button type="button" data-action="ol" class="toolbar-btn" title="有序列表">1. List</button>
+  <span class="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1 self-center"></span>
+  <button type="button" data-action="image" class="toolbar-btn" title="插入图片">🖼</button>
+  <label class="toolbar-btn cursor-pointer" title="上传图片">
+    📤
+    <input type="file" id="editor-file-input" accept="image/*" class="hidden" />
+  </label>
+</div>
+
+<!-- 编辑器主体：左右分栏 -->
+<div class="flex flex-col lg:flex-row gap-0 border border-gray-300 dark:border-gray-600 rounded-b-lg overflow-hidden" style="min-height: 500px;">
+  <!-- 编辑区 -->
+  <div class="flex-1 relative">
+    <textarea
+      id="md-editor"
+      class="w-full h-full min-h-[500px] p-4 bg-white dark:bg-gray-900 text-text-light dark:text-text-dark font-mono text-sm resize-none outline-none border-r border-gray-300 dark:border-gray-600"
+      placeholder="在此输入 Markdown..."
+    >{content}</textarea>
+  </div>
+  <!-- 预览区 -->
+  <div class="flex-1 p-4 bg-white dark:bg-gray-900 overflow-y-auto prose dark:prose-invert max-w-none" id="md-preview">
+    <p class="text-gray-400">预览区域</p>
+  </div>
+</div>
+
+<!-- 自动保存提示 -->
+<div id="autosave-status" class="text-xs text-gray-400 mt-1 text-right"></div>
+
+<style>
+  .toolbar-btn {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    color: var(--color-text-light);
+    transition: background-color 0.15s;
+    cursor: pointer;
+  }
+  :where(.dark, .dark *) .toolbar-btn {
+    color: var(--color-text-dark);
+  }
+  .toolbar-btn:hover {
+    background-color: #e5e7eb;
+  }
+  :where(.dark, .dark *) .toolbar-btn:hover {
+    background-color: #374151;
+  }
+</style>
+
+<script is:inline src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script is:inline>
+(function() {
+  var editor = document.getElementById('md-editor');
+  var preview = document.getElementById('md-preview');
+  var autosaveEl = document.getElementById('autosave-status');
+  var fileInput = document.getElementById('editor-file-input');
+
+  // 自动保存 key（基于 URL）
+  var draftKey = 'draft:' + window.location.pathname;
+
+  // 初始化：如果编辑器为空，尝试恢复草稿
+  if (!editor.value.trim()) {
+    var saved = localStorage.getItem(draftKey);
+    if (saved) editor.value = saved;
+  }
+
+  // 实时预览
+  function updatePreview() {
+    preview.innerHTML = marked.parse(editor.value || '');
+  }
+
+  // 自动保存到 localStorage
+  var saveTimeout;
+  function scheduleSave() {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(function() {
+      localStorage.setItem(draftKey, editor.value);
+      autosaveEl.textContent = '已暂存 ' + new Date().toLocaleTimeString();
+    }, 1000);
+  }
+
+  editor.addEventListener('input', function() {
+    updatePreview();
+    scheduleSave();
+  });
+
+  // 初始预览
+  updatePreview();
+
+  // 工具栏操作
+  function insertAtCursor(before, after) {
+    var start = editor.selectionStart;
+    var end = editor.selectionEnd;
+    var selected = editor.value.substring(start, end);
+    var replacement = before + (selected || '') + (after || '');
+    editor.value = editor.value.substring(0, start) + replacement + editor.value.substring(end);
+    editor.selectionStart = start + before.length;
+    editor.selectionEnd = start + before.length + selected.length;
+    editor.focus();
+    updatePreview();
+    scheduleSave();
+  }
+
+  function insertAtLineStart(prefix) {
+    var start = editor.selectionStart;
+    var lineStart = editor.value.lastIndexOf('\n', start - 1) + 1;
+    editor.value = editor.value.substring(0, lineStart) + prefix + editor.value.substring(lineStart);
+    editor.selectionStart = editor.selectionEnd = start + prefix.length;
+    editor.focus();
+    updatePreview();
+    scheduleSave();
+  }
+
+  var actions = {
+    h1: function() { insertAtLineStart('# '); },
+    h2: function() { insertAtLineStart('## '); },
+    h3: function() { insertAtLineStart('### '); },
+    bold: function() { insertAtCursor('**', '**'); },
+    italic: function() { insertAtCursor('*', '*'); },
+    code: function() { insertAtCursor('`', '`'); },
+    codeblock: function() { insertAtCursor('\n```\n', '\n```\n'); },
+    link: function() { insertAtCursor('[', '](url)'); },
+    ul: function() { insertAtLineStart('- '); },
+    ol: function() { insertAtLineStart('1. '); },
+    image: function() { insertAtCursor('![alt](', ')'); },
+  };
+
+  document.querySelectorAll('[data-action]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var action = this.getAttribute('data-action');
+      if (actions[action]) actions[action]();
+    });
+  });
+
+  // 图片上传
+  async function uploadImage(file) {
+    var formData = new FormData();
+    formData.append('file', file);
+    try {
+      var res = await fetch('/api/admin/images', { method: 'POST', body: formData });
+      var data = await res.json();
+      if (data.ok) {
+        insertAtCursor('![' + file.name + '](', data.data.url + ')');
+      } else {
+        alert('上传失败: ' + (data.error?.message || '未知错误'));
+      }
+    } catch (e) {
+      alert('上传失败: 网络错误');
+    }
+  }
+
+  // 文件选择上传
+  fileInput.addEventListener('change', function() {
+    if (this.files[0]) uploadImage(this.files[0]);
+    this.value = '';
+  });
+
+  // 拖拽上传
+  editor.addEventListener('dragover', function(e) { e.preventDefault(); });
+  editor.addEventListener('drop', function(e) {
+    e.preventDefault();
+    var files = e.dataTransfer.files;
+    for (var i = 0; i < files.length; i++) {
+      if (files[i].type.startsWith('image/')) uploadImage(files[i]);
+    }
+  });
+
+  // 粘贴上传
+  editor.addEventListener('paste', function(e) {
+    var items = e.clipboardData?.items;
+    if (!items) return;
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith('image/')) {
+        e.preventDefault();
+        uploadImage(items[i].getAsFile());
+        return;
+      }
+    }
+  });
+
+  // Tab 键支持缩进
+  editor.addEventListener('keydown', function(e) {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      insertAtCursor('  ', '');
+    }
+  });
+
+  // 暴露获取内容的方法供表单使用
+  window.getEditorContent = function() { return editor.value; };
+  window.clearEditorDraft = function() { localStorage.removeItem(draftKey); };
+})();
+</script>

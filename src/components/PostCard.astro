@@ -29,7 +29,7 @@ const formattedDate = new Date(date).toLocaleDateString('zh-CN', {
 });
 ---
 
-<article class="group bg-white dark:bg-slate-800 rounded-xl shadow-sm hover:shadow-md border border-slate-200 dark:border-slate-700 transition-all duration-300 overflow-hidden">
+<article class="group bg-white dark:bg-slate-800 rounded-xl shadow-soft hover:shadow-soft-md border border-slate-200 dark:border-slate-700 transition-all duration-300 overflow-hidden">
   {cover && (
     <a href={`/posts/${slug}/`} class="block overflow-hidden">
       <img
@@ -45,7 +45,7 @@ const formattedDate = new Date(date).toLocaleDateString('zh-CN', {
     <div class="flex items-center gap-2 mb-3">
       <a
         href={`/${category}/`}
-        class="text-xs font-medium px-2.5 py-1 rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-900/50 transition-colors"
+        class="text-xs font-medium px-2.5 py-1 rounded-full bg-grass-50 text-grass-600 dark:bg-grass-700/20 dark:text-grass-300 hover:bg-grass-100 dark:hover:bg-grass-700/30 transition-colors"
       >
         {categoryLabels[category] || category}
       </a>
@@ -77,7 +77,7 @@ const formattedDate = new Date(date).toLocaleDateString('zh-CN', {
         {tags.slice(0, 3).map(tag => (
           <a
             href={`/tags/${tag}/`}
-            class="text-xs px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400 hover:bg-primary-100 hover:text-primary-600 dark:hover:bg-primary-900/30 dark:hover:text-primary-300 transition-colors"
+            class="text-xs px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400 hover:bg-grass-50 hover:text-grass-600 dark:hover:bg-grass-700/20 dark:hover:text-grass-300 transition-colors"
           >
             #{tag}
           </a>

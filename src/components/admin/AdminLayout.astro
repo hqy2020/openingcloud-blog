@@ -1,0 +1,89 @@
+---
+import '@/styles/global.css';
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+const currentPath = Astro.url.pathname;
+
+const navGroups = [
+  {
+    label: '内容管理',
+    items: [
+      { href: '/admin/posts', label: '📝 文章管理' },
+      { href: '/admin/posts/new', label: '✏️ 新建文章' },
+      { href: '/admin/media', label: '🖼️ 图片管理' },
+    ],
+  },
+  {
+    label: '数据管理',
+    items: [
+      { href: '/admin/diary', label: '📊 日记数据' },
+      { href: '/admin/timeline', label: '🗺️ 人生路线' },
+    ],
+  },
+];
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title} | 启云后台</title>
+    <script is:inline>
+      if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    </script>
+  </head>
+  <body class="min-h-screen bg-bg-light dark:bg-bg-dark text-text-light dark:text-text-dark">
+    <!-- 顶部导航 -->
+    <header class="bg-card-light dark:bg-card-dark border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
+        <div class="flex items-center gap-6">
+          <a href="/admin" class="font-bold text-primary-500">启云后台</a>
+          <nav class="hidden sm:flex items-center gap-1">
+            {navGroups.map((group, gi) => (
+              <>
+                {gi > 0 && <span class="text-gray-300 dark:text-gray-600 mx-1">|</span>}
+                {group.items.map(({ href, label }) => (
+                  <a
+                    href={href}
+                    class:list={[
+                      'text-sm px-2 py-1 rounded transition-colors',
+                      currentPath.startsWith(href)
+                        ? 'text-primary-500 font-medium bg-primary-50 dark:bg-primary-900/20'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800',
+                    ]}
+                  >
+                    {label}
+                  </a>
+                ))}
+              </>
+            ))}
+          </nav>
+        </div>
+        <div class="flex items-center gap-3">
+          <a href="/" class="text-sm text-gray-500 hover:text-primary-500">查看博客</a>
+          <button id="admin-logout-btn" class="text-sm text-red-500 hover:text-red-600 cursor-pointer">退出</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 内容区 -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+      <slot />
+    </main>
+
+    <script is:inline>
+      document.getElementById('admin-logout-btn')?.addEventListener('click', async () => {
+        await fetch('/api/admin/auth/logout', { method: 'POST' });
+        window.location.href = '/admin/login';
+      });
+    </script>
+  </body>
+</html>

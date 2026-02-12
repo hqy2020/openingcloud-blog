@@ -47,7 +47,7 @@ const formattedDate = new Date(date).toLocaleDateString('zh-CN', {
         <div class="flex items-center gap-3 mb-4">
           <a
             href={`/${category}/`}
-            class="text-sm font-medium px-3 py-1 rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
+            class="text-sm font-medium px-3 py-1 rounded-full bg-grass-50 text-grass-600 dark:bg-grass-700/20 dark:text-grass-300"
           >
             {categoryLabels[category] || category}
           </a>
@@ -80,7 +80,7 @@ const formattedDate = new Date(date).toLocaleDateString('zh-CN', {
             {tags.map(tag => (
               <a
                 href={`/tags/${tag}/`}
-                class="text-sm px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-primary-100 hover:text-primary-600 dark:hover:bg-primary-900/30 dark:hover:text-primary-300 transition-colors"
+                class="text-sm px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-grass-50 hover:text-grass-600 dark:hover:bg-grass-700/20 dark:hover:text-grass-300 transition-colors"
               >
                 #{tag}
               </a>

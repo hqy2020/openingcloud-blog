@@ -1,0 +1,243 @@
+---
+export const prerender = false;
+/**
+ * 时间线节点管理 — 时间轴视图 + 表格 + CRUD
+ */
+import AdminLayout from '@/components/admin/AdminLayout.astro';
+---
+
+<AdminLayout title="人生路线">
+  <div class="space-y-6">
+    <!-- 顶部 -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <h1 class="text-2xl font-bold">🗺️ 人生路线</h1>
+      <div class="flex items-center gap-3">
+        <select id="filter-type" class="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-slate-800">
+          <option value="">全部类型</option>
+          <option value="career">💼 职业</option>
+          <option value="learning">📚 学习</option>
+          <option value="health">💪 健康</option>
+          <option value="family">🏠 家庭</option>
+        </select>
+        <button id="btn-add" class="px-4 py-2 bg-primary-500 text-white rounded-lg text-sm hover:bg-primary-600 transition-colors cursor-pointer">
+          + 新增节点
+        </button>
+      </div>
+    </div>
+
+    <!-- 时间轴视图 -->
+    <div id="timeline-view" class="relative">
+      <!-- 垂直线 -->
+      <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
+      <div id="timeline-nodes" class="space-y-4 pl-10">
+        <div class="text-center text-gray-400 py-8">加载中...</div>
+      </div>
+    </div>
+
+    <!-- 分页 -->
+    <div class="flex items-center justify-between">
+      <span id="page-info" class="text-sm text-gray-500"></span>
+      <div class="flex gap-2">
+        <button id="btn-prev" class="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 cursor-pointer" disabled>上一页</button>
+        <button id="btn-next" class="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 cursor-pointer" disabled>下一页</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新增/编辑弹窗 -->
+  <div id="timeline-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 overflow-y-auto">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg mx-4 my-8 p-6">
+      <h3 id="modal-title" class="text-lg font-bold mb-4">新增节点</h3>
+      <form id="timeline-form" class="space-y-4">
+        <input type="hidden" id="form-id" />
+        <div>
+          <label class="block text-sm font-medium mb-1">标题 *</label>
+          <input type="text" id="form-title" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-900" required />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">开始日期 *</label>
+            <input type="month" id="form-start" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-900" required />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">结束日期</label>
+            <input type="month" id="form-end" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-900" />
+            <label class="flex items-center gap-1 mt-1 text-xs text-gray-500"><input type="checkbox" id="form-ongoing" class="cursor-pointer" /> 进行中</label>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">类型 *</label>
+            <select id="form-type" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-900" required>
+              <option value="career">💼 职业</option>
+              <option value="learning">📚 学习</option>
+              <option value="health">💪 健康</option>
+              <option value="family">🏠 家庭</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">影响力</label>
+            <select id="form-impact" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-900">
+              <option value="low">🔹 低</option>
+              <option value="medium" selected>🔶 中</option>
+              <option value="high">🔴 高</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">人生阶段</label>
+          <input type="text" id="form-phase" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-900" placeholder="求学期 / 工作期 / ..." />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">描述 (Markdown)</label>
+          <textarea id="form-desc" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-900 font-mono text-sm" rows="4"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">标签 (逗号分隔)</label>
+          <input type="text" id="form-tags" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-900" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">封面图 URL</label>
+          <input type="url" id="form-cover" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-900" />
+        </div>
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" id="btn-cancel" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 cursor-pointer">取消</button>
+          <button type="submit" class="px-4 py-2 bg-primary-500 text-white rounded-lg text-sm hover:bg-primary-600 cursor-pointer">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</AdminLayout>
+
+<script is:inline>
+(function() {
+  let currentPage = 1;
+  const pageSize = 20;
+  const typeIcons = { career: '💼', learning: '📚', health: '💪', family: '🏠' };
+  const typeColors = { career: 'border-primary-400', learning: 'border-grass-400', health: 'border-sun-400', family: 'border-primary-300' };
+  const impactDots = { high: '🔴', medium: '🔶', low: '🔹' };
+
+  const container = document.getElementById('timeline-nodes');
+  const modal = document.getElementById('timeline-modal');
+  const form = document.getElementById('timeline-form');
+  const filterType = document.getElementById('filter-type');
+  const pageInfo = document.getElementById('page-info');
+  const btnPrev = document.getElementById('btn-prev');
+  const btnNext = document.getElementById('btn-next');
+
+  async function loadNodes() {
+    const params = new URLSearchParams({ page: currentPage, pageSize });
+    if (filterType.value) params.set('type', filterType.value);
+
+    const res = await fetch('/api/admin/timeline?' + params);
+    const json = await res.json();
+    if (!json.ok) return;
+
+    const { nodes, total, page } = json.data;
+    const totalPages = Math.ceil(total / pageSize);
+    pageInfo.textContent = `第 ${page} / ${totalPages || 1} 页 (共 ${total} 条)`;
+    btnPrev.disabled = page <= 1;
+    btnNext.disabled = page >= totalPages;
+
+    if (nodes.length === 0) {
+      container.innerHTML = '<div class="text-center text-gray-400 py-8">暂无数据</div>';
+      return;
+    }
+
+    container.innerHTML = nodes.map(n => `
+      <div class="relative bg-white dark:bg-slate-800 rounded-xl p-4 border-l-4 ${typeColors[n.type] || 'border-gray-300'} shadow-sm hover:shadow-md transition-shadow">
+        <!-- 节点圆点 -->
+        <div class="absolute -left-[25px] top-5 w-3 h-3 rounded-full bg-white border-2 ${typeColors[n.type] || 'border-gray-400'}"></div>
+        <div class="flex items-start justify-between">
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <span>${typeIcons[n.type] || ''}</span>
+              <span class="font-bold">${n.title}</span>
+              <span class="text-xs">${impactDots[n.impact] || ''}</span>
+              ${n.phase ? '<span class="text-xs bg-gray-100 dark:bg-gray-700 rounded-full px-2 py-0.5">' + n.phase + '</span>' : ''}
+            </div>
+            <div class="text-xs text-gray-400">
+              ${n.start_date}${n.end_date ? ' ~ ' + n.end_date : ' ~ 至今'}
+            </div>
+            ${n.description ? '<p class="text-sm text-gray-600 dark:text-gray-400 mt-2 line-clamp-2">' + n.description + '</p>' : ''}
+          </div>
+          <div class="flex gap-2 ml-4 shrink-0">
+            <button onclick="editNode(${n.id})" class="text-primary-500 hover:text-primary-600 text-sm cursor-pointer">编辑</button>
+            <button onclick="deleteNode(${n.id})" class="text-red-500 hover:text-red-600 text-sm cursor-pointer">删除</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function openModal(node) {
+    document.getElementById('modal-title').textContent = node ? '编辑节点' : '新增节点';
+    document.getElementById('form-id').value = node ? node.id : '';
+    document.getElementById('form-title').value = node?.title ?? '';
+    document.getElementById('form-start').value = node?.start_date ?? '';
+    document.getElementById('form-end').value = node?.end_date ?? '';
+    document.getElementById('form-ongoing').checked = node ? !node.end_date : false;
+    document.getElementById('form-type').value = node?.type ?? 'career';
+    document.getElementById('form-impact').value = node?.impact ?? 'medium';
+    document.getElementById('form-phase').value = node?.phase ?? '';
+    document.getElementById('form-desc').value = node?.description ?? '';
+    document.getElementById('form-tags').value = node ? JSON.parse(node.tags || '[]').join(', ') : '';
+    document.getElementById('form-cover').value = node?.cover ?? '';
+    modal.classList.remove('hidden');
+  }
+
+  window.editNode = async function(id) {
+    const res = await fetch('/api/admin/timeline/' + id);
+    const json = await res.json();
+    if (json.ok) openModal(json.data);
+  };
+
+  window.deleteNode = async function(id) {
+    if (!confirm('确定删除此节点？')) return;
+    await fetch('/api/admin/timeline/' + id, { method: 'DELETE' });
+    loadNodes();
+  };
+
+  document.getElementById('btn-add').addEventListener('click', () => openModal(null));
+  document.getElementById('btn-cancel').addEventListener('click', () => modal.classList.add('hidden'));
+  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
+  filterType.addEventListener('change', () => { currentPage = 1; loadNodes(); });
+  btnPrev.addEventListener('click', () => { currentPage--; loadNodes(); });
+  btnNext.addEventListener('click', () => { currentPage++; loadNodes(); });
+
+  document.getElementById('form-ongoing').addEventListener('change', e => {
+    document.getElementById('form-end').disabled = e.target.checked;
+    if (e.target.checked) document.getElementById('form-end').value = '';
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('form-id').value;
+    const data = {
+      title: document.getElementById('form-title').value,
+      start_date: document.getElementById('form-start').value,
+      end_date: document.getElementById('form-end').value || null,
+      type: document.getElementById('form-type').value,
+      impact: document.getElementById('form-impact').value,
+      phase: document.getElementById('form-phase').value || null,
+      description: document.getElementById('form-desc').value || null,
+      tags: document.getElementById('form-tags').value ? document.getElementById('form-tags').value.split(',').map(t => t.trim()).filter(Boolean) : [],
+      cover: document.getElementById('form-cover').value || null,
+    };
+
+    const url = id ? '/api/admin/timeline/' + id : '/api/admin/timeline';
+    const method = id ? 'PUT' : 'POST';
+    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    const json = await res.json();
+
+    if (json.ok) {
+      modal.classList.add('hidden');
+      loadNodes();
+    } else {
+      alert(json.error?.message || '保存失败');
+    }
+  });
+
+  loadNodes();
+})();
+</script>

@@ -1,0 +1,78 @@
+---
+export const prerender = false;
+import AdminLayout from '@/components/admin/AdminLayout.astro';
+import PostMetaForm from '@/components/admin/PostMetaForm.astro';
+import MarkdownEditor from '@/components/admin/MarkdownEditor.astro';
+import { getPost } from '@/lib/db';
+
+const id = Number(Astro.params.id);
+const db = Astro.locals.runtime.env.BLOG_DB;
+const post = await getPost(db, id);
+
+if (!post) {
+  return Astro.redirect('/admin/posts');
+}
+---
+
+<AdminLayout title={`编辑: ${post.title}`}>
+  <h1 class="text-xl font-bold mb-4">编辑文章</h1>
+
+  <form id="post-form">
+    <PostMetaForm post={post} />
+    <MarkdownEditor content={post.content} />
+
+    <div class="flex gap-3 mt-4">
+      <button type="submit" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-sm cursor-pointer">保存修改</button>
+      <a href="/admin/posts" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-800">返回列表</a>
+    </div>
+  </form>
+
+  <div id="form-message" class="mt-3 text-sm hidden"></div>
+</AdminLayout>
+
+<script is:inline define:vars={{ postId: id }}>
+(function() {
+  var form = document.getElementById('post-form');
+  var msgEl = document.getElementById('form-message');
+
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    msgEl.classList.add('hidden');
+
+    var tagsRaw = document.getElementById('post-tags').value;
+    var tags = tagsRaw ? tagsRaw.split(',').map(function(t) { return t.trim(); }).filter(Boolean) : [];
+
+    var body = {
+      title: document.getElementById('post-title').value,
+      slug: document.getElementById('post-slug').value,
+      description: document.getElementById('post-description').value || undefined,
+      content: window.getEditorContent(),
+      category: document.getElementById('post-category').value,
+      tags: tags,
+      cover: document.getElementById('post-cover').value || undefined,
+    };
+
+    try {
+      var res = await fetch('/api/admin/posts/' + postId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      var data = await res.json();
+      if (data.ok) {
+        window.clearEditorDraft();
+        showMessage('保存成功', false);
+      } else {
+        showMessage(data.error?.message || '保存失败', true);
+      }
+    } catch {
+      showMessage('网络错误', true);
+    }
+  });
+
+  function showMessage(text, isError) {
+    msgEl.textContent = text;
+    msgEl.className = 'mt-3 text-sm ' + (isError ? 'text-red-500' : 'text-green-500');
+  }
+})();
+</script>

@@ -1,0 +1,102 @@
+---
+export const prerender = false;
+import AdminLayout from '@/components/admin/AdminLayout.astro';
+---
+
+<AdminLayout title="图片管理">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-xl font-bold">图片管理</h1>
+    <label class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer">
+      上传图片
+      <input type="file" id="upload-input" accept="image/*" multiple class="hidden" />
+    </label>
+  </div>
+
+  <div id="upload-status" class="mb-4 text-sm hidden"></div>
+
+  <!-- 图片网格 -->
+  <div id="image-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+    <div class="col-span-full text-center text-gray-400 py-8">加载中...</div>
+  </div>
+
+  <div id="load-more-container" class="text-center mt-6"></div>
+</AdminLayout>
+
+<script is:inline>
+(function() {
+  var grid = document.getElementById('image-grid');
+  var uploadInput = document.getElementById('upload-input');
+  var statusEl = document.getElementById('upload-status');
+  var loadMoreContainer = document.getElementById('load-more-container');
+  var currentCursor = undefined;
+
+  async function loadImages(cursor) {
+    var params = new URLSearchParams();
+    if (cursor) params.set('cursor', cursor);
+    var res = await fetch('/api/admin/images?' + params);
+    var result = await res.json();
+    if (!result.ok) return;
+
+    var data = result.data;
+    if (!cursor) grid.innerHTML = '';
+
+    if (data.items.length === 0 && !cursor) {
+      grid.innerHTML = '<div class="col-span-full text-center text-gray-400 py-8">暂无图片</div>';
+      return;
+    }
+
+    data.items.forEach(function(item) {
+      var card = document.createElement('div');
+      card.className = 'bg-card-light dark:bg-card-dark rounded-lg overflow-hidden shadow group relative';
+      card.innerHTML =
+        '<img src="' + item.url + '" alt="" class="w-full h-32 object-cover" loading="lazy" />' +
+        '<div class="p-2 text-xs text-gray-500 truncate">' + item.key.split('/').pop() + '</div>' +
+        '<div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">' +
+          '<button onclick="copyUrl(\'' + item.url + '\')" class="px-2 py-1 bg-white text-black rounded text-xs cursor-pointer">复制链接</button>' +
+        '</div>';
+      grid.appendChild(card);
+    });
+
+    currentCursor = data.truncated ? data.cursor : undefined;
+    loadMoreContainer.innerHTML = currentCursor
+      ? '<button onclick="loadMore()" class="px-4 py-2 border rounded text-sm cursor-pointer">加载更多</button>'
+      : '';
+  }
+
+  window.loadMore = function() { loadImages(currentCursor); };
+
+  window.copyUrl = function(url) {
+    navigator.clipboard.writeText(url).then(function() {
+      statusEl.textContent = '链接已复制';
+      statusEl.className = 'mb-4 text-sm text-green-500';
+      setTimeout(function() { statusEl.className = 'mb-4 text-sm hidden'; }, 2000);
+    });
+  };
+
+  uploadInput.addEventListener('change', async function() {
+    var files = this.files;
+    if (!files.length) return;
+
+    statusEl.textContent = '上传中...';
+    statusEl.className = 'mb-4 text-sm text-blue-500';
+
+    var success = 0;
+    for (var i = 0; i < files.length; i++) {
+      var formData = new FormData();
+      formData.append('file', files[i]);
+      try {
+        var res = await fetch('/api/admin/images', { method: 'POST', body: formData });
+        var data = await res.json();
+        if (data.ok) success++;
+      } catch {}
+    }
+
+    statusEl.textContent = '成功上传 ' + success + '/' + files.length + ' 张图片';
+    statusEl.className = 'mb-4 text-sm text-green-500';
+    this.value = '';
+    loadImages();
+  });
+
+  loadImages();
+})();
+</script>

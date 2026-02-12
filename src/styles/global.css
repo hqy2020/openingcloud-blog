@@ -2,28 +2,67 @@
 @plugin '@tailwindcss/typography';
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* 自定义主题色 — 参考 hjw-aihub.cn 的紫色 #928CEE */
+/* 云上牧场日记 — 设计系统 */
 @theme {
-  --color-primary-50: #f5f3ff;
-  --color-primary-100: #ede9fe;
-  --color-primary-200: #ddd6fe;
-  --color-primary-300: #c4b5fd;
-  --color-primary-400: #a78bfa;
-  --color-primary-500: #928cee;
-  --color-primary-600: #7c3aed;
-  --color-primary-700: #6d28d9;
-  --color-primary-800: #5b21b6;
-  --color-primary-900: #4c1d95;
+  /* 天空蓝 — 主色（替换原紫色 primary） */
+  --color-primary-50:  #F0F7FF;
+  --color-primary-100: #E0EFFF;
+  --color-primary-200: #BAD9FF;
+  --color-primary-300: #8EC9FF;
+  --color-primary-400: #5CB0FF;
+  --color-primary-500: #3A9AFF;
+  --color-primary-600: #1A7AE6;
+  --color-primary-700: #0F5FBF;
+  --color-primary-800: #0A4599;
+  --color-primary-900: #062D73;
 
-  --color-bg-light: #f8f9fa;
-  --color-bg-dark: #0f172a;
-  --color-card-light: #ffffff;
-  --color-card-dark: #1e293b;
+  /* 语义别名 — 对齐设计文档 token */
+  --color-sky-400: #8EC9FF;
+  --color-cloud-50: #F8FBFF;
+
+  /* 草地绿 — 分类/标签 */
+  --color-grass-50:  #F0F7F0;
+  --color-grass-100: #DCF0DC;
+  --color-grass-200: #B5DEB5;
+  --color-grass-300: #8ECC8E;
+  --color-grass-400: #7AA874;
+  --color-grass-500: #5E8E58;
+  --color-grass-600: #4A7346;
+  --color-grass-700: #375A35;
+
+  /* 暖调橙 — CTA/高亮 */
+  --color-sun-50:  #FFF8F0;
+  --color-sun-100: #FFECD4;
+  --color-sun-200: #FFD9A8;
+  --color-sun-300: #FFB86B;
+  --color-sun-400: #FF9F3A;
+  --color-sun-500: #E6850F;
+  --color-sun-600: #BF6B0A;
+
+  /* 背景色 */
+  --color-bg-light:   #F8FBFF;
+  --color-bg-dark:    #0f172a;
+  --color-card-light: #FFFFFF;
+  --color-card-dark:  #1e293b;
   --color-text-light: #1e293b;
-  --color-text-dark: #e2e8f0;
+  --color-text-dark:  #e2e8f0;
 
+  /* 字体 */
   --font-sans: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'LXGW WenKai', 'PingFang SC', cursive;
   --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, monospace;
+
+  /* 柔和阴影 */
+  --shadow-soft: 0 2px 15px -3px rgba(0, 0, 0, 0.06), 0 2px 6px -4px rgba(0, 0, 0, 0.04);
+  --shadow-soft-md: 0 4px 25px -5px rgba(0, 0, 0, 0.08), 0 4px 10px -6px rgba(0, 0, 0, 0.04);
+
+  /* 云朵浮动动画 */
+  --animate-float-cloud: float-cloud 8s ease-in-out infinite;
+
+  @keyframes float-cloud {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+  }
 }
 
 /* 基础样式 */
@@ -38,15 +77,34 @@ body {
   transition: background-color 0.3s, color 0.3s;
 }
 
+/* 纸质纹理 overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
 .dark body {
   background-color: var(--color-bg-dark);
   color: var(--color-text-dark);
+}
+
+/* 标题字体 — 霞鹜文楷 */
+h1, h2, h3 {
+  font-family: var(--font-display);
 }
 
 /* 文章内容样式 */
 .prose h1, .prose h2, .prose h3 {
   color: var(--color-text-light);
   font-weight: 700;
+  font-family: var(--font-display);
 }
 
 .dark .prose h1, .dark .prose h2, .dark .prose h3 {
@@ -85,7 +143,7 @@ body {
   margin: 1.5rem auto;
 }
 
-/* 滚动条 */
+/* 滚动条 — 天空蓝 */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -98,4 +156,24 @@ body {
 }
 .dark ::-webkit-scrollbar-thumb {
   background: var(--color-primary-700);
+}
+
+/* 滚动渐入动效 */
+[data-animate="fade-up"] {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+[data-animate="fade-up"].is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-animate="fade-up"] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
