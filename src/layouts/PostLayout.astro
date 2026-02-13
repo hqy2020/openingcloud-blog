@@ -15,9 +15,10 @@ interface Props {
   category: string;
   tags?: string[];
   cover?: string;
+  slug: string;
 }
 
-const { title, description, date, category, tags = [], cover } = Astro.props;
+const { title, description, date, category, tags = [], cover, slug } = Astro.props;
 
 const categoryLabels: Record<string, string> = {
   journal: '日记',
@@ -148,12 +149,13 @@ const formattedDate = new Date(date).toLocaleDateString('zh-CN', {
   <AdminEntry />
 </Head>
 
-<script>
+<script define:vars={{ postSlug: slug }}>
   function initPostLayout() {
     initReadingProgress();
     initCoverParallax();
     initTOC();
     initReadingTime();
+    initPostViewPing();
   }
 
   function initReadingProgress() {
@@ -242,6 +244,44 @@ const formattedDate = new Date(date).toLocaleDateString('zh-CN', {
     const words = text.replace(/[\u4e00-\u9fff]/g, '').split(/\s+/).filter(Boolean).length;
     const minutes = Math.ceil(cjkChars / 400 + words / 200);
     el.textContent = `· ${minutes} 分钟阅读`;
+  }
+
+  function initPostViewPing() {
+    if (!postSlug) return;
+
+    const key = `oc:viewed:${postSlug}`;
+    const now = Date.now();
+    const windowMs = 6 * 60 * 60 * 1000;
+
+    try {
+      const cached = Number(localStorage.getItem(key) || '0');
+      if (cached && now - cached < windowMs) {
+        return;
+      }
+    } catch {
+      // ignore storage errors
+    }
+
+    const encoded = postSlug
+      .split('/')
+      .map((part) => encodeURIComponent(part))
+      .join('/');
+
+    fetch(`/api/posts/${encoded}/view`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      keepalive: true,
+    })
+      .then(() => {
+        try {
+          localStorage.setItem(key, String(now));
+        } catch {
+          // ignore storage errors
+        }
+      })
+      .catch(() => {
+        // no-op
+      });
   }
 
   initPostLayout();

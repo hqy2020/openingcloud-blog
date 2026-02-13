@@ -1,5 +1,8 @@
-# Placeholder Media
+# Media Notes
 
-- `hero-fallback-video.webm` is an empty placeholder file in this repo.
-- Replace it with a real 1920x1080 looping cloud-sea video when assets are ready.
-- All current pages already include image fallback, so UI remains usable without the final video.
+- Hero fallback image: `public/media/hero/hero-fallback.png`
+- Hero fallback video (current runtime source): `public/media/hero/hero-fallback.mp4`
+- OG image: `public/media/og-cloudscape-card.png`
+
+Pending optimization:
+- Convert `public/media/hero/hero-fallback.mp4` to `webm` for smaller payload and better autoplay compatibility.

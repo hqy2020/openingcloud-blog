@@ -20,12 +20,6 @@ function countWords(raw: string) {
   return cjk + english;
 }
 
-function mockViews(seed: string) {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) hash = (hash * 33 + seed.charCodeAt(i)) % 100000;
-  return 80 + (hash % 2600);
-}
-
 const postsForLayout = posts.map((post) => ({
   title: post.data.title,
   description: post.data.description,
@@ -35,7 +29,7 @@ const postsForLayout = posts.map((post) => ({
   cover: post.data.cover,
   slug: post.id,
   words: countWords(post.body),
-  views: mockViews(post.id),
+  views: 0,
 }));
 ---
 

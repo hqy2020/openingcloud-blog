@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { BackgroundBeams } from '@/react/ui/BackgroundBeams';
 import { FadeIn } from '@/react/motion/FadeIn';
 import { CoverFallbackArtwork } from '@/react/ui/CoverFallbackArtwork';
+import { useReducedMotion } from '@/react/hooks/useReducedMotion';
 import { cn } from '@/react/ui/cn';
 
 interface CategoryPost {
@@ -32,6 +33,11 @@ interface CategoryConfig {
   accentRing: string;
   beamClass: string;
   defaultCover: string;
+}
+
+interface PostViewsEnvelope {
+  ok: boolean;
+  data?: Record<string, number>;
 }
 
 const categoryConfig: Record<string, CategoryConfig> = {
@@ -107,6 +113,8 @@ function categoryTone(key: string) {
 }
 
 export function CategoryMasonry({ posts, title, subtitle, categoryKey }: CategoryMasonryProps) {
+  const reduced = useReducedMotion();
+  const [postsWithViews, setPostsWithViews] = useState<CategoryPost[]>(posts);
   const [activeTag, setActiveTag] = useState('全部');
   const [sortBy, setSortBy] = useState<'latest' | 'popular'>('latest');
   const [visibleCount, setVisibleCount] = useState(10);
@@ -114,9 +122,50 @@ export function CategoryMasonry({ posts, title, subtitle, categoryKey }: Categor
 
   const config = categoryConfig[categoryKey] || categoryConfig.tech;
 
+  useEffect(() => {
+    setPostsWithViews(posts);
+  }, [posts]);
+
+  useEffect(() => {
+    let canceled = false;
+
+    async function loadViews() {
+      const slugs = posts.map((post) => post.slug).filter(Boolean);
+      if (!slugs.length) return;
+
+      const query = new URLSearchParams();
+      slugs.forEach((slug) => query.append('slug', slug));
+
+      try {
+        const response = await fetch(`/api/post-views?${query.toString()}`, {
+          credentials: 'same-origin',
+        });
+        if (!response.ok) return;
+
+        const envelope = await response.json() as PostViewsEnvelope;
+        if (!envelope.ok || !envelope.data || canceled) return;
+
+        setPostsWithViews((current) =>
+          current.map((post) => ({
+            ...post,
+            views: typeof envelope.data?.[post.slug] === 'number' ? envelope.data[post.slug] : post.views,
+          }))
+        );
+      } catch {
+        // Keep SSR views when runtime API is unavailable.
+      }
+    }
+
+    loadViews();
+
+    return () => {
+      canceled = true;
+    };
+  }, [posts]);
+
   const tagStats = useMemo(() => {
     const counter = new Map<string, number>();
-    posts.forEach((post) => {
+    postsWithViews.forEach((post) => {
       post.tags?.forEach((tag) => {
         counter.set(tag, (counter.get(tag) || 0) + 1);
       });
@@ -126,13 +175,15 @@ export function CategoryMasonry({ posts, title, subtitle, categoryKey }: Categor
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
       .map(([tag, count]) => ({ tag, count }));
 
-    return [{ tag: '全部', count: posts.length }, ...sorted];
-  }, [posts]);
+    return [{ tag: '全部', count: postsWithViews.length }, ...sorted];
+  }, [postsWithViews]);
 
   const filteredPosts = useMemo(() => {
-    const selected = activeTag === '全部' ? posts : posts.filter((post) => post.tags?.includes(activeTag));
+    const selected = activeTag === '全部'
+      ? postsWithViews
+      : postsWithViews.filter((post) => post.tags?.includes(activeTag));
     return sortPosts(selected, sortBy);
-  }, [activeTag, sortBy, posts]);
+  }, [activeTag, sortBy, postsWithViews]);
 
   const visiblePosts = filteredPosts.slice(0, visibleCount);
 
@@ -172,7 +223,7 @@ export function CategoryMasonry({ posts, title, subtitle, categoryKey }: Categor
               <p className="mt-2 text-sm md:text-base text-ink-500 dark:text-ink-300">{subtitle}</p>
             </div>
             <p className={cn('text-sm font-medium', config.accent)}>
-              {posts.length} 篇文章 · {posts.reduce((sum, post) => sum + post.words, 0).toLocaleString('zh-CN')} 字
+              {postsWithViews.length} 篇文章 · {postsWithViews.reduce((sum, post) => sum + post.words, 0).toLocaleString('zh-CN')} 字
             </p>
           </div>
         </header>
@@ -242,8 +293,11 @@ export function CategoryMasonry({ posts, title, subtitle, categoryKey }: Categor
               {visiblePosts.map((post, index) => {
                 const ratio = masonryRatios[index % masonryRatios.length];
                 return (
-                  <article
+                  <motion.article
                     key={post.slug}
+                    initial={reduced ? false : { opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, delay: Math.min(index, 10) * 0.06, ease: [0.16, 1, 0.3, 1] }}
                     className="break-inside-avoid mb-3 md:mb-4 overflow-hidden rounded-2xl border border-ink-200/80 dark:border-ink-700/70 bg-white/85 dark:bg-ink-900/72 shadow-soft transition-transform duration-200 hover:-translate-y-1 hover:shadow-soft-md"
                   >
                     <a href={`/posts/${post.slug}/`} className="block">
@@ -281,7 +335,7 @@ export function CategoryMasonry({ posts, title, subtitle, categoryKey }: Categor
                         )}
                       </div>
                     </a>
-                  </article>
+                  </motion.article>
                 );
               })}
             </div>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, animate, motion, useMotionValue, useTransform } from 'motion/react';
+import { AnimatePresence, animate, motion, useMotionValue, useTransform, useInView } from 'motion/react';
 import { CloudScene } from '@/react/three/CloudScene';
 import { useReducedMotion } from '@/react/hooks/useReducedMotion';
 import { CardSpotlight } from '@/react/ui/CardSpotlight';
@@ -8,6 +8,7 @@ import { FadeIn } from '@/react/motion/FadeIn';
 import { BackgroundBeams } from '@/react/ui/BackgroundBeams';
 import { CoverFallbackArtwork } from '@/react/ui/CoverFallbackArtwork';
 import { cn } from '@/react/ui/cn';
+import { chinaProvinceShapes, normalizeProvinceId } from '@/lib/china-provinces';
 
 type TimelineType = 'career' | 'learning' | 'family' | 'health' | 'reflection';
 type Impact = 'high' | 'medium' | 'low';
@@ -93,6 +94,75 @@ interface HomePageExperienceProps {
   stats: HomeStats;
 }
 
+interface HomeTimelineNodeApi {
+  id: number | string;
+  start_date: string;
+  end_date: string | null;
+  title: string;
+  type: string;
+  impact: string;
+  description: string | null;
+}
+
+interface HomeHighlightItemApi {
+  id: number;
+  content: string;
+}
+
+interface HomeHighlightApi {
+  id: number;
+  label: string;
+  period: string | null;
+  items: HomeHighlightItemApi[];
+}
+
+interface HomeTravelApi {
+  province: string;
+  cities: City[];
+}
+
+interface HomeSocialStageApi {
+  id: string;
+  label: string;
+  period: string;
+  category: 'learning' | 'career' | 'family';
+}
+
+interface HomePublicFriendApi {
+  id: string;
+  stage_id: string;
+  public_label: string;
+}
+
+interface HomeDataApi {
+  timeline: HomeTimelineNodeApi[];
+  highlights: HomeHighlightApi[];
+  travel: HomeTravelApi[];
+  social: {
+    stages: HomeSocialStageApi[];
+    friends: HomePublicFriendApi[];
+  };
+}
+
+interface HomeApiEnvelope {
+  ok: boolean;
+  data?: HomeDataApi;
+}
+
+interface AdminFriendApi {
+  id: number;
+  stage_id: string;
+  name: string;
+  public_label: string;
+  bio: string | null;
+  link: string | null;
+}
+
+interface AdminGraphEnvelope {
+  ok: boolean;
+  data?: AdminFriendApi[];
+}
+
 const slogans = [
   '用代码丈量世界的边界',
   '记录即存在，分享即生长',
@@ -102,7 +172,7 @@ const slogans = [
   '把日常过成实验，把生活活成作品',
 ];
 
-const timelineNodes: TimelineNode[] = [
+const fallbackTimelineNodes: TimelineNode[] = [
   { id: 'n1', start_date: '2000-09', title: '出生', type: 'family', impact: 'medium', description: '时间线起点。' },
   { id: 'n2', start_date: '2006-09', end_date: '2012-07', title: '凉城三小 · 小学', type: 'learning', impact: 'medium', description: '开始系统接受基础教育。' },
   { id: 'n3', start_date: '2012-09', end_date: '2016-07', title: '扬波中学 · 初中', type: 'learning', impact: 'medium', description: '视野打开，学习方法逐步成型。' },
@@ -118,7 +188,7 @@ const timelineNodes: TimelineNode[] = [
   { id: 'n11', start_date: '2026-02', title: '系统整理博客', type: 'career', impact: 'medium', description: '将经验沉淀为可复用的公开资产。' },
 ];
 
-const highlightCards: HighlightCard[] = [
+const fallbackHighlightCards: HighlightCard[] = [
   {
     id: 'h1',
     stage: '小学 · 初中 · 高中',
@@ -181,118 +251,49 @@ const highlightLayout = [
   'col-span-12 lg:col-span-4 lg:translate-y-3',
 ];
 
-const travelPlaces: TravelPlace[] = [
-  {
-    province: 'shanghai',
-    label: '上海',
-    path: 'M920 450h20v20H920z',
-    cities: [{ name: '上海', period: '2000 → 2024', tag: '生活' }],
-    marker: { x: 930, y: 460, icon: 'star', city: '上海' },
-  },
+const provinceShapeMap = new Map(chinaProvinceShapes.map((shape) => [shape.id, shape]));
+
+const fallbackTravelSeed: Array<{ province: string; cities: City[] }> = [
+  { province: 'shanghai', cities: [{ name: '上海', period: '2000 → 2024', tag: '生活' }] },
   {
     province: 'zhejiang',
-    label: '浙江',
-    path: 'M840 420h90v90H840z',
     cities: [
       { name: '杭州', period: '2024-09 → 至今', tag: '求学', current: true },
       { name: '宁波', period: '2025-05', tag: '旅行' },
     ],
-    marker: { x: 880, y: 465, city: '杭州' },
   },
-  {
-    province: 'jiangsu',
-    label: '江苏',
-    path: 'M810 340h110v70H810z',
-    cities: [{ name: '南京', period: '2024-10', tag: '旅行' }],
-    marker: { x: 855, y: 368, city: '南京' },
-  },
-  {
-    province: 'beijing',
-    label: '北京',
-    path: 'M760 210h30v20H760z',
-    cities: [{ name: '北京', period: '2023', tag: '旅行' }],
-    marker: { x: 775, y: 220, city: '北京' },
-  },
-  {
-    province: 'heilongjiang',
-    label: '黑龙江',
-    path: 'M790 90h140v90H790z',
-    cities: [{ name: '哈尔滨', period: '2024', tag: '旅行' }],
-    marker: { x: 860, y: 128, city: '哈尔滨' },
-  },
-  {
-    province: 'guangdong',
-    label: '广东',
-    path: 'M670 560h150v80H670z',
-    cities: [{ name: '深圳', period: '2025', tag: '工作' }],
-    marker: { x: 748, y: 594, city: '深圳' },
-  },
-  {
-    province: 'fujian',
-    label: '福建',
-    path: 'M820 510h100v90H820z',
-    cities: [{ name: '厦门', period: '2025', tag: '旅行' }],
-    marker: { x: 875, y: 548, city: '厦门' },
-  },
-  {
-    province: 'sichuan',
-    label: '四川',
-    path: 'M360 410h150v130H360z',
-    cities: [{ name: '成都', period: '2023', tag: '旅行' }],
-    marker: { x: 435, y: 468, city: '成都' },
-  },
-  {
-    province: 'hubei',
-    label: '湖北',
-    path: 'M560 430h130v90H560z',
-    cities: [{ name: '武汉', period: '2024', tag: '旅行' }],
-    marker: { x: 620, y: 470, city: '武汉' },
-  },
-  {
-    province: 'inner_mongolia',
-    label: '内蒙古',
-    path: 'M450 120h340v80H450z',
-    cities: [{ name: '呼和浩特', period: '2024', tag: '旅行' }],
-    marker: { x: 620, y: 155, city: '呼和浩特' },
-  },
-  {
-    province: 'hainan',
-    label: '海南',
-    path: 'M690 660h90v30H690z',
-    cities: [{ name: '海口', period: '2025', tag: '旅行' }],
-    marker: { x: 736, y: 676, city: '海口' },
-  },
+  { province: 'jiangsu', cities: [{ name: '南京', period: '2024-10', tag: '旅行' }] },
+  { province: 'beijing', cities: [{ name: '北京', period: '2023', tag: '旅行' }] },
+  { province: 'heilongjiang', cities: [{ name: '哈尔滨', period: '2024', tag: '旅行' }] },
+  { province: 'guangdong', cities: [{ name: '深圳', period: '2025', tag: '工作' }] },
+  { province: 'fujian', cities: [{ name: '厦门', period: '2025', tag: '旅行' }] },
+  { province: 'sichuan', cities: [{ name: '成都', period: '2023', tag: '旅行' }] },
+  { province: 'hubei', cities: [{ name: '武汉', period: '2024', tag: '旅行' }] },
+  { province: 'inner_mongolia', cities: [{ name: '呼和浩特', period: '2024', tag: '旅行' }] },
+  { province: 'hainan', cities: [{ name: '海口', period: '2025', tag: '旅行' }] },
 ];
 
-const allProvinceShapes = [
-  { id: 'xinjiang', label: '新疆', path: 'M100 260h140v100H100z' },
-  { id: 'xizang', label: '西藏', path: 'M130 380h190v110H130z' },
-  { id: 'qinghai', label: '青海', path: 'M260 250h150v120H260z' },
-  { id: 'gansu', label: '甘肃', path: 'M380 220h110v180H380z' },
-  { id: 'sichuan', label: '四川', path: 'M360 410h150v130H360z' },
-  { id: 'yunnan', label: '云南', path: 'M300 540h130v90H300z' },
-  { id: 'guizhou', label: '贵州', path: 'M450 540h110v80H450z' },
-  { id: 'guangxi', label: '广西', path: 'M560 560h110v80H560z' },
-  { id: 'guangdong', label: '广东', path: 'M670 560h150v80H670z' },
-  { id: 'hainan', label: '海南', path: 'M690 660h90v30H690z' },
-  { id: 'hubei', label: '湖北', path: 'M560 430h130v90H560z' },
-  { id: 'hunan', label: '湖南', path: 'M560 520h130v80H560z' },
-  { id: 'henan', label: '河南', path: 'M560 330h130v90H560z' },
-  { id: 'shanxi', label: '山西', path: 'M560 230h120v90H560z' },
-  { id: 'hebei', label: '河北', path: 'M690 220h130v100H690z' },
-  { id: 'shandong', label: '山东', path: 'M810 240h110v90H810z' },
-  { id: 'jiangsu', label: '江苏', path: 'M810 340h110v70H810z' },
-  { id: 'zhejiang', label: '浙江', path: 'M840 420h90v90H840z' },
-  { id: 'anhui', label: '安徽', path: 'M720 340h90v90H720z' },
-  { id: 'fujian', label: '福建', path: 'M820 510h100v90H820z' },
-  { id: 'jiangxi', label: '江西', path: 'M720 460h110v100H720z' },
-  { id: 'beijing', label: '北京', path: 'M760 210h30v20H760z' },
-  { id: 'shanghai', label: '上海', path: 'M920 450h20v20H920z' },
-  { id: 'inner_mongolia', label: '内蒙古', path: 'M450 120h340v80H450z' },
-  { id: 'heilongjiang', label: '黑龙江', path: 'M790 90h140v90H790z' },
-];
+const fallbackTravelPlaces: TravelPlace[] = fallbackTravelSeed
+  .map((place) => {
+    const shape = provinceShapeMap.get(place.province);
+    if (!shape) return null;
+    const currentCity = place.cities.find((city) => city.current);
+    return {
+      province: shape.id,
+      label: shape.label,
+      path: shape.path,
+      cities: place.cities,
+      marker: {
+        x: shape.center.x,
+        y: shape.center.y,
+        icon: currentCity ? 'star' : 'dot',
+        city: currentCity?.name || place.cities[0]?.name || shape.label,
+      },
+    };
+  })
+  .filter((item): item is TravelPlace => !!item);
 
-const stageNodes: StageNode[] = [
+const fallbackStageNodes: StageNode[] = [
   { id: 'primary', label: '小学', period: '2006-2012', category: 'learning', x: 150, y: 200 },
   { id: 'middle', label: '初中', period: '2012-2016', category: 'learning', x: 310, y: 200 },
   { id: 'high', label: '高中', period: '2016-2019', category: 'learning', x: 470, y: 245 },
@@ -301,7 +302,7 @@ const stageNodes: StageNode[] = [
   { id: 'work', label: '工作', period: '2022-Now', category: 'career', x: 900, y: 210 },
 ];
 
-const friendNodes: FriendNode[] = [
+const fallbackFriendNodes: FriendNode[] = [
   { id: 'f1', stageId: 'primary', publicLabel: '一位同窗', name: 'L', bio: '童年跑步搭子' },
   { id: 'f2', stageId: 'primary', publicLabel: '一位挚友', name: 'Z', bio: '最早的同桌' },
   { id: 'f3', stageId: 'middle', publicLabel: '一位同窗', name: 'J', bio: '竞赛互助伙伴' },
@@ -373,12 +374,22 @@ const socialCategoryFill: Record<StageNode['category'], string> = {
   family: '#9684A8',
 };
 
-const dateBase = new Date('2000-09-01').getTime();
-const dateNow = new Date().getTime();
+const highlightCovers = [
+  '/media/highlights/highlight-1.svg',
+  '/media/highlights/highlight-2.svg',
+  '/media/highlights/highlight-3.svg',
+];
+
+const fallbackStagePositionMap = new Map(
+  fallbackStageNodes.map((stage) => [stage.id, { x: stage.x, y: stage.y }])
+);
 
 function monthDistance(date: string) {
-  const [y, m] = date.split('-').map((n) => Number(n));
-  return y * 12 + (m - 1);
+  const [rawY, rawM] = date.split('-');
+  const year = Number(rawY);
+  const month = Number(rawM || '1');
+  if (!Number.isFinite(year) || !Number.isFinite(month)) return 0;
+  return year * 12 + Math.max(0, month - 1);
 }
 
 function getTypeLabel(type: TimelineType) {
@@ -406,8 +417,151 @@ function categoryBadge(type: TimelineType) {
 }
 
 function formatShortDate(input: string) {
-  const [y, m] = input.split('-');
-  return `${y}.${m}`;
+  const [year, month] = input.split('-');
+  if (!year) return input;
+  if (!month) return year;
+  return `${year}.${month.padStart(2, '0')}`;
+}
+
+function normalizeTimelineType(value: string): TimelineType {
+  if (value === 'career' || value === 'learning' || value === 'family' || value === 'health' || value === 'reflection') {
+    return value;
+  }
+  return 'reflection';
+}
+
+function normalizeImpact(value: string): Impact {
+  if (value === 'high' || value === 'medium' || value === 'low') {
+    return value;
+  }
+  return 'medium';
+}
+
+function normalizeStageCategory(value: string): StageNode['category'] {
+  if (value === 'career' || value === 'family' || value === 'learning') {
+    return value;
+  }
+  return 'learning';
+}
+
+function inferHighlightType(label: string): TimelineType {
+  const text = label.toLowerCase();
+  if (text.includes('恋爱') || text.includes('家庭')) return 'family';
+  if (text.includes('实习') || text.includes('工作') || text.includes('职业')) return 'career';
+  if (text.includes('健康')) return 'health';
+  if (text.includes('沉淀') || text.includes('反思')) return 'reflection';
+  return 'learning';
+}
+
+function mapTimelineNodes(raw: HomeTimelineNodeApi[]): TimelineNode[] {
+  if (!raw.length) return fallbackTimelineNodes;
+
+  const mapped = raw.map((node) => ({
+    id: String(node.id),
+    start_date: node.start_date,
+    end_date: node.end_date ?? undefined,
+    title: node.title,
+    type: normalizeTimelineType(node.type),
+    impact: normalizeImpact(node.impact),
+    description: (node.description || '').trim() || '该阶段正在持续书写。',
+  }));
+
+  return mapped.sort((a, b) => monthDistance(a.start_date) - monthDistance(b.start_date));
+}
+
+function mapHighlightCards(raw: HomeHighlightApi[]): HighlightCard[] {
+  if (!raw.length) return fallbackHighlightCards;
+
+  return raw.map((stage, index) => {
+    const achievements = (stage.items || []).map((item) => item.content).filter(Boolean);
+    const type = inferHighlightType(stage.label);
+    return {
+      id: `h-${stage.id}`,
+      stage: stage.label,
+      period: stage.period || '持续中',
+      achievements: achievements.length ? achievements : ['持续沉淀中'],
+      type,
+      impact: achievements.length >= 3 ? 'high' : 'medium',
+      cover: highlightCovers[index] || undefined,
+    };
+  });
+}
+
+function mapTravelPlaces(raw: HomeTravelApi[]): TravelPlace[] {
+  if (!raw.length) return fallbackTravelPlaces;
+
+  return raw
+    .map((place) => {
+      const provinceId = normalizeProvinceId(place.province);
+      const shape = provinceShapeMap.get(provinceId);
+      if (!shape) return null;
+
+      const currentCity = place.cities.find((city) => city.current);
+      const markerCity = currentCity?.name || place.cities[0]?.name || shape.label;
+
+      return {
+        province: shape.id,
+        label: shape.label,
+        path: shape.path,
+        cities: place.cities,
+        marker: {
+          x: shape.center.x,
+          y: shape.center.y,
+          city: markerCity,
+          icon: currentCity ? 'star' : 'dot',
+        },
+      };
+    })
+    .filter((item): item is TravelPlace => !!item);
+}
+
+function mapStageNodes(raw: HomeSocialStageApi[]): StageNode[] {
+  if (!raw.length) return fallbackStageNodes;
+
+  return raw.map((stage, index) => {
+    const position = fallbackStagePositionMap.get(stage.id);
+    return {
+      id: stage.id,
+      label: stage.label,
+      period: stage.period,
+      category: normalizeStageCategory(stage.category),
+      x: position?.x ?? 140 + index * 150,
+      y: position?.y ?? (index % 2 === 0 ? 220 : 280),
+    };
+  });
+}
+
+function mapPublicFriends(raw: HomePublicFriendApi[], stages: StageNode[]): FriendNode[] {
+  if (!raw.length) return fallbackFriendNodes;
+
+  const stageIds = new Set(stages.map((stage) => stage.id));
+
+  return raw
+    .filter((friend) => stageIds.has(friend.stage_id))
+    .map((friend, index) => ({
+      id: friend.id || `public-${index + 1}`,
+      stageId: friend.stage_id,
+      publicLabel: friend.public_label || '一位朋友',
+      name: friend.public_label || '匿名朋友',
+      bio: '一位在这个阶段互相照亮的人',
+    }));
+}
+
+function mapAdminFriends(raw: AdminFriendApi[], stages: StageNode[]): FriendNode[] {
+  if (!raw.length) return [];
+
+  const stageIds = new Set(stages.map((stage) => stage.id));
+
+  return raw
+    .filter((friend) => stageIds.has(friend.stage_id))
+    .map((friend) => ({
+      id: `admin-${friend.id}`,
+      stageId: friend.stage_id,
+      publicLabel: friend.public_label || '一位朋友',
+      name: friend.name || friend.public_label || '匿名朋友',
+      bio: friend.bio || '一位在这个阶段互相照亮的人',
+      link: friend.link || undefined,
+    }));
 }
 
 function AnimatedNumber({ value }: { value: number }) {
@@ -461,15 +615,15 @@ function Hero() {
             muted
             loop
             playsInline
-            poster="/media/hero-fallback.svg"
+            poster="/media/hero/hero-fallback.png"
             onError={() => setVideoFailed(true)}
           >
-            <source src="/media/hero-fallback-video.webm" type="video/webm" />
+            <source src="/media/hero/hero-fallback.mp4" type="video/mp4" />
           </video>
         )}
         {(videoFailed || reduced) && (
           <img
-            src="/media/hero-fallback.svg"
+            src="/media/hero/hero-fallback.png"
             alt="hero fallback"
             className="absolute inset-0 w-full h-full object-cover"
             loading="eager"
@@ -530,9 +684,18 @@ function Hero() {
   );
 }
 
-function TimelineSection() {
+function TimelineSection({ nodes }: { nodes: TimelineNode[] }) {
   const reduced = useReducedMotion();
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(timelineRef, { once: true, margin: '-60px' });
+  const timelineNodes = nodes.length ? nodes : fallbackTimelineNodes;
   const [activeId, setActiveId] = useState<string>(timelineNodes[timelineNodes.length - 1].id);
+
+  useEffect(() => {
+    if (!timelineNodes.some((node) => node.id === activeId)) {
+      setActiveId(timelineNodes[timelineNodes.length - 1].id);
+    }
+  }, [activeId, timelineNodes]);
 
   const maxMonth = Math.max(...timelineNodes.map((node) => monthDistance(node.start_date)));
   const minMonth = Math.min(...timelineNodes.map((node) => monthDistance(node.start_date)));
@@ -550,14 +713,14 @@ function TimelineSection() {
         </header>
       </FadeIn>
 
-      <div className="relative overflow-x-auto rounded-3xl border border-ink-200/80 dark:border-ink-700/70 bg-white/72 dark:bg-ink-900/65 backdrop-blur p-5 md:p-7">
+      <div ref={timelineRef} className="relative overflow-x-auto rounded-3xl border border-ink-200/80 dark:border-ink-700/70 bg-white/72 dark:bg-ink-900/65 backdrop-blur p-5 md:p-7">
         <div className="min-w-[1024px]">
           <div className="relative h-20">
             <div className="absolute left-4 right-4 top-9 border-t-2 border-dashed border-ink-300 dark:border-ink-700" />
             <motion.div
               className="absolute left-4 top-9 border-t-2 border-primary-500"
               initial={reduced ? false : { scaleX: 0 }}
-              animate={{ scaleX: progress }}
+              animate={isInView ? { scaleX: progress } : { scaleX: 0 }}
               transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
               style={{ width: 'calc(100% - 2rem)', transformOrigin: 'left' }}
             />
@@ -575,13 +738,28 @@ function TimelineSection() {
                       onFocus={() => setActiveId(node.id)}
                       onClick={() => setActiveId(node.id)}
                     >
-                      <div
-                        className={cn(
-                          'mx-auto mt-4 border-2 transition-transform duration-200',
-                          isReflection ? 'w-4 h-4 rotate-45 rounded-[2px]' : isHigh ? 'w-5 h-5 rounded-full' : 'w-4 h-4 rounded-full',
-                          isActive ? 'border-primary-500 bg-primary-500 shadow-[0_0_0_5px_rgba(79,106,229,0.14)]' : 'border-ink-300 bg-white dark:border-ink-500 dark:bg-ink-800'
-                        )}
-                      />
+                      {isReflection && !reduced ? (
+                        <motion.div
+                          animate={{ scale: [1, 1.15, 1], opacity: [0.7, 1, 0.7] }}
+                          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                        >
+                          <div
+                            className={cn(
+                              'mx-auto mt-4 border-2 transition-transform duration-200',
+                              'w-4 h-4 rotate-45 rounded-[2px]',
+                              isActive ? 'border-primary-500 bg-primary-500 shadow-[0_0_0_5px_rgba(79,106,229,0.14)]' : 'border-ink-300 bg-white dark:border-ink-500 dark:bg-ink-800'
+                            )}
+                          />
+                        </motion.div>
+                      ) : (
+                        <div
+                          className={cn(
+                            'mx-auto mt-4 border-2 transition-transform duration-200',
+                            isReflection ? 'w-4 h-4 rotate-45 rounded-[2px]' : isHigh ? 'w-5 h-5 rounded-full' : 'w-4 h-4 rounded-full',
+                            isActive ? 'border-primary-500 bg-primary-500 shadow-[0_0_0_5px_rgba(79,106,229,0.14)]' : 'border-ink-300 bg-white dark:border-ink-500 dark:bg-ink-800'
+                          )}
+                        />
+                      )}
                       <p className="mt-3 text-[11px] font-medium text-ink-600 dark:text-ink-300">{node.start_date.slice(0, 4)}</p>
                       <p className="mt-1 text-[11px] leading-tight text-ink-500 dark:text-ink-400 line-clamp-2">{node.title}</p>
                     </button>
@@ -618,7 +796,8 @@ function TimelineSection() {
   );
 }
 
-function HighlightsSection() {
+function HighlightsSection({ cards }: { cards: HighlightCard[] }) {
+  const highlightCards = cards.length ? cards : fallbackHighlightCards;
   return (
     <section className="max-w-6xl mx-auto px-4 md:px-6 py-12 md:py-16">
       <FadeIn>
@@ -672,11 +851,33 @@ function HighlightsSection() {
   );
 }
 
-function TravelSection() {
+function TravelSection({ places }: { places: TravelPlace[] }) {
+  const reduced = useReducedMotion();
   const [tooltip, setTooltip] = useState<Tooltip | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
+  const travelInViewRef = useRef<HTMLDivElement>(null);
+  const isTravelInView = useInView(travelInViewRef, { once: true, margin: '-60px' });
+  const travelPlaces = places.length ? places : fallbackTravelPlaces;
 
-  const visitedSet = useMemo(() => new Set(travelPlaces.map((item) => item.province)), []);
+  const visitedSet = useMemo(() => new Set(travelPlaces.map((item) => item.province)), [travelPlaces]);
+
+  // Calculate distance from Shanghai (771, 426.4) for each visited province, sort for stagger
+  const shanghaiCenter = { x: 771, y: 426.4 };
+  const visitedProvinceDelays = useMemo(() => {
+    const distances = travelPlaces.map((place) => {
+      const shape = provinceShapeMap.get(place.province);
+      if (!shape) return { province: place.province, distance: 0 };
+      const dx = shape.center.x - shanghaiCenter.x;
+      const dy = shape.center.y - shanghaiCenter.y;
+      return { province: place.province, distance: Math.sqrt(dx * dx + dy * dy) };
+    });
+    distances.sort((a, b) => a.distance - b.distance);
+    const delayMap = new Map<string, number>();
+    distances.forEach((item, index) => {
+      delayMap.set(item.province, index * 0.12);
+    });
+    return delayMap;
+  }, [travelPlaces]);
 
   const selected = travelPlaces.find((item) => item.province === tooltip?.province);
 
@@ -695,22 +896,29 @@ function TravelSection() {
         </header>
       </FadeIn>
 
-      <div ref={mapRef} className="relative rounded-3xl border border-ink-200/80 dark:border-ink-700/70 bg-white/75 dark:bg-ink-900/68 backdrop-blur p-4 md:p-6 overflow-hidden">
+      <div ref={(node) => { mapRef.current = node; (travelInViewRef as React.MutableRefObject<HTMLDivElement | null>).current = node; }} className="relative rounded-3xl border border-ink-200/80 dark:border-ink-700/70 bg-white/75 dark:bg-ink-900/68 backdrop-blur p-4 md:p-6 overflow-hidden">
         <svg viewBox="0 0 1040 720" className="w-full h-auto">
           <rect x="40" y="30" width="960" height="640" rx="28" fill="currentColor" className="text-ink-100/70 dark:text-ink-800/60" />
 
-          {allProvinceShapes.map((shape) => {
+          {chinaProvinceShapes.map((shape) => {
             const visited = visitedSet.has(shape.id);
-            const isCurrent = shape.id === 'zhejiang';
+            const isCurrent = !!travelPlaces.find(
+              (place) => place.province === shape.id && place.cities.some((city) => city.current)
+            );
+            const targetOpacity = visited ? (isCurrent ? 0.55 : 0.42) : 0;
+            const delay = visitedProvinceDelays.get(shape.id) ?? 0;
+            const shouldAnimate = visited && !reduced && isTravelInView;
             return (
-              <path
+              <motion.path
                 key={shape.id}
                 d={shape.path}
                 fill={visited ? (isCurrent ? '#4F6AE5' : '#7B93F0') : 'transparent'}
-                fillOpacity={visited ? (isCurrent ? 0.55 : 0.42) : 0}
+                initial={reduced ? { fillOpacity: targetOpacity } : { fillOpacity: 0 }}
+                animate={shouldAnimate ? { fillOpacity: targetOpacity } : reduced ? { fillOpacity: targetOpacity } : undefined}
+                transition={{ duration: 0.5, delay, ease: [0.16, 1, 0.3, 1] }}
                 stroke={visited ? '#4F6AE5' : '#A9B4CB'}
                 strokeWidth={visited ? 2.6 : 2}
-                className="transition-all duration-200 cursor-pointer"
+                className="cursor-pointer"
                 onMouseMove={(event) => {
                   const bounds = mapRef.current?.getBoundingClientRect();
                   if (!bounds) return;
@@ -735,7 +943,7 @@ function TravelSection() {
           })}
 
           {travelPlaces.map((place) => place.marker).filter(Boolean).map((marker) => {
-            const isCurrent = marker?.icon === 'star' || marker?.city === '杭州';
+            const isCurrent = marker?.icon === 'star';
             if (!marker) return null;
             return (
               <g key={marker.city}>
@@ -754,7 +962,7 @@ function TravelSection() {
             className="absolute pointer-events-none z-20 w-60 rounded-xl border border-ink-200/80 dark:border-ink-700/70 bg-white/92 dark:bg-ink-900/90 backdrop-blur-sm p-3 shadow-soft"
             style={{ left: Math.min(Math.max(tooltip.x + 14, 12), (mapRef.current?.clientWidth ?? 640) - 260), top: Math.max(tooltip.y - 18, 12) }}
           >
-            <h3 className="font-semibold text-ink-900 dark:text-ink-100">{allProvinceShapes.find((shape) => shape.id === tooltip.province)?.label}</h3>
+            <h3 className="font-semibold text-ink-900 dark:text-ink-100">{chinaProvinceShapes.find((shape) => shape.id === tooltip.province)?.label}</h3>
             {selected ? (
               <ul className="mt-2 space-y-1">
                 {selected.cities.map((city) => (
@@ -773,15 +981,22 @@ function TravelSection() {
   );
 }
 
-function SocialSection() {
-  const [isAdmin, setIsAdmin] = useState(false);
+function SocialSection({
+  isAdmin,
+  stages,
+  friends,
+}: {
+  isAdmin: boolean;
+  stages: StageNode[];
+  friends: FriendNode[];
+}) {
+  const reduced = useReducedMotion();
   const [tooltip, setTooltip] = useState<SocialTooltip | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    setIsAdmin(document.cookie.includes('oc_admin_token='));
-  }, []);
+  const socialInViewRef = useRef<HTMLDivElement>(null);
+  const isSocialInView = useInView(socialInViewRef, { once: true, margin: '-60px' });
+  const stageNodes = stages.length ? stages : fallbackStageNodes;
+  const friendNodes = friends.length ? friends : fallbackFriendNodes;
 
   const friendPositions = useMemo(() => {
     const positionMap = new Map<string, { x: number; y: number }>();
@@ -806,7 +1021,62 @@ function SocialSection() {
     });
 
     return positionMap;
-  }, []);
+  }, [friendNodes, stageNodes]);
+
+  // Idle floating offsets driven by rAF
+  const [floatOffsets, setFloatOffsets] = useState<Map<string, { dx: number; dy: number }>>(new Map());
+
+  useEffect(() => {
+    if (reduced || !isSocialInView) return;
+
+    // Per-node random phase/amplitude
+    const nodeParams = friendNodes.map((friend) => ({
+      id: friend.id,
+      phaseX: Math.random() * Math.PI * 2,
+      phaseY: Math.random() * Math.PI * 2,
+      ampX: 1.5 + Math.random() * 2.5,
+      ampY: 1.5 + Math.random() * 2.5,
+      speedX: 0.4 + Math.random() * 0.6,
+      speedY: 0.4 + Math.random() * 0.6,
+    }));
+
+    let rafId: number;
+    let start: number | null = null;
+
+    function tick(timestamp: number) {
+      if (start === null) start = timestamp;
+      const elapsed = (timestamp - start) / 1000;
+
+      const next = new Map<string, { dx: number; dy: number }>();
+      nodeParams.forEach((params) => {
+        next.set(params.id, {
+          dx: Math.sin(elapsed * params.speedX + params.phaseX) * params.ampX,
+          dy: Math.cos(elapsed * params.speedY + params.phaseY) * params.ampY,
+        });
+      });
+      setFloatOffsets(next);
+      rafId = requestAnimationFrame(tick);
+    }
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [reduced, isSocialInView, friendNodes]);
+
+  // Stagger index for each friend node (used for burst delay)
+  const friendStaggerIndex = useMemo(() => {
+    const map = new Map<string, number>();
+    let globalIdx = 0;
+    const stageOrder = stageNodes.map((s) => s.id);
+    stageOrder.forEach((stageId) => {
+      friendNodes
+        .filter((f) => f.stageId === stageId)
+        .forEach((f) => {
+          map.set(f.id, globalIdx);
+          globalIdx++;
+        });
+    });
+    return map;
+  }, [friendNodes, stageNodes]);
 
   const tooltipFriend = tooltip ? friendNodes.find((friend) => friend.id === tooltip.friendId) : null;
 
@@ -823,7 +1093,7 @@ function SocialSection() {
         </header>
       </FadeIn>
 
-      <div ref={containerRef} className="relative rounded-3xl border border-ink-200/80 dark:border-ink-700/70 bg-white/74 dark:bg-ink-900/68 backdrop-blur p-4 md:p-6 overflow-hidden">
+      <div ref={(node) => { containerRef.current = node; (socialInViewRef as React.MutableRefObject<HTMLDivElement | null>).current = node; }} className="relative rounded-3xl border border-ink-200/80 dark:border-ink-700/70 bg-white/74 dark:bg-ink-900/68 backdrop-blur p-4 md:p-6 overflow-hidden">
         <svg viewBox="0 0 1040 470" className="w-full h-auto">
           {stageNodes.slice(0, -1).map((stage, index) => {
             const next = stageNodes[index + 1];
@@ -846,20 +1116,28 @@ function SocialSection() {
             const stage = stageNodes.find((node) => node.id === friend.stageId);
             if (!point || !stage) return null;
             const color = socialCategoryFill[stage.category];
+            const burstIdx = friendStaggerIndex.get(friend.id) ?? 0;
+            const floatOffset = floatOffsets.get(friend.id);
+            const fx = floatOffset?.dx ?? 0;
+            const fy = floatOffset?.dy ?? 0;
+            const shouldAnimate = !reduced && isSocialInView;
             return (
               <g key={friend.id}>
-                <line x1={stage.x} y1={stage.y} x2={point.x} y2={point.y} stroke={color} strokeOpacity="0.3" strokeWidth="1.2" />
-                <circle
-                  cx={point.x}
-                  cy={point.y}
+                <line x1={stage.x} y1={stage.y} x2={point.x + fx} y2={point.y + fy} stroke={color} strokeOpacity="0.3" strokeWidth="1.2" />
+                <motion.circle
+                  cx={point.x + fx}
+                  cy={point.y + fy}
                   r={isAdmin ? 6 : 4.6}
                   fill={isAdmin ? color : '#9BA4BA'}
-                  onMouseEnter={(event) => {
+                  initial={reduced ? undefined : { scale: 0.3, opacity: 0 }}
+                  animate={shouldAnimate ? { scale: 1, opacity: 1 } : reduced ? undefined : { scale: 0.3, opacity: 0 }}
+                  transition={{ type: 'spring', bounce: 0.25, delay: 0.3 + burstIdx * 0.04 }}
+                  onMouseEnter={(event: React.MouseEvent) => {
                     const bounds = containerRef.current?.getBoundingClientRect();
                     if (!bounds) return;
                     setTooltip({ friendId: friend.id, x: event.clientX - bounds.left, y: event.clientY - bounds.top });
                   }}
-                  onMouseMove={(event) => {
+                  onMouseMove={(event: React.MouseEvent) => {
                     const bounds = containerRef.current?.getBoundingClientRect();
                     if (!bounds) return;
                     setTooltip({ friendId: friend.id, x: event.clientX - bounds.left, y: event.clientY - bounds.top });
@@ -871,12 +1149,21 @@ function SocialSection() {
             );
           })}
 
-          {stageNodes.map((stage) => (
-            <g key={stage.id}>
-              <circle cx={stage.x} cy={stage.y} r={24} fill={socialCategoryFill[stage.category]} fillOpacity="0.18" stroke={socialCategoryFill[stage.category]} strokeWidth="2" />
-              <text x={stage.x} y={stage.y + 4} textAnchor="middle" fontSize="14" fill="#1A1D2E">{stage.label}</text>
-            </g>
-          ))}
+          {stageNodes.map((stage, index) => {
+            const shouldAnimate = !reduced && isSocialInView;
+            return (
+              <motion.g
+                key={stage.id}
+                initial={reduced ? undefined : { scale: 0.3, opacity: 0 }}
+                animate={shouldAnimate ? { scale: 1, opacity: 1 } : reduced ? undefined : { scale: 0.3, opacity: 0 }}
+                transition={{ type: 'spring', bounce: 0.2, delay: index * 0.12 }}
+                style={{ transformOrigin: `${stage.x}px ${stage.y}px` }}
+              >
+                <circle cx={stage.x} cy={stage.y} r={24} fill={socialCategoryFill[stage.category]} fillOpacity="0.18" stroke={socialCategoryFill[stage.category]} strokeWidth="2" />
+                <text x={stage.x} y={stage.y + 4} textAnchor="middle" fontSize="14" fill="currentColor" className="text-ink-900 dark:text-ink-100">{stage.label}</text>
+              </motion.g>
+            );
+          })}
         </svg>
 
         {tooltip && tooltipFriend && (
@@ -1014,17 +1301,100 @@ function ConnectSection() {
 }
 
 export function HomePageExperience({ stats }: HomePageExperienceProps) {
+  const [timelineNodes, setTimelineNodes] = useState<TimelineNode[]>(fallbackTimelineNodes);
+  const [highlightCards, setHighlightCards] = useState<HighlightCard[]>(fallbackHighlightCards);
+  const [travelPlaces, setTravelPlaces] = useState<TravelPlace[]>(fallbackTravelPlaces);
+  const [stageNodes, setStageNodes] = useState<StageNode[]>(fallbackStageNodes);
+  const [publicFriends, setPublicFriends] = useState<FriendNode[]>(fallbackFriendNodes);
+  const [socialFriends, setSocialFriends] = useState<FriendNode[]>(fallbackFriendNodes);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    setIsAdmin(document.cookie.includes('oc_admin_token='));
+  }, []);
+
+  useEffect(() => {
+    let canceled = false;
+
+    async function loadHomeData() {
+      try {
+        const response = await fetch('/api/home', { credentials: 'same-origin' });
+        if (!response.ok) return;
+
+        const envelope = await response.json() as HomeApiEnvelope;
+        if (!envelope.ok || !envelope.data) return;
+
+        const nextTimeline = mapTimelineNodes(envelope.data.timeline || []);
+        const nextHighlights = mapHighlightCards(envelope.data.highlights || []);
+        const nextTravel = mapTravelPlaces(envelope.data.travel || []);
+        const nextStages = mapStageNodes(envelope.data.social?.stages || []);
+        const nextPublicFriends = mapPublicFriends(envelope.data.social?.friends || [], nextStages);
+
+        if (canceled) return;
+
+        setTimelineNodes(nextTimeline);
+        setHighlightCards(nextHighlights);
+        setTravelPlaces(nextTravel);
+        setStageNodes(nextStages);
+        setPublicFriends(nextPublicFriends);
+        if (!isAdmin) {
+          setSocialFriends(nextPublicFriends);
+        }
+      } catch {
+        // Keep local fallback data when API is unavailable.
+      }
+    }
+
+    loadHomeData();
+
+    return () => {
+      canceled = true;
+    };
+  }, [isAdmin]);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      setSocialFriends(publicFriends);
+      return;
+    }
+
+    let canceled = false;
+
+    async function loadAdminGraph() {
+      try {
+        const response = await fetch('/api/admin/social-graph', { credentials: 'same-origin' });
+        if (!response.ok) return;
+
+        const envelope = await response.json() as AdminGraphEnvelope;
+        if (!envelope.ok || !envelope.data) return;
+
+        const nextAdminFriends = mapAdminFriends(envelope.data, stageNodes);
+        if (canceled || !nextAdminFriends.length) return;
+        setSocialFriends(nextAdminFriends);
+      } catch {
+        // Keep public social graph when admin graph request fails.
+      }
+    }
+
+    loadAdminGraph();
+
+    return () => {
+      canceled = true;
+    };
+  }, [isAdmin, publicFriends, stageNodes]);
+
   return (
     <>
       <Hero />
       <SectionDivider variant="cloud" />
-      <TimelineSection />
+      <TimelineSection nodes={timelineNodes} />
       <SectionDivider variant="wave" />
-      <HighlightsSection />
+      <HighlightsSection cards={highlightCards} />
       <SectionDivider variant="tide" />
-      <TravelSection />
+      <TravelSection places={travelPlaces} />
       <SectionDivider variant="ridge" />
-      <SocialSection />
+      <SocialSection isAdmin={isAdmin} stages={stageNodes} friends={socialFriends} />
       <SectionDivider variant="dust" />
       <DataPanelSection stats={stats} />
       <SectionDivider variant="flow" />

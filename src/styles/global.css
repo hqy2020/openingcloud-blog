@@ -209,6 +209,10 @@ h3 {
     transform: none;
     transition: none;
   }
+
+  .home-divider-animated {
+    animation: none;
+  }
 }
 
 .text-editorial-xl {
