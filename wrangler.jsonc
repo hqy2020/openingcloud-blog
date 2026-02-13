@@ -17,6 +17,7 @@
     "IMAGE_STORE_PUBLIC_URL": "https://openingclouds.ccwu.cc"
   },
   "assets": {
-    "directory": "./dist"
+    "directory": "./dist",
+    "not_found_handling": "404-page"
   }
 }
