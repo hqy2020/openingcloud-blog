@@ -1,32 +1,29 @@
-# Dependencies
-node_modules/
+# macOS
+.DS_Store
 
-# Build output
-dist/
-bundled/
+# IDE
+.vscode/
+.idea/
+.ccb/
+
+# Python
+__pycache__/
+*.pyc
+backend/.venv/
+backend/db.sqlite3
+backend/staticfiles/
+backend/data/
+data/
+
+# Node
+node_modules/
+frontend/node_modules/
+frontend/dist/
 
 # Environment
 .env
-.env.local
-.env.production
-.dev.vars
+*.env
+!.env.example
 
-# Editor
-.vscode/
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Astro
-.astro/
-
-# Wrangler
-.wrangler/
-
-# CCB
-.ccb/
-
-# Reference repos (cloned for development reference)
-references/
+# Logs
+*.log
