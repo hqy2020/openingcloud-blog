@@ -1,32 +1,31 @@
 ---
-// BlogPet.astro — 基于 oneko.js 改造的博客宠物（小绵羊版）
-// 原始项目: https://github.com/adryd325/oneko.js (MIT License)
-// 精灵图: public/pets/oneko-sheep.png (32x32 帧, 8列x4行)
+/**
+ * BlogPet.astro — 固定驻留版 oneko
+ * Base logic: https://github.com/adryd325/oneko.js (MIT)
+ * Sprite asset: https://github.com/kyrie25/spicetify-oneko (MIT)
+ */
 ---
 
 <script is:inline>
 (function blogPet() {
-  // 尊重用户的减少动画偏好
-  const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-  if (motionQuery.matches) return;
+  const PET_ID = 'blog-pet';
+  const STYLE_ID = 'blog-pet-style';
+  const previous = window.__blogPetState;
+  if (previous && typeof previous.cleanup === 'function') {
+    previous.cleanup();
+  }
+  const state = {
+    timer: 0,
+    cleanup: null,
+  };
+  window.__blogPetState = state;
 
-  // 移动端 (<768px) 默认隐藏
-  if (window.innerWidth < 768) return;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const PET_SIZE = 32;
+  const HALF = PET_SIZE / 2;
+  const PET_SPEED = 10;
+  const PET_SCALE = window.innerWidth < 768 ? 1.45 : 1.8;
 
-  const nekoEl = document.createElement('div');
-  let nekoPosX = 32;
-  let nekoPosY = 32;
-  let mousePosX = 0;
-  let mousePosY = 0;
-  let frameCount = 0;
-  let idleTime = 0;
-  let idleAnimation = null;
-  let idleAnimationFrame = 0;
-  let lastFrameTimestamp;
-
-  const nekoSpeed = 10;
-
-  // 精灵图坐标映射 (列, 行) — 负值偏移
   const spriteSets = {
     idle: [[-3, -3]],
     alert: [[-7, -3]],
@@ -47,138 +46,251 @@
     NW: [[-1, 0], [-1, -1]],
   };
 
-  function init() {
-    nekoEl.id = 'blog-pet';
-    nekoEl.ariaHidden = true;
-    nekoEl.style.width = '32px';
-    nekoEl.style.height = '32px';
-    nekoEl.style.position = 'fixed';
-    nekoEl.style.pointerEvents = 'none';
-    nekoEl.style.imageRendering = 'pixelated';
-    nekoEl.style.left = nekoPosX - 16 + 'px';
-    nekoEl.style.top = nekoPosY - 16 + 'px';
-    nekoEl.style.zIndex = '9999';
-    nekoEl.style.backgroundImage = 'url(/pets/oneko-sheep.png)';
+  function ensureStyle() {
+    if (document.getElementById(STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = STYLE_ID;
+    style.textContent = `
+      #${PET_ID} {
+        position: fixed;
+        width: ${PET_SIZE}px;
+        height: ${PET_SIZE}px;
+        pointer-events: auto;
+        user-select: none;
+        image-rendering: pixelated;
+        z-index: 9998;
+        background-repeat: no-repeat;
+        background-size: 256px 128px;
+        filter: drop-shadow(0 8px 12px rgba(15, 23, 42, 0.28));
+        transform-origin: center center;
+        transform: scale(var(--pet-scale, 1.8)) translateY(0);
+        cursor: pointer;
+      }
+      #${PET_ID}.is-animated {
+        animation: blog-pet-float 2.8s ease-in-out infinite;
+      }
+      #${PET_ID}:active {
+        transform: scale(calc(var(--pet-scale, 1.8) * 0.96)) translateY(0);
+      }
+      @keyframes blog-pet-float {
+        0%, 100% { transform: scale(var(--pet-scale, 1.8)) translateY(0); }
+        50% { transform: scale(var(--pet-scale, 1.8)) translateY(-3px); }
+      }
+      @media (max-width: 767px) {
+        #${PET_ID} {
+          --pet-scale: 1.45;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
 
-    document.body.appendChild(nekoEl);
+  function ensurePet() {
+    let pet = document.getElementById(PET_ID);
+    if (!pet) {
+      pet = document.createElement('div');
+      pet.id = PET_ID;
+      pet.ariaHidden = true;
+      document.body.appendChild(pet);
+    }
+    pet.innerHTML = '';
+    pet.style.backgroundImage = "url('/pets/oneko-sheep.png')";
+    pet.style.backgroundPosition = '0px 0px';
+    pet.style.setProperty('--pet-scale', String(PET_SCALE));
+    return pet;
+  }
 
-    document.addEventListener('mousemove', function (e) {
+  function setSprite(pet, name, frame) {
+    const row = spriteSets[name];
+    if (!row) return;
+    const sprite = row[frame % row.length];
+    pet.style.backgroundPosition = sprite[0] * 32 + 'px ' + sprite[1] * 32 + 'px';
+  }
+
+  function startIdleLoop(pet) {
+    let nekoPosX = Math.max(HALF, window.innerWidth - 54);
+    let nekoPosY = Math.max(HALF, window.innerHeight - 54);
+    let mousePosX = nekoPosX;
+    let mousePosY = nekoPosY;
+    let frameCount = 0;
+    let idleTime = 0;
+    let idleAnimation = null;
+    let idleAnimationFrame = 0;
+    let forceSleep = false;
+    let lastClickTs = 0;
+
+    function setPosition() {
+      pet.style.left = `${nekoPosX - HALF}px`;
+      pet.style.top = `${nekoPosY - HALF}px`;
+    }
+
+    setPosition();
+
+    function resetIdleAnimation() {
+      idleAnimation = null;
+      idleAnimationFrame = 0;
+    }
+
+    function idle() {
+      idleTime += 1;
+
+      if (idleTime > 10 && Math.floor(Math.random() * 200) === 0 && idleAnimation === null) {
+        const available = ['sleeping', 'scratchSelf'];
+        if (nekoPosX < 40) available.push('scratchWallW');
+        if (nekoPosY < 40) available.push('scratchWallN');
+        if (nekoPosX > window.innerWidth - 40) available.push('scratchWallE');
+        if (nekoPosY > window.innerHeight - 40) available.push('scratchWallS');
+        idleAnimation = available[Math.floor(Math.random() * available.length)];
+      }
+
+      if (forceSleep) {
+        idleAnimation = 'sleeping';
+      }
+
+      switch (idleAnimation) {
+        case 'sleeping':
+          if (idleAnimationFrame < 8) {
+            setSprite(pet, 'tired', 0);
+            break;
+          }
+          setSprite(pet, 'sleeping', Math.floor(idleAnimationFrame / 4));
+          if (idleAnimationFrame > 180) resetIdleAnimation();
+          break;
+        case 'scratchWallN':
+        case 'scratchWallS':
+        case 'scratchWallE':
+        case 'scratchWallW':
+        case 'scratchSelf':
+          setSprite(pet, idleAnimation, idleAnimationFrame);
+          if (idleAnimationFrame > 9) resetIdleAnimation();
+          break;
+        default:
+          setSprite(pet, 'idle', 0);
+          return;
+      }
+
+      idleAnimationFrame += 1;
+    }
+
+    function step() {
+      frameCount += 1;
+
+      if (forceSleep) {
+        idle();
+        return;
+      }
+
+      const diffX = nekoPosX - mousePosX;
+      const diffY = nekoPosY - mousePosY;
+      const distance = Math.sqrt(diffX * diffX + diffY * diffY);
+
+      if (distance < PET_SPEED || distance < 48) {
+        idle();
+        return;
+      }
+
+      idleAnimation = null;
+      idleAnimationFrame = 0;
+
+      if (idleTime > 1) {
+        setSprite(pet, 'alert', 0);
+        idleTime = Math.min(idleTime, 7);
+        idleTime -= 1;
+        return;
+      }
+
+      let direction = '';
+      direction = diffY / distance > 0.5 ? 'N' : '';
+      direction += diffY / distance < -0.5 ? 'S' : '';
+      direction += diffX / distance > 0.5 ? 'W' : '';
+      direction += diffX / distance < -0.5 ? 'E' : '';
+      if (direction) setSprite(pet, direction, frameCount);
+
+      nekoPosX -= (diffX / distance) * PET_SPEED;
+      nekoPosY -= (diffY / distance) * PET_SPEED;
+
+      nekoPosX = Math.min(Math.max(HALF, nekoPosX), window.innerWidth - HALF);
+      nekoPosY = Math.min(Math.max(HALF, nekoPosY), window.innerHeight - HALF);
+      setPosition();
+    }
+
+    function onMouseMove(e) {
+      if (forceSleep) return;
       mousePosX = e.clientX;
       mousePosY = e.clientY;
-    });
-
-    window.requestAnimationFrame(onAnimationFrame);
-  }
-
-  function onAnimationFrame(timestamp) {
-    if (!nekoEl.isConnected) return;
-
-    // 页面隐藏时暂停动画
-    if (document.hidden) {
-      window.requestAnimationFrame(onAnimationFrame);
-      return;
     }
 
-    if (!lastFrameTimestamp) {
-      lastFrameTimestamp = timestamp;
-    }
-    if (timestamp - lastFrameTimestamp > 100) {
-      lastFrameTimestamp = timestamp;
-      frame();
-    }
-    window.requestAnimationFrame(onAnimationFrame);
-  }
-
-  function setSprite(name, frame) {
-    var sprite = spriteSets[name][frame % spriteSets[name].length];
-    nekoEl.style.backgroundPosition = sprite[0] * 32 + 'px ' + sprite[1] * 32 + 'px';
-  }
-
-  function resetIdleAnimation() {
-    idleAnimation = null;
-    idleAnimationFrame = 0;
-  }
-
-  function idle() {
-    idleTime += 1;
-
-    // 闲置一段时间后随机选择动画
-    if (idleTime > 10 && Math.floor(Math.random() * 200) === 0 && idleAnimation === null) {
-      var available = ['sleeping', 'scratchSelf'];
-      if (nekoPosX < 32) available.push('scratchWallW');
-      if (nekoPosY < 32) available.push('scratchWallN');
-      if (nekoPosX > window.innerWidth - 32) available.push('scratchWallE');
-      if (nekoPosY > window.innerHeight - 32) available.push('scratchWallS');
-      idleAnimation = available[Math.floor(Math.random() * available.length)];
+    function onWindowClick(e) {
+      if (forceSleep) return;
+      mousePosX = e.clientX;
+      mousePosY = e.clientY;
+      idleTime = 0;
+      setSprite(pet, 'alert', 0);
     }
 
-    switch (idleAnimation) {
-      case 'sleeping':
-        if (idleAnimationFrame < 8) {
-          setSprite('tired', 0);
-          break;
+    function onPetClick(e) {
+      e.stopPropagation();
+      const now = Date.now();
+      if (now - lastClickTs < 280) {
+        forceSleep = !forceSleep;
+        resetIdleAnimation();
+        idleTime = 0;
+        if (!forceSleep) {
+          mousePosX = window.innerWidth - 32;
+          mousePosY = window.innerHeight - 32;
         }
-        setSprite('sleeping', Math.floor(idleAnimationFrame / 4));
-        if (idleAnimationFrame > 192) resetIdleAnimation();
-        break;
-      case 'scratchWallN':
-      case 'scratchWallS':
-      case 'scratchWallE':
-      case 'scratchWallW':
-      case 'scratchSelf':
-        setSprite(idleAnimation, idleAnimationFrame);
-        if (idleAnimationFrame > 9) resetIdleAnimation();
-        break;
-      default:
-        setSprite('idle', 0);
-        return;
+      } else {
+        setSprite(pet, 'alert', 0);
+      }
+      lastClickTs = now;
     }
-    idleAnimationFrame += 1;
+
+    function onResize() {
+      nekoPosX = Math.min(Math.max(HALF, nekoPosX), window.innerWidth - HALF);
+      nekoPosY = Math.min(Math.max(HALF, nekoPosY), window.innerHeight - HALF);
+      setPosition();
+    }
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('click', onWindowClick);
+    window.addEventListener('resize', onResize);
+    pet.addEventListener('click', onPetClick);
+
+    if (state.timer) {
+      clearInterval(state.timer);
+      state.timer = 0;
+    }
+
+    if (reduced) {
+      // 减少动态偏好下保留交互，但停掉漂浮
+      pet.classList.remove('is-animated');
+    } else {
+      pet.classList.add('is-animated');
+    }
+
+    // 首帧提醒
+    setSprite(pet, 'alert', 0);
+    setTimeout(() => setSprite(pet, 'idle', 0), 240);
+
+    state.timer = window.setInterval(() => {
+      if (document.hidden) return;
+      step();
+    }, 100);
+
+    state.cleanup = () => {
+      if (state.timer) {
+        clearInterval(state.timer);
+        state.timer = 0;
+      }
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('click', onWindowClick);
+      window.removeEventListener('resize', onResize);
+      pet.removeEventListener('click', onPetClick);
+    };
   }
 
-  function frame() {
-    frameCount += 1;
-    var diffX = nekoPosX - mousePosX;
-    var diffY = nekoPosY - mousePosY;
-    var distance = Math.sqrt(diffX * diffX + diffY * diffY);
-
-    // 距离够近就闲置
-    if (distance < nekoSpeed || distance < 48) {
-      idle();
-      return;
-    }
-
-    idleAnimation = null;
-    idleAnimationFrame = 0;
-
-    // 从闲置恢复时先显示 alert 状态
-    if (idleTime > 1) {
-      setSprite('alert', 0);
-      idleTime = Math.min(idleTime, 7);
-      idleTime -= 1;
-      return;
-    }
-
-    // 计算方向
-    var direction = '';
-    direction = diffY / distance > 0.5 ? 'N' : '';
-    direction += diffY / distance < -0.5 ? 'S' : '';
-    direction += diffX / distance > 0.5 ? 'W' : '';
-    direction += diffX / distance < -0.5 ? 'E' : '';
-    if (direction) setSprite(direction, frameCount);
-
-    // 移动
-    nekoPosX -= (diffX / distance) * nekoSpeed;
-    nekoPosY -= (diffY / distance) * nekoSpeed;
-
-    // 限制在视窗内
-    nekoPosX = Math.min(Math.max(16, nekoPosX), window.innerWidth - 16);
-    nekoPosY = Math.min(Math.max(16, nekoPosY), window.innerHeight - 16);
-
-    nekoEl.style.left = nekoPosX - 16 + 'px';
-    nekoEl.style.top = nekoPosY - 16 + 'px';
-  }
-
-  init();
+  ensureStyle();
+  const pet = ensurePet();
+  startIdleLoop(pet);
 })();
 </script>

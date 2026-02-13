@@ -1,68 +1,133 @@
 ---
 /**
- * Hero 区域 — 电影感云层视差 + 打字机标语
+ * Hero 区域 — 全视口高度、渐变背景 + 光束线 + 大号品牌 + 打字机标语 + 滚动指示器
  */
 ---
 
-<section class="relative mb-10 -mx-4 -mt-8 px-4 pt-16 pb-20 overflow-hidden bg-gradient-to-b from-primary-100 via-cloud-50 to-white dark:from-primary-900/40 dark:via-bg-dark dark:to-bg-dark">
-  <!-- 背景云层 (最远层) -->
-  <svg class="absolute top-6 left-[10%] w-40 h-24 text-primary-200/40 dark:text-primary-700/20 animate-float-cloud" viewBox="0 0 160 96" fill="currentColor">
-    <ellipse cx="80" cy="56" rx="60" ry="28" />
-    <ellipse cx="56" cy="42" rx="36" ry="24" />
-    <ellipse cx="104" cy="38" rx="40" ry="26" />
-  </svg>
+<section class="relative min-h-[85vh] flex items-center justify-center overflow-hidden bg-beams">
+  <!-- 渐变背景 -->
+  <div class="absolute inset-0 bg-gradient-to-b from-primary-50 via-white to-white dark:from-primary-900/20 dark:via-bg-dark dark:to-bg-dark"></div>
 
-  <!-- 中景云层 -->
-  <svg class="absolute top-16 right-[5%] w-28 h-16 text-primary-200/50 dark:text-primary-700/25 animate-float-cloud" style="animation-delay: -2s; animation-duration: 10s;" viewBox="0 0 112 64" fill="currentColor">
-    <ellipse cx="56" cy="40" rx="42" ry="20" />
-    <ellipse cx="38" cy="28" rx="26" ry="18" />
-    <ellipse cx="74" cy="26" rx="30" ry="19" />
-  </svg>
-
-  <!-- 前景小云 -->
-  <svg class="absolute bottom-8 left-[60%] w-20 h-12 text-primary-200/30 dark:text-primary-700/15 animate-float-cloud" style="animation-delay: -5s; animation-duration: 12s;" viewBox="0 0 80 48" fill="currentColor">
-    <ellipse cx="40" cy="30" rx="30" ry="14" />
-    <ellipse cx="28" cy="22" rx="18" ry="12" />
-    <ellipse cx="52" cy="20" rx="20" ry="13" />
-  </svg>
-
-  <svg class="absolute top-24 left-[35%] w-16 h-10 text-primary-200/25 dark:text-primary-700/10 animate-float-cloud" style="animation-delay: -7s; animation-duration: 14s;" viewBox="0 0 80 48" fill="currentColor">
-    <ellipse cx="40" cy="30" rx="30" ry="14" />
-    <ellipse cx="28" cy="22" rx="18" ry="12" />
-  </svg>
+  <!-- 装饰云层 — GSAP 视差 -->
+  <div class="absolute inset-0 pointer-events-none" id="hero-clouds">
+    <svg class="absolute top-[15%] left-[8%] w-48 h-28 text-primary-200/30 dark:text-primary-700/15" data-speed="0.3" viewBox="0 0 160 96" fill="currentColor">
+      <ellipse cx="80" cy="56" rx="60" ry="28" />
+      <ellipse cx="56" cy="42" rx="36" ry="24" />
+      <ellipse cx="104" cy="38" rx="40" ry="26" />
+    </svg>
+    <svg class="absolute top-[25%] right-[5%] w-36 h-20 text-primary-200/25 dark:text-primary-700/12" data-speed="0.5" viewBox="0 0 112 64" fill="currentColor">
+      <ellipse cx="56" cy="40" rx="42" ry="20" />
+      <ellipse cx="38" cy="28" rx="26" ry="18" />
+      <ellipse cx="74" cy="26" rx="30" ry="19" />
+    </svg>
+    <svg class="absolute bottom-[20%] left-[55%] w-24 h-14 text-primary-200/20 dark:text-primary-700/10" data-speed="0.7" viewBox="0 0 80 48" fill="currentColor">
+      <ellipse cx="40" cy="30" rx="30" ry="14" />
+      <ellipse cx="28" cy="22" rx="18" ry="12" />
+      <ellipse cx="52" cy="20" rx="20" ry="13" />
+    </svg>
+    <svg class="absolute top-[40%] left-[30%] w-20 h-12 text-primary-200/15 dark:text-primary-700/8" data-speed="0.9" viewBox="0 0 80 48" fill="currentColor">
+      <ellipse cx="40" cy="30" rx="30" ry="14" />
+      <ellipse cx="28" cy="22" rx="18" ry="12" />
+    </svg>
+  </div>
 
   <!-- 主内容 -->
-  <div class="relative z-10 max-w-2xl mx-auto text-center">
-    <h1 class="text-3xl md:text-4xl font-bold text-slate-800 dark:text-slate-100 mb-4 font-display">
-      启云的博客
+  <div class="relative z-10 text-center px-4 max-w-3xl mx-auto" id="hero-content">
+    <!-- 品牌名 -->
+    <h1 class="text-editorial-xl mb-4">
+      <span class="text-slate-800 dark:text-slate-100">opening</span><span class="bg-gradient-to-r from-primary-500 to-primary-400 bg-clip-text text-transparent">Clouds</span>
     </h1>
-    <p id="hero-tagline" class="text-lg text-slate-600 dark:text-slate-300 h-7 font-display"></p>
-    <p class="mt-4 text-sm text-slate-400 dark:text-slate-500 italic">
-      技术 · 学习 · 生活 — 记录成长的每一步
+
+    <!-- 打字机标语 -->
+    <p id="hero-tagline" class="text-xl md:text-2xl text-slate-500 dark:text-slate-400 h-9 font-display"></p>
+
+    <!-- 副标语 -->
+    <p class="mt-6 text-sm text-slate-400 dark:text-slate-500 tracking-widest uppercase">
+      Tech · Efficiency · Life
     </p>
+  </div>
+
+  <!-- 滚动指示器 -->
+  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce" id="scroll-indicator">
+    <span class="text-xs text-slate-400 dark:text-slate-500 tracking-wider">SCROLL</span>
+    <svg class="w-5 h-5 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+    </svg>
   </div>
 </section>
 
-<script is:inline>
-(function () {
-  const el = document.getElementById('hero-tagline');
-  if (!el || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    if (el) el.textContent = '云上牧场，日有所进';
-    return;
-  }
-  const phrases = ['云上牧场，日有所进', '代码如诗，生活如画', '每一行代码都是成长的痕迹'];
-  let pi = 0, ci = 0, deleting = false;
-  function tick() {
-    const phrase = phrases[pi];
-    if (!deleting) {
-      el.textContent = phrase.slice(0, ++ci);
-      if (ci === phrase.length) { setTimeout(() => { deleting = true; tick(); }, 2500); return; }
-    } else {
-      el.textContent = phrase.slice(0, --ci);
-      if (ci === 0) { deleting = false; pi = (pi + 1) % phrases.length; }
+<script>
+  import { gsap, ScrollTrigger } from '../lib/animations';
+
+  function initHero() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const el = document.getElementById('hero-tagline');
+      if (el) el.textContent = '云上牧场，日有所进';
+      return;
     }
-    setTimeout(tick, deleting ? 40 : 100);
+
+    // 入场动画
+    const content = document.getElementById('hero-content');
+    if (content) {
+      gsap.fromTo(content.children,
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.8, stagger: 0.15, ease: 'power3.out' }
+      );
+    }
+
+    // 云层视差
+    document.querySelectorAll('#hero-clouds svg').forEach(cloud => {
+      const speed = parseFloat(cloud.getAttribute('data-speed') || '0.5');
+      gsap.to(cloud, {
+        y: -100 * speed,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: '#hero-clouds',
+          start: 'top top',
+          end: 'bottom top',
+          scrub: 1,
+        },
+      });
+    });
+
+    // 滚动隐藏指示器
+    const indicator = document.getElementById('scroll-indicator');
+    if (indicator) {
+      gsap.to(indicator, {
+        opacity: 0,
+        y: 20,
+        scrollTrigger: {
+          trigger: indicator,
+          start: 'top 90%',
+          end: 'top 60%',
+          scrub: true,
+        },
+      });
+    }
+
+    // 打字机效果
+    typewriter();
   }
-  tick();
-})();
+
+  function typewriter() {
+    const el = document.getElementById('hero-tagline');
+    if (!el) return;
+    const phrases = ['云上牧场，日有所进', '代码如诗，生活如画', '每一行代码都是成长的痕迹'];
+    let pi = 0, ci = 0, deleting = false;
+    function tick() {
+      const phrase = phrases[pi];
+      if (!deleting) {
+        el.textContent = phrase.slice(0, ++ci);
+        if (ci === phrase.length) { setTimeout(() => { deleting = true; tick(); }, 2500); return; }
+      } else {
+        el.textContent = phrase.slice(0, --ci);
+        if (ci === 0) { deleting = false; pi = (pi + 1) % phrases.length; }
+      }
+      setTimeout(tick, deleting ? 40 : 100);
+    }
+    tick();
+  }
+
+  initHero();
+  document.addEventListener('astro:after-swap', initHero);
 </script>

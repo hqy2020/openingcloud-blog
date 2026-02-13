@@ -41,15 +41,15 @@ function formatDate(d: string) {
 
 export function BentoGrid({ featured, categories, restPosts }: BentoGridProps) {
   return (
-    <section className="max-w-6xl mx-auto px-4 py-12">
+    <section className="max-w-6xl mx-auto px-4 pt-8 pb-10 md:pt-10 md:pb-12">
       <FadeIn>
-        <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 font-display mb-8">
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 font-display mb-6 md:mb-7">
           探索内容
         </h2>
       </FadeIn>
 
       <StaggerContainer
-        className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5"
+        className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4"
         stagger={0.08}
       >
         {/* 首篇大卡: 2x2 */}
@@ -65,14 +65,14 @@ export function BentoGrid({ featured, categories, restPosts }: BentoGridProps) {
                   <img
                     src={featured.cover}
                     alt={featured.title}
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 rounded-2xl"
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700 rounded-2xl"
                     loading="lazy"
                   />
                 ) : (
                   <div className="absolute inset-0 bg-gradient-to-br from-primary-400 to-primary-600 rounded-2xl" />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent rounded-2xl" />
-                <div className="relative z-10 p-6">
+                <div className="relative z-10 p-5 md:p-6">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-white/20 text-white backdrop-blur-sm">
                       {categoryLabels[featured.category] || featured.category}
@@ -102,7 +102,7 @@ export function BentoGrid({ featured, categories, restPosts }: BentoGridProps) {
                 'group block rounded-2xl p-4 md:p-5 bg-gradient-to-br transition-all duration-300 flex flex-col justify-between min-h-[120px] border border-slate-200/60 dark:border-slate-700/40',
                 cat.gradient
               )}
-              whileHover={{ y: -2, transition: { duration: 0.2 } }}
+              whileHover={{ y: -1.5, transition: { duration: 0.2 } }}
             >
               <span className="text-2xl">{cat.icon}</span>
               <div>

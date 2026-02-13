@@ -1,0 +1,36 @@
+---
+/**
+ * MotionStoryRail Astro wrapper — 首页动效叙事轨道
+ */
+import { getCollection } from 'astro:content';
+import { MotionStoryRail } from '@/react/sections/MotionStoryRail';
+
+const collections = await Promise.all([
+  getCollection('journal', ({ data }) => !data.draft),
+  getCollection('tech', ({ data }) => !data.draft),
+  getCollection('learning', ({ data }) => !data.draft),
+  getCollection('life', ({ data }) => !data.draft),
+]);
+
+const posts = collections
+  .flat()
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 12)
+  .map((post) => ({
+    title: post.data.title,
+    description: post.data.description,
+    date: post.data.date.toISOString(),
+    category: post.data.category,
+    cover: post.data.cover,
+    slug: post.id,
+  }));
+
+const categories = [
+  { key: 'journal', label: '日记', icon: '📓', desc: '日记 & 计划复盘', count: collections[0].length },
+  { key: 'tech', label: '技术', icon: '💻', desc: 'Java · AI · Agent', count: collections[1].length },
+  { key: 'learning', label: '效率', icon: '📚', desc: '效率方法 & 认知', count: collections[2].length },
+  { key: 'life', label: '生活', icon: '📷', desc: '照片 & 随记', count: collections[3].length },
+];
+---
+
+<MotionStoryRail client:visible posts={posts} categories={categories} />

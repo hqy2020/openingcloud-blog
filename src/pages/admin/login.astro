@@ -59,7 +59,7 @@ import '@/styles/global.css';
           });
           const data = await res.json();
           if (data.ok) {
-            window.location.href = '/admin/posts';
+            window.location.href = '/admin';
           } else {
             errorEl.textContent = data.error?.message || '登录失败';
             errorEl.classList.remove('hidden');

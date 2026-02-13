@@ -1,4 +1,78 @@
 ---
 export const prerender = false;
-return Astro.redirect('/admin/posts');
+
+import AdminLayout from '@/components/admin/AdminLayout.astro';
+
+const stats = {
+  posts: 0,
+  provinces: 0,
+  friends: 0,
+  timeline: 0,
+  highlights: 0,
+};
+
+try {
+  const db = Astro.locals.runtime.env.BLOG_DB;
+  const [postCount, provinceCount, friendCount, timelineCount, highlightCount] = await Promise.all([
+    db.prepare('SELECT COUNT(*) as total FROM posts').first<{ total: number }>(),
+    db.prepare('SELECT COUNT(DISTINCT province) as total FROM travel_places').first<{ total: number }>(),
+    db.prepare('SELECT COUNT(*) as total FROM social_friends').first<{ total: number }>(),
+    db.prepare('SELECT COUNT(*) as total FROM timeline_nodes').first<{ total: number }>(),
+    db.prepare('SELECT COUNT(*) as total FROM highlight_stages').first<{ total: number }>(),
+  ]);
+
+  stats.posts = postCount?.total ?? 0;
+  stats.provinces = provinceCount?.total ?? 0;
+  stats.friends = friendCount?.total ?? 0;
+  stats.timeline = timelineCount?.total ?? 0;
+  stats.highlights = highlightCount?.total ?? 0;
+} catch {
+  // Keep fallback zeros when tables are not ready.
+}
+
+const dashboardCards = [
+  { label: '篇文章', value: stats.posts, icon: '📝' },
+  { label: '已点亮省份', value: `${stats.provinces}/34`, icon: '🗺️' },
+  { label: '位好友', value: stats.friends, icon: '🌐' },
+  { label: '时间节点', value: stats.timeline, icon: '🛤️' },
+  { label: '高光阶段', value: stats.highlights, icon: '⭐' },
+];
+
+const recentLogs = [
+  '完成首页七段式重构并接入素材占位',
+  '新增旅行/社交/高光三套 API 与管理页骨架',
+  '分类页已切换为双列瀑布流 + 标签筛选',
+  '可继续在本页右上导航进入各模块补充真实数据',
+];
 ---
+
+<AdminLayout title="仪表盘">
+  <div class="space-y-6">
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold">📊 仪表盘</h1>
+        <p class="text-sm text-gray-500 mt-1">首页模块与内容数据概览</p>
+      </div>
+      <a href="/" class="text-sm text-primary-500 hover:underline">查看前台首页</a>
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
+      {dashboardCards.map((card) => (
+        <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 p-4">
+          <div class="text-xl">{card.icon}</div>
+          <div class="text-2xl font-bold mt-2">{card.value}</div>
+          <div class="text-xs text-gray-500 mt-1">{card.label}</div>
+        </div>
+      ))}
+    </div>
+
+    <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 p-5">
+      <h2 class="text-lg font-semibold mb-3">最近动态</h2>
+      <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+        {recentLogs.map((log) => (
+          <li>· {log}</li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</AdminLayout>

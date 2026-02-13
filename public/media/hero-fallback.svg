@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="960" y1="0" x2="960" y2="1080" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0B0E18"/>
+      <stop offset="0.45" stop-color="#213464"/>
+      <stop offset="1" stop-color="#B8945E"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1340 250) rotate(133) scale(480 360)">
+      <stop stop-color="#FFF6D8" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#FFF6D8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cloudA" x1="0" y1="0" x2="1920" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8F9FC" stop-opacity="0.24"/>
+      <stop offset="1" stop-color="#DCE4FA" stop-opacity="0.32"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+  <rect width="1920" height="1080" fill="url(#sun)"/>
+  <path d="M-80 650c120-90 260-110 420-60s300 70 460 10 330-70 520-25 350 70 600 20V1080H-80V650z" fill="url(#cloudA)"/>
+  <path d="M-80 760c170-120 310-130 450-90s260 90 430 40 340-90 560-20 350 90 560 45V1080H-80V760z" fill="#F8F9FC" fill-opacity="0.2"/>
+  <path d="M1380 120 930 900" stroke="#FFF5D8" stroke-opacity="0.36" stroke-width="160"/>
+  <path d="M1455 155 1080 910" stroke="#FFF5D8" stroke-opacity="0.24" stroke-width="90"/>
+  <path d="M1505 170 1190 930" stroke="#FFF5D8" stroke-opacity="0.14" stroke-width="46"/>
+</svg>

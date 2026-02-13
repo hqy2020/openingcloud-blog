@@ -1,7 +1,8 @@
 import { useRef, useState, useEffect } from 'react';
-import { motion, useScroll, useTransform, AnimatePresence } from 'motion/react';
+import { motion, useScroll, useTransform } from 'motion/react';
 import { AuroraBackground } from '../ui/AuroraBackground';
 import { useReducedMotion } from '../hooks/useReducedMotion';
+import { CloudScene } from '../three/CloudScene';
 
 const phrases = ['云上牧场，日有所进', '代码如诗，生活如画', '每一行代码都是成长的痕迹'];
 
@@ -91,14 +92,17 @@ export function HeroSection() {
   });
 
   const scrollIndicatorOpacity = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
-  const scrollIndicatorY = useTransform(scrollYProgress, [0, 0.3], [0, 20]);
+  const scrollIndicatorY = useTransform(scrollYProgress, [0, 0.3], [0, 16]);
 
   return (
-    <section ref={sectionRef} className="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
+    <section ref={sectionRef} className="relative min-h-[82vh] md:min-h-[85vh] flex items-center justify-center overflow-hidden">
       {/* Aurora 背景 */}
       <AuroraBackground className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-b from-primary-50 via-white to-white dark:from-primary-900/20 dark:via-bg-dark dark:to-bg-dark" />
       </AuroraBackground>
+      <div className="absolute inset-0 opacity-60">
+        <CloudScene />
+      </div>
 
       {/* 装饰云层 — Framer Motion 视差 */}
       <div className="absolute inset-0 pointer-events-none">
@@ -123,13 +127,13 @@ export function HeroSection() {
       {/* 主内容 */}
       <motion.div
         className="relative z-10 text-center px-4 max-w-3xl mx-auto"
-        initial={reduced ? false : { opacity: 0, y: 30 }}
+        initial={reduced ? false : { opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
       >
         <motion.h1
-          className="text-editorial-xl mb-4"
-          initial={reduced ? false : { opacity: 0, y: 20 }}
+          className="text-editorial-xl mb-3 md:mb-4"
+          initial={reduced ? false : { opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1 }}
         >
@@ -140,8 +144,8 @@ export function HeroSection() {
         </motion.h1>
 
         <motion.p
-          className="text-xl md:text-2xl text-slate-500 dark:text-slate-400 h-9 font-display"
-          initial={reduced ? false : { opacity: 0, y: 20 }}
+          className="text-lg sm:text-xl md:text-2xl text-slate-500 dark:text-slate-400 min-h-[2.25rem] md:min-h-[2.75rem] font-display flex items-center justify-center"
+          initial={reduced ? false : { opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.25 }}
         >
@@ -149,21 +153,30 @@ export function HeroSection() {
         </motion.p>
 
         <motion.p
-          className="mt-6 text-sm text-slate-400 dark:text-slate-500 tracking-widest uppercase"
-          initial={reduced ? false : { opacity: 0, y: 20 }}
+          className="mt-4 md:mt-5 text-xs sm:text-sm text-slate-400 dark:text-slate-500 tracking-[0.2em] uppercase"
+          initial={reduced ? false : { opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
         >
           Tech · Efficiency · Life
         </motion.p>
+
+        <motion.p
+          className="mt-2 text-[11px] sm:text-xs text-slate-400/90 dark:text-slate-500/90 tracking-wide"
+          initial={reduced ? false : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.55 }}
+        >
+          移动鼠标或轻点云层，感受云与羊的柔和流动
+        </motion.p>
       </motion.div>
 
       {/* 滚动指示器 */}
       <motion.div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+        className="absolute bottom-5 md:bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5"
         style={{ opacity: scrollIndicatorOpacity, y: scrollIndicatorY }}
-        animate={reduced ? {} : { y: [0, 8, 0] }}
-        transition={reduced ? {} : { duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+        animate={reduced ? {} : { y: [0, 6, 0] }}
+        transition={reduced ? {} : { duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
       >
         <span className="text-xs text-slate-400 dark:text-slate-500 tracking-wider">SCROLL</span>
         <svg className="w-5 h-5 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -1,9 +1,8 @@
 import { Suspense, lazy, useState, useEffect } from 'react';
 
 function canRun3D(): boolean {
-  if (typeof navigator === 'undefined') return false;
-  // Low-end device check
-  if (navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4) return false;
+  if (typeof window === 'undefined') return false;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
   // WebGL check
   try {
     const canvas = document.createElement('canvas');

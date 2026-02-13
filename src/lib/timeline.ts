@@ -6,7 +6,7 @@ export interface TimelineNode {
   description: string | null;
   start_date: string;
   end_date: string | null;
-  type: 'career' | 'health' | 'learning' | 'family';
+  type: 'career' | 'health' | 'learning' | 'family' | 'reflection';
   impact: 'high' | 'medium' | 'low';
   phase: string | null;
   tags: string;

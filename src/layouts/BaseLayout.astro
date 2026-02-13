@@ -15,9 +15,10 @@ interface Props {
   image?: string;
   sidebar?: boolean;
   fullWidth?: boolean;
+  hideFooter?: boolean;
 }
 
-const { title, description, image, sidebar = true, fullWidth = false } = Astro.props;
+const { title, description, image, sidebar = true, fullWidth = false, hideFooter = false } = Astro.props;
 ---
 
 <Head title={title} description={description} image={image}>
@@ -45,7 +46,7 @@ const { title, description, image, sidebar = true, fullWidth = false } = Astro.p
       )}
     </main>
   )}
-  <FooterWrapper />
+  {!hideFooter && <FooterWrapper />}
   {!Astro.url.pathname.startsWith('/admin') && <BlogPet />}
   {!Astro.url.pathname.startsWith('/admin') && <AdminEntry />}
 </Head>

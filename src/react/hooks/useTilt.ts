@@ -16,9 +16,9 @@ export function useTilt<T extends HTMLElement>(
   const reduced = useReducedMotion();
 
   const {
-    max = 5,
+    max = 4,
     speed = 400,
-    scale = 1.01,
+    scale = 1.005,
   } = options;
 
   useEffect(() => {

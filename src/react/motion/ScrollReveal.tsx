@@ -18,9 +18,9 @@ interface ScrollRevealProps {
 export function ScrollReveal({
   children,
   className,
-  scale = [0.95, 1],
+  scale = [0.985, 1],
   opacity = [0, 1],
-  y = [40, 0],
+  y = [24, 0],
 }: ScrollRevealProps) {
   const ref = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();

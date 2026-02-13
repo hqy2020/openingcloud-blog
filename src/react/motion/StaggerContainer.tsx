@@ -24,7 +24,7 @@ const containerVariants: Variants = {
 export function StaggerContainer({
   children,
   className,
-  stagger = 0.1,
+  stagger = 0.08,
   delay = 0,
   once = true,
 }: StaggerContainerProps) {
@@ -75,7 +75,7 @@ export function StaggerItem({
   children,
   className,
   direction = 'up',
-  distance = 30,
+  distance = 20,
 }: StaggerItemProps) {
   const offsets: Record<string, { x: number; y: number }> = {
     up: { x: 0, y: distance },

@@ -1,0 +1,248 @@
+---
+export const prerender = false;
+import AdminLayout from '@/components/admin/AdminLayout.astro';
+---
+
+<AdminLayout title="社交图谱管理">
+  <div class="space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <h1 class="text-2xl font-bold">🌐 社交图谱管理</h1>
+      <div class="flex items-center gap-2">
+        <select id="stage-filter" class="border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 text-sm bg-white dark:bg-slate-800">
+          <option value="">全部阶段</option>
+          <option value="primary">小学</option>
+          <option value="middle">初中</option>
+          <option value="high">高中</option>
+          <option value="tongji">同济</option>
+          <option value="zju">浙大</option>
+          <option value="work">工作</option>
+        </select>
+        <button id="btn-add" class="px-4 py-2 bg-primary-500 text-white rounded-lg text-sm hover:bg-primary-600 transition-colors cursor-pointer">+ 新增</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 p-3 text-center">
+        <div class="text-xs text-gray-500">好友总数</div>
+        <div id="stat-total" class="text-xl font-bold mt-1">-</div>
+      </div>
+      <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 p-3 text-center">
+        <div class="text-xs text-gray-500">阶段覆盖</div>
+        <div id="stat-stage" class="text-xl font-bold mt-1">-</div>
+      </div>
+      <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 p-3 text-center">
+        <div class="text-xs text-gray-500">有主页链接</div>
+        <div id="stat-link" class="text-xl font-bold mt-1">-</div>
+      </div>
+      <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 p-3 text-center">
+        <div class="text-xs text-gray-500">有头像</div>
+        <div id="stat-avatar" class="text-xl font-bold mt-1">-</div>
+      </div>
+    </div>
+
+    <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 dark:bg-slate-900/50">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">阶段</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">姓名</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">公开称呼</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">一句话</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">链接</th>
+            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">操作</th>
+          </tr>
+        </thead>
+        <tbody id="social-table" class="divide-y divide-gray-200 dark:divide-gray-700">
+          <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">加载中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="social-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6">
+      <h3 id="modal-title" class="text-lg font-bold mb-4">新增好友</h3>
+      <form id="social-form" class="space-y-4">
+        <input type="hidden" id="form-id" />
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">阶段 *</label>
+            <select id="form-stage" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-900">
+              <option value="primary">小学</option>
+              <option value="middle">初中</option>
+              <option value="high">高中</option>
+              <option value="tongji">同济</option>
+              <option value="zju">浙大</option>
+              <option value="work">工作</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">平台</label>
+            <select id="form-platform" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-900">
+              <option value="other">other</option>
+              <option value="blog">blog</option>
+              <option value="github">github</option>
+              <option value="twitter">twitter</option>
+              <option value="weibo">weibo</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">姓名 *</label>
+            <input type="text" id="form-name" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-900" required />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">公开称呼 *</label>
+            <input type="text" id="form-public" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-900" placeholder="一位同窗" required />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">一句话</label>
+          <input type="text" id="form-bio" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-900" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">头像 URL</label>
+          <input type="url" id="form-avatar" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-900" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">主页链接</label>
+          <input type="url" id="form-link" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-900" />
+        </div>
+
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" id="btn-cancel" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 cursor-pointer">取消</button>
+          <button type="submit" class="px-4 py-2 bg-primary-500 text-white rounded-lg text-sm hover:bg-primary-600 cursor-pointer">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</AdminLayout>
+
+<script is:inline>
+(function() {
+  const table = document.getElementById('social-table');
+  const filter = document.getElementById('stage-filter');
+  const modal = document.getElementById('social-modal');
+  const form = document.getElementById('social-form');
+
+  const stageLabelMap = {
+    primary: '小学',
+    middle: '初中',
+    high: '高中',
+    tongji: '同济',
+    zju: '浙大',
+    work: '工作',
+  };
+
+  async function loadFriends() {
+    const params = new URLSearchParams();
+    if (filter.value) params.set('stage_id', filter.value);
+    const res = await fetch('/api/admin/social?' + params.toString());
+    const json = await res.json();
+    if (!json.ok) return;
+
+    const rows = json.data.friends;
+    renderTable(rows);
+    renderStats(rows);
+  }
+
+  function renderTable(rows) {
+    if (!rows.length) {
+      table.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">暂无数据</td></tr>';
+      return;
+    }
+
+    table.innerHTML = rows.map((row) => `
+      <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/40">
+        <td class="px-4 py-3">${stageLabelMap[row.stage_id] || row.stage_id}</td>
+        <td class="px-4 py-3 font-medium">${row.name}</td>
+        <td class="px-4 py-3">${row.public_label}</td>
+        <td class="px-4 py-3 text-gray-500 max-w-[250px] truncate">${row.bio || ''}</td>
+        <td class="px-4 py-3">${row.link ? '<a class="text-primary-500 hover:underline" href="' + row.link + '" target="_blank" rel="noopener">链接</a>' : '—'}</td>
+        <td class="px-4 py-3 text-right">
+          <button onclick="editFriend(${row.id})" class="text-primary-500 hover:text-primary-600 text-sm mr-2 cursor-pointer">编辑</button>
+          <button onclick="deleteFriend(${row.id})" class="text-red-500 hover:text-red-600 text-sm cursor-pointer">删除</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function renderStats(rows) {
+    const stageCount = new Set(rows.map((r) => r.stage_id)).size;
+    const linkCount = rows.filter((r) => !!r.link).length;
+    const avatarCount = rows.filter((r) => !!r.avatar).length;
+
+    document.getElementById('stat-total').textContent = String(rows.length);
+    document.getElementById('stat-stage').textContent = String(stageCount);
+    document.getElementById('stat-link').textContent = String(linkCount);
+    document.getElementById('stat-avatar').textContent = String(avatarCount);
+  }
+
+  function openModal(item) {
+    document.getElementById('modal-title').textContent = item ? '编辑好友' : '新增好友';
+    document.getElementById('form-id').value = item?.id || '';
+    document.getElementById('form-stage').value = item?.stage_id || 'tongji';
+    document.getElementById('form-platform').value = item?.platform || 'other';
+    document.getElementById('form-name').value = item?.name || '';
+    document.getElementById('form-public').value = item?.public_label || '';
+    document.getElementById('form-bio').value = item?.bio || '';
+    document.getElementById('form-avatar').value = item?.avatar || '';
+    document.getElementById('form-link').value = item?.link || '';
+    modal.classList.remove('hidden');
+  }
+
+  window.editFriend = async function(id) {
+    const res = await fetch('/api/admin/social/' + id);
+    const json = await res.json();
+    if (json.ok) openModal(json.data);
+  };
+
+  window.deleteFriend = async function(id) {
+    if (!confirm('确定删除这位好友吗？')) return;
+    await fetch('/api/admin/social/' + id, { method: 'DELETE' });
+    loadFriends();
+  };
+
+  document.getElementById('btn-add').addEventListener('click', () => openModal(null));
+  document.getElementById('btn-cancel').addEventListener('click', () => modal.classList.add('hidden'));
+  filter.addEventListener('change', loadFriends);
+
+  modal.addEventListener('click', (event) => {
+    if (event.target === modal) modal.classList.add('hidden');
+  });
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const id = document.getElementById('form-id').value;
+    const payload = {
+      stage_id: document.getElementById('form-stage').value,
+      platform: document.getElementById('form-platform').value,
+      name: document.getElementById('form-name').value.trim(),
+      public_label: document.getElementById('form-public').value.trim(),
+      bio: document.getElementById('form-bio').value.trim() || null,
+      avatar: document.getElementById('form-avatar').value.trim() || null,
+      link: document.getElementById('form-link').value.trim() || null,
+    };
+
+    const url = id ? '/api/admin/social/' + id : '/api/admin/social';
+    const method = id ? 'PUT' : 'POST';
+
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+
+    if (json.ok) {
+      modal.classList.add('hidden');
+      loadFriends();
+    } else {
+      alert(json.error?.message || '保存失败');
+    }
+  });
+
+  loadFriends();
+})();
+</script>

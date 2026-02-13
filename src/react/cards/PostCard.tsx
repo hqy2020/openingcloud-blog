@@ -21,7 +21,7 @@ const categoryLabels: Record<string, string> = {
 };
 
 export function PostCard({ title, description, date, category, tags = [], cover, slug }: PostCardProps) {
-  const tiltRef = useTilt<HTMLElement>({ max: 5, speed: 400, scale: 1.01 });
+  const tiltRef = useTilt<HTMLElement>({ max: 4, speed: 400, scale: 1.005 });
 
   const formattedDate = new Date(date).toLocaleDateString('zh-CN', {
     year: 'numeric',
@@ -32,7 +32,7 @@ export function PostCard({ title, description, date, category, tags = [], cover,
   return (
     <motion.article
       ref={tiltRef}
-      whileHover={{ y: -4 }}
+      whileHover={{ y: -2 }}
       transition={{ duration: 0.2 }}
     >
       <CardSpotlight className="overflow-hidden">
@@ -41,7 +41,7 @@ export function PostCard({ title, description, date, category, tags = [], cover,
             <img
               src={cover}
               alt={title}
-              className="w-full h-48 object-cover hover:scale-105 transition-transform duration-300"
+              className="w-full h-48 object-cover hover:scale-[1.03] transition-transform duration-300"
               loading="lazy"
             />
           </a>

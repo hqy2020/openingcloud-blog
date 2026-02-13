@@ -22,9 +22,10 @@ interface HorizontalTimelineProps {
 
 const typeConfig: Record<string, { icon: string; label: string; color: string; bg: string }> = {
   career:   { icon: '💼', label: '职业', color: 'border-primary-400', bg: 'bg-primary-50 dark:bg-primary-900/20' },
-  learning: { icon: '📚', label: '效率', color: 'border-grass-400', bg: 'bg-grass-50 dark:bg-grass-900/20' },
+  learning: { icon: '📚', label: '求学', color: 'border-grass-400', bg: 'bg-grass-50 dark:bg-grass-900/20' },
   health:   { icon: '💪', label: '健康', color: 'border-sun-400', bg: 'bg-sun-50 dark:bg-sun-900/20' },
   family:   { icon: '🏠', label: '家庭', color: 'border-primary-300', bg: 'bg-primary-50 dark:bg-primary-900/10' },
+  reflection: { icon: '🌧️', label: '沉淀', color: 'border-slate-400', bg: 'bg-slate-50 dark:bg-slate-800/70' },
 };
 
 export function HorizontalTimeline({ nodes }: HorizontalTimelineProps) {

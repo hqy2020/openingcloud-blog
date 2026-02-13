@@ -1,28 +1,66 @@
 ---
-/**
- * 首页 — 全宽沉浸式: Hero + BentoGrid + 生活指标 + 时间线预览
- */
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { HeroSection } from '@/react/sections/HeroSection';
-import BentoGridWrapper from '@/components/BentoGridWrapper.astro';
-import LifeIndicatorsWrapper from '@/components/LifeIndicatorsWrapper.astro';
-import TimelinePreview from '@/components/TimelinePreview.astro';
+import { HomePageExperience } from '@/react/sections/HomePageExperience';
+import { getCollection } from 'astro:content';
+
+const [journalPosts, techPosts, learningPosts, lifePosts] = await Promise.all([
+  getCollection('journal', ({ data }) => !data.draft),
+  getCollection('tech', ({ data }) => !data.draft),
+  getCollection('learning', ({ data }) => !data.draft),
+  getCollection('life', ({ data }) => !data.draft),
+]);
+
+const allPosts = [...journalPosts, ...techPosts, ...learningPosts, ...lifePosts];
+
+function countWords(raw: string) {
+  const plainText = raw
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/`[^`]*`/g, ' ')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/[#>*_\-\[\]()]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const cjkChars = (plainText.match(/[\u4e00-\u9fff]/g) || []).length;
+  const englishWords = plainText.replace(/[\u4e00-\u9fff]/g, ' ').split(/\s+/).filter(Boolean).length;
+  return cjkChars + englishWords;
+}
+
+const totalWords = allPosts.reduce((sum, post) => sum + countWords(post.body), 0);
+const tags = new Set<string>();
+for (const post of allPosts) {
+  for (const tag of post.data.tags || []) {
+    tags.add(tag);
+  }
+}
+
+const firstPublishedDate = allPosts.length
+  ? allPosts.reduce((min, post) => (post.data.date < min ? post.data.date : min), allPosts[0].data.date)
+  : new Date();
+
+const msPerDay = 1000 * 60 * 60 * 24;
+const activeDays = Math.max(1, Math.floor((Date.now() - firstPublishedDate.getTime()) / msPerDay));
+
+const stats = {
+  totalPosts: allPosts.length,
+  totalWords,
+  totalTags: tags.size,
+  activeDays,
+  byCategory: {
+    tech: techPosts.length,
+    learning: learningPosts.length,
+    life: lifePosts.length,
+  },
+};
 ---
 
-<BaseLayout title="首页" sidebar={false} fullWidth={true}>
-  <!-- Hero -->
-  <HeroSection client:load />
-
-  <!-- Bento Grid -->
-  <BentoGridWrapper />
-
-  <!-- 生活指标 -->
-  <div class="max-w-6xl mx-auto px-4 py-8">
-    <LifeIndicatorsWrapper />
-  </div>
-
-  <!-- 时间线预览 -->
-  <div class="max-w-6xl mx-auto px-4 py-8">
-    <TimelinePreview />
-  </div>
+<BaseLayout
+  title="首页"
+  description="openingClouds：技术、效率、生活的云海穿越式博客首页"
+  image="/media/og-placeholder.svg"
+  sidebar={false}
+  fullWidth={true}
+  hideFooter={true}
+>
+  <HomePageExperience client:load stats={stats} />
 </BaseLayout>

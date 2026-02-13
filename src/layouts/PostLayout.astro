@@ -20,10 +20,17 @@ interface Props {
 const { title, description, date, category, tags = [], cover } = Astro.props;
 
 const categoryLabels: Record<string, string> = {
-  journal: '📓 日记',
-  tech: '💻 技术',
-  learning: '📚 效率',
-  life: '📷 生活',
+  journal: '日记',
+  tech: '技术',
+  learning: '效率',
+  life: '生活',
+};
+
+const categoryPillMap: Record<string, string> = {
+  journal: 'bg-primary-50 text-primary-600 dark:bg-primary-900/25 dark:text-primary-200',
+  tech: 'bg-sage-50 text-sage-700 dark:bg-sage-900/25 dark:text-sage-200',
+  learning: 'bg-amber-50 text-amber-700 dark:bg-amber-900/25 dark:text-amber-200',
+  life: 'bg-mauve-50 text-mauve-700 dark:bg-mauve-900/25 dark:text-mauve-200',
 };
 
 const formattedDate = new Date(date).toLocaleDateString('zh-CN', {
@@ -63,7 +70,10 @@ const formattedDate = new Date(date).toLocaleDateString('zh-CN', {
         <div class="flex items-center gap-3 mb-4">
           <a
             href={`/${category}/`}
-            class="text-sm font-medium px-3 py-1 rounded-full bg-grass-50 text-grass-600 dark:bg-grass-700/20 dark:text-grass-300 hover:bg-grass-100 dark:hover:bg-grass-700/30 transition-colors"
+            class:list={[
+              'text-sm font-medium px-3 py-1 rounded-full transition-colors',
+              categoryPillMap[category] || categoryPillMap.journal,
+            ]}
           >
             {categoryLabels[category] || category}
           </a>

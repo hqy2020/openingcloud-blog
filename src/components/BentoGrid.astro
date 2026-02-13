@@ -1,0 +1,145 @@
+---
+/**
+ * BentoGrid — 非对称便当盒网格，混合分类磁贴 + 最新文章
+ * 替代 ArcCategories + FeaturedArticles
+ */
+import { getCollection } from 'astro:content';
+
+const allCollections = await Promise.all([
+  getCollection('journal', ({ data }) => !data.draft),
+  getCollection('tech', ({ data }) => !data.draft),
+  getCollection('learning', ({ data }) => !data.draft),
+  getCollection('life', ({ data }) => !data.draft),
+]);
+
+const allPosts = allCollections.flat()
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 6);
+
+const categories = [
+  { key: 'journal', label: '日记', icon: '📓', desc: '日记 & 计划复盘', gradient: 'from-primary-100 to-primary-50 dark:from-primary-900/30 dark:to-slate-800', count: allCollections[0].length },
+  { key: 'tech', label: '技术', icon: '💻', desc: 'Java · AI · Agent', gradient: 'from-grass-100 to-grass-50 dark:from-grass-700/20 dark:to-slate-800', count: allCollections[1].length },
+  { key: 'learning', label: '效率', icon: '📚', desc: '效率方法 & 认知', gradient: 'from-sun-100 to-sun-50 dark:from-sun-600/20 dark:to-slate-800', count: allCollections[2].length },
+  { key: 'life', label: '生活', icon: '📷', desc: '照片 & 随记', gradient: 'from-purple-100 to-primary-50 dark:from-purple-900/20 dark:to-slate-800', count: allCollections[3].length },
+];
+
+const featured = allPosts[0];
+const restPosts = allPosts.slice(1, 5);
+
+const categoryLabels: Record<string, string> = {
+  journal: '📓 日记', tech: '💻 技术', learning: '📚 效率', life: '📷 生活',
+};
+
+function formatDate(d: Date) {
+  return new Date(d).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+}
+---
+
+<section class="max-w-6xl mx-auto px-4 py-12">
+  <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 font-display mb-8" data-gsap-fade>
+    探索内容
+  </h2>
+
+  <!-- Bento Grid -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5" data-gsap-stagger id="bento-grid">
+
+    <!-- 首篇大卡: 2x2 -->
+    {featured && (
+      <a
+        href={`/posts/${featured.id}/`}
+        class="col-span-2 row-span-2 group relative rounded-2xl overflow-hidden glow-border bg-white dark:bg-slate-800 min-h-[280px] md:min-h-[360px] flex flex-col justify-end"
+        data-bento-tilt
+        style="view-transition-name: post-featured"
+      >
+        {featured.data.cover ? (
+          <img
+            src={featured.data.cover}
+            alt={featured.data.title}
+            class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+            loading="lazy"
+          />
+        ) : (
+          <div class="absolute inset-0 bg-gradient-to-br from-primary-400 to-primary-600"></div>
+        )}
+        <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+        <div class="relative z-10 p-6">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-white/20 text-white backdrop-blur-sm">
+              {categoryLabels[featured.data.category] || featured.data.category}
+            </span>
+            <time class="text-xs text-white/70">{formatDate(featured.data.date)}</time>
+          </div>
+          <h3 class="text-xl md:text-2xl font-bold text-white leading-tight line-clamp-2 group-hover:text-primary-200 transition-colors">
+            {featured.data.title}
+          </h3>
+          {featured.data.description && (
+            <p class="text-sm text-white/70 mt-2 line-clamp-2 hidden md:block">{featured.data.description}</p>
+          )}
+        </div>
+      </a>
+    )}
+
+    <!-- 分类磁贴 (4个各占1格) -->
+    {categories.map(cat => (
+      <a
+        href={`/${cat.key}/`}
+        class:list={[
+          'group rounded-2xl p-4 md:p-5 bg-gradient-to-br glow-border transition-all duration-300 hover:-translate-y-0.5 flex flex-col justify-between min-h-[120px]',
+          cat.gradient,
+        ]}
+        data-bento-tilt
+      >
+        <span class="text-2xl">{cat.icon}</span>
+        <div>
+          <h3 class="font-bold text-slate-800 dark:text-slate-100 text-lg">{cat.label}</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{cat.desc}</p>
+          <span class="inline-block mt-2 text-xs bg-white/60 dark:bg-slate-700/60 rounded-full px-2 py-0.5 text-slate-500 dark:text-slate-400">
+            {cat.count} 篇
+          </span>
+        </div>
+      </a>
+    ))}
+
+    <!-- 更多文章卡片（横跨底部 4 格） -->
+    {restPosts.map(post => (
+      <a
+        href={`/posts/${post.id}/`}
+        class="group rounded-2xl p-4 bg-white dark:bg-slate-800 glow-border transition-all duration-300 hover:-translate-y-0.5 flex flex-col justify-between min-h-[120px]"
+        data-bento-tilt
+      >
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-grass-50 text-grass-600 dark:bg-grass-700/20 dark:text-grass-300">
+            {categoryLabels[post.data.category] || post.data.category}
+          </span>
+          <time class="text-xs text-slate-400">{formatDate(post.data.date)}</time>
+        </div>
+        <h3 class="font-semibold text-slate-800 dark:text-slate-100 group-hover:text-primary-500 transition-colors line-clamp-2 text-sm">
+          {post.data.title}
+        </h3>
+      </a>
+    ))}
+  </div>
+</section>
+
+<script>
+  import VanillaTilt from 'vanilla-tilt';
+
+  function initBentoTilt() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (window.matchMedia('(hover: none)').matches) return; // 触屏不启用
+
+    const elements = document.querySelectorAll('[data-bento-tilt]') as NodeListOf<HTMLElement>;
+    elements.forEach(el => {
+      VanillaTilt.init(el, {
+        max: 5,
+        speed: 400,
+        glare: true,
+        'max-glare': 0.08,
+        scale: 1.01,
+      });
+    });
+  }
+
+  initBentoTilt();
+  document.addEventListener('astro:after-swap', initBentoTilt);
+</script>

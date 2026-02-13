@@ -18,9 +18,9 @@ export function AuroraBackground({ children, className }: AuroraBackgroundProps)
             background: 'linear-gradient(135deg, var(--color-primary-300), var(--color-primary-500))',
           }}
           animate={{
-            x: [0, 60, -30, 0],
-            y: [0, -40, 20, 0],
-            scale: [1, 1.1, 0.95, 1],
+            x: [0, 45, -20, 0],
+            y: [0, -28, 14, 0],
+            scale: [1, 1.04, 0.98, 1],
           }}
           transition={{
             duration: 20,
@@ -34,9 +34,9 @@ export function AuroraBackground({ children, className }: AuroraBackgroundProps)
             background: 'linear-gradient(225deg, rgba(139, 92, 246, 0.5), var(--color-primary-400))',
           }}
           animate={{
-            x: [0, -50, 30, 0],
-            y: [0, 30, -20, 0],
-            scale: [1, 0.9, 1.1, 1],
+            x: [0, -35, 20, 0],
+            y: [0, 20, -14, 0],
+            scale: [1, 0.96, 1.03, 1],
           }}
           transition={{
             duration: 25,
@@ -50,8 +50,8 @@ export function AuroraBackground({ children, className }: AuroraBackgroundProps)
             background: 'linear-gradient(180deg, var(--color-sun-300), var(--color-primary-300))',
           }}
           animate={{
-            x: [0, 40, -20, 0],
-            y: [0, -30, 40, 0],
+            x: [0, 28, -14, 0],
+            y: [0, -22, 30, 0],
           }}
           transition={{
             duration: 18,

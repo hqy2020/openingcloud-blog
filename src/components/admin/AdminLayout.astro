@@ -10,6 +10,12 @@ const currentPath = Astro.url.pathname;
 
 const navGroups = [
   {
+    label: '总览',
+    items: [
+      { href: '/admin', label: '📊 仪表盘' },
+    ],
+  },
+  {
     label: '内容管理',
     items: [
       { href: '/admin/posts', label: '📝 文章管理' },
@@ -18,10 +24,13 @@ const navGroups = [
     ],
   },
   {
-    label: '数据管理',
+    label: '首页模块',
     items: [
+      { href: '/admin/travel', label: '🗺️ 旅行足迹' },
+      { href: '/admin/social', label: '🌐 社交图谱' },
+      { href: '/admin/highlights', label: '⭐ 高光时刻' },
       { href: '/admin/diary', label: '📊 日记数据' },
-      { href: '/admin/timeline', label: '🗺️ 人生路线' },
+      { href: '/admin/timeline', label: '🛤️ 人生路径' },
     ],
   },
 ];
@@ -55,7 +64,7 @@ const navGroups = [
                     href={href}
                     class:list={[
                       'text-sm px-2 py-1 rounded transition-colors',
-                      currentPath.startsWith(href)
+                      (href === '/admin' ? currentPath === '/admin' : currentPath.startsWith(href))
                         ? 'text-primary-500 font-medium bg-primary-50 dark:bg-primary-900/20'
                         : 'text-gray-600 dark:text-gray-400 hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800',
                     ]}

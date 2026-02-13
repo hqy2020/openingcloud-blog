@@ -20,7 +20,7 @@ export function FadeIn({
   delay = 0,
   duration = 0.5,
   direction = 'up',
-  distance = 24,
+  distance = 18,
   once = true,
   as = 'div',
 }: FadeInProps) {
