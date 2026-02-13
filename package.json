@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
-    "build": "node scripts/sync-d1-posts.mjs && astro build",
+    "build": "node scripts/sync-d1-posts.mjs && astro build && printf \"_worker.js\\n\" > dist/.assetsignore",
     "preview": "astro preview",
     "sync": "node scripts/obsidian-sync.js",
     "astro": "astro"
