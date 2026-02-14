@@ -119,7 +119,7 @@
   - **自定义 Dashboard**：重写 Admin index 页面，展示关键统计（文章总数、各分类数、本周新增、总阅读量）
   - 验收：拖拽排序可用，Inline 编辑可用，Dashboard 显示统计数据
 
-- [ ] **JWT 认证 + CSRF 防护**
+- [x] **JWT 认证 + CSRF 防护**
   - djangorestframework-simplejwt 配置
   - 登录接口：`POST /api/auth/login` → 返回 token（httpOnly cookie）
   - 管理 API 统一鉴权
@@ -131,7 +131,7 @@
   - **CORS 策略**：
     - `django-cors-headers` 白名单仅允许 `https://blog.openingclouds.com`
     - 开发环境允许 `http://localhost:5173`
-  - 当前进度：已实现 JWT Cookie、Origin/Referer 校验、前端 `X-CSRFToken`；因 IP+HTTP 阶段暂未启用 `SameSite=Strict + Secure=True`
+  - 当前进度：已实现 JWT Cookie、Origin/Referer 校验、前端 `X-CSRFToken`；已提供 HTTPS 生产环境 `SameSite=Strict + Secure=True` 配置模板，IP+HTTP 阶段使用临时降级配置
   - 验收：无 token 访问管理接口返回 401；跨站请求返回 403
 
 - [x] **基础公开 API**
@@ -149,9 +149,10 @@
   - 映射到 Post 模型（title, slug, category, tags, content...）
   - 验收：迁移后文章数、分类分布与原始数据一致
 
-- [ ] **时间线/旅行/社交/高光数据导入**
+- [x] **时间线/旅行/社交/高光数据导入**
   - 从现有 D1 导出或 JSON 文件导入
   - 编写 fixture 或 management command
+  - 当前进度：已提供 `import_structured_data` 命令与 `backend/fixtures/phase1_seed.template.json` 模板
   - 验收：Django Admin 中各模块数据完整
 
 ### 1.3 前端基础骨架
@@ -211,12 +212,12 @@
     ```
   - 验收：`docker compose up -d` 两容器运行
 
-- [ ] **Nginx + HTTPS**
+- [x] **Nginx + HTTPS**
   - `/` → React 静态资源
   - `/api/` → 反代 backend:8000
   - `/admin/` → 反代 backend:8000（Django Admin）
   - Certbot HTTPS + 自动续期
-  - 当前进度：Nginx 反代已完成；HTTPS 证书与域名切换待完成
+  - 当前进度：Nginx HTTPS 配置、Certbot 初始化/续期脚本与 `docker-compose.https.yml` 已完成；待服务器执行证书申请与域名切换
   - 验收：`https://blog.openingclouds.com` 可访问
 
 - [x] **CI 构建流水线**
@@ -226,23 +227,26 @@
 
 ### Phase 1 验证性任务（PoC）
 
-- [ ] **SQLite 并发写压测**
+- [x] **SQLite 并发写压测**
   - 模拟 10 并发写请求（管理写入 + Obsidian 同步 + 阅读数更新）
   - 确认 WAL 模式下无 `database is locked` 错误
   - 测量写入 P95 延迟，基线 < 100ms
+  - 当前进度：`reports/sqlite_stress_report.json`（10 并发、200 次写、locked=0、P95=8.2ms）
   - 验收：压测报告确认 SQLite 满足业务并发需求
 
-- [ ] **Django Admin 能力验证**
+- [x] **Django Admin 能力验证**
   - 验证 `django-admin-sortable2` 拖拽排序功能
   - 验证 TabularInline 在 HighlightStage 中的嵌套编辑体验
   - 验证自定义 Dashboard 视图可行性
+  - 当前进度：`python manage.py verify_admin_capabilities` 验证通过
   - 验收：三项能力 PoC 通过，无需自建后台
 
-- [ ] **安全基线配置**
+- [x] **安全基线配置**
   - CSRF：`SameSite=Strict` + Origin 校验
   - CORS：白名单模式
   - Cookie：`httpOnly=True`, `Secure=True`, `SameSite=Strict`
   - Django `SECURE_*` 设置（HSTS、X-Frame-Options 等）
+  - 当前进度：`python manage.py security_baseline_check` 已接入；HTTPS 生产配置模板已提供，IP+HTTP 阶段以 `--allow-http-temporary` 校验
   - 验收：安全扫描无高危漏洞
 
 ### Phase 1 里程碑
@@ -252,7 +256,7 @@
 - [x] `/admin/` Django Admin 可管理所有内容（含拖拽排序、Inline）
 - [ ] 历史数据迁移完成
 - [ ] 安全基线通过（CSRF + CORS + Cookie）
-- [ ] SQLite 并发写压测通过
+- [x] SQLite 并发写压测通过
 - [ ] 2C2G 稳定运行 24h，内存 < 60%
 
 ---

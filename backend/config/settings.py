@@ -8,10 +8,26 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+def parse_csv_env(name: str, default: str) -> list[str]:
+    value = os.getenv(name, default)
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def bool_env(name: str, default: bool) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.lower() in {"1", "true", "yes", "on"}
+
+
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "change-me-in-production-at-least-32-bytes-long")
 DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
 
-ALLOWED_HOSTS = [h.strip() for h in os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost,47.99.42.71").split(",") if h.strip()]
+ALLOWED_HOSTS = parse_csv_env(
+    "DJANGO_ALLOWED_HOSTS",
+    "127.0.0.1,localhost,testserver,47.99.42.71,blog.openingclouds.com",
+)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -63,6 +79,9 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": DB_PATH,
+        "OPTIONS": {
+            "timeout": int(os.getenv("SQLITE_TIMEOUT", "20")),
+        },
     }
 }
 
@@ -107,30 +126,19 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
-CORS_ALLOWED_ORIGINS = [
-    origin.strip()
-    for origin in os.getenv(
-        "DJANGO_CORS_ALLOWED_ORIGINS",
-        "http://localhost:5173,http://127.0.0.1:5173,http://47.99.42.71",
-    ).split(",")
-    if origin.strip()
-]
+CORS_DEFAULT = "http://localhost:5173,http://127.0.0.1:5173,http://47.99.42.71" if DEBUG else "https://blog.openingclouds.com"
+CSRF_DEFAULT = "http://localhost:5173,http://127.0.0.1:5173,http://47.99.42.71" if DEBUG else "https://blog.openingclouds.com"
+
+CORS_ALLOWED_ORIGINS = parse_csv_env("DJANGO_CORS_ALLOWED_ORIGINS", CORS_DEFAULT)
 CORS_ALLOW_CREDENTIALS = True
 
-CSRF_TRUSTED_ORIGINS = [
-    origin.strip()
-    for origin in os.getenv(
-        "DJANGO_CSRF_TRUSTED_ORIGINS",
-        "http://localhost:5173,http://127.0.0.1:5173,http://47.99.42.71",
-    ).split(",")
-    if origin.strip()
-]
+CSRF_TRUSTED_ORIGINS = parse_csv_env("DJANGO_CSRF_TRUSTED_ORIGINS", CSRF_DEFAULT)
 
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = False
 
-COOKIE_SECURE = os.getenv("COOKIE_SECURE", "0") == "1"
-COOKIE_SAMESITE = os.getenv("COOKIE_SAMESITE", "Lax")
+COOKIE_SECURE = bool_env("COOKIE_SECURE", not DEBUG)
+COOKIE_SAMESITE = os.getenv("COOKIE_SAMESITE", "Lax" if DEBUG else "Strict")
 
 SESSION_COOKIE_SECURE = COOKIE_SECURE
 SESSION_COOKIE_SAMESITE = COOKIE_SAMESITE
@@ -140,12 +148,14 @@ CSRF_COOKIE_SAMESITE = COOKIE_SAMESITE
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
+SECURE_REFERRER_POLICY = "same-origin"
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-    SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "1") == "1"
+    SECURE_SSL_REDIRECT = bool_env("SECURE_SSL_REDIRECT", True)
 
 LOGIN_COOKIE_NAME = os.getenv("LOGIN_COOKIE_NAME", "oc_access_token")
 REFRESH_COOKIE_NAME = os.getenv("REFRESH_COOKIE_NAME", "oc_refresh_token")

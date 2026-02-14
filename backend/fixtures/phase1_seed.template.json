@@ -1,0 +1,51 @@
+{
+  "timeline_nodes": [
+    {
+      "title": "大学毕业",
+      "description": "完成本科学业并进入软件行业",
+      "start_date": "2020-07-01",
+      "type": "career",
+      "impact": "high",
+      "phase": "起步期",
+      "tags": ["career", "graduation"],
+      "sort_order": 1
+    }
+  ],
+  "travel_places": [
+    {
+      "province": "浙江",
+      "city": "杭州",
+      "notes": "第一次独立旅行",
+      "visited_at": "2021-05-02",
+      "latitude": 30.2741,
+      "longitude": 120.1551,
+      "sort_order": 1
+    }
+  ],
+  "social_friends": [
+    {
+      "name": "张三",
+      "public_label": "技术伙伴A",
+      "relation": "同事",
+      "is_public": true,
+      "sort_order": 1
+    }
+  ],
+  "highlight_stages": [
+    {
+      "title": "职业早期",
+      "description": "打基础阶段",
+      "start_date": "2020-01-01",
+      "end_date": "2022-12-31",
+      "sort_order": 1,
+      "items": [
+        {
+          "title": "上线第一个生产系统",
+          "description": "负责核心 API 模块",
+          "achieved_at": "2021-08-15",
+          "sort_order": 1
+        }
+      ]
+    }
+  ]
+}
