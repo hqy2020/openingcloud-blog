@@ -27,6 +27,7 @@
       "name": "张三",
       "public_label": "技术伙伴A",
       "relation": "同事",
+      "stage_key": "career",
       "is_public": true,
       "sort_order": 1
     }

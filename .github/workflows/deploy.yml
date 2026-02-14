@@ -54,6 +54,17 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Verify prerender artifacts
+        run: |
+          test -f dist/index.html
+          test -f dist/tech/index.html
+          test -f dist/learning/index.html
+          test -f dist/life/index.html
+          grep -q "openingClouds" dist/index.html
+          grep -q "技术" dist/tech/index.html
+          grep -q "效率" dist/learning/index.html
+          grep -q "生活" dist/life/index.html
+
       - name: Upload dist
         uses: actions/upload-artifact@v4
         with:

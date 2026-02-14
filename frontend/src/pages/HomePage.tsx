@@ -1,39 +1,40 @@
-import { Link } from "react-router-dom";
-import { fetchHealth } from "../api/posts";
+import { Helmet } from "react-helmet-async";
+import { fetchHome } from "../api/home";
+import { ContactSection } from "../components/home/ContactSection";
+import { HeroSection } from "../components/home/HeroSection";
+import { HighlightsSection } from "../components/home/HighlightsSection";
+import { SocialGraphSection } from "../components/home/SocialGraphSection";
+import { StatsSection } from "../components/home/StatsSection";
+import { TimelineSection } from "../components/home/TimelineSection";
+import { TravelSection } from "../components/home/TravelSection";
 import { useAsync } from "../hooks/useAsync";
+import { fallbackHomePayload } from "../data/fallback";
 
 export function HomePage() {
-  const { data, loading, error } = useAsync(fetchHealth, []);
+  const { data, loading, error } = useAsync(fetchHome, []);
+  const payload = data ?? fallbackHomePayload;
 
   return (
-    <section className="space-y-6">
-      <div className="rounded-2xl bg-gradient-to-r from-indigo-700 to-sky-600 px-6 py-10 text-white shadow-xl">
-        <h1 className="text-4xl font-bold tracking-tight">openingClouds</h1>
-        <p className="mt-3 text-lg text-indigo-50">Tech · Efficiency · Life</p>
-      </div>
+    <section className="space-y-12">
+      <Helmet>
+        <title>openingClouds | Tech · Efficiency · Life</title>
+        <meta content="在云层之上，记录技术、效率与生活。" name="description" />
+        <meta content="openingClouds" property="og:title" />
+        <meta content="在云层之上，记录技术、效率与生活。" property="og:description" />
+        <meta content="/og-cloudscape-card.png" property="og:image" />
+        <link href="https://blog.openingclouds.com/" rel="canonical" />
+      </Helmet>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-5">
-        <h2 className="mb-2 text-lg font-semibold">后端健康检查</h2>
-        {loading && <p className="text-slate-500">加载中...</p>}
-        {error && <p className="text-rose-600">{error}</p>}
-        {data && (
-          <p className="text-slate-700">
-            {data.service} / {data.status} / {new Date(data.time).toLocaleString()}
-          </p>
-        )}
-      </div>
+      {loading ? <p className="text-sm text-slate-500">首页数据加载中...</p> : null}
+      {!loading && error ? <p className="text-sm text-amber-700">实时数据暂不可用，已展示静态内容。</p> : null}
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Link className="rounded-xl border border-slate-200 bg-white p-5 hover:border-indigo-300" to="/tech">
-          技术文章
-        </Link>
-        <Link className="rounded-xl border border-slate-200 bg-white p-5 hover:border-indigo-300" to="/learning">
-          效率文章
-        </Link>
-        <Link className="rounded-xl border border-slate-200 bg-white p-5 hover:border-indigo-300" to="/life">
-          生活文章
-        </Link>
-      </div>
+      <HeroSection hero={payload.hero} />
+      <TimelineSection nodes={payload.timeline} />
+      <HighlightsSection stages={payload.highlights} />
+      <TravelSection travel={payload.travel} />
+      <SocialGraphSection links={payload.social_graph.links} nodes={payload.social_graph.nodes} />
+      <StatsSection stats={payload.stats} />
+      <ContactSection contact={payload.contact} />
     </section>
   );
 }

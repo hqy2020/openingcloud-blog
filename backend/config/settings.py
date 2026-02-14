@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
+    "django.contrib.sitemaps",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
@@ -161,6 +162,9 @@ LOGIN_COOKIE_NAME = os.getenv("LOGIN_COOKIE_NAME", "oc_access_token")
 REFRESH_COOKIE_NAME = os.getenv("REFRESH_COOKIE_NAME", "oc_refresh_token")
 COOKIE_DOMAIN = os.getenv("COOKIE_DOMAIN")
 ALLOWED_WRITE_ORIGINS = set(CORS_ALLOWED_ORIGINS)
+
+PUBLIC_CONTACT_EMAIL = os.getenv("PUBLIC_CONTACT_EMAIL", "openingclouds@outlook.com")
+PUBLIC_GITHUB_URL = os.getenv("PUBLIC_GITHUB_URL", "https://github.com/hqy2020/openingcloud-blog")
 
 CACHES = {
     "default": {

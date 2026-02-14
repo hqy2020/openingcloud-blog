@@ -99,11 +99,17 @@ class Command(BaseCommand):
 
             social_count = 0
             for index, friend in enumerate(social_friends):
+                stage_key = friend.get("stage_key", SocialFriend.StageKey.CAREER)
+                valid_stage_keys = {choice[0] for choice in SocialFriend.StageKey.choices}
+                if stage_key not in valid_stage_keys:
+                    stage_key = SocialFriend.StageKey.CAREER
+
                 SocialFriend.objects.update_or_create(
                     public_label=friend["public_label"],
                     defaults={
                         "name": friend.get("name", friend["public_label"]),
                         "relation": friend.get("relation", ""),
+                        "stage_key": stage_key,
                         "avatar": friend.get("avatar", ""),
                         "profile_url": friend.get("profile_url", ""),
                         "is_public": bool(friend.get("is_public", True)),

@@ -4,7 +4,7 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.core.cache import cache
-from django.db.models import F
+from django.db.models import F, Sum
 from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -12,9 +12,18 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import Post, PostView
+from .models import HighlightStage, Post, PostView, SocialFriend, TimelineNode, TravelPlace
 from .permissions import IsStaffUser
-from .serializers import LoginSerializer, PostDetailSerializer, PostListSerializer
+from .serializers import (
+    HighlightStagePublicSerializer,
+    HomeAggregateSerializer,
+    LoginSerializer,
+    PostDetailSerializer,
+    PostListSerializer,
+    SocialGraphPublicSerializer,
+    TimelineNodePublicSerializer,
+    TravelProvinceSerializer,
+)
 
 
 def api_ok(data, status_code=status.HTTP_200_OK):
@@ -43,7 +52,7 @@ class PostListView(generics.ListAPIView):
     permission_classes = [AllowAny]
 
     def get_queryset(self):
-        queryset = Post.objects.filter(draft=False).order_by("-created_at")
+        queryset = Post.objects.filter(draft=False).select_related("view_record").order_by("-created_at")
         category = self.request.query_params.get("category")
         tag = self.request.query_params.get("tag")
 
@@ -66,7 +75,7 @@ class PostDetailView(generics.RetrieveAPIView):
     lookup_field = "slug"
 
     def get_queryset(self):
-        return Post.objects.filter(draft=False)
+        return Post.objects.filter(draft=False).select_related("view_record")
 
     def retrieve(self, request, *args, **kwargs):
         response = super().retrieve(request, *args, **kwargs)
@@ -162,3 +171,173 @@ class AdminPingView(APIView):
 
     def get(self, request):
         return api_ok({"message": "admin access granted", "username": request.user.username})
+
+
+def _travel_payload() -> list[dict]:
+    rows = TravelPlace.objects.all().order_by("sort_order", "province", "city")
+    grouped: dict[str, dict] = {}
+    for row in rows:
+        if row.province not in grouped:
+            grouped[row.province] = {"province": row.province, "count": 0, "cities": []}
+        grouped[row.province]["cities"].append(
+            {
+                "city": row.city,
+                "notes": row.notes,
+                "visited_at": row.visited_at,
+                "latitude": row.latitude,
+                "longitude": row.longitude,
+                "cover": row.cover,
+                "sort_order": row.sort_order,
+            }
+        )
+        grouped[row.province]["count"] += 1
+
+    return [grouped[province] for province in sorted(grouped.keys())]
+
+
+def _social_graph_payload() -> dict:
+    stage_meta = {
+        SocialFriend.StageKey.PRIMARY: ("小学", 10),
+        SocialFriend.StageKey.MIDDLE: ("初中", 20),
+        SocialFriend.StageKey.HIGH: ("高中", 30),
+        SocialFriend.StageKey.TONGJI: ("同济", 40),
+        SocialFriend.StageKey.ZJU: ("浙大", 50),
+        SocialFriend.StageKey.CAREER: ("工作", 60),
+        SocialFriend.StageKey.FAMILY: ("家庭", 70),
+    }
+    stage_keys = list(stage_meta.keys())
+
+    nodes: list[dict] = []
+    links: list[dict] = []
+
+    for key in stage_keys:
+        label, order = stage_meta[key]
+        nodes.append(
+            {
+                "id": f"stage-{key}",
+                "type": "stage",
+                "label": label,
+                "stage_key": key,
+                "order": order,
+            }
+        )
+
+    friends = SocialFriend.objects.filter(is_public=True).order_by("sort_order", "id")
+    for friend in friends:
+        node_id = f"friend-{friend.id}"
+        stage_id = f"stage-{friend.stage_key}"
+        nodes.append(
+            {
+                "id": node_id,
+                "type": "friend",
+                "label": friend.public_label,
+                "stage_key": friend.stage_key,
+                "order": 1000 + friend.sort_order,
+            }
+        )
+        links.append({"source": stage_id, "target": node_id})
+
+    return {"nodes": nodes, "links": links}
+
+
+def _home_stats_payload() -> dict:
+    posts = Post.objects.all()
+    published_posts = posts.filter(draft=False)
+    tags: set[str] = set()
+    for row in published_posts.values_list("tags", flat=True):
+        if isinstance(row, list):
+            tags.update(str(item) for item in row if item)
+
+    views_total = PostView.objects.aggregate(total=Sum("views"))["total"] or 0
+
+    stages = HighlightStage.objects.prefetch_related("items")
+
+    return {
+        "posts_total": posts.count(),
+        "published_posts_total": published_posts.count(),
+        "timeline_total": TimelineNode.objects.count(),
+        "travel_total": TravelPlace.objects.count(),
+        "social_total": SocialFriend.objects.filter(is_public=True).count(),
+        "highlight_stages_total": stages.count(),
+        "highlight_items_total": sum(len(stage.items.all()) for stage in stages),
+        "tags_total": len(tags),
+        "views_total": int(views_total),
+    }
+
+
+def _home_payload() -> dict:
+    timeline = TimelineNode.objects.all().order_by("sort_order", "start_date")
+    highlights = HighlightStage.objects.prefetch_related("items").order_by("sort_order", "start_date", "id")
+    travel = _travel_payload()
+    social_graph = _social_graph_payload()
+
+    email = getattr(settings, "PUBLIC_CONTACT_EMAIL", "openingclouds@outlook.com")
+    github = getattr(settings, "PUBLIC_GITHUB_URL", "https://github.com/hqy2020/openingcloud-blog")
+
+    return {
+        "hero": {
+            "title": "openingClouds",
+            "subtitle": "Tech · Efficiency · Life",
+            "slogans": [
+                "用代码丈量世界的边界",
+                "记录即存在，分享即生长",
+                "每一次优化都是向自由迈进",
+                "在云端看自己的脚印",
+                "技术是手段，思考是目的",
+                "把日常过成实验，把生活活成作品",
+            ],
+            "fallback_image": "/media/hero/hero-fallback.png",
+            "fallback_video": "/media/hero/hero-fallback.mp4",
+        },
+        "timeline": TimelineNodePublicSerializer(timeline, many=True).data,
+        "highlights": HighlightStagePublicSerializer(highlights, many=True).data,
+        "travel": TravelProvinceSerializer(travel, many=True).data,
+        "social_graph": SocialGraphPublicSerializer(social_graph).data,
+        "stats": _home_stats_payload(),
+        "contact": {
+            "email": email,
+            "github": github,
+        },
+    }
+
+
+class TimelineView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        queryset = TimelineNode.objects.all().order_by("sort_order", "start_date")
+        payload = TimelineNodePublicSerializer(queryset, many=True).data
+        return api_ok(payload)
+
+
+class HighlightsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        queryset = HighlightStage.objects.prefetch_related("items").order_by("sort_order", "start_date", "id")
+        payload = HighlightStagePublicSerializer(queryset, many=True).data
+        return api_ok(payload)
+
+
+class TravelView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        payload = TravelProvinceSerializer(_travel_payload(), many=True).data
+        return api_ok(payload)
+
+
+class SocialGraphView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        payload = SocialGraphPublicSerializer(_social_graph_payload()).data
+        return api_ok(payload)
+
+
+class HomeView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        payload = HomeAggregateSerializer(_home_payload()).data
+        return api_ok(payload)

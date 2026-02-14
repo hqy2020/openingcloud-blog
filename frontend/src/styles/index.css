@@ -1,13 +1,31 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=ZCOOL+XiaoWei&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --ink-950: #050816;
+  --ink-900: #0f172a;
+  --paper: #f8fafc;
+  --brand: #4f46e5;
+  --brand-soft: #818cf8;
+  --accent: #f97316;
+  font-family: "IBM Plex Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  background:
+    radial-gradient(circle at 20% -10%, rgba(79, 70, 229, 0.15), transparent 40%),
+    radial-gradient(circle at 90% 5%, rgba(249, 115, 22, 0.1), transparent 35%),
+    linear-gradient(180deg, #f8fafc 0%, #f1f5f9 42%, #eef2ff 100%);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: "ZCOOL XiaoWei", "IBM Plex Sans", serif;
 }

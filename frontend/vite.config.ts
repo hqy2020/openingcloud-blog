@@ -1,7 +1,25 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import path from "node:path";
+import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
 
-// https://vite.dev/config/
+const require = createRequire(import.meta.url);
+const vitePrerender = require("vite-plugin-prerender");
+const JSDOMRenderer = require("@prerenderer/renderer-jsdom");
+
+const currentFile = fileURLToPath(import.meta.url);
+const currentDir = path.dirname(currentFile);
+
 export default defineConfig({
-  plugins: [react()],
-})
+  plugins: [
+    react(),
+    vitePrerender({
+      staticDir: path.join(currentDir, "dist"),
+      routes: ["/", "/tech", "/learning", "/life"],
+      renderer: new JSDOMRenderer({
+        renderAfterTime: 250,
+      }),
+    }),
+  ],
+});

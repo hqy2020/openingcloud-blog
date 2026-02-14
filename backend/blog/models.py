@@ -119,9 +119,19 @@ class TravelPlace(TimeStampedModel):
 
 
 class SocialFriend(TimeStampedModel):
+    class StageKey(models.TextChoices):
+        PRIMARY = "primary", "小学"
+        MIDDLE = "middle", "初中"
+        HIGH = "high", "高中"
+        TONGJI = "tongji", "同济"
+        ZJU = "zju", "浙大"
+        CAREER = "career", "工作"
+        FAMILY = "family", "家庭"
+
     name = models.CharField(max_length=100)
     public_label = models.CharField(max_length=100)
     relation = models.CharField(max_length=100, blank=True)
+    stage_key = models.CharField(max_length=20, choices=StageKey.choices, default=StageKey.CAREER)
     avatar = models.URLField(max_length=500, blank=True)
     profile_url = models.URLField(max_length=500, blank=True)
     is_public = models.BooleanField(default=True)
