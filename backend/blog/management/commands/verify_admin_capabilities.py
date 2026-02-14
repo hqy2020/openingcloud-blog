@@ -58,7 +58,10 @@ class Command(BaseCommand):
             if not login_ok:
                 errors.append("failed to login test superuser")
             else:
-                response = client.get("/admin/")
+                host = "testserver"
+                if settings.ALLOWED_HOSTS:
+                    host = settings.ALLOWED_HOSTS[0]
+                response = client.get("/admin/", HTTP_HOST=host)
                 if response.status_code != 200:
                     errors.append(f"admin index returned {response.status_code}, expected 200")
                 elif "运营概览" not in response.content.decode("utf-8"):
