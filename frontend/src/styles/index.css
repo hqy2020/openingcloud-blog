@@ -1,31 +1,40 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=ZCOOL+XiaoWei&display=swap");
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --ink-950: #050816;
-  --ink-900: #0f172a;
-  --paper: #f8fafc;
-  --brand: #4f46e5;
-  --brand-soft: #818cf8;
-  --accent: #f97316;
-  font-family: "IBM Plex Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --azure: #4f6ae5;
+  --sage: #6b917b;
+  --amber: #b8945e;
+  --mauve: #9684a8;
+  --ink-900: #1a1d2e;
+  --paper: #f8f9fc;
+  color: var(--ink-900);
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(circle at 20% -10%, rgba(79, 70, 229, 0.15), transparent 40%),
-    radial-gradient(circle at 90% 5%, rgba(249, 115, 22, 0.1), transparent 35%),
-    linear-gradient(180deg, #f8fafc 0%, #f1f5f9 42%, #eef2ff 100%);
+    radial-gradient(circle at 14% -10%, rgba(79, 106, 229, 0.18), transparent 42%),
+    radial-gradient(circle at 88% 0%, rgba(150, 132, 168, 0.12), transparent 38%),
+    linear-gradient(180deg, #f8f9fc 0%, #f4f6fb 45%, #edf2fb 100%);
+  color: var(--ink-900);
 }
 
 h1,
 h2,
 h3,
 h4 {
-  font-family: "ZCOOL XiaoWei", "IBM Plex Sans", serif;
+  font-family: "LXGW WenKai", "Kaiti SC", "STKaiti", "PingFang SC", serif;
+}
+
+code,
+pre {
+  font-family: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
 }

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
 
@@ -170,3 +171,50 @@ class HighlightItem(TimeStampedModel):
 
     def __str__(self) -> str:
         return self.title
+
+
+class SyncLog(TimeStampedModel):
+    class Source(models.TextChoices):
+        API = "api", "API"
+        COMMAND = "command", "Command"
+
+    class Mode(models.TextChoices):
+        OVERWRITE = "overwrite", "覆盖"
+        SKIP = "skip", "跳过"
+        MERGE = "merge", "合并"
+
+    class Action(models.TextChoices):
+        CREATED = "created", "创建"
+        UPDATED = "updated", "更新"
+        SKIPPED = "skipped", "跳过"
+        FAILED = "failed", "失败"
+
+    class Status(models.TextChoices):
+        SUCCESS = "success", "成功"
+        FAILED = "failed", "失败"
+        DRY_RUN = "dry_run", "预演"
+
+    source = models.CharField(max_length=20, choices=Source.choices, default=Source.API)
+    slug = models.SlugField(max_length=255, blank=True)
+    mode = models.CharField(max_length=20, choices=Mode.choices, default=Mode.OVERWRITE)
+    action = models.CharField(max_length=20, choices=Action.choices, default=Action.CREATED)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.SUCCESS)
+    message = models.TextField(blank=True)
+    payload = models.JSONField(default=dict, blank=True)
+    result = models.JSONField(default=dict, blank=True)
+    started_at = models.DateTimeField()
+    finished_at = models.DateTimeField()
+    duration_ms = models.PositiveIntegerField(default=0)
+    operator = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sync_logs",
+    )
+
+    class Meta:
+        ordering = ["-started_at", "-id"]
+
+    def __str__(self) -> str:
+        return f"{self.slug or '-'} [{self.source}/{self.mode}] {self.status}"

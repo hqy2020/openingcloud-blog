@@ -1,9 +1,39 @@
-import { motion } from "motion/react";
 import type { TimelineNode } from "../../api/home";
+import { FadeIn } from "../motion/FadeIn";
+import { ScrollReveal } from "../motion/ScrollReveal";
+import { StaggerContainer, StaggerItem } from "../motion/StaggerContainer";
+import { CardSpotlight } from "../ui/CardSpotlight";
 
 type TimelineSectionProps = {
   nodes: TimelineNode[];
 };
+
+function typeBadge(type: TimelineNode["type"]) {
+  switch (type) {
+    case "career":
+      return { label: "职业", badge: "bg-blue-100 text-blue-700", dot: "bg-blue-500", isDiamond: false };
+    case "health":
+      return { label: "健康", badge: "bg-amber-100 text-amber-700", dot: "bg-amber-500", isDiamond: false };
+    case "learning":
+      return { label: "求学", badge: "bg-emerald-100 text-emerald-700", dot: "bg-emerald-500", isDiamond: false };
+    case "family":
+      return { label: "家庭", badge: "bg-violet-100 text-violet-700", dot: "bg-violet-500", isDiamond: false };
+    case "reflection":
+      return { label: "沉淀", badge: "bg-slate-200 text-slate-700", dot: "bg-slate-500", isDiamond: true };
+    default:
+      return { label: type, badge: "bg-slate-100 text-slate-700", dot: "bg-slate-500", isDiamond: false };
+  }
+}
+
+function impactBadge(impact: TimelineNode["impact"]) {
+  if (impact === "high") {
+    return { label: "重点节点", badge: "bg-indigo-600 text-white ring-1 ring-indigo-300" };
+  }
+  if (impact === "medium") {
+    return { label: "一般节点", badge: "bg-slate-100 text-slate-700" };
+  }
+  return { label: "轻量节点", badge: "bg-slate-50 text-slate-500" };
+}
 
 function formatPeriod(node: TimelineNode) {
   if (!node.end_date) {
@@ -13,34 +43,65 @@ function formatPeriod(node: TimelineNode) {
 }
 
 export function TimelineSection({ nodes }: TimelineSectionProps) {
+  if (nodes.length === 0) {
+    return (
+      <ScrollReveal className="space-y-6">
+        <div className="flex items-end justify-between">
+          <h2 className="text-2xl font-semibold text-slate-900">人生足迹</h2>
+          <span className="text-sm text-slate-500">0 个节点</span>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white/80 px-5 py-6 text-sm text-slate-600">
+          暂无时间线数据，请先在后台补充人生节点。
+        </div>
+      </ScrollReveal>
+    );
+  }
+
   return (
-    <section className="space-y-6">
+    <ScrollReveal className="space-y-6">
       <div className="flex items-end justify-between">
         <h2 className="text-2xl font-semibold text-slate-900">人生足迹</h2>
         <span className="text-sm text-slate-500">{nodes.length} 个节点</span>
       </div>
 
-      <div className="overflow-x-auto pb-3">
-        <div className="flex min-w-max items-start gap-5">
-          {nodes.map((node, idx) => (
-            <motion.article
-              key={`${node.title}-${node.start_date}-${idx}`}
-              animate={{ opacity: 1, y: 0 }}
-              className="w-72 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-              initial={{ opacity: 0, y: 18 }}
-              transition={{ delay: idx * 0.06, duration: 0.35 }}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs uppercase tracking-wider text-slate-500">{node.type}</span>
-                <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">{node.impact}</span>
-              </div>
-              <h3 className="mt-3 text-lg font-semibold text-slate-900">{node.title}</h3>
-              <p className="mt-2 text-sm text-slate-500">{formatPeriod(node)}</p>
-              <p className="mt-3 line-clamp-3 text-sm text-slate-700">{node.description || "暂无描述"}</p>
-            </motion.article>
-          ))}
-        </div>
+      <div className="relative overflow-x-auto pb-4">
+        <FadeIn className="absolute left-0 top-9 h-[2px] min-w-full bg-gradient-to-r from-[#4F6AE5]/45 via-[#9684A8]/40 to-[#B8945E]/35" />
+
+        <StaggerContainer className="flex min-w-max items-start gap-5" stagger={0.06}>
+          {nodes.map((node, idx) => {
+            const typeMeta = typeBadge(node.type);
+            const impactMeta = impactBadge(node.impact);
+
+            return (
+              <StaggerItem key={`${node.title}-${node.start_date}-${idx}`} className="w-72">
+                <CardSpotlight
+                  className={[
+                    "rounded-2xl border bg-white/90 p-5 shadow-[0_12px_32px_rgba(15,23,42,0.08)] backdrop-blur",
+                    node.impact === "high" ? "border-indigo-300/90" : "border-slate-200/80",
+                  ].join(" ")}
+                >
+                  <div className="mb-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={[
+                          "inline-block h-2.5 w-2.5",
+                          typeMeta.isDiamond ? "rotate-45 rounded-[2px]" : "rounded-full",
+                          typeMeta.dot,
+                        ].join(" ")}
+                      />
+                      <span className={`rounded-full px-2 py-1 text-xs font-medium ${typeMeta.badge}`}>{typeMeta.label}</span>
+                    </div>
+                    <span className={`rounded-full px-2 py-1 text-xs font-medium ${impactMeta.badge}`}>{impactMeta.label}</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900">{node.title}</h3>
+                  <p className="mt-2 text-sm text-slate-500">{formatPeriod(node)}</p>
+                  <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-700">{node.description || "暂无描述"}</p>
+                </CardSpotlight>
+              </StaggerItem>
+            );
+          })}
+        </StaggerContainer>
       </div>
-    </section>
+    </ScrollReveal>
   );
 }

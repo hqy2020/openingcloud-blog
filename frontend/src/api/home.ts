@@ -86,6 +86,8 @@ export type HomePayload = {
     highlight_items_total: number;
     tags_total: number;
     views_total: number;
+    total_words: number;
+    site_days: number;
   };
   contact: {
     email: string;

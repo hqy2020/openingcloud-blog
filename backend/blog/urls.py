@@ -3,6 +3,9 @@ from __future__ import annotations
 from django.urls import path
 
 from .views import (
+    AdminImageUploadView,
+    AdminObsidianReconcileView,
+    AdminObsidianSyncView,
     AdminPingView,
     HealthCheckView,
     HighlightsView,
@@ -32,4 +35,7 @@ urlpatterns = [
     path("auth/logout", LogoutView.as_view(), name="auth-logout"),
     path("auth/me", MeView.as_view(), name="auth-me"),
     path("admin/ping", AdminPingView.as_view(), name="admin-ping"),
+    path("admin/images/", AdminImageUploadView.as_view(), name="admin-images"),
+    path("admin/obsidian-sync/", AdminObsidianSyncView.as_view(), name="admin-obsidian-sync"),
+    path("admin/obsidian-sync/reconcile/", AdminObsidianReconcileView.as_view(), name="admin-obsidian-reconcile"),
 ]

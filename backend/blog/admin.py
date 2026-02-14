@@ -9,6 +9,7 @@ from .models import (
     Post,
     PostView,
     SocialFriend,
+    SyncLog,
     TimelineNode,
     TravelPlace,
 )
@@ -73,6 +74,44 @@ class HighlightItemAdmin(SortableAdminMixin, admin.ModelAdmin):
     list_display = ["title", "stage", "achieved_at", "sort_order", "updated_at"]
     list_filter = ["stage"]
     search_fields = ["title", "description"]
+
+
+@admin.register(SyncLog)
+class SyncLogAdmin(admin.ModelAdmin):
+    list_display = ["started_at", "source", "slug", "mode", "action", "status", "duration_ms", "operator"]
+    list_filter = ["source", "mode", "action", "status"]
+    search_fields = ["slug", "message", "operator__username"]
+    readonly_fields = [
+        "source",
+        "slug",
+        "mode",
+        "action",
+        "status",
+        "message",
+        "payload",
+        "result",
+        "started_at",
+        "finished_at",
+        "duration_ms",
+        "operator",
+        "created_at",
+        "updated_at",
+    ]
+    fieldsets = (
+        ("基本信息", {"fields": ("source", "slug", "mode", "action", "status", "operator")}),
+        ("执行信息", {"fields": ("message", "duration_ms", "started_at", "finished_at")}),
+        ("数据快照", {"fields": ("payload", "result")}),
+        ("时间", {"fields": ("created_at", "updated_at")}),
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 admin.site.site_header = "openingClouds 管理后台"

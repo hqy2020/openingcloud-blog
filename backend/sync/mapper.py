@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
 from django.utils.text import slugify
@@ -27,11 +28,47 @@ def map_clc_to_category(clc_code: str | None) -> str:
     return Post.Category.TECH
 
 
-def resolve_category(metadata: dict) -> str:
+def _normalize_path(path: str) -> str:
+    return path.replace("\\", "/").strip().lower()
+
+
+def map_path_to_category(relative_path: str | None) -> str | None:
+    if not relative_path:
+        return None
+
+    normalized = _normalize_path(relative_path)
+
+    if "/daily/" in normalized or normalized.startswith("daily/"):
+        return Post.Category.LIFE
+    if "/travel/" in normalized or normalized.startswith("travel/"):
+        return Post.Category.LIFE
+
+    if "3-knowledge" in normalized and "t_工业技术" in normalized:
+        return Post.Category.TECH
+    if "3-knowledge" in normalized and "/tp_" in normalized:
+        return Post.Category.TECH
+    if "3-knowledge" in normalized and "/tp3_" in normalized:
+        return Post.Category.TECH
+
+    if "5-economics" in normalized:
+        return Post.Category.LEARNING
+    if "3-knowledge" in normalized:
+        return Post.Category.LEARNING
+    if "2-resource" in normalized:
+        return Post.Category.LEARNING
+
+    return None
+
+
+def resolve_category(metadata: dict, relative_path: str | None = None) -> str:
     explicit = str(metadata.get("category", "")).strip().lower()
     valid = {choice[0] for choice in Post.Category.choices}
     if explicit in valid:
         return explicit
+
+    mapped = map_path_to_category(relative_path)
+    if mapped:
+        return mapped
 
     for key in ("clc", "zhongtufa", "clc_code", "中图法"):
         if key in metadata:
@@ -43,9 +80,14 @@ def resolve_category(metadata: dict) -> str:
     if any(tag in {"learning", "study", "productivity", "efficiency"} for tag in tags):
         return Post.Category.LEARNING
 
-    return Post.Category.TECH
+    return Post.Category.LEARNING
 
 
-def resolve_slug(metadata: dict, path: Path, title: str) -> str:
+def resolve_slug(metadata: dict, path: Path, title: str, *, fallback_key: str | None = None) -> str:
     source = str(metadata.get("slug", "")).strip() or title or path.stem
-    return slugify(source)
+    slug = slugify(source)
+    if slug:
+        return slug
+    stable_key = fallback_key or path.as_posix()
+    digest = hashlib.sha1(stable_key.encode("utf-8")).hexdigest()[:12]
+    return f"obs-{digest}"

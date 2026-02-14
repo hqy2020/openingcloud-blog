@@ -22,4 +22,22 @@ export default defineConfig({
       }),
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("three") || id.includes("@react-three")) {
+            return "three-stack";
+          }
+          if (id.includes("echarts")) {
+            return "echarts-stack";
+          }
+          if (id.includes("react-force-graph")) {
+            return "graph-stack";
+          }
+          return undefined;
+        },
+      },
+    },
+  },
 });

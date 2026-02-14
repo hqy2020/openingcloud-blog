@@ -113,3 +113,46 @@ python manage.py sqlite_write_stress_test --concurrency 10 --rounds 20 --strict 
 ./scripts/restore_sqlite.sh ./data/backups/blog_YYYYmmdd_HHMMSS.sqlite3 ./data/blog.sqlite3
 ./scripts/monitor_memory.sh 1440 60 ./reports/memory_24h.log
 ```
+
+## Obsidian publish sync
+
+Only notes with `publish` tag inside frontmatter `tags` are synced. Default scope:
+
+- `3-Knowledge（知识库）`
+- `2-Resource（参考资源）`
+
+### Local sync
+
+```bash
+cd backend
+source .venv/bin/activate
+python manage.py sync_obsidian /Users/openingcloud/Documents/GardenOfOpeningClouds --mode overwrite --dry-run
+python manage.py sync_obsidian /Users/openingcloud/Documents/GardenOfOpeningClouds --mode overwrite
+```
+
+### Remote sync (token)
+
+1) Set backend env:
+
+```env
+OBSIDIAN_SYNC_TOKEN=replace-with-strong-sync-token
+```
+
+2) Run remote sync from local machine:
+
+```bash
+export OBSIDIAN_SYNC_TOKEN=replace-with-strong-sync-token
+cd backend
+source .venv/bin/activate
+python manage.py sync_obsidian /Users/openingcloud/Documents/GardenOfOpeningClouds \
+  --target remote \
+  --remote-base-url http://47.99.42.71/api \
+  --mode overwrite \
+  --unpublish-behavior draft
+```
+
+### launchd (every 2 hours)
+
+- Script: `/Users/openingcloud/openingcloud-blog/scripts/obsidian_sync_remote.sh`
+- Agent plist: `/Users/openingcloud/Library/LaunchAgents/com.openingcloud.obsidian-sync.plist`
+- Optional local env file for launchd: `/Users/openingcloud/.config/openingcloud/obsidian-sync.env`

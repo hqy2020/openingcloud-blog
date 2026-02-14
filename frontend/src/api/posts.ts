@@ -24,12 +24,20 @@ type PageResponse<T> = {
   results: T[];
 };
 
+type FetchPostsParams = {
+  category?: string;
+  tag?: string;
+  sort?: "latest" | "views";
+  page?: number;
+  page_size?: number;
+};
+
 export async function fetchHealth() {
   const { data } = await apiClient.get("/health");
   return data.data as { service: string; status: string; time: string };
 }
 
-export async function fetchPosts(params?: { category?: string; tag?: string; page?: number }) {
+export async function fetchPosts(params?: FetchPostsParams) {
   const { data } = await apiClient.get("/posts/", { params });
   return data.data as PageResponse<PostSummary>;
 }

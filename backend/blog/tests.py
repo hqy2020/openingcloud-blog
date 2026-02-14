@@ -1,15 +1,22 @@
 from __future__ import annotations
 
+import hashlib
+import os
 import tempfile
+from datetime import timedelta
 from pathlib import Path
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
-from django.test import TestCase
+from django.core.management.base import CommandError
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework.test import APIClient
 
-from .models import HighlightItem, HighlightStage, Post, PostView, SocialFriend, TimelineNode, TravelPlace
+from .models import HighlightItem, HighlightStage, Post, PostView, SocialFriend, SyncLog, TimelineNode, TravelPlace
 
 
 class ApiTests(TestCase):
@@ -97,6 +104,97 @@ class ApiTests(TestCase):
         self.assertEqual(resp.data["data"]["count"], 1)
         self.assertEqual(resp.data["data"]["results"][0]["slug"], "hello")
 
+    def test_posts_list_latest_uses_db_order_by_updated_at_desc(self):
+        older = Post.objects.create(
+            title="Older",
+            slug="older-post",
+            excerpt="older",
+            content="older",
+            category=Post.Category.TECH,
+            tags=[],
+            draft=False,
+        )
+        newer = Post.objects.create(
+            title="Newer",
+            slug="newer-post",
+            excerpt="newer",
+            content="newer",
+            category=Post.Category.TECH,
+            tags=[],
+            draft=False,
+        )
+        now = timezone.now()
+        Post.objects.filter(id=older.id).update(updated_at=now - timedelta(days=3))
+        Post.objects.filter(id=self.post.id).update(updated_at=now - timedelta(days=2))
+        Post.objects.filter(id=newer.id).update(updated_at=now - timedelta(days=1))
+
+        resp = self.client.get(reverse("posts-list"))
+        self.assertEqual(resp.status_code, 200)
+        slugs = [item["slug"] for item in resp.data["data"]["results"]]
+        self.assertEqual(slugs[:3], ["newer-post", "hello", "older-post"])
+
+    def test_posts_list_views_sort_uses_db_order(self):
+        mid = Post.objects.create(
+            title="Mid",
+            slug="views-mid",
+            excerpt="mid",
+            content="mid",
+            category=Post.Category.TECH,
+            tags=[],
+            draft=False,
+        )
+        top = Post.objects.create(
+            title="Top",
+            slug="views-top",
+            excerpt="top",
+            content="top",
+            category=Post.Category.TECH,
+            tags=[],
+            draft=False,
+        )
+        PostView.objects.create(post=self.post, views=1)
+        PostView.objects.create(post=mid, views=6)
+        PostView.objects.create(post=top, views=12)
+
+        resp = self.client.get(reverse("posts-list"), {"sort": "views"})
+        self.assertEqual(resp.status_code, 200)
+        slugs = [item["slug"] for item in resp.data["data"]["results"]]
+        self.assertEqual(slugs[:3], ["views-top", "views-mid", "hello"])
+
+    def test_posts_list_filters_tag_case_insensitive(self):
+        resp = self.client.get(reverse("posts-list"), {"tag": "DJANGO"})
+        self.assertEqual(resp.status_code, 200)
+        slugs = [item["slug"] for item in resp.data["data"]["results"]]
+        self.assertEqual(slugs, ["hello"])
+
+    def test_posts_list_filters_chinese_tag_with_category(self):
+        tech_post = Post.objects.create(
+            title="Sharding",
+            slug="sharding-cn",
+            excerpt="中文标签",
+            content="content",
+            category=Post.Category.TECH,
+            tags=["分库分表", "架构"],
+            draft=False,
+        )
+        Post.objects.create(
+            title="Learning Tag",
+            slug="learning-cn",
+            excerpt="学习分类",
+            content="content",
+            category=Post.Category.LEARNING,
+            tags=["分库分表"],
+            draft=False,
+        )
+
+        resp = self.client.get(
+            reverse("posts-list"),
+            {"category": Post.Category.TECH, "tag": "分库分表"},
+        )
+        self.assertEqual(resp.status_code, 200)
+        slugs = [item["slug"] for item in resp.data["data"]["results"]]
+        self.assertEqual(slugs, [tech_post.slug])
+
     def test_increment_view_and_throttle(self):
         first = self.client.post(reverse("posts-view", kwargs={"slug": self.post.slug}))
         second = self.client.post(reverse("posts-view", kwargs={"slug": self.post.slug}))
@@ -119,6 +217,10 @@ class ApiTests(TestCase):
         self.assertIn("stats", payload)
         self.assertIn("contact", payload)
         self.assertGreaterEqual(payload["stats"]["published_posts_total"], 1)
+        self.assertIn("total_words", payload["stats"])
+        self.assertIn("site_days", payload["stats"])
+        self.assertGreaterEqual(payload["stats"]["total_words"], 1)
+        self.assertGreaterEqual(payload["stats"]["site_days"], 1)
 
     def test_timeline_api(self):
         resp = self.client.get(reverse("timeline"))
@@ -179,21 +281,27 @@ class AuthTests(TestCase):
 
 
 class SyncObsidianCommandTests(TestCase):
+    def _write_note(self, vault: Path, relative_path: str, content: str) -> Path:
+        path = vault / relative_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+        return path
+
     def test_sync_obsidian_upsert(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             vault = Path(temp_dir)
-            markdown = vault / "hello.md"
-            markdown.write_text(
+            self._write_note(
+                vault,
+                "3-Knowledge（知识库）/T_工业技术/hello.md",
                 "---\n"
                 "title: 来自 Obsidian\n"
-                "publish: true\n"
                 "tags:\n"
                 "  - note\n"
+                "  - publish\n"
                 "  - sync\n"
                 "clc: T123\n"
                 "---\n\n"
                 "这是正文。\n",
-                encoding="utf-8",
             )
 
             call_command("sync_obsidian", str(vault), "--force")
@@ -203,5 +311,505 @@ class SyncObsidianCommandTests(TestCase):
             assert post is not None
             self.assertEqual(post.sync_source, Post.SyncSource.OBSIDIAN)
             self.assertEqual(post.category, Post.Category.TECH)
-            self.assertEqual(post.obsidian_path, "hello.md")
+            self.assertEqual(post.obsidian_path, "3-Knowledge（知识库）/T_工业技术/hello.md")
             self.assertEqual(post.draft, False)
+            self.assertEqual(post.tags, ["note", "sync"])
+
+    def test_sync_obsidian_skips_without_publish_tag(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+            self._write_note(
+                vault,
+                "3-Knowledge（知识库）/skip.md",
+                "---\n"
+                "title: 不发布\n"
+                "tags:\n"
+                "  - note\n"
+                "---\n\n"
+                "这是一篇不发布的文章。\n",
+            )
+            call_command("sync_obsidian", str(vault), "--force")
+            self.assertEqual(Post.objects.count(), 0)
+
+    def test_sync_obsidian_slug_hash_fallback_for_non_ascii_title(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+            relative = "3-Knowledge（知识库）/路径/纯中文标题.md"
+            self._write_note(
+                vault,
+                relative,
+                "---\n"
+                "title: 纯中文标题\n"
+                "tags:\n"
+                "  - publish\n"
+                "---\n\n"
+                "正文\n",
+            )
+            call_command("sync_obsidian", str(vault), "--force")
+            post = Post.objects.first()
+            assert post is not None
+            expected = f"obs-{hashlib.sha1(relative.encode('utf-8')).hexdigest()[:12]}"
+            self.assertEqual(post.slug, expected)
+
+    def test_sync_obsidian_reconcile_drafts_when_publish_removed(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+            relative = "3-Knowledge（知识库）/to-unpublish.md"
+            path = self._write_note(
+                vault,
+                relative,
+                "---\n"
+                "title: 先发布\n"
+                "tags:\n"
+                "  - publish\n"
+                "---\n\n"
+                "正文\n",
+            )
+            call_command("sync_obsidian", str(vault), "--force")
+            post = Post.objects.get(obsidian_path=relative)
+            self.assertFalse(post.draft)
+
+            path.write_text(
+                "---\n"
+                "title: 先发布\n"
+                "tags:\n"
+                "  - note\n"
+                "---\n\n"
+                "正文\n",
+                encoding="utf-8",
+            )
+            call_command("sync_obsidian", str(vault), "--force")
+
+            post.refresh_from_db()
+            self.assertTrue(post.draft)
+
+    def test_sync_obsidian_whitelist_excludes_other_roots(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+            self._write_note(
+                vault,
+                "3-Knowledge（知识库）/in-scope.md",
+                "---\n"
+                "title: 在范围\n"
+                "tags:\n"
+                "  - publish\n"
+                "---\n\n"
+                "正文\n",
+            )
+            self._write_note(
+                vault,
+                "1-Information（项目与任务）/out-scope.md",
+                "---\n"
+                "title: 不在范围\n"
+                "tags:\n"
+                "  - publish\n"
+                "---\n\n"
+                "正文\n",
+            )
+            call_command("sync_obsidian", str(vault), "--force")
+            self.assertEqual(Post.objects.count(), 1)
+            self.assertTrue(Post.objects.filter(obsidian_path="3-Knowledge（知识库）/in-scope.md").exists())
+
+    def test_sync_obsidian_same_slug_different_paths_keep_separate_posts(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+            self._write_note(
+                vault,
+                "2-Resource（参考资源）/并发/ThreadLocal什么场景内存泄露.md",
+                "---\n"
+                "title: ThreadLocal\n"
+                "tags:\n"
+                "  - publish\n"
+                "---\n\n"
+                "正文 A\n",
+            )
+            self._write_note(
+                vault,
+                "2-Resource（参考资源）/并发/ThreadLocal底层实现原理.md",
+                "---\n"
+                "title: ThreadLocal\n"
+                "tags:\n"
+                "  - publish\n"
+                "---\n\n"
+                "正文 B\n",
+            )
+            self._write_note(
+                vault,
+                "2-Resource（参考资源）/并发/ThreadLocal有哪些扩展实现.md",
+                "---\n"
+                "title: ThreadLocal\n"
+                "tags:\n"
+                "  - publish\n"
+                "---\n\n"
+                "正文 C\n",
+            )
+
+            call_command("sync_obsidian", str(vault), "--force")
+
+            posts = Post.objects.filter(sync_source=Post.SyncSource.OBSIDIAN)
+            self.assertEqual(posts.count(), 3)
+            slugs = set(posts.values_list("slug", flat=True))
+            self.assertEqual(len(slugs), 3)
+            self.assertIn("threadlocal", slugs)
+            self.assertEqual(
+                posts.filter(slug__startswith="threadlocal-").count(),
+                2,
+            )
+
+    def test_sync_obsidian_remote_mode_posts_and_reconciles(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+            self._write_note(
+                vault,
+                "3-Knowledge（知识库）/remote.md",
+                "---\n"
+                "title: 远程同步\n"
+                "tags:\n"
+                "  - publish\n"
+                "  - kb\n"
+                "---\n\n"
+                "正文\n",
+            )
+
+            with patch.dict(os.environ, {"TEST_SYNC_TOKEN": "token-123"}, clear=False):
+                with patch(
+                    "blog.management.commands.sync_obsidian._post_remote_json",
+                    side_effect=[
+                        {"action": "created"},
+                        {"action": "updated", "drafted": 1, "deleted": 0},
+                    ],
+                ) as remote_post:
+                    call_command(
+                        "sync_obsidian",
+                        str(vault),
+                        "--target",
+                        "remote",
+                        "--remote-base-url",
+                        "https://example.com/api",
+                        "--remote-token-env",
+                        "TEST_SYNC_TOKEN",
+                    )
+
+            self.assertEqual(remote_post.call_count, 2)
+            sync_call = remote_post.call_args_list[0]
+            sync_payload = sync_call.args[2]
+            self.assertEqual(sync_payload["tags"], ["kb"])
+            self.assertEqual(sync_payload["obsidian_path"], "3-Knowledge（知识库）/remote.md")
+
+    def test_sync_obsidian_remote_mode_requires_token_env(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir)
+            with self.assertRaises(CommandError):
+                call_command(
+                    "sync_obsidian",
+                    str(vault),
+                    "--target",
+                    "remote",
+                    "--remote-base-url",
+                    "https://example.com/api",
+                    "--remote-token-env",
+                    "MISSING_SYNC_TOKEN",
+                )
+
+
+class AdminApiTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.staff_user = get_user_model().objects.create_user(
+            username="staff",
+            password="pass1234",
+            is_staff=True,
+        )
+        self.normal_user = get_user_model().objects.create_user(
+            username="normal",
+            password="pass1234",
+            is_staff=False,
+        )
+
+    def test_image_upload_requires_auth(self):
+        resp = self.client.post(reverse("admin-images"), {}, format="multipart")
+        self.assertEqual(resp.status_code, 401)
+
+    def test_image_upload_requires_staff(self):
+        self.client.force_authenticate(user=self.normal_user)
+        upload = SimpleUploadedFile("note.txt", b"hello", content_type="text/plain")
+        resp = self.client.post(reverse("admin-images"), {"file": upload}, format="multipart")
+        self.assertEqual(resp.status_code, 403)
+
+    def test_image_upload_reject_invalid_type(self):
+        self.client.force_authenticate(user=self.staff_user)
+        upload = SimpleUploadedFile("note.txt", b"hello", content_type="text/plain")
+        resp = self.client.post(reverse("admin-images"), {"file": upload}, format="multipart")
+        self.assertEqual(resp.status_code, 400)
+
+    @override_settings(MEDIA_ROOT=tempfile.gettempdir())
+    def test_image_upload_reject_oversize(self):
+        self.client.force_authenticate(user=self.staff_user)
+        payload = b"a" * (5 * 1024 * 1024 + 1)
+        upload = SimpleUploadedFile("big.png", payload, content_type="image/png")
+        resp = self.client.post(reverse("admin-images"), {"file": upload}, format="multipart")
+        self.assertEqual(resp.status_code, 400)
+
+    def test_image_upload_success(self):
+        self.client.force_authenticate(user=self.staff_user)
+        with tempfile.TemporaryDirectory() as media_root:
+            with override_settings(MEDIA_ROOT=media_root):
+                upload = SimpleUploadedFile(
+                    "cloud.png",
+                    b"\x89PNG\r\n\x1a\nmock-image",
+                    content_type="image/png",
+                )
+                resp = self.client.post(reverse("admin-images"), {"file": upload}, format="multipart")
+
+        self.assertEqual(resp.status_code, 200)
+        body = resp.data["data"]
+        self.assertTrue(body["url"].startswith("/media/"))
+        self.assertTrue(body["path"].startswith("uploads/"))
+        self.assertEqual(body["content_type"], "image/png")
+
+    def test_obsidian_sync_create(self):
+        self.client.force_authenticate(user=self.staff_user)
+        resp = self.client.post(
+            reverse("admin-obsidian-sync"),
+            {
+                "title": "API 同步创建",
+                "slug": "api-sync-create",
+                "content": "# hello",
+                "category": "tech",
+                "tags": ["sync", "publish"],
+                "mode": "overwrite",
+            },
+            format="json",
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["data"]["action"], "created")
+        self.assertTrue(Post.objects.filter(slug="api-sync-create").exists())
+        self.assertEqual(Post.objects.get(slug="api-sync-create").tags, ["sync"])
+        self.assertEqual(SyncLog.objects.count(), 1)
+        self.assertEqual(SyncLog.objects.first().status, SyncLog.Status.SUCCESS)
+
+    def test_obsidian_sync_update(self):
+        self.client.force_authenticate(user=self.staff_user)
+        Post.objects.create(
+            title="旧标题",
+            slug="api-sync-update",
+            excerpt="old",
+            content="old",
+            category=Post.Category.TECH,
+            tags=[],
+            draft=False,
+        )
+        resp = self.client.post(
+            reverse("admin-obsidian-sync"),
+            {
+                "title": "新标题",
+                "slug": "api-sync-update",
+                "content": "new",
+                "category": "learning",
+                "mode": "overwrite",
+            },
+            format="json",
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["data"]["action"], "updated")
+        post = Post.objects.get(slug="api-sync-update")
+        self.assertEqual(post.title, "新标题")
+        self.assertEqual(post.content, "new")
+        self.assertEqual(post.category, "learning")
+
+    def test_obsidian_sync_skip(self):
+        self.client.force_authenticate(user=self.staff_user)
+        Post.objects.create(
+            title="原文",
+            slug="api-sync-skip",
+            excerpt="keep",
+            content="keep",
+            category=Post.Category.TECH,
+            tags=["keep"],
+            draft=False,
+        )
+        resp = self.client.post(
+            reverse("admin-obsidian-sync"),
+            {
+                "title": "新文",
+                "slug": "api-sync-skip",
+                "content": "replace",
+                "mode": "skip",
+            },
+            format="json",
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["data"]["action"], "skipped")
+        post = Post.objects.get(slug="api-sync-skip")
+        self.assertEqual(post.title, "原文")
+        self.assertEqual(post.content, "keep")
+
+    def test_obsidian_sync_merge(self):
+        self.client.force_authenticate(user=self.staff_user)
+        Post.objects.create(
+            title="",
+            slug="api-sync-merge",
+            excerpt="",
+            content="",
+            category=Post.Category.TECH,
+            tags=[],
+            cover="",
+            draft=False,
+        )
+        resp = self.client.post(
+            reverse("admin-obsidian-sync"),
+            {
+                "title": "合并标题",
+                "slug": "api-sync-merge",
+                "excerpt": "合并摘要",
+                "content": "合并正文",
+                "cover": "https://example.com/c.png",
+                "category": "life",
+                "tags": ["merged"],
+                "obsidian_path": "notes/merge.md",
+                "mode": "merge",
+            },
+            format="json",
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["data"]["action"], "updated")
+
+        post = Post.objects.get(slug="api-sync-merge")
+        self.assertEqual(post.title, "合并标题")
+        self.assertEqual(post.excerpt, "合并摘要")
+        self.assertEqual(post.content, "合并正文")
+        self.assertEqual(post.cover, "https://example.com/c.png")
+        self.assertEqual(post.category, "life")
+        self.assertEqual(post.tags, ["merged"])
+        self.assertEqual(post.obsidian_path, "notes/merge.md")
+        self.assertEqual(SyncLog.objects.count(), 1)
+
+    @override_settings(OBSIDIAN_SYNC_TOKEN="sync-token")
+    def test_obsidian_sync_requires_auth_or_token(self):
+        resp = self.client.post(
+            reverse("admin-obsidian-sync"),
+            {
+                "title": "NoAuth",
+                "slug": "no-auth-sync",
+                "content": "x",
+            },
+            format="json",
+        )
+        self.assertIn(resp.status_code, {401, 403})
+
+    @override_settings(OBSIDIAN_SYNC_TOKEN="sync-token")
+    def test_obsidian_sync_invalid_token_forbidden(self):
+        resp = self.client.post(
+            reverse("admin-obsidian-sync"),
+            {
+                "title": "BadToken",
+                "slug": "bad-token",
+                "content": "x",
+            },
+            format="json",
+            HTTP_X_OBSIDIAN_SYNC_TOKEN="wrong-token",
+        )
+        self.assertIn(resp.status_code, {401, 403})
+
+    @override_settings(OBSIDIAN_SYNC_TOKEN="sync-token")
+    def test_obsidian_sync_valid_token_without_login(self):
+        resp = self.client.post(
+            reverse("admin-obsidian-sync"),
+            {
+                "title": "Token 同步",
+                "slug": "token-sync",
+                "content": "token",
+                "category": "learning",
+                "tags": ["publish", "kb"],
+            },
+            format="json",
+            HTTP_X_OBSIDIAN_SYNC_TOKEN="sync-token",
+        )
+        self.assertEqual(resp.status_code, 200)
+        post = Post.objects.get(slug="token-sync")
+        self.assertEqual(post.tags, ["kb"])
+
+    @override_settings(OBSIDIAN_SYNC_TOKEN="sync-token")
+    def test_obsidian_sync_same_slug_different_path_creates_new_post(self):
+        Post.objects.create(
+            title="ThreadLocal A",
+            slug="threadlocal",
+            excerpt="",
+            content="A",
+            category=Post.Category.TECH,
+            tags=[],
+            draft=False,
+            sync_source=Post.SyncSource.OBSIDIAN,
+            obsidian_path="2-Resource（参考资源）/并发/A.md",
+        )
+
+        resp = self.client.post(
+            reverse("admin-obsidian-sync"),
+            {
+                "title": "ThreadLocal B",
+                "slug": "threadlocal",
+                "content": "B",
+                "category": "tech",
+                "tags": ["publish", "kb"],
+                "mode": "overwrite",
+                "obsidian_path": "2-Resource（参考资源）/并发/B.md",
+            },
+            format="json",
+            HTTP_X_OBSIDIAN_SYNC_TOKEN="sync-token",
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(Post.objects.count(), 2)
+        second = Post.objects.get(obsidian_path="2-Resource（参考资源）/并发/B.md")
+        self.assertNotEqual(second.slug, "threadlocal")
+        self.assertTrue(second.slug.startswith("threadlocal-"))
+
+    @override_settings(OBSIDIAN_SYNC_TOKEN="sync-token")
+    def test_obsidian_reconcile_draft_with_token(self):
+        Post.objects.create(
+            title="A",
+            slug="reconcile-a",
+            excerpt="a",
+            content="a",
+            category=Post.Category.TECH,
+            tags=[],
+            draft=False,
+            sync_source=Post.SyncSource.OBSIDIAN,
+            obsidian_path="3-Knowledge（知识库）/a.md",
+        )
+        post_b = Post.objects.create(
+            title="B",
+            slug="reconcile-b",
+            excerpt="b",
+            content="b",
+            category=Post.Category.TECH,
+            tags=[],
+            draft=False,
+            sync_source=Post.SyncSource.OBSIDIAN,
+            obsidian_path="3-Knowledge（知识库）/b.md",
+        )
+        Post.objects.create(
+            title="OutScope",
+            slug="reconcile-out",
+            excerpt="c",
+            content="c",
+            category=Post.Category.TECH,
+            tags=[],
+            draft=False,
+            sync_source=Post.SyncSource.OBSIDIAN,
+            obsidian_path="1-Information（项目与任务）/c.md",
+        )
+
+        resp = self.client.post(
+            reverse("admin-obsidian-reconcile"),
+            {
+                "published_paths": ["3-Knowledge（知识库）/a.md"],
+                "scope_prefixes": ["3-Knowledge（知识库）"],
+                "behavior": "draft",
+            },
+            format="json",
+            HTTP_X_OBSIDIAN_SYNC_TOKEN="sync-token",
+        )
+        self.assertEqual(resp.status_code, 200)
+        post_b.refresh_from_db()
+        self.assertTrue(post_b.draft)
+        self.assertEqual(resp.data["data"]["drafted"], 1)

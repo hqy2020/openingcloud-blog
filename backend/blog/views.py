@@ -1,20 +1,32 @@
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import date, timedelta
+from pathlib import Path
+from uuid import uuid4
 
 from django.conf import settings
 from django.core.cache import cache
-from django.db.models import F, Sum
+from django.core.files.storage import default_storage
+from django.db import connection
+from django.db.models import BooleanField, F, IntegerField, Sum, Value
+from django.db.models.expressions import RawSQL
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 from rest_framework import generics, status
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import HighlightStage, Post, PostView, SocialFriend, TimelineNode, TravelPlace
-from .permissions import IsStaffUser
+from .models import HighlightStage, Post, PostView, SocialFriend, SyncLog, TimelineNode, TravelPlace
+from .permissions import IsStaffOrSyncToken, IsStaffUser
 from .serializers import (
+    AdminImageUploadSerializer,
+    AdminObsidianReconcileRequestSerializer,
+    AdminObsidianReconcileResponseSerializer,
+    AdminObsidianSyncRequestSerializer,
+    AdminObsidianSyncResponseSerializer,
     HighlightStagePublicSerializer,
     HomeAggregateSerializer,
     LoginSerializer,
@@ -24,6 +36,7 @@ from .serializers import (
     TimelineNodePublicSerializer,
     TravelProvinceSerializer,
 )
+from sync.service import reconcile_obsidian_publications, sync_post_payload
 
 
 def api_ok(data, status_code=status.HTTP_200_OK):
@@ -32,6 +45,26 @@ def api_ok(data, status_code=status.HTTP_200_OK):
 
 def api_error(code, message, status_code):
     return Response({"ok": False, "code": code, "message": message}, status=status_code)
+
+
+def filter_posts_by_tag(queryset, tag: str):
+    normalized_tag = str(tag or "").strip()
+    if not normalized_tag:
+        return queryset
+
+    if connection.vendor == "sqlite":
+        table_name = queryset.model._meta.db_table
+        tag_match_sql = (
+            "EXISTS ("
+            f"SELECT 1 FROM json_each({table_name}.tags) "
+            "WHERE lower(trim(CAST(json_each.value AS TEXT))) = lower(trim(%s))"
+            ")"
+        )
+        return queryset.annotate(
+            _tag_matched=RawSQL(tag_match_sql, (normalized_tag,), output_field=BooleanField())
+        ).filter(_tag_matched=True)
+
+    return queryset.filter(tags__icontains=f'"{normalized_tag}"')
 
 
 class HealthCheckView(APIView):
@@ -52,15 +85,23 @@ class PostListView(generics.ListAPIView):
     permission_classes = [AllowAny]
 
     def get_queryset(self):
-        queryset = Post.objects.filter(draft=False).select_related("view_record").order_by("-created_at")
+        queryset = Post.objects.filter(draft=False).select_related("view_record")
         category = self.request.query_params.get("category")
         tag = self.request.query_params.get("tag")
+        sort = self.request.query_params.get("sort", "latest")
 
         if category:
             queryset = queryset.filter(category=category)
 
         if tag:
-            queryset = queryset.filter(tags__icontains=f'"{tag}"')
+            queryset = filter_posts_by_tag(queryset, tag)
+
+        if sort == "views":
+            queryset = queryset.annotate(
+                sort_views=Coalesce("view_record__views", Value(0), output_field=IntegerField())
+            ).order_by("-sort_views", "-updated_at", "-id")
+        else:
+            queryset = queryset.order_by("-updated_at", "-id")
 
         return queryset
 
@@ -173,6 +214,97 @@ class AdminPingView(APIView):
         return api_ok({"message": "admin access granted", "username": request.user.username})
 
 
+class AdminImageUploadView(APIView):
+    permission_classes = [IsAuthenticated, IsStaffUser]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        serializer = AdminImageUploadSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        upload = serializer.validated_data["file"]
+        suffix = Path(upload.name).suffix.lower() or ".bin"
+        saved_path = default_storage.save(
+            f"uploads/{timezone.now():%Y/%m}/{uuid4().hex}{suffix}",
+            upload,
+        )
+
+        return api_ok(
+            {
+                "url": default_storage.url(saved_path),
+                "path": saved_path,
+                "size": upload.size,
+                "content_type": str(getattr(upload, "content_type", "")),
+            }
+        )
+
+
+class AdminObsidianSyncView(APIView):
+    permission_classes = [IsStaffOrSyncToken]
+
+    def post(self, request):
+        serializer = AdminObsidianSyncRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        payload = dict(serializer.validated_data)
+        mode = payload.pop("mode", SyncLog.Mode.OVERWRITE)
+        dry_run = bool(payload.pop("dry_run", False))
+        operator = request.user if request.user and request.user.is_authenticated else None
+        try:
+            outcome = sync_post_payload(
+                payload,
+                mode=mode,
+                source=SyncLog.Source.API,
+                operator=operator,
+                dry_run=dry_run,
+            )
+        except ValueError as exc:
+            return api_error("sync_failed", str(exc), status.HTTP_400_BAD_REQUEST)
+
+        response_payload = {
+            "action": outcome.action,
+            "post": outcome.sync_log.result if outcome.post else None,
+            "sync_log_id": outcome.sync_log.id,
+        }
+        response_serializer = AdminObsidianSyncResponseSerializer(data=response_payload)
+        response_serializer.is_valid(raise_exception=True)
+        return api_ok(response_serializer.validated_data)
+
+
+class AdminObsidianReconcileView(APIView):
+    permission_classes = [IsStaffOrSyncToken]
+
+    def post(self, request):
+        serializer = AdminObsidianReconcileRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        operator = request.user if request.user and request.user.is_authenticated else None
+
+        payload = dict(serializer.validated_data)
+        try:
+            result = reconcile_obsidian_publications(
+                published_paths=payload.get("published_paths", []),
+                scope_prefixes=payload.get("scope_prefixes", []),
+                behavior=payload.get("behavior", "draft"),
+                source=SyncLog.Source.API,
+                operator=operator,
+                dry_run=bool(payload.get("dry_run", False)),
+            )
+        except ValueError as exc:
+            return api_error("reconcile_failed", str(exc), status.HTTP_400_BAD_REQUEST)
+
+        response_payload = {
+            "action": result.action,
+            "behavior": result.behavior,
+            "matched": result.matched,
+            "drafted": result.drafted,
+            "deleted": result.deleted,
+            "sync_log_id": result.sync_log.id,
+        }
+        response_serializer = AdminObsidianReconcileResponseSerializer(data=response_payload)
+        response_serializer.is_valid(raise_exception=True)
+        return api_ok(response_serializer.validated_data)
+
+
 def _travel_payload() -> list[dict]:
     rows = TravelPlace.objects.all().order_by("sort_order", "province", "city")
     grouped: dict[str, dict] = {}
@@ -251,6 +383,24 @@ def _home_stats_payload() -> dict:
     views_total = PostView.objects.aggregate(total=Sum("views"))["total"] or 0
 
     stages = HighlightStage.objects.prefetch_related("items")
+    total_words = sum(len(str(content or "").replace(" ", "").replace("\n", "").replace("\t", "")) for content in published_posts.values_list("content", flat=True))
+
+    launch_date = None
+    configured_launch_date = str(getattr(settings, "SITE_LAUNCH_DATE", "2026-02-01")).strip()
+    try:
+        launch_date = date.fromisoformat(configured_launch_date)
+    except ValueError:
+        launch_date = None
+
+    if launch_date is None:
+        first_post_created_at = published_posts.order_by("created_at").values_list("created_at", flat=True).first()
+        if first_post_created_at is not None:
+            launch_date = timezone.localdate(first_post_created_at)
+
+    if launch_date is None:
+        launch_date = timezone.localdate()
+
+    site_days = max(1, (timezone.localdate() - launch_date).days + 1)
 
     return {
         "posts_total": posts.count(),
@@ -262,6 +412,8 @@ def _home_stats_payload() -> dict:
         "highlight_items_total": sum(len(stage.items.all()) for stage in stages),
         "tags_total": len(tags),
         "views_total": int(views_total),
+        "total_words": int(total_words),
+        "site_days": int(site_days),
     }
 
 

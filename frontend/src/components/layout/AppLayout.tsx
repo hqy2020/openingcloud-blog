@@ -1,3 +1,4 @@
+import { motion } from "motion/react";
 import { NavLink, Outlet } from "react-router-dom";
 import { BlogPetMachine } from "../pet/BlogPetMachine";
 
@@ -10,26 +11,32 @@ const links = [
 
 export function AppLayout() {
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <header className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/85 backdrop-blur-xl">
+    <div className="min-h-screen bg-[#F6F7FB] text-slate-900">
+      <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <NavLink className="text-2xl font-semibold tracking-wide text-indigo-700" to="/">
-            openingClouds
+          <NavLink className="text-2xl font-semibold tracking-wide text-[#4F6AE5]" to="/">
+            opening<span className="text-slate-900">Clouds</span>
           </NavLink>
 
-          <nav className="flex items-center gap-2 rounded-full bg-slate-100/80 p-1 text-sm font-medium text-slate-700">
+          <nav className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100/70 p-1 text-sm font-medium text-slate-700">
             {links.map((item) => (
               <NavLink
                 key={item.to}
-                className={({ isActive }) =>
-                  [
-                    "rounded-full px-3 py-1.5 transition",
-                    isActive ? "bg-white text-indigo-700 shadow-sm" : "text-slate-600 hover:text-slate-900",
-                  ].join(" ")
-                }
+                className="rounded-full transition"
                 to={item.to}
               >
-                {item.label}
+                {({ isActive }) => (
+                  <span className="relative block px-3 py-1.5">
+                    {isActive ? (
+                      <motion.span
+                        layoutId="nav-pill"
+                        className="absolute inset-0 rounded-full bg-white shadow-sm"
+                        transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                      />
+                    ) : null}
+                    <span className={`relative ${isActive ? "text-[#4F6AE5]" : "text-slate-600 hover:text-slate-900"}`}>{item.label}</span>
+                  </span>
+                )}
               </NavLink>
             ))}
           </nav>
