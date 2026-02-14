@@ -63,4 +63,16 @@ export class GrassManager {
 
     return this.grassPatches.splice(nearestIndex, 1)[0] ?? null;
   }
+
+  findById(id: string) {
+    return this.grassPatches.find((patch) => patch.id === id) ?? null;
+  }
+
+  removeById(id: string) {
+    const index = this.grassPatches.findIndex((patch) => patch.id === id);
+    if (index < 0) {
+      return null;
+    }
+    return this.grassPatches.splice(index, 1)[0] ?? null;
+  }
 }
