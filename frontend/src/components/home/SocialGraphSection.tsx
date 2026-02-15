@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { ComponentType } from "react";
 import type { SocialGraphLink, SocialGraphNode } from "../../api/home";
 import { ScrollReveal } from "../motion/ScrollReveal";
 import { StaggerContainer, StaggerItem } from "../motion/StaggerContainer";
@@ -9,21 +10,46 @@ type SocialGraphSectionProps = {
   links: SocialGraphLink[];
 };
 
-type PositionedNode = {
-  id: string;
-  label: string;
-  type: SocialGraphNode["type"];
-  stage_key: string;
-  x: number;
-  y: number;
+type GraphNode = SocialGraphNode & {
+  val: number;
+  x?: number;
+  y?: number;
+  fx?: number;
+  fy?: number;
 };
 
-type PositionedLink = {
-  key: string;
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
+type GraphLink = SocialGraphLink & {
+  id: string;
+  distance: number;
+  strength: number;
+};
+
+type ForceGraphData = {
+  nodes: GraphNode[];
+  links: GraphLink[];
+};
+
+type ForceGraphRuntime = {
+  d3Force: (forceName: string) => unknown;
+  d3ReheatSimulation: () => unknown;
+  zoomToFit: (durationMs?: number, padding?: number) => unknown;
+};
+
+type ForceLinkRuntime = {
+  distance?: (distance: number | ((link: GraphLink) => number)) => ForceLinkRuntime;
+  strength?: (strength: number | ((link: GraphLink) => number)) => ForceLinkRuntime;
+  iterations?: (iterations: number) => ForceLinkRuntime;
+};
+
+type ForceChargeRuntime = {
+  strength?: (strength: number | ((node: GraphNode) => number)) => ForceChargeRuntime;
+  distanceMin?: (distance: number) => ForceChargeRuntime;
+  distanceMax?: (distance: number) => ForceChargeRuntime;
+};
+
+type ForceCenterRuntime = {
+  x?: (x: number) => ForceCenterRuntime;
+  y?: (y: number) => ForceCenterRuntime;
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -41,20 +67,100 @@ function toNodeId(input: unknown) {
   return "";
 }
 
+function unwrapDefault<T>(moduleValue: unknown): T {
+  const first = (moduleValue as { default?: unknown })?.default ?? moduleValue;
+  const second = (first as { default?: unknown })?.default ?? first;
+  return second as T;
+}
+
 export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
+  const hostRef = useRef<HTMLDivElement | null>(null);
+  const graphRef = useRef<ForceGraphRuntime | null>(null);
   const [graphSize, setGraphSize] = useState({ width: 960, height: 440 });
+  const [activeLoad, setActiveLoad] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [ForceGraph2D, setForceGraph2D] = useState<ComponentType<Record<string, unknown>> | null>(null);
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
 
   useEffect(() => {
+    const host = hostRef.current;
+    if (!host) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setActiveLoad(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "260px 0px" },
+    );
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) {
+      return;
+    }
+
     const updateSize = () => {
-      const width = Math.max(320, Math.min(window.innerWidth - 80, 1480));
-      const height = Math.max(380, Math.min(Math.round(width * 0.48), 620));
-      setGraphSize({ width, height });
+      const available = Math.max(320, Math.floor(host.clientWidth - 16));
+      const width = clamp(available, 320, 1480);
+      const height = clamp(Math.round(width * 0.5), 380, 620);
+      setGraphSize((prev) => (prev.width === width && prev.height === height ? prev : { width, height }));
     };
 
     updateSize();
+    const resizeObserver = new ResizeObserver(updateSize);
+    resizeObserver.observe(host);
     window.addEventListener("resize", updateSize);
-    return () => window.removeEventListener("resize", updateSize);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateSize);
+    };
   }, []);
+
+  useEffect(() => {
+    if (!activeLoad) {
+      return;
+    }
+
+    const canUseCanvas =
+      typeof window !== "undefined" &&
+      typeof document !== "undefined" &&
+      !!document.createElement("canvas").getContext;
+    if (!canUseCanvas) {
+      setLoadError("当前环境不支持图谱画布渲染。");
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const forceGraphModule = await import("react-force-graph-2d");
+        const Graph = unwrapDefault<ComponentType<Record<string, unknown>>>(forceGraphModule);
+        if (!cancelled) {
+          setForceGraph2D(() => Graph);
+          setLoadError(null);
+        }
+      } catch {
+        if (!cancelled) {
+          setForceGraph2D(null);
+          setLoadError("图谱组件加载失败，已保留静态概览。");
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeLoad]);
 
   const stageNodes = useMemo(
     () => nodes.filter((node) => node.type === "stage").sort((a, b) => a.order - b.order),
@@ -66,12 +172,11 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
   );
   const hasCompleteGraphData = stageNodes.length > 0 && friendNodes.length > 0 && links.length > 0;
 
-  const layout = useMemo(() => {
+  const graphData = useMemo<ForceGraphData>(() => {
     if (!hasCompleteGraphData) {
       return {
-        stages: [] as PositionedNode[],
-        friends: [] as PositionedNode[],
-        linkLines: [] as PositionedLink[],
+        nodes: [],
+        links: [],
       };
     }
 
@@ -79,23 +184,21 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
     const height = graphSize.height;
     const centerX = width / 2;
     const centerY = height / 2;
-    const stageRadiusX = clamp(width * 0.42, 230, 560);
-    const stageRadiusY = clamp(height * 0.38, 130, 250);
-    const friendRadiusX = clamp(stageRadiusX * 0.72, 160, 420);
-    const friendRadiusY = clamp(stageRadiusY * 0.72, 95, 180);
+    const stageRadiusX = clamp(width * 0.38, 170, 520);
+    const stageRadiusY = clamp(height * 0.34, 120, 240);
     const edgePadding = 52;
 
     const stageAngles = new Map<string, number>();
-    const stages: PositionedNode[] = stageNodes.map((stage, index) => {
+    const stageByKey = new Map<string, { x: number; y: number }>();
+    const stages: GraphNode[] = stageNodes.map((stage, index) => {
       const angle = (index / stageNodes.length) * Math.PI * 2 - Math.PI / 2;
       stageAngles.set(stage.stage_key, angle);
       const x = clamp(centerX + Math.cos(angle) * stageRadiusX, edgePadding, width - edgePadding);
       const y = clamp(centerY + Math.sin(angle) * stageRadiusY, edgePadding, height - edgePadding);
+      stageByKey.set(stage.stage_key, { x, y });
       return {
-        id: stage.id,
-        label: stage.label,
-        type: stage.type,
-        stage_key: stage.stage_key,
+        ...stage,
+        val: 18,
         x,
         y,
       };
@@ -109,54 +212,131 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
       friendBucket.set(friend.stage_key, bucket);
     });
 
-    const friends: PositionedNode[] = [];
+    const friends: GraphNode[] = [];
     friendBucket.forEach((bucket, stageKey) => {
-      const baseAngle = stageAngles.get(stageKey);
-      if (typeof baseAngle !== "number") {
-        return;
-      }
-
-      const spread = bucket.length <= 1 ? 0 : Math.min(0.72, (bucket.length - 1) * 0.18);
+      const baseAngle = stageAngles.get(stageKey) ?? -Math.PI / 2;
+      const anchor = stageByKey.get(stageKey);
 
       bucket.forEach((friend, idx) => {
         const ratio = bucket.length <= 1 ? 0 : idx / (bucket.length - 1) - 0.5;
-        const angle = baseAngle + ratio * spread;
-        const x = clamp(centerX + Math.cos(angle) * friendRadiusX, edgePadding, width - edgePadding);
-        const y = clamp(centerY + Math.sin(angle) * friendRadiusY, edgePadding, height - edgePadding);
+        const spread = bucket.length <= 1 ? 0 : Math.min(0.9, (bucket.length - 1) * 0.2);
+        const angle = baseAngle + ratio * spread + (idx % 2 === 0 ? 0.12 : -0.12);
+        const radius = 74 + (idx % 3) * 18;
+        const baseX = anchor?.x ?? centerX;
+        const baseY = anchor?.y ?? centerY;
+        const x = clamp(baseX + Math.cos(angle) * radius, edgePadding, width - edgePadding);
+        const y = clamp(baseY + Math.sin(angle) * radius, edgePadding, height - edgePadding);
 
         friends.push({
-          id: friend.id,
-          label: friend.label,
-          type: friend.type,
-          stage_key: friend.stage_key,
+          ...friend,
+          val: 6,
           x,
           y,
         });
       });
     });
 
-    const positionedById = new Map<string, PositionedNode>();
-    [...stages, ...friends].forEach((node) => positionedById.set(node.id, node));
+    const graphNodes = [...stages, ...friends];
+    const positionedById = new Map<string, GraphNode>();
+    graphNodes.forEach((node) => positionedById.set(node.id, node));
 
-    const linkLines: PositionedLink[] = links
+    const graphLinks = links
       .map((link, index) => {
-        const source = positionedById.get(toNodeId((link as unknown as { source: unknown }).source));
-        const target = positionedById.get(toNodeId((link as unknown as { target: unknown }).target));
+        const sourceId = toNodeId((link as unknown as { source: unknown }).source);
+        const targetId = toNodeId((link as unknown as { target: unknown }).target);
+        const source = positionedById.get(sourceId);
+        const target = positionedById.get(targetId);
         if (!source || !target) {
           return null;
         }
+        const connectsStage = source.type === "stage" || target.type === "stage";
+        const sameStage = source.stage_key === target.stage_key;
         return {
-          key: `${source.id}-${target.id}-${index}`,
-          x1: source.x,
-          y1: source.y,
-          x2: target.x,
-          y2: target.y,
+          id: `${source.id}-${target.id}-${index}`,
+          source: source.id,
+          target: target.id,
+          distance: connectsStage ? (sameStage ? 86 : 106) : 70,
+          strength: connectsStage ? 0.28 : 0.16,
         };
       })
-      .filter((item): item is PositionedLink => item !== null);
+      .filter((item): item is GraphLink => item !== null);
 
-    return { stages, friends, linkLines };
+    return { nodes: graphNodes, links: graphLinks };
   }, [hasCompleteGraphData, stageNodes, friendNodes, links, graphSize.width, graphSize.height]);
+
+  const nodeTypeById = useMemo(() => {
+    const map = new Map<string, SocialGraphNode["type"]>();
+    graphData.nodes.forEach((node) => {
+      map.set(node.id, node.type);
+    });
+    return map;
+  }, [graphData.nodes]);
+
+  const connectedByNodeId = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    graphData.links.forEach((link) => {
+      const sourceId = toNodeId(link.source);
+      const targetId = toNodeId(link.target);
+      if (!sourceId || !targetId) {
+        return;
+      }
+      const sourceSet = map.get(sourceId) ?? new Set<string>();
+      sourceSet.add(targetId);
+      map.set(sourceId, sourceSet);
+
+      const targetSet = map.get(targetId) ?? new Set<string>();
+      targetSet.add(sourceId);
+      map.set(targetId, targetSet);
+    });
+    return map;
+  }, [graphData.links]);
+
+  const highlightedNodeIds = useMemo(() => {
+    if (!hoveredNodeId) {
+      return null;
+    }
+    const highlighted = new Set<string>([hoveredNodeId]);
+    connectedByNodeId.get(hoveredNodeId)?.forEach((nodeId) => highlighted.add(nodeId));
+    return highlighted;
+  }, [hoveredNodeId, connectedByNodeId]);
+
+  useEffect(() => {
+    setHoveredNodeId(null);
+  }, [graphData.nodes.length, graphData.links.length]);
+
+  useEffect(() => {
+    if (!ForceGraph2D || !hasCompleteGraphData || graphData.nodes.length === 0) {
+      return;
+    }
+
+    const graph = graphRef.current;
+    if (!graph) {
+      return;
+    }
+
+    const linkForce = graph.d3Force("link") as ForceLinkRuntime | undefined;
+    linkForce?.distance?.((link) => link.distance);
+    linkForce?.strength?.((link) => link.strength);
+    linkForce?.iterations?.(2);
+
+    const chargeForce = graph.d3Force("charge") as ForceChargeRuntime | undefined;
+    chargeForce?.strength?.((node) => (node.type === "stage" ? -440 : -185));
+    chargeForce?.distanceMin?.(20);
+    chargeForce?.distanceMax?.(560);
+
+    const centerForce = graph.d3Force("center") as ForceCenterRuntime | undefined;
+    centerForce?.x?.(graphSize.width / 2);
+    centerForce?.y?.(graphSize.height / 2);
+
+    graph.d3ReheatSimulation();
+    const fitTimer = window.setTimeout(() => {
+      graph.zoomToFit(620, 78);
+    }, 260);
+
+    return () => {
+      window.clearTimeout(fitTimer);
+    };
+  }, [ForceGraph2D, graphData, graphSize.width, graphSize.height, hasCompleteGraphData]);
 
   return (
     <ScrollReveal className="space-y-6">
@@ -165,47 +345,124 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
         <span className="text-sm text-slate-500">公开匿名节点：{friendNodes.length}</span>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 p-2 text-slate-100 shadow-sm">
+      <div ref={hostRef} className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 p-2 text-slate-100 shadow-sm">
         {hasCompleteGraphData ? (
-          <div className="relative mx-auto" style={{ width: graphSize.width, height: graphSize.height }}>
-            <svg className="absolute inset-0 h-full w-full" viewBox={`0 0 ${graphSize.width} ${graphSize.height}`}>
-              {layout.linkLines.map((line) => (
-                <line
-                  key={line.key}
-                  stroke="rgba(148, 163, 184, 0.55)"
-                  strokeLinecap="round"
-                  strokeWidth={1.8}
-                  x1={line.x1}
-                  x2={line.x2}
-                  y1={line.y1}
-                  y2={line.y2}
-                />
-              ))}
-            </svg>
+          <div className="relative mx-auto overflow-hidden rounded-xl" style={{ width: graphSize.width, height: graphSize.height }}>
+            {ForceGraph2D ? (
+              <ForceGraph2D
+                ref={graphRef}
+                autoPauseRedraw={false}
+                backgroundColor="#020617"
+                cooldownTicks={0}
+                d3AlphaDecay={0.02}
+                d3VelocityDecay={0.24}
+                enableNodeDrag
+                enablePanInteraction
+                enableZoomInteraction
+                graphData={graphData}
+                height={graphSize.height}
+                linkColor={(link: unknown) => {
+                  const sourceId = toNodeId((link as GraphLink).source);
+                  const targetId = toNodeId((link as GraphLink).target);
+                  if (!hoveredNodeId) {
+                    return "rgba(148,163,184,0.56)";
+                  }
+                  return sourceId === hoveredNodeId || targetId === hoveredNodeId
+                    ? "rgba(148,163,184,0.92)"
+                    : "rgba(71,85,105,0.24)";
+                }}
+                linkWidth={(link: unknown) => {
+                  const sourceId = toNodeId((link as GraphLink).source);
+                  const targetId = toNodeId((link as GraphLink).target);
+                  const sourceType = nodeTypeById.get(sourceId);
+                  const targetType = nodeTypeById.get(targetId);
+                  const connectsStage = sourceType === "stage" || targetType === "stage";
+                  if (hoveredNodeId && (sourceId === hoveredNodeId || targetId === hoveredNodeId)) {
+                    return 2.4;
+                  }
+                  return connectsStage ? 1.6 : 1.2;
+                }}
+                maxZoom={3.2}
+                minZoom={0.45}
+                nodeCanvasObject={(node: unknown, canvasContext: CanvasRenderingContext2D, globalScale: number) => {
+                  const typedNode = node as GraphNode;
+                  const x = typedNode.x ?? 0;
+                  const y = typedNode.y ?? 0;
+                  const isStage = typedNode.type === "stage";
+                  const isHovered = hoveredNodeId === typedNode.id;
+                  const isRelated = highlightedNodeIds?.has(typedNode.id) ?? false;
+                  const dimmed = Boolean(highlightedNodeIds) && !isRelated;
+                  const viewScale = Math.max(globalScale, 0.8);
+                  const radius = (isStage ? 8.6 : 4.4) / viewScale;
 
-            {layout.stages.map((stage) => (
-              <div
-                key={stage.id}
-                className="pointer-events-none absolute flex items-center gap-2"
-                style={{ left: stage.x, top: stage.y, transform: "translate(-50%, -50%)" }}
-              >
-                <span className="inline-block h-4 w-4 rounded-full bg-slate-100 ring-2 ring-blue-300/70" />
-                <span className="rounded bg-slate-950/35 px-1.5 py-0.5 text-sm font-semibold text-slate-100">
-                  {stage.label}
-                </span>
-              </div>
-            ))}
+                  canvasContext.beginPath();
+                  canvasContext.arc(x, y, radius + (isHovered ? 1.2 / viewScale : 0), 0, Math.PI * 2);
+                  canvasContext.fillStyle = dimmed
+                    ? "rgba(148,163,184,0.32)"
+                    : isStage
+                      ? "rgba(248,250,252,0.98)"
+                      : "rgba(203,213,225,0.95)";
+                  canvasContext.fill();
 
-            {layout.friends.map((friend) => (
-              <div
-                key={friend.id}
-                className="pointer-events-none absolute flex items-center gap-1.5"
-                style={{ left: friend.x, top: friend.y, transform: "translate(-50%, -50%)" }}
-              >
-                <span className="inline-block h-2.5 w-2.5 rounded-full bg-slate-300" />
-                <span className="rounded bg-slate-950/30 px-1 py-0.5 text-xs font-medium text-slate-300">{friend.label}</span>
+                  if (isStage) {
+                    canvasContext.lineWidth = (isHovered ? 2.4 : 1.6) / viewScale;
+                    canvasContext.strokeStyle = dimmed ? "rgba(125,211,252,0.2)" : "rgba(125,211,252,0.9)";
+                    canvasContext.stroke();
+                  }
+
+                  const fontSize = (isStage ? 14 : 11) / viewScale;
+                  canvasContext.font = `${isStage ? 700 : 500} ${fontSize}px "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", sans-serif`;
+                  const label = typedNode.label;
+                  const textWidth = canvasContext.measureText(label).width;
+                  const labelX = x + radius + 6 / viewScale;
+                  const labelY = y + fontSize * 0.33;
+
+                  canvasContext.fillStyle = dimmed ? "rgba(2,6,23,0.24)" : "rgba(2,6,23,0.48)";
+                  canvasContext.fillRect(
+                    labelX - 4 / viewScale,
+                    labelY - fontSize + 2 / viewScale,
+                    textWidth + 8 / viewScale,
+                    fontSize + 5 / viewScale,
+                  );
+
+                  canvasContext.fillStyle = dimmed
+                    ? isStage
+                      ? "rgba(248,250,252,0.36)"
+                      : "rgba(203,213,225,0.34)"
+                    : isStage
+                      ? "rgba(248,250,252,0.97)"
+                      : "rgba(203,213,225,0.9)";
+                  canvasContext.fillText(label, labelX, labelY);
+                }}
+                nodeCanvasObjectMode={() => "replace"}
+                nodeLabel={(node: unknown) => (node as GraphNode).label}
+                nodeVal={(node: unknown) => (node as GraphNode).val}
+                onNodeDrag={(node: unknown) => {
+                  const typedNode = node as GraphNode;
+                  typedNode.fx = typedNode.x;
+                  typedNode.fy = typedNode.y;
+                }}
+                onNodeDragEnd={(node: unknown) => {
+                  const typedNode = node as GraphNode;
+                  typedNode.fx = undefined;
+                  typedNode.fy = undefined;
+                  graphRef.current?.d3ReheatSimulation();
+                }}
+                onNodeHover={(node: unknown) => setHoveredNodeId((node as GraphNode | null)?.id ?? null)}
+                showPointerCursor={(obj: unknown) =>
+                  Boolean(obj && typeof obj === "object" && "type" in (obj as { type?: unknown }))
+                }
+                width={graphSize.width}
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-slate-300">
+                {loadError ?? "图谱组件加载中..."}
               </div>
-            ))}
+            )}
+
+            <div className="pointer-events-none absolute bottom-3 left-3 rounded-md bg-slate-900/45 px-2 py-1 text-xs text-slate-300">
+              拖拽任意节点可重新编排关系
+            </div>
           </div>
         ) : (
           <div className="space-y-3 p-4">
