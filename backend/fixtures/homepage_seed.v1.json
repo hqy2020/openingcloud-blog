@@ -1,0 +1,565 @@
+{
+  "timeline_nodes": [
+    {
+      "title": "出生",
+      "description": "时间线起点",
+      "start_date": "2000-09-01",
+      "end_date": null,
+      "type": "family",
+      "impact": "medium",
+      "phase": "起点",
+      "tags": ["family"],
+      "cover": "",
+      "links": [],
+      "sort_order": 1
+    },
+    {
+      "title": "凉城三小 · 小学",
+      "description": "",
+      "start_date": "2006-09-01",
+      "end_date": "2012-07-01",
+      "type": "learning",
+      "impact": "medium",
+      "phase": "小学",
+      "tags": ["learning"],
+      "cover": "",
+      "links": [],
+      "sort_order": 2
+    },
+    {
+      "title": "扬波中学 · 初中",
+      "description": "",
+      "start_date": "2012-09-01",
+      "end_date": "2016-07-01",
+      "type": "learning",
+      "impact": "medium",
+      "phase": "初中",
+      "tags": ["learning"],
+      "cover": "",
+      "links": [],
+      "sort_order": 3
+    },
+    {
+      "title": "交大附中嘉定分校 · 高中",
+      "description": "",
+      "start_date": "2016-09-01",
+      "end_date": "2019-07-01",
+      "type": "learning",
+      "impact": "medium",
+      "phase": "高中",
+      "tags": ["learning"],
+      "cover": "",
+      "links": [],
+      "sort_order": 4
+    },
+    {
+      "title": "暗夜与破晓",
+      "description": "高三的漫长冬天，也是黎明前最深的夜",
+      "start_date": "2018-12-01",
+      "end_date": "2019-01-01",
+      "type": "reflection",
+      "impact": "low",
+      "phase": "沉淀",
+      "tags": ["reflection"],
+      "cover": "",
+      "links": [],
+      "sort_order": 5
+    },
+    {
+      "title": "同济大学 · 本科",
+      "description": "",
+      "start_date": "2019-09-01",
+      "end_date": "2023-07-01",
+      "type": "learning",
+      "impact": "high",
+      "phase": "本科",
+      "tags": ["learning"],
+      "cover": "",
+      "links": [],
+      "sort_order": 6
+    },
+    {
+      "title": "和杨彩确定恋爱关系",
+      "description": "",
+      "start_date": "2020-11-01",
+      "end_date": null,
+      "type": "family",
+      "impact": "high",
+      "phase": "家庭",
+      "tags": ["family"],
+      "cover": "",
+      "links": [],
+      "sort_order": 7
+    },
+    {
+      "title": "蔚来实习",
+      "description": "",
+      "start_date": "2022-11-01",
+      "end_date": "2023-05-01",
+      "type": "career",
+      "impact": "medium",
+      "phase": "实习",
+      "tags": ["career", "internship"],
+      "cover": "",
+      "links": [],
+      "sort_order": 8
+    },
+    {
+      "title": "SAP 实习",
+      "description": "",
+      "start_date": "2024-06-01",
+      "end_date": "2024-09-01",
+      "type": "career",
+      "impact": "medium",
+      "phase": "实习",
+      "tags": ["career", "internship"],
+      "cover": "",
+      "links": [],
+      "sort_order": 9
+    },
+    {
+      "title": "浙江大学 · 硕士",
+      "description": "",
+      "start_date": "2024-09-01",
+      "end_date": "2026-03-01",
+      "type": "learning",
+      "impact": "high",
+      "phase": "硕士",
+      "tags": ["learning", "research"],
+      "cover": "",
+      "links": [],
+      "sort_order": 10
+    },
+    {
+      "title": "阿里云实习",
+      "description": "",
+      "start_date": "2025-04-01",
+      "end_date": "2025-06-01",
+      "type": "career",
+      "impact": "high",
+      "phase": "实习",
+      "tags": ["career", "internship"],
+      "cover": "",
+      "links": [],
+      "sort_order": 11
+    },
+    {
+      "title": "云层之下",
+      "description": "走过一段看不见天空的路，但脚步没有停",
+      "start_date": "2025-04-01",
+      "end_date": "2025-10-01",
+      "type": "reflection",
+      "impact": "low",
+      "phase": "沉淀",
+      "tags": ["reflection"],
+      "cover": "",
+      "links": [],
+      "sort_order": 12
+    },
+    {
+      "title": "开始系统整理博客",
+      "description": "",
+      "start_date": "2026-02-01",
+      "end_date": null,
+      "type": "career",
+      "impact": "medium",
+      "phase": "博客",
+      "tags": ["career", "blog"],
+      "cover": "",
+      "links": [],
+      "sort_order": 13
+    }
+  ],
+  "highlight_stages": [
+    {
+      "title": "小学",
+      "description": "",
+      "start_date": "2006-09-01",
+      "end_date": "2012-07-01",
+      "sort_order": 1,
+      "items": [
+        {
+          "title": "三年大队长",
+          "description": "",
+          "achieved_at": null,
+          "sort_order": 1
+        },
+        {
+          "title": "800 米虹口区第二",
+          "description": "",
+          "achieved_at": null,
+          "sort_order": 2
+        }
+      ]
+    },
+    {
+      "title": "初中",
+      "description": "",
+      "start_date": "2012-09-01",
+      "end_date": "2016-07-01",
+      "sort_order": 2,
+      "items": [
+        {
+          "title": "班长、大队长",
+          "description": "",
+          "achieved_at": null,
+          "sort_order": 1
+        },
+        {
+          "title": "校 800 米第一",
+          "description": "",
+          "achieved_at": null,
+          "sort_order": 2
+        }
+      ]
+    },
+    {
+      "title": "高中",
+      "description": "",
+      "start_date": "2016-09-01",
+      "end_date": "2019-07-01",
+      "sort_order": 3,
+      "items": [
+        {
+          "title": "生物/地理课代表",
+          "description": "",
+          "achieved_at": null,
+          "sort_order": 1
+        },
+        {
+          "title": "1000m 校记录",
+          "description": "",
+          "achieved_at": null,
+          "sort_order": 2
+        }
+      ]
+    },
+    {
+      "title": "高考",
+      "description": "",
+      "start_date": "2019-06-01",
+      "end_date": "2019-06-30",
+      "sort_order": 4,
+      "items": [
+        {
+          "title": "575 分，全市 2000 多名",
+          "description": "",
+          "achieved_at": null,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "title": "同济大学 · 本科",
+      "description": "",
+      "start_date": "2019-09-01",
+      "end_date": "2023-07-01",
+      "sort_order": 5,
+      "items": [
+        {
+          "title": "优秀学生、优秀学生干部",
+          "description": "",
+          "achieved_at": null,
+          "sort_order": 1
+        },
+        {
+          "title": "学生会主席",
+          "description": "",
+          "achieved_at": null,
+          "sort_order": 2
+        },
+        {
+          "title": "志愿者中队负责人",
+          "description": "",
+          "achieved_at": null,
+          "sort_order": 3
+        },
+        {
+          "title": "中共党员",
+          "description": "",
+          "achieved_at": null,
+          "sort_order": 4
+        },
+        {
+          "title": "年级 15",
+          "description": "",
+          "achieved_at": null,
+          "sort_order": 5
+        },
+        {
+          "title": "上海市优秀毕业生",
+          "description": "",
+          "achieved_at": null,
+          "sort_order": 6
+        },
+        {
+          "title": "优秀毕业论文",
+          "description": "",
+          "achieved_at": null,
+          "sort_order": 7
+        },
+        {
+          "title": "第四、五届进博会志愿者",
+          "description": "",
+          "achieved_at": null,
+          "sort_order": 8
+        },
+        {
+          "title": "和老婆恋爱",
+          "description": "",
+          "achieved_at": null,
+          "sort_order": 9
+        }
+      ]
+    },
+    {
+      "title": "浙江大学 · 硕士",
+      "description": "",
+      "start_date": "2024-09-01",
+      "end_date": "2026-03-01",
+      "sort_order": 6,
+      "items": [
+        {
+          "title": "CCF-B 一作",
+          "description": "",
+          "achieved_at": null,
+          "sort_order": 1
+        },
+        {
+          "title": "CCF-A 二作",
+          "description": "",
+          "achieved_at": null,
+          "sort_order": 2
+        },
+        {
+          "title": "两篇专利",
+          "description": "",
+          "achieved_at": null,
+          "sort_order": 3
+        },
+        {
+          "title": "一篇期刊在投",
+          "description": "",
+          "achieved_at": null,
+          "sort_order": 4
+        },
+        {
+          "title": "浙江大学优秀毕业生",
+          "description": "",
+          "achieved_at": null,
+          "sort_order": 5
+        },
+        {
+          "title": "优秀研究生",
+          "description": "",
+          "achieved_at": null,
+          "sort_order": 6
+        }
+      ]
+    }
+  ],
+  "travel_places": [
+    {
+      "province": "北京",
+      "city": "北京",
+      "notes": "小学阶段旅行（近似记录）",
+      "visited_at": "2011-07-01",
+      "latitude": 39.9042,
+      "longitude": 116.4074,
+      "cover": "",
+      "sort_order": 1
+    },
+    {
+      "province": "安徽",
+      "city": "黄山",
+      "notes": "小学阶段旅行（近似记录）",
+      "visited_at": "2012-07-01",
+      "latitude": 29.7147,
+      "longitude": 118.3376,
+      "cover": "",
+      "sort_order": 2
+    },
+    {
+      "province": "山东",
+      "city": "青岛",
+      "notes": "2019 毕业旅行；本科毕业后与老婆旅行",
+      "visited_at": "2023-07-01",
+      "latitude": 36.0671,
+      "longitude": 120.3826,
+      "cover": "",
+      "sort_order": 3
+    },
+    {
+      "province": "浙江",
+      "city": "舟山",
+      "notes": "桃花岛归一到舟山",
+      "visited_at": "2021-10-01",
+      "latitude": 30.0160,
+      "longitude": 122.1068,
+      "cover": "",
+      "sort_order": 4
+    },
+    {
+      "province": "福建",
+      "city": "厦门",
+      "notes": "2019 毕业旅行；后续再次到访",
+      "visited_at": "2019-08-01",
+      "latitude": 24.4798,
+      "longitude": 118.0894,
+      "cover": "",
+      "sort_order": 5
+    },
+    {
+      "province": "江苏",
+      "city": "南京",
+      "notes": "2025 年乒超联赛",
+      "visited_at": "2025-12-01",
+      "latitude": 32.0603,
+      "longitude": 118.7969,
+      "cover": "",
+      "sort_order": 6
+    },
+    {
+      "province": "浙江",
+      "city": "杭州",
+      "notes": "浙大学习与实习阶段长期停留",
+      "visited_at": "2024-09-01",
+      "latitude": 30.2741,
+      "longitude": 120.1551,
+      "cover": "",
+      "sort_order": 7
+    },
+    {
+      "province": "浙江",
+      "city": "淳安",
+      "notes": "千岛湖旅行",
+      "visited_at": "2025-05-01",
+      "latitude": 29.6080,
+      "longitude": 119.0420,
+      "cover": "",
+      "sort_order": 8
+    },
+    {
+      "province": "辽宁",
+      "city": "沈阳",
+      "notes": "2026 年春节去老婆家过年",
+      "visited_at": "2026-01-01",
+      "latitude": 41.8057,
+      "longitude": 123.4315,
+      "cover": "",
+      "sort_order": 9
+    }
+  ],
+  "social_friends": [
+    {
+      "name": "张子涵",
+      "public_label": "一位高中同学 A",
+      "relation": "高中同学",
+      "stage_key": "high",
+      "avatar": "",
+      "profile_url": "",
+      "is_public": true,
+      "sort_order": 1
+    },
+    {
+      "name": "葛煜",
+      "public_label": "一位高中同学 B",
+      "relation": "高中同学",
+      "stage_key": "high",
+      "avatar": "",
+      "profile_url": "",
+      "is_public": true,
+      "sort_order": 2
+    },
+    {
+      "name": "李航宇",
+      "public_label": "一位大学同学 A",
+      "relation": "大学同学",
+      "stage_key": "tongji",
+      "avatar": "",
+      "profile_url": "",
+      "is_public": true,
+      "sort_order": 3
+    },
+    {
+      "name": "刘远翔",
+      "public_label": "一位大学同学 B",
+      "relation": "室友",
+      "stage_key": "tongji",
+      "avatar": "",
+      "profile_url": "",
+      "is_public": true,
+      "sort_order": 4
+    },
+    {
+      "name": "杨彩",
+      "public_label": "一位大学同学 C",
+      "relation": "情侣",
+      "stage_key": "tongji",
+      "avatar": "",
+      "profile_url": "",
+      "is_public": true,
+      "sort_order": 5
+    },
+    {
+      "name": "王嘉恒",
+      "public_label": "一位研究生同路人 A",
+      "relation": "研究生同学",
+      "stage_key": "zju",
+      "avatar": "",
+      "profile_url": "",
+      "is_public": true,
+      "sort_order": 6
+    },
+    {
+      "name": "苏哲",
+      "public_label": "一位研究生同路人 B",
+      "relation": "研究生同学",
+      "stage_key": "zju",
+      "avatar": "",
+      "profile_url": "",
+      "is_public": true,
+      "sort_order": 7
+    },
+    {
+      "name": "冯天",
+      "public_label": "一位研究生同路人 C",
+      "relation": "导师",
+      "stage_key": "zju",
+      "avatar": "",
+      "profile_url": "",
+      "is_public": true,
+      "sort_order": 8
+    },
+    {
+      "name": "沈骏翱",
+      "public_label": "一位研究生同路人 D",
+      "relation": "师兄",
+      "stage_key": "zju",
+      "avatar": "",
+      "profile_url": "",
+      "is_public": true,
+      "sort_order": 9
+    },
+    {
+      "name": "李炜涛",
+      "public_label": "一位研究生同路人 E",
+      "relation": "师弟",
+      "stage_key": "zju",
+      "avatar": "",
+      "profile_url": "",
+      "is_public": true,
+      "sort_order": 10
+    },
+    {
+      "name": "冀锦康",
+      "public_label": "一位职场朋友 A",
+      "relation": "朋友",
+      "stage_key": "career",
+      "avatar": "",
+      "profile_url": "",
+      "is_public": true,
+      "sort_order": 11
+    }
+  ]
+}
