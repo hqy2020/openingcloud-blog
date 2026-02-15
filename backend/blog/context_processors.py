@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from django.db.models import Sum
 
-from .models import HighlightItem, HighlightStage, Post, PostView, SocialFriend, TimelineNode, TravelPlace
+from .models import HighlightItem, HighlightStage, PhotoWallImage, Post, PostView, SocialFriend, TimelineNode, TravelPlace
 
 
 def admin_dashboard_stats(_request):
@@ -14,6 +14,7 @@ def admin_dashboard_stats(_request):
             "timeline_total": TimelineNode.objects.count(),
             "travel_total": TravelPlace.objects.count(),
             "social_total": SocialFriend.objects.count(),
+            "photo_total": PhotoWallImage.objects.count(),
             "highlight_stages_total": HighlightStage.objects.count(),
             "highlight_items_total": HighlightItem.objects.count(),
             "total_views": total_views,

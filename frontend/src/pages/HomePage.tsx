@@ -1,9 +1,10 @@
 import { Helmet } from "react-helmet-async";
-import type { HighlightStage, SocialGraphLink, SocialGraphNode, TimelineNode } from "../api/home";
+import type { HighlightStage, PhotoWallItem, SocialGraphLink, SocialGraphNode, TimelineNode } from "../api/home";
 import { fetchHome } from "../api/home";
 import { ContactSection } from "../components/home/ContactSection";
 import { HeroSection } from "../components/home/HeroSection";
 import { HighlightsSection } from "../components/home/HighlightsSection";
+import { PhotoWallSection } from "../components/home/PhotoWallSection";
 import { SocialGraphSection } from "../components/home/SocialGraphSection";
 import { StatsSection } from "../components/home/StatsSection";
 import { TimelineSection } from "../components/home/TimelineSection";
@@ -133,6 +134,29 @@ const socialGraphFallbackForUx: {
   ],
 };
 
+const photoWallFallbackForUx: PhotoWallItem[] = [
+  {
+    title: "云海日出",
+    description: "远程图床示例图",
+    image_url: "https://raw.githubusercontent.com/hqy2020/obsidian-images/main/gallery/sunrise.jpg",
+    source_url: "https://github.com/hqy2020/obsidian-images/blob/main/gallery/sunrise.jpg",
+    captured_at: "2025-11-08",
+    width: null,
+    height: null,
+    sort_order: 1,
+  },
+  {
+    title: "夜色城景",
+    description: "Immich 风格照片墙占位图",
+    image_url: "https://raw.githubusercontent.com/hqy2020/obsidian-images/main/gallery/night-city.jpg",
+    source_url: "https://github.com/hqy2020/obsidian-images/blob/main/gallery/night-city.jpg",
+    captured_at: "2025-12-18",
+    width: null,
+    height: null,
+    sort_order: 2,
+  },
+];
+
 export function HomePage() {
   const { data, loading, error } = useAsync(fetchHome, []);
   const payload = data ?? fallbackHomePayload;
@@ -145,6 +169,8 @@ export function HomePage() {
   const socialHasLink = socialLinksRaw.length > 0;
   const socialNodes = socialHasFriend && socialHasLink ? socialNodesRaw : socialGraphFallbackForUx.nodes;
   const socialLinks = socialHasFriend && socialHasLink ? socialLinksRaw : socialGraphFallbackForUx.links;
+  const photoWallItems =
+    Array.isArray(payload.photo_wall) && payload.photo_wall.length > 0 ? payload.photo_wall : photoWallFallbackForUx;
 
   return (
     <section className="space-y-12">
@@ -165,6 +191,7 @@ export function HomePage() {
       <HighlightsSection stages={highlightStages} />
       <TravelSection travel={payload.travel} />
       <SocialGraphSection links={socialLinks} nodes={socialNodes} />
+      <PhotoWallSection photos={photoWallItems} />
       <StatsSection stats={payload.stats} />
       <ContactSection contact={payload.contact} />
     </section>

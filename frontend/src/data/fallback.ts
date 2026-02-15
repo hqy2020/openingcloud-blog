@@ -1,0 +1,202 @@
+import type { HomePayload } from "../api/home";
+import type { PostSummary } from "../api/posts";
+
+export const fallbackHomePayload: HomePayload = {
+  hero: {
+    title: "openingClouds",
+    subtitle: "Tech · Efficiency · Life",
+    slogans: [
+      "用代码丈量世界的边界",
+      "记录即存在，分享即生长",
+      "每一次优化都是向自由迈进",
+    ],
+    fallback_image: "/media/hero/hero-fallback.png",
+    fallback_video: "/media/hero/hero-fallback.mp4",
+  },
+  timeline: [
+    {
+      title: "出生",
+      description: "时间线起点，家庭与成长的开始。",
+      start_date: "2000-09-01",
+      end_date: null,
+      type: "family",
+      impact: "medium",
+      phase: "起点",
+      tags: ["family"],
+      cover: "",
+      links: [],
+      sort_order: 1,
+    },
+    {
+      title: "同济大学",
+      description: "系统训练工程思维，奠定技术基础。",
+      start_date: "2019-09-01",
+      end_date: "2023-07-01",
+      type: "learning",
+      impact: "high",
+      phase: "本科",
+      tags: ["learning"],
+      cover: "",
+      links: [],
+      sort_order: 2,
+    },
+    {
+      title: "云层之下",
+      description: "阶段性沉淀与反思，调整方向后继续前进。",
+      start_date: "2025-04-01",
+      end_date: "2025-10-01",
+      type: "reflection",
+      impact: "low",
+      phase: "沉淀",
+      tags: ["reflection"],
+      cover: "",
+      links: [],
+      sort_order: 3,
+    },
+    {
+      title: "浙江大学",
+      description: "继续研究与实践，拓展技术边界。",
+      start_date: "2024-09-01",
+      end_date: null,
+      type: "learning",
+      impact: "high",
+      phase: "硕士",
+      tags: ["research"],
+      cover: "",
+      links: [],
+      sort_order: 4,
+    },
+    {
+      title: "开始系统整理博客",
+      description: "将技术、效率与生活经验结构化沉淀并持续输出。",
+      start_date: "2026-02-01",
+      end_date: null,
+      type: "career",
+      impact: "high",
+      phase: "实践",
+      tags: ["career"],
+      cover: "",
+      links: [],
+      sort_order: 5,
+    },
+  ],
+  highlights: [
+    {
+      title: "学术进展",
+      description: "持续输出论文与专利成果。",
+      start_date: "2024-09-01",
+      end_date: null,
+      sort_order: 1,
+      items: [
+        {
+          title: "完成多篇论文投稿",
+          description: "学术方向持续推进",
+          achieved_at: null,
+          sort_order: 1,
+        },
+      ],
+    },
+  ],
+  travel: [
+    {
+      province: "浙江",
+      count: 2,
+      cities: [
+        { city: "杭州", notes: "求学", visited_at: null, latitude: 30.2741, longitude: 120.1551, cover: "", sort_order: 1 },
+        { city: "宁波", notes: "旅行", visited_at: null, latitude: 29.8683, longitude: 121.544, cover: "", sort_order: 2 },
+      ],
+    },
+  ],
+  social_graph: {
+    nodes: [
+      { id: "stage-tongji", type: "stage", label: "同济", stage_key: "tongji", order: 40 },
+      { id: "stage-zju", type: "stage", label: "浙大", stage_key: "zju", order: 50 },
+      { id: "friend-1", type: "friend", label: "一位同窗", stage_key: "tongji", order: 101 },
+    ],
+    links: [{ source: "stage-tongji", target: "friend-1" }],
+  },
+  photo_wall: [
+    {
+      title: "云海日出",
+      description: "远程图床示例",
+      image_url: "https://raw.githubusercontent.com/hqy2020/obsidian-images/main/gallery/sunrise.jpg",
+      source_url: "https://github.com/hqy2020/obsidian-images/blob/main/gallery/sunrise.jpg",
+      captured_at: "2025-11-08",
+      width: null,
+      height: null,
+      sort_order: 1,
+    },
+    {
+      title: "夜色城景",
+      description: "Immich 风格照片墙占位图",
+      image_url: "https://raw.githubusercontent.com/hqy2020/obsidian-images/main/gallery/night-city.jpg",
+      source_url: "https://github.com/hqy2020/obsidian-images/blob/main/gallery/night-city.jpg",
+      captured_at: "2025-12-18",
+      width: null,
+      height: null,
+      sort_order: 2,
+    },
+  ],
+  stats: {
+    posts_total: 0,
+    published_posts_total: 0,
+    timeline_total: 5,
+    travel_total: 2,
+    social_total: 1,
+    highlight_stages_total: 1,
+    highlight_items_total: 1,
+    tags_total: 0,
+    views_total: 0,
+    total_words: 0,
+    site_days: 1,
+  },
+  contact: {
+    email: "hqy200091@163.com",
+    github: "https://github.com/hqy2020",
+  },
+};
+
+const now = new Date().toISOString();
+
+const fallbackPosts: PostSummary[] = [
+  {
+    title: "构建个人博客系统的实践",
+    slug: "build-personal-blog",
+    excerpt: "从工程视角拆解一个可持续迭代的博客系统。",
+    category: "tech",
+    tags: ["django", "react"],
+    cover: "",
+    draft: false,
+    views_count: 18,
+    created_at: now,
+    updated_at: now,
+  },
+  {
+    title: "效率系统复盘：如何持续输出",
+    slug: "efficiency-system",
+    excerpt: "以周为单位设计输入-处理-输出闭环。",
+    category: "learning",
+    tags: ["productivity", "workflow"],
+    cover: "",
+    draft: false,
+    views_count: 12,
+    created_at: now,
+    updated_at: now,
+  },
+  {
+    title: "在杭州的普通一天",
+    slug: "hangzhou-one-day",
+    excerpt: "记录生活节奏与城市观察。",
+    category: "life",
+    tags: ["daily", "city"],
+    cover: "",
+    draft: false,
+    views_count: 9,
+    created_at: now,
+    updated_at: now,
+  },
+];
+
+export function getFallbackPosts(category: PostSummary["category"]) {
+  return fallbackPosts.filter((post) => post.category === category);
+}

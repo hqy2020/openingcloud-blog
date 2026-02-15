@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+from urllib.parse import urlparse
 
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 
-from .models import HighlightItem, HighlightStage, Post, SocialFriend, TimelineNode, TravelPlace
+from .models import HighlightItem, HighlightStage, PhotoWallImage, Post, SocialFriend, TimelineNode, TravelPlace
 
 
 class LoginSerializer(serializers.Serializer):
@@ -197,6 +198,55 @@ class SocialFriendAdminSerializer(serializers.ModelSerializer):
         }
 
 
+class PhotoWallImageAdminSerializer(serializers.ModelSerializer):
+    allowed_hosts = {"github.com", "raw.githubusercontent.com"}
+    allowed_repo_segment = "hqy2020/obsidian-images"
+
+    class Meta:
+        model = PhotoWallImage
+        fields = [
+            "id",
+            "title",
+            "description",
+            "image_url",
+            "source_url",
+            "captured_at",
+            "width",
+            "height",
+            "is_public",
+            "sort_order",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+        extra_kwargs = {
+            "title": {"required": False, "allow_blank": True},
+            "description": {"required": False, "allow_blank": True},
+            "source_url": {"required": False, "allow_blank": True},
+            "captured_at": {"required": False, "allow_null": True},
+            "width": {"required": False, "allow_null": True},
+            "height": {"required": False, "allow_null": True},
+        }
+
+    def validate_image_url(self, value: str):
+        url = str(value or "").strip()
+        if url.startswith("/"):
+            raise serializers.ValidationError("照片墙只允许远程链接，不能使用本地路径")
+        parsed = urlparse(url)
+        if parsed.netloc.lower() not in self.allowed_hosts or self.allowed_repo_segment not in parsed.path:
+            raise serializers.ValidationError("照片墙图片请使用 hqy2020/obsidian-images 仓库远程链接")
+        return url
+
+    def validate_source_url(self, value: str):
+        url = str(value or "").strip()
+        if not url:
+            return ""
+        parsed = urlparse(url)
+        if parsed.netloc.lower() not in self.allowed_hosts or self.allowed_repo_segment not in parsed.path:
+            raise serializers.ValidationError("source_url 需指向 hqy2020/obsidian-images 仓库")
+        return url
+
+
 class HighlightItemAdminSerializer(serializers.ModelSerializer):
     class Meta:
         model = HighlightItem
@@ -368,6 +418,21 @@ class SocialGraphPublicSerializer(serializers.Serializer):
     links = SocialGraphLinkSerializer(many=True)
 
 
+class PhotoWallPublicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PhotoWallImage
+        fields = [
+            "title",
+            "description",
+            "image_url",
+            "source_url",
+            "captured_at",
+            "width",
+            "height",
+            "sort_order",
+        ]
+
+
 class HomeHeroSerializer(serializers.Serializer):
     title = serializers.CharField()
     subtitle = serializers.CharField()
@@ -401,6 +466,7 @@ class HomeAggregateSerializer(serializers.Serializer):
     highlights = HighlightStagePublicSerializer(many=True)
     travel = TravelProvinceSerializer(many=True)
     social_graph = SocialGraphPublicSerializer()
+    photo_wall = PhotoWallPublicSerializer(many=True)
     stats = HomeStatsSerializer()
     contact = HomeContactSerializer()
 

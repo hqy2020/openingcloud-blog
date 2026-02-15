@@ -179,6 +179,28 @@ class SocialFriend(TimeStampedModel):
         return f"{first_char}{suffix}"
 
 
+class PhotoWallImage(TimeStampedModel):
+    title = models.CharField(max_length=120, blank=True)
+    description = models.TextField(blank=True)
+    image_url = models.URLField(max_length=800)
+    source_url = models.URLField(max_length=800, blank=True)
+    captured_at = models.DateField(null=True, blank=True)
+    width = models.PositiveIntegerField(null=True, blank=True)
+    height = models.PositiveIntegerField(null=True, blank=True)
+    is_public = models.BooleanField(default=True)
+    sort_order = models.PositiveIntegerField(default=0, db_index=True)
+
+    class Meta:
+        ordering = ["sort_order", "id"]
+        verbose_name = "照片墙"
+        verbose_name_plural = "照片墙"
+
+    def __str__(self) -> str:
+        if self.title:
+            return self.title
+        return self.image_url
+
+
 class HighlightStage(TimeStampedModel):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)

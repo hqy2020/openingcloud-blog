@@ -6,6 +6,7 @@ from adminsortable2.admin import SortableAdminMixin, SortableInlineAdminMixin
 from .models import (
     HighlightItem,
     HighlightStage,
+    PhotoWallImage,
     Post,
     PostView,
     SocialFriend,
@@ -55,6 +56,13 @@ class SocialFriendAdmin(SortableAdminMixin, admin.ModelAdmin):
     list_display = ["public_label", "honorific", "stage_key", "relation", "contact", "is_public", "sort_order", "updated_at"]
     list_filter = ["stage_key", "is_public"]
     search_fields = ["name", "public_label", "relation", "contact"]
+
+
+@admin.register(PhotoWallImage)
+class PhotoWallImageAdmin(SortableAdminMixin, admin.ModelAdmin):
+    list_display = ["title", "captured_at", "is_public", "sort_order", "updated_at"]
+    list_filter = ["is_public"]
+    search_fields = ["title", "description", "image_url", "source_url"]
 
 
 class HighlightItemInline(SortableInlineAdminMixin, admin.TabularInline):

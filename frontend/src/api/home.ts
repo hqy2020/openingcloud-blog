@@ -64,6 +64,17 @@ export type SocialGraphPayload = {
   links: SocialGraphLink[];
 };
 
+export type PhotoWallItem = {
+  title: string;
+  description: string;
+  image_url: string;
+  source_url: string;
+  captured_at: string | null;
+  width: number | null;
+  height: number | null;
+  sort_order: number;
+};
+
 export type HomePayload = {
   hero: {
     title: string;
@@ -76,6 +87,7 @@ export type HomePayload = {
   highlights: HighlightStage[];
   travel: TravelProvince[];
   social_graph: SocialGraphPayload;
+  photo_wall: PhotoWallItem[];
   stats: {
     posts_total: number;
     published_posts_total: number;
@@ -118,4 +130,9 @@ export async function fetchTravel() {
 export async function fetchSocialGraph() {
   const { data } = await apiClient.get("/social-graph/");
   return data.data as SocialGraphPayload;
+}
+
+export async function fetchPhotoWall() {
+  const { data } = await apiClient.get("/photo-wall/");
+  return data.data as PhotoWallItem[];
 }

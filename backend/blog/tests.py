@@ -16,7 +16,7 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from .models import HighlightItem, HighlightStage, Post, PostView, SocialFriend, SyncLog, TimelineNode, TravelPlace
+from .models import HighlightItem, HighlightStage, PhotoWallImage, Post, PostView, SocialFriend, SyncLog, TimelineNode, TravelPlace
 
 
 class ApiTests(TestCase):
@@ -88,6 +88,22 @@ class ApiTests(TestCase):
             public_label="一位朋友",
             relation="朋友",
             stage_key=SocialFriend.StageKey.FAMILY,
+            is_public=False,
+            sort_order=2,
+        )
+        PhotoWallImage.objects.create(
+            title="云海日出",
+            description="公开照片",
+            image_url="https://raw.githubusercontent.com/hqy2020/obsidian-images/main/gallery/sunrise.jpg",
+            source_url="https://github.com/hqy2020/obsidian-images/blob/main/gallery/sunrise.jpg",
+            captured_at="2025-11-08",
+            is_public=True,
+            sort_order=1,
+        )
+        PhotoWallImage.objects.create(
+            title="私密照片",
+            description="仅后台",
+            image_url="https://raw.githubusercontent.com/hqy2020/obsidian-images/main/gallery/private.jpg",
             is_public=False,
             sort_order=2,
         )
@@ -214,6 +230,7 @@ class ApiTests(TestCase):
         self.assertIn("highlights", payload)
         self.assertIn("travel", payload)
         self.assertIn("social_graph", payload)
+        self.assertIn("photo_wall", payload)
         self.assertIn("stats", payload)
         self.assertIn("contact", payload)
         self.assertGreaterEqual(payload["stats"]["published_posts_total"], 1)
@@ -307,6 +324,16 @@ class ApiTests(TestCase):
         friend_nodes = [node for node in resp.data["data"]["nodes"] if node["type"] == "friend"]
         labels = {node["label"] for node in friend_nodes}
         self.assertIn("杨女士", labels)
+
+    def test_photo_wall_api_only_returns_public_remote_images(self):
+        resp = self.client.get(reverse("photo-wall"))
+        self.assertEqual(resp.status_code, 200)
+        rows = resp.data["data"]
+        self.assertEqual(len(rows), 1)
+        item = rows[0]
+        self.assertEqual(item["title"], "云海日出")
+        self.assertTrue(str(item["image_url"]).startswith("https://"))
+        self.assertIn("hqy2020/obsidian-images", item["source_url"])
 
     def test_sitemap_contains_published_posts_only(self):
         resp = self.client.get("/sitemap.xml")
@@ -914,6 +941,13 @@ class AdminContentCrudApiTests(TestCase):
             is_public=True,
             sort_order=3,
         )
+        self.photo = PhotoWallImage.objects.create(
+            title="旧照片",
+            description="old",
+            image_url="https://raw.githubusercontent.com/hqy2020/obsidian-images/main/gallery/old.jpg",
+            is_public=True,
+            sort_order=3,
+        )
         self.stage = HighlightStage.objects.create(
             title="大学",
             description="old",
@@ -1109,6 +1143,51 @@ class AdminContentCrudApiTests(TestCase):
         delete_resp = self.client.delete(reverse("admin-social-detail", kwargs={"social_id": friend_id}))
         self.assertEqual(delete_resp.status_code, 200)
         self.assertFalse(SocialFriend.objects.filter(id=friend_id).exists())
+
+    def test_admin_photo_wall_crud_filter_and_reorder(self):
+        create_resp = self.client.post(
+            reverse("admin-photos"),
+            {
+                "title": "新照片",
+                "description": "from github blob",
+                "image_url": "https://github.com/hqy2020/obsidian-images/blob/main/gallery/new.jpg",
+                "source_url": "https://github.com/hqy2020/obsidian-images/blob/main/gallery/new.jpg",
+                "captured_at": "2026-02-01",
+                "is_public": True,
+                "sort_order": 8,
+            },
+            format="json",
+        )
+        self.assertEqual(create_resp.status_code, 201)
+        photo_id = create_resp.data["data"]["id"]
+        self.assertTrue(create_resp.data["data"]["image_url"].startswith("https://raw.githubusercontent.com/"))
+
+        filter_resp = self.client.get(reverse("admin-photos"), {"q": "新照片"})
+        self.assertEqual(filter_resp.status_code, 200)
+        ids = [row["id"] for row in filter_resp.data["data"]["results"]]
+        self.assertIn(photo_id, ids)
+
+        reorder_resp = self.client.patch(
+            reverse("admin-photos-reorder"),
+            {"ids": [photo_id, self.photo.id]},
+            format="json",
+        )
+        self.assertEqual(reorder_resp.status_code, 200)
+        self.photo.refresh_from_db()
+        self.assertEqual(self.photo.sort_order, 1)
+
+        update_resp = self.client.put(
+            reverse("admin-photo-detail", kwargs={"photo_id": photo_id}),
+            {"description": "updated", "is_public": False},
+            format="json",
+        )
+        self.assertEqual(update_resp.status_code, 200)
+        self.assertEqual(update_resp.data["data"]["description"], "updated")
+        self.assertFalse(update_resp.data["data"]["is_public"])
+
+        delete_resp = self.client.delete(reverse("admin-photo-detail", kwargs={"photo_id": photo_id}))
+        self.assertEqual(delete_resp.status_code, 200)
+        self.assertFalse(PhotoWallImage.objects.filter(id=photo_id).exists())
 
     def test_admin_highlights_stage_item_crud_and_reorder(self):
         stage_resp = self.client.post(

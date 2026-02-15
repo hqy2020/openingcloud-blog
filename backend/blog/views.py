@@ -19,7 +19,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import HighlightItem, HighlightStage, Post, PostView, SocialFriend, SyncLog, TimelineNode, TravelPlace
+from .models import HighlightItem, HighlightStage, PhotoWallImage, Post, PostView, SocialFriend, SyncLog, TimelineNode, TravelPlace
 from .permissions import IsStaffOrSyncToken, IsStaffUser
 from .serializers import (
     AdminImageUploadSerializer,
@@ -33,6 +33,8 @@ from .serializers import (
     HighlightStagePublicSerializer,
     HomeAggregateSerializer,
     LoginSerializer,
+    PhotoWallImageAdminSerializer,
+    PhotoWallPublicSerializer,
     PostAdminSerializer,
     PostDetailSerializer,
     PostListSerializer,
@@ -45,6 +47,8 @@ from .serializers import (
     TravelProvinceSerializer,
 )
 from sync.service import reconcile_obsidian_publications, sync_post_payload
+
+OBSIDIAN_IMAGES_REPO_URL = "https://github.com/hqy2020/obsidian-images"
 
 
 def api_ok(data, status_code=status.HTTP_200_OK):
@@ -115,6 +119,18 @@ def _apply_reorder(model, items: list[dict], *, allow_extra_fields: bool = False
         if allow_extra_fields and "stage_id" in item:
             update_kwargs["stage_id"] = item["stage_id"]
         model.objects.filter(id=item["id"]).update(**update_kwargs)
+
+
+def _normalize_remote_image_url(url: str) -> str:
+    text = str(url or "").strip()
+    if not text:
+        return text
+
+    github_blob_prefix = f"{OBSIDIAN_IMAGES_REPO_URL}/blob/"
+    if text.startswith(github_blob_prefix):
+        suffix = text.removeprefix(github_blob_prefix)
+        return f"https://raw.githubusercontent.com/hqy2020/obsidian-images/{suffix}"
+    return text
 
 
 class HealthCheckView(APIView):
@@ -475,6 +491,52 @@ class AdminSocialDetailView(AdminDetailView):
     lookup_url_kwarg = "social_id"
 
 
+class AdminPhotoListCreateView(AdminListCreateView):
+    serializer_class = PhotoWallImageAdminSerializer
+    queryset = PhotoWallImage.objects.all()
+
+    def get_queryset(self):
+        queryset = PhotoWallImage.objects.all()
+        public_only = _parse_bool_query(self.request.query_params.get("is_public"))
+        keyword = str(self.request.query_params.get("q", "")).strip()
+        sort = str(self.request.query_params.get("sort", "order")).strip()
+
+        if public_only is not None:
+            queryset = queryset.filter(is_public=public_only)
+        if keyword:
+            queryset = queryset.filter(
+                Q(title__icontains=keyword) | Q(description__icontains=keyword) | Q(image_url__icontains=keyword)
+            )
+
+        if sort == "latest":
+            return queryset.order_by("-updated_at", "-id")
+        if sort == "captured_at":
+            return queryset.order_by("-captured_at", "-id")
+        return queryset.order_by("sort_order", "id")
+
+    def perform_create(self, serializer):
+        source_url = serializer.validated_data.get("source_url", "") or OBSIDIAN_IMAGES_REPO_URL
+        serializer.save(
+            image_url=_normalize_remote_image_url(serializer.validated_data.get("image_url", "")),
+            source_url=_normalize_remote_image_url(source_url),
+        )
+
+
+class AdminPhotoDetailView(AdminDetailView):
+    serializer_class = PhotoWallImageAdminSerializer
+    queryset = PhotoWallImage.objects.all()
+    lookup_field = "id"
+    lookup_url_kwarg = "photo_id"
+
+    def perform_update(self, serializer):
+        payload = {}
+        if "image_url" in serializer.validated_data:
+            payload["image_url"] = _normalize_remote_image_url(serializer.validated_data.get("image_url", ""))
+        if "source_url" in serializer.validated_data:
+            payload["source_url"] = _normalize_remote_image_url(serializer.validated_data.get("source_url", ""))
+        serializer.save(**payload)
+
+
 class AdminReorderView(APIView):
     permission_classes = [IsAuthenticated, IsStaffUser]
     model = None
@@ -503,6 +565,10 @@ class AdminTravelReorderView(AdminReorderView):
 
 class AdminSocialReorderView(AdminReorderView):
     model = SocialFriend
+
+
+class AdminPhotoReorderView(AdminReorderView):
+    model = PhotoWallImage
 
 
 class AdminHighlightsView(APIView):
@@ -760,6 +826,21 @@ def _social_graph_payload(*, show_real_name: bool = False) -> dict:
     return {"nodes": nodes, "links": links}
 
 
+def _photo_wall_payload() -> list[dict]:
+    queryset = PhotoWallImage.objects.filter(is_public=True).order_by("sort_order", "id")
+    payload = PhotoWallPublicSerializer(queryset, many=True).data
+    normalized: list[dict] = []
+    for item in payload:
+        normalized.append(
+            {
+                **item,
+                "image_url": _normalize_remote_image_url(item.get("image_url", "")),
+                "source_url": _normalize_remote_image_url(item.get("source_url", "") or OBSIDIAN_IMAGES_REPO_URL),
+            }
+        )
+    return normalized
+
+
 def _home_stats_payload() -> dict:
     posts = Post.objects.all()
     published_posts = posts.filter(draft=False)
@@ -810,6 +891,7 @@ def _home_payload(*, show_real_name: bool = False) -> dict:
     highlights = HighlightStage.objects.prefetch_related("items").order_by("sort_order", "start_date", "id")
     travel = _travel_payload()
     social_graph = _social_graph_payload(show_real_name=show_real_name)
+    photo_wall = _photo_wall_payload()
 
     email = getattr(settings, "PUBLIC_CONTACT_EMAIL", "openingclouds@outlook.com")
     github = getattr(settings, "PUBLIC_GITHUB_URL", "https://github.com/hqy2020/openingcloud-blog")
@@ -833,6 +915,7 @@ def _home_payload(*, show_real_name: bool = False) -> dict:
         "highlights": HighlightStagePublicSerializer(highlights, many=True).data,
         "travel": TravelProvinceSerializer(travel, many=True).data,
         "social_graph": SocialGraphPublicSerializer(social_graph).data,
+        "photo_wall": photo_wall,
         "stats": _home_stats_payload(),
         "contact": {
             "email": email,
@@ -873,6 +956,13 @@ class SocialGraphView(APIView):
     def get(self, request):
         payload = SocialGraphPublicSerializer(_social_graph_payload(show_real_name=_is_staff_viewer(request))).data
         return api_ok(payload)
+
+
+class PhotoWallView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        return api_ok(_photo_wall_payload())
 
 
 class HomeView(APIView):
