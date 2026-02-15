@@ -182,6 +182,7 @@ class SocialFriendAdminSerializer(serializers.ModelSerializer):
             "honorific",
             "avatar",
             "profile_url",
+            "contact",
             "is_public",
             "sort_order",
             "created_at",
@@ -192,6 +193,7 @@ class SocialFriendAdminSerializer(serializers.ModelSerializer):
             "relation": {"required": False, "allow_blank": True},
             "avatar": {"required": False, "allow_blank": True},
             "profile_url": {"required": False, "allow_blank": True},
+            "contact": {"required": False, "allow_blank": True},
         }
 
 

@@ -454,7 +454,12 @@ class AdminSocialListCreateView(AdminListCreateView):
         if public_only is not None:
             queryset = queryset.filter(is_public=public_only)
         if keyword:
-            queryset = queryset.filter(Q(name__icontains=keyword) | Q(public_label__icontains=keyword) | Q(relation__icontains=keyword))
+            queryset = queryset.filter(
+                Q(name__icontains=keyword)
+                | Q(public_label__icontains=keyword)
+                | Q(relation__icontains=keyword)
+                | Q(contact__icontains=keyword)
+            )
 
         if sort == "latest":
             return queryset.order_by("-updated_at", "-id")

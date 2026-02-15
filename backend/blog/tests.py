@@ -910,6 +910,7 @@ class AdminContentCrudApiTests(TestCase):
             public_label="一位同学",
             relation="同窗",
             stage_key=SocialFriend.StageKey.TONGJI,
+            contact="wechat:zhangsan",
             is_public=True,
             sort_order=3,
         )
@@ -1067,12 +1068,14 @@ class AdminContentCrudApiTests(TestCase):
                 "public_label": "一位朋友",
                 "relation": "好友",
                 "stage_key": "zju",
+                "contact": "wechat:lisi",
                 "is_public": True,
                 "sort_order": 8,
             },
             format="json",
         )
         self.assertEqual(create_resp.status_code, 201)
+        self.assertEqual(create_resp.data["data"]["contact"], "wechat:lisi")
         friend_id = create_resp.data["data"]["id"]
 
         filter_resp = self.client.get(reverse("admin-social"), {"stage_key": "zju"})
@@ -1096,11 +1099,12 @@ class AdminContentCrudApiTests(TestCase):
 
         update_resp = self.client.put(
             reverse("admin-social-detail", kwargs={"social_id": friend_id}),
-            {"relation": "同事", "is_public": False},
+            {"relation": "同事", "contact": "phone:13800000000", "is_public": False},
             format="json",
         )
         self.assertEqual(update_resp.status_code, 200)
         self.assertFalse(update_resp.data["data"]["is_public"])
+        self.assertEqual(update_resp.data["data"]["contact"], "phone:13800000000")
 
         delete_resp = self.client.delete(reverse("admin-social-detail", kwargs={"social_id": friend_id}))
         self.assertEqual(delete_resp.status_code, 200)

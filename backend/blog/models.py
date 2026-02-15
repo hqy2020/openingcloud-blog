@@ -148,6 +148,7 @@ class SocialFriend(TimeStampedModel):
     honorific = models.CharField(max_length=10, choices=Honorific.choices, default=Honorific.MR)
     avatar = models.URLField(max_length=500, blank=True)
     profile_url = models.URLField(max_length=500, blank=True)
+    contact = models.CharField(max_length=255, blank=True, verbose_name="联系方式")
     is_public = models.BooleanField(default=True)
     sort_order = models.PositiveIntegerField(default=0, db_index=True)
 
