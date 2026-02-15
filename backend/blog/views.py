@@ -7,8 +7,8 @@ from uuid import uuid4
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files.storage import default_storage
-from django.db import connection
-from django.db.models import BooleanField, F, IntegerField, Sum, Value
+from django.db import connection, transaction
+from django.db.models import BooleanField, F, IntegerField, Q, Sum, Value
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Coalesce
 from django.utils import timezone
@@ -19,7 +19,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import HighlightStage, Post, PostView, SocialFriend, SyncLog, TimelineNode, TravelPlace
+from .models import HighlightItem, HighlightStage, Post, PostView, SocialFriend, SyncLog, TimelineNode, TravelPlace
 from .permissions import IsStaffOrSyncToken, IsStaffUser
 from .serializers import (
     AdminImageUploadSerializer,
@@ -27,13 +27,21 @@ from .serializers import (
     AdminObsidianReconcileResponseSerializer,
     AdminObsidianSyncRequestSerializer,
     AdminObsidianSyncResponseSerializer,
+    HighlightItemAdminSerializer,
+    HighlightReorderRequestSerializer,
+    HighlightStageAdminSerializer,
     HighlightStagePublicSerializer,
     HomeAggregateSerializer,
     LoginSerializer,
+    PostAdminSerializer,
     PostDetailSerializer,
     PostListSerializer,
+    ReorderRequestSerializer,
+    SocialFriendAdminSerializer,
     SocialGraphPublicSerializer,
+    TimelineNodeAdminSerializer,
     TimelineNodePublicSerializer,
+    TravelPlaceAdminSerializer,
     TravelProvinceSerializer,
 )
 from sync.service import reconcile_obsidian_publications, sync_post_payload
@@ -65,6 +73,38 @@ def filter_posts_by_tag(queryset, tag: str):
         ).filter(_tag_matched=True)
 
     return queryset.filter(tags__icontains=f'"{normalized_tag}"')
+
+
+def _parse_bool_query(raw_value: str | None):
+    if raw_value is None:
+        return None
+    normalized = str(raw_value).strip().lower()
+    if normalized in {"1", "true", "yes", "y", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "n", "off"}:
+        return False
+    return None
+
+
+def _normalize_reorder_items(payload: dict) -> list[dict]:
+    ids = payload.get("ids") or []
+    if ids:
+        return [{"id": item_id, "sort_order": index} for index, item_id in enumerate(ids)]
+    return list(payload.get("items") or [])
+
+
+def _apply_reorder(model, items: list[dict], *, allow_extra_fields: bool = False):
+    ids = [item["id"] for item in items]
+    existing_ids = set(model.objects.filter(id__in=ids).values_list("id", flat=True))
+    missing_ids = [item_id for item_id in ids if item_id not in existing_ids]
+    if missing_ids:
+        raise ValueError(f"记录不存在: {missing_ids}")
+
+    for item in items:
+        update_kwargs = {"sort_order": item["sort_order"]}
+        if allow_extra_fields and "stage_id" in item:
+            update_kwargs["stage_id"] = item["stage_id"]
+        model.objects.filter(id=item["id"]).update(**update_kwargs)
 
 
 class HealthCheckView(APIView):
@@ -237,6 +277,338 @@ class AdminImageUploadView(APIView):
                 "content_type": str(getattr(upload, "content_type", "")),
             }
         )
+
+
+class AdminListCreateView(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated, IsStaffUser]
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        return api_ok(response.data)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        response = api_ok(serializer.data, status_code=status.HTTP_201_CREATED)
+        for key, value in headers.items():
+            response[key] = value
+        return response
+
+
+class AdminDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated, IsStaffUser]
+
+    def retrieve(self, request, *args, **kwargs):
+        response = super().retrieve(request, *args, **kwargs)
+        return api_ok(response.data)
+
+    def put(self, request, *args, **kwargs):
+        kwargs["partial"] = True
+        return self.update(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return api_ok(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        deleted_id = instance.id
+        self.perform_destroy(instance)
+        return api_ok({"deleted": True, "id": deleted_id})
+
+
+class AdminPostListCreateView(AdminListCreateView):
+    serializer_class = PostAdminSerializer
+    queryset = Post.objects.select_related("view_record").all()
+
+    def get_queryset(self):
+        queryset = Post.objects.all().select_related("view_record")
+        category = self.request.query_params.get("category")
+        draft = _parse_bool_query(self.request.query_params.get("draft"))
+        keyword = str(self.request.query_params.get("q", "")).strip()
+        tag = self.request.query_params.get("tag")
+        sort = str(self.request.query_params.get("sort", "latest")).strip()
+
+        if category:
+            queryset = queryset.filter(category=category)
+        if draft is not None:
+            queryset = queryset.filter(draft=draft)
+        if keyword:
+            queryset = queryset.filter(Q(title__icontains=keyword) | Q(slug__icontains=keyword) | Q(excerpt__icontains=keyword))
+        if tag:
+            queryset = filter_posts_by_tag(queryset, tag)
+
+        if sort == "views":
+            return queryset.annotate(
+                sort_views=Coalesce("view_record__views", Value(0), output_field=IntegerField())
+            ).order_by("-sort_views", "-updated_at", "-id")
+        if sort == "oldest":
+            return queryset.order_by("updated_at", "id")
+        if sort == "title_asc":
+            return queryset.order_by("title", "-updated_at", "-id")
+        if sort == "title_desc":
+            return queryset.order_by("-title", "-updated_at", "-id")
+
+        return queryset.order_by("-updated_at", "-id")
+
+
+class AdminPostDetailView(AdminDetailView):
+    serializer_class = PostAdminSerializer
+    queryset = Post.objects.select_related("view_record").all()
+    lookup_field = "id"
+    lookup_url_kwarg = "post_id"
+
+
+class AdminTimelineListCreateView(AdminListCreateView):
+    serializer_class = TimelineNodeAdminSerializer
+    queryset = TimelineNode.objects.all()
+
+    def get_queryset(self):
+        queryset = TimelineNode.objects.all()
+        node_type = self.request.query_params.get("type")
+        impact = self.request.query_params.get("impact")
+        keyword = str(self.request.query_params.get("q", "")).strip()
+        sort = str(self.request.query_params.get("sort", "order")).strip()
+
+        if node_type:
+            queryset = queryset.filter(type=node_type)
+        if impact:
+            queryset = queryset.filter(impact=impact)
+        if keyword:
+            queryset = queryset.filter(Q(title__icontains=keyword) | Q(description__icontains=keyword) | Q(phase__icontains=keyword))
+
+        if sort == "latest":
+            return queryset.order_by("-start_date", "-id")
+        if sort == "oldest":
+            return queryset.order_by("start_date", "id")
+        return queryset.order_by("sort_order", "start_date", "id")
+
+
+class AdminTimelineDetailView(AdminDetailView):
+    serializer_class = TimelineNodeAdminSerializer
+    queryset = TimelineNode.objects.all()
+    lookup_field = "id"
+    lookup_url_kwarg = "timeline_id"
+
+
+class AdminTravelListCreateView(AdminListCreateView):
+    serializer_class = TravelPlaceAdminSerializer
+    queryset = TravelPlace.objects.all()
+
+    def get_queryset(self):
+        queryset = TravelPlace.objects.all()
+        province = self.request.query_params.get("province")
+        keyword = str(self.request.query_params.get("q", "")).strip()
+        sort = str(self.request.query_params.get("sort", "order")).strip()
+
+        if province:
+            queryset = queryset.filter(province=province)
+        if keyword:
+            queryset = queryset.filter(Q(province__icontains=keyword) | Q(city__icontains=keyword) | Q(notes__icontains=keyword))
+
+        if sort == "province":
+            return queryset.order_by("province", "city", "id")
+        if sort == "latest":
+            return queryset.order_by("-updated_at", "-id")
+        return queryset.order_by("sort_order", "province", "city", "id")
+
+
+class AdminTravelDetailView(AdminDetailView):
+    serializer_class = TravelPlaceAdminSerializer
+    queryset = TravelPlace.objects.all()
+    lookup_field = "id"
+    lookup_url_kwarg = "travel_id"
+
+
+class AdminSocialListCreateView(AdminListCreateView):
+    serializer_class = SocialFriendAdminSerializer
+    queryset = SocialFriend.objects.all()
+
+    def get_queryset(self):
+        queryset = SocialFriend.objects.all()
+        stage_key = self.request.query_params.get("stage_key")
+        if not stage_key:
+            stage_key = self.request.query_params.get("stage")
+        public_only = _parse_bool_query(self.request.query_params.get("is_public"))
+        keyword = str(self.request.query_params.get("q", "")).strip()
+        sort = str(self.request.query_params.get("sort", "order")).strip()
+
+        if stage_key:
+            queryset = queryset.filter(stage_key=stage_key)
+        if public_only is not None:
+            queryset = queryset.filter(is_public=public_only)
+        if keyword:
+            queryset = queryset.filter(Q(name__icontains=keyword) | Q(public_label__icontains=keyword) | Q(relation__icontains=keyword))
+
+        if sort == "latest":
+            return queryset.order_by("-updated_at", "-id")
+        if sort == "name":
+            return queryset.order_by("name", "id")
+        return queryset.order_by("sort_order", "id")
+
+
+class AdminSocialDetailView(AdminDetailView):
+    serializer_class = SocialFriendAdminSerializer
+    queryset = SocialFriend.objects.all()
+    lookup_field = "id"
+    lookup_url_kwarg = "social_id"
+
+
+class AdminReorderView(APIView):
+    permission_classes = [IsAuthenticated, IsStaffUser]
+    model = None
+
+    def patch(self, request):
+        serializer = ReorderRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        items = _normalize_reorder_items(serializer.validated_data)
+
+        try:
+            with transaction.atomic():
+                _apply_reorder(self.model, items)
+        except ValueError as exc:
+            return api_error("not_found", str(exc), status.HTTP_404_NOT_FOUND)
+
+        return api_ok({"updated": len(items)})
+
+
+class AdminTimelineReorderView(AdminReorderView):
+    model = TimelineNode
+
+
+class AdminTravelReorderView(AdminReorderView):
+    model = TravelPlace
+
+
+class AdminSocialReorderView(AdminReorderView):
+    model = SocialFriend
+
+
+class AdminHighlightsView(APIView):
+    permission_classes = [IsAuthenticated, IsStaffUser]
+
+    def get(self, request):
+        queryset = HighlightStage.objects.prefetch_related("items").order_by("sort_order", "start_date", "id")
+        keyword = str(request.query_params.get("q", "")).strip()
+        if keyword:
+            queryset = queryset.filter(Q(title__icontains=keyword) | Q(description__icontains=keyword))
+        payload = HighlightStageAdminSerializer(queryset, many=True).data
+        return api_ok(payload)
+
+
+class AdminHighlightStageCreateView(APIView):
+    permission_classes = [IsAuthenticated, IsStaffUser]
+
+    def post(self, request):
+        serializer = HighlightStageAdminSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+        return api_ok(HighlightStageAdminSerializer(instance).data, status_code=status.HTTP_201_CREATED)
+
+
+class AdminHighlightStageDetailView(APIView):
+    permission_classes = [IsAuthenticated, IsStaffUser]
+
+    def _get_object(self, stage_id):
+        return HighlightStage.objects.filter(id=stage_id).first()
+
+    def put(self, request, stage_id):
+        return self._update(request, stage_id, partial=True)
+
+    def patch(self, request, stage_id):
+        return self._update(request, stage_id, partial=True)
+
+    def delete(self, request, stage_id):
+        instance = self._get_object(stage_id)
+        if not instance:
+            return api_error("not_found", "阶段不存在", status.HTTP_404_NOT_FOUND)
+        deleted_id = instance.id
+        instance.delete()
+        return api_ok({"deleted": True, "id": deleted_id})
+
+    def _update(self, request, stage_id, *, partial):
+        instance = self._get_object(stage_id)
+        if not instance:
+            return api_error("not_found", "阶段不存在", status.HTTP_404_NOT_FOUND)
+        serializer = HighlightStageAdminSerializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return api_ok(serializer.data)
+
+
+class AdminHighlightItemCreateView(APIView):
+    permission_classes = [IsAuthenticated, IsStaffUser]
+
+    def post(self, request):
+        serializer = HighlightItemAdminSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+        return api_ok(HighlightItemAdminSerializer(instance).data, status_code=status.HTTP_201_CREATED)
+
+
+class AdminHighlightItemDetailView(APIView):
+    permission_classes = [IsAuthenticated, IsStaffUser]
+
+    def _get_object(self, item_id):
+        return HighlightItem.objects.filter(id=item_id).first()
+
+    def put(self, request, item_id):
+        return self._update(request, item_id, partial=True)
+
+    def patch(self, request, item_id):
+        return self._update(request, item_id, partial=True)
+
+    def delete(self, request, item_id):
+        instance = self._get_object(item_id)
+        if not instance:
+            return api_error("not_found", "成就不存在", status.HTTP_404_NOT_FOUND)
+        deleted_id = instance.id
+        instance.delete()
+        return api_ok({"deleted": True, "id": deleted_id})
+
+    def _update(self, request, item_id, *, partial):
+        instance = self._get_object(item_id)
+        if not instance:
+            return api_error("not_found", "成就不存在", status.HTTP_404_NOT_FOUND)
+        serializer = HighlightItemAdminSerializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return api_ok(serializer.data)
+
+
+class AdminHighlightReorderView(APIView):
+    permission_classes = [IsAuthenticated, IsStaffUser]
+
+    def patch(self, request):
+        serializer = HighlightReorderRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        stages_payload = serializer.validated_data.get("stages")
+        stage_items = _normalize_reorder_items(stages_payload) if stages_payload else []
+        highlight_items = list(serializer.validated_data.get("items") or [])
+
+        stage_ids = {item["stage_id"] for item in highlight_items if "stage_id" in item}
+        if stage_ids:
+            existing_stage_ids = set(HighlightStage.objects.filter(id__in=stage_ids).values_list("id", flat=True))
+            missing_stage_ids = sorted(stage_ids - existing_stage_ids)
+            if missing_stage_ids:
+                return api_error("not_found", f"阶段不存在: {missing_stage_ids}", status.HTTP_404_NOT_FOUND)
+
+        try:
+            with transaction.atomic():
+                if stage_items:
+                    _apply_reorder(HighlightStage, stage_items)
+                if highlight_items:
+                    _apply_reorder(HighlightItem, highlight_items, allow_extra_fields=True)
+        except ValueError as exc:
+            return api_error("not_found", str(exc), status.HTTP_404_NOT_FOUND)
+
+        return api_ok({"updated_stages": len(stage_items), "updated_items": len(highlight_items)})
 
 
 class AdminObsidianSyncView(APIView):

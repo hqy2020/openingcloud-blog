@@ -813,3 +813,308 @@ class AdminApiTests(TestCase):
         post_b.refresh_from_db()
         self.assertTrue(post_b.draft)
         self.assertEqual(resp.data["data"]["drafted"], 1)
+
+
+class AdminContentCrudApiTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.staff_user = get_user_model().objects.create_user(
+            username="admin-crud",
+            password="pass1234",
+            is_staff=True,
+        )
+        self.client.force_authenticate(user=self.staff_user)
+
+        self.post = Post.objects.create(
+            title="管理文章",
+            slug="admin-post",
+            excerpt="old",
+            content="content",
+            category=Post.Category.TECH,
+            tags=["ops"],
+            draft=False,
+        )
+        PostView.objects.create(post=self.post, views=3)
+
+        self.timeline = TimelineNode.objects.create(
+            title="基础节点",
+            description="old",
+            start_date="2020-01-01",
+            type=TimelineNode.NodeType.LEARNING,
+            impact=TimelineNode.Impact.MEDIUM,
+            sort_order=3,
+        )
+        self.travel = TravelPlace.objects.create(
+            province="上海",
+            city="上海",
+            notes="old",
+            sort_order=3,
+        )
+        self.social = SocialFriend.objects.create(
+            name="张三",
+            public_label="一位同学",
+            relation="同窗",
+            stage_key=SocialFriend.StageKey.TONGJI,
+            is_public=True,
+            sort_order=3,
+        )
+        self.stage = HighlightStage.objects.create(
+            title="大学",
+            description="old",
+            sort_order=3,
+        )
+        self.item = HighlightItem.objects.create(
+            stage=self.stage,
+            title="论文",
+            description="old",
+            sort_order=3,
+        )
+
+    def test_admin_posts_crud_filter_and_sort(self):
+        top_post = Post.objects.create(
+            title="Top Views",
+            slug="top-views",
+            excerpt="x",
+            content="x",
+            category=Post.Category.TECH,
+            tags=[],
+            draft=False,
+        )
+        PostView.objects.create(post=top_post, views=12)
+
+        resp = self.client.get(reverse("admin-posts"), {"category": Post.Category.TECH})
+        self.assertEqual(resp.status_code, 200)
+        self.assertGreaterEqual(resp.data["data"]["count"], 2)
+
+        create_resp = self.client.post(
+            reverse("admin-posts"),
+            {
+                "title": "新增文章",
+                "slug": "admin-created-post",
+                "excerpt": "new",
+                "content": "# new",
+                "category": "life",
+                "tags": ["new", "life"],
+                "draft": True,
+            },
+            format="json",
+        )
+        self.assertEqual(create_resp.status_code, 201)
+        post_id = create_resp.data["data"]["id"]
+
+        update_resp = self.client.put(
+            reverse("admin-post-detail", kwargs={"post_id": post_id}),
+            {"excerpt": "updated", "draft": False},
+            format="json",
+        )
+        self.assertEqual(update_resp.status_code, 200)
+        self.assertEqual(update_resp.data["data"]["excerpt"], "updated")
+        self.assertFalse(update_resp.data["data"]["draft"])
+
+        sort_resp = self.client.get(reverse("admin-posts"), {"sort": "views"})
+        self.assertEqual(sort_resp.status_code, 200)
+        self.assertEqual(sort_resp.data["data"]["results"][0]["slug"], "top-views")
+
+        delete_resp = self.client.delete(reverse("admin-post-detail", kwargs={"post_id": post_id}))
+        self.assertEqual(delete_resp.status_code, 200)
+        self.assertFalse(Post.objects.filter(id=post_id).exists())
+
+    def test_admin_timeline_crud_filter_and_reorder(self):
+        create_resp = self.client.post(
+            reverse("admin-timeline"),
+            {
+                "title": "沉淀期",
+                "description": "node",
+                "start_date": "2021-01-01",
+                "type": "reflection",
+                "impact": "high",
+                "phase": "self",
+                "tags": ["成长"],
+                "links": [],
+                "sort_order": 7,
+            },
+            format="json",
+        )
+        self.assertEqual(create_resp.status_code, 201)
+        node_id = create_resp.data["data"]["id"]
+
+        filter_resp = self.client.get(reverse("admin-timeline"), {"type": "reflection"})
+        self.assertEqual(filter_resp.status_code, 200)
+        returned_ids = [row["id"] for row in filter_resp.data["data"]["results"]]
+        self.assertIn(node_id, returned_ids)
+
+        reorder_resp = self.client.patch(
+            reverse("admin-timeline-reorder"),
+            {"ids": [node_id, self.timeline.id]},
+            format="json",
+        )
+        self.assertEqual(reorder_resp.status_code, 200)
+        self.timeline.refresh_from_db()
+        self.assertEqual(self.timeline.sort_order, 1)
+
+        update_resp = self.client.put(
+            reverse("admin-timeline-detail", kwargs={"timeline_id": node_id}),
+            {"title": "沉淀期-更新"},
+            format="json",
+        )
+        self.assertEqual(update_resp.status_code, 200)
+        self.assertEqual(update_resp.data["data"]["title"], "沉淀期-更新")
+
+        delete_resp = self.client.delete(reverse("admin-timeline-detail", kwargs={"timeline_id": node_id}))
+        self.assertEqual(delete_resp.status_code, 200)
+        self.assertFalse(TimelineNode.objects.filter(id=node_id).exists())
+
+    def test_admin_travel_crud_filter_and_reorder(self):
+        create_resp = self.client.post(
+            reverse("admin-travel"),
+            {
+                "province": "浙江",
+                "city": "杭州",
+                "notes": "travel",
+                "sort_order": 8,
+            },
+            format="json",
+        )
+        self.assertEqual(create_resp.status_code, 201)
+        place_id = create_resp.data["data"]["id"]
+
+        filter_resp = self.client.get(reverse("admin-travel"), {"province": "浙江"})
+        self.assertEqual(filter_resp.status_code, 200)
+        ids = [row["id"] for row in filter_resp.data["data"]["results"]]
+        self.assertIn(place_id, ids)
+
+        reorder_resp = self.client.patch(
+            reverse("admin-travel-reorder"),
+            {"items": [{"id": place_id, "sort_order": 0}, {"id": self.travel.id, "sort_order": 1}]},
+            format="json",
+        )
+        self.assertEqual(reorder_resp.status_code, 200)
+        self.travel.refresh_from_db()
+        self.assertEqual(self.travel.sort_order, 1)
+
+        update_resp = self.client.put(
+            reverse("admin-travel-detail", kwargs={"travel_id": place_id}),
+            {"notes": "updated"},
+            format="json",
+        )
+        self.assertEqual(update_resp.status_code, 200)
+        self.assertEqual(update_resp.data["data"]["notes"], "updated")
+
+        delete_resp = self.client.delete(reverse("admin-travel-detail", kwargs={"travel_id": place_id}))
+        self.assertEqual(delete_resp.status_code, 200)
+        self.assertFalse(TravelPlace.objects.filter(id=place_id).exists())
+
+    def test_admin_social_crud_filter_and_reorder(self):
+        create_resp = self.client.post(
+            reverse("admin-social"),
+            {
+                "name": "李四",
+                "public_label": "一位朋友",
+                "relation": "好友",
+                "stage_key": "zju",
+                "is_public": True,
+                "sort_order": 8,
+            },
+            format="json",
+        )
+        self.assertEqual(create_resp.status_code, 201)
+        friend_id = create_resp.data["data"]["id"]
+
+        filter_resp = self.client.get(reverse("admin-social"), {"stage_key": "zju"})
+        self.assertEqual(filter_resp.status_code, 200)
+        ids = [row["id"] for row in filter_resp.data["data"]["results"]]
+        self.assertIn(friend_id, ids)
+
+        graph_resp = self.client.get(reverse("admin-social-graph"), {"stage_key": "zju"})
+        self.assertEqual(graph_resp.status_code, 200)
+        graph_ids = [row["id"] for row in graph_resp.data["data"]["results"]]
+        self.assertIn(friend_id, graph_ids)
+
+        reorder_resp = self.client.patch(
+            reverse("admin-social-reorder"),
+            {"ids": [friend_id, self.social.id]},
+            format="json",
+        )
+        self.assertEqual(reorder_resp.status_code, 200)
+        self.social.refresh_from_db()
+        self.assertEqual(self.social.sort_order, 1)
+
+        update_resp = self.client.put(
+            reverse("admin-social-detail", kwargs={"social_id": friend_id}),
+            {"relation": "同事", "is_public": False},
+            format="json",
+        )
+        self.assertEqual(update_resp.status_code, 200)
+        self.assertFalse(update_resp.data["data"]["is_public"])
+
+        delete_resp = self.client.delete(reverse("admin-social-detail", kwargs={"social_id": friend_id}))
+        self.assertEqual(delete_resp.status_code, 200)
+        self.assertFalse(SocialFriend.objects.filter(id=friend_id).exists())
+
+    def test_admin_highlights_stage_item_crud_and_reorder(self):
+        stage_resp = self.client.post(
+            reverse("admin-highlight-stage-create"),
+            {
+                "title": "硕士",
+                "description": "new stage",
+                "sort_order": 8,
+            },
+            format="json",
+        )
+        self.assertEqual(stage_resp.status_code, 201)
+        stage_id = stage_resp.data["data"]["id"]
+
+        item_resp = self.client.post(
+            reverse("admin-highlight-item-create"),
+            {
+                "stage": stage_id,
+                "title": "获奖",
+                "description": "new item",
+                "sort_order": 8,
+            },
+            format="json",
+        )
+        self.assertEqual(item_resp.status_code, 201)
+        item_id = item_resp.data["data"]["id"]
+
+        list_resp = self.client.get(reverse("admin-highlights"))
+        self.assertEqual(list_resp.status_code, 200)
+        stage_ids = [row["id"] for row in list_resp.data["data"]]
+        self.assertIn(stage_id, stage_ids)
+
+        update_stage_resp = self.client.put(
+            reverse("admin-highlight-stage-detail", kwargs={"stage_id": stage_id}),
+            {"title": "硕士-更新"},
+            format="json",
+        )
+        self.assertEqual(update_stage_resp.status_code, 200)
+        self.assertEqual(update_stage_resp.data["data"]["title"], "硕士-更新")
+
+        update_item_resp = self.client.put(
+            reverse("admin-highlight-item-detail", kwargs={"item_id": item_id}),
+            {"title": "获奖-更新"},
+            format="json",
+        )
+        self.assertEqual(update_item_resp.status_code, 200)
+        self.assertEqual(update_item_resp.data["data"]["title"], "获奖-更新")
+
+        reorder_resp = self.client.patch(
+            reverse("admin-highlights-reorder"),
+            {
+                "stages": {"ids": [stage_id, self.stage.id]},
+                "items": [{"id": item_id, "sort_order": 0, "stage_id": self.stage.id}],
+            },
+            format="json",
+        )
+        self.assertEqual(reorder_resp.status_code, 200)
+        moved_item = HighlightItem.objects.get(id=item_id)
+        self.assertEqual(moved_item.stage_id, self.stage.id)
+        self.assertEqual(moved_item.sort_order, 0)
+
+        delete_item_resp = self.client.delete(reverse("admin-highlight-item-detail", kwargs={"item_id": item_id}))
+        self.assertEqual(delete_item_resp.status_code, 200)
+        self.assertFalse(HighlightItem.objects.filter(id=item_id).exists())
+
+        delete_stage_resp = self.client.delete(reverse("admin-highlight-stage-detail", kwargs={"stage_id": stage_id}))
+        self.assertEqual(delete_stage_resp.status_code, 200)
+        self.assertFalse(HighlightStage.objects.filter(id=stage_id).exists())

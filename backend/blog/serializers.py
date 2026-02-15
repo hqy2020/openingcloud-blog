@@ -5,7 +5,7 @@ from pathlib import Path
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 
-from .models import HighlightItem, HighlightStage, Post, TimelineNode
+from .models import HighlightItem, HighlightStage, Post, SocialFriend, TimelineNode, TravelPlace
 
 
 class LoginSerializer(serializers.Serializer):
@@ -63,6 +63,228 @@ class PostDetailSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
+
+class PostAdminSerializer(serializers.ModelSerializer):
+    views_count = serializers.SerializerMethodField(read_only=True)
+
+    def get_views_count(self, obj):
+        return getattr(getattr(obj, "view_record", None), "views", 0)
+
+    def validate_tags(self, value):
+        if not isinstance(value, list):
+            raise serializers.ValidationError("tags 必须是数组")
+        cleaned: list[str] = []
+        for raw in value:
+            text = str(raw or "").strip()
+            if text:
+                cleaned.append(text)
+        return cleaned
+
+    class Meta:
+        model = Post
+        fields = [
+            "id",
+            "title",
+            "slug",
+            "excerpt",
+            "content",
+            "category",
+            "tags",
+            "cover",
+            "draft",
+            "obsidian_path",
+            "sync_source",
+            "last_synced_at",
+            "views_count",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "sync_source",
+            "last_synced_at",
+            "views_count",
+            "created_at",
+            "updated_at",
+        ]
+        extra_kwargs = {
+            "slug": {"required": False, "allow_blank": True},
+            "excerpt": {"required": False, "allow_blank": True},
+            "cover": {"required": False, "allow_blank": True},
+            "obsidian_path": {"required": False, "allow_blank": True},
+        }
+
+
+class TimelineNodeAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TimelineNode
+        fields = [
+            "id",
+            "title",
+            "description",
+            "start_date",
+            "end_date",
+            "type",
+            "impact",
+            "phase",
+            "tags",
+            "cover",
+            "links",
+            "sort_order",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+        extra_kwargs = {
+            "description": {"required": False, "allow_blank": True},
+            "end_date": {"required": False, "allow_null": True},
+            "phase": {"required": False, "allow_blank": True},
+            "cover": {"required": False, "allow_blank": True},
+        }
+
+
+class TravelPlaceAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TravelPlace
+        fields = [
+            "id",
+            "province",
+            "city",
+            "notes",
+            "visited_at",
+            "latitude",
+            "longitude",
+            "cover",
+            "sort_order",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+        extra_kwargs = {
+            "notes": {"required": False, "allow_blank": True},
+            "visited_at": {"required": False, "allow_null": True},
+            "latitude": {"required": False, "allow_null": True},
+            "longitude": {"required": False, "allow_null": True},
+            "cover": {"required": False, "allow_blank": True},
+        }
+
+
+class SocialFriendAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SocialFriend
+        fields = [
+            "id",
+            "name",
+            "public_label",
+            "relation",
+            "stage_key",
+            "avatar",
+            "profile_url",
+            "is_public",
+            "sort_order",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+        extra_kwargs = {
+            "relation": {"required": False, "allow_blank": True},
+            "avatar": {"required": False, "allow_blank": True},
+            "profile_url": {"required": False, "allow_blank": True},
+        }
+
+
+class HighlightItemAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HighlightItem
+        fields = [
+            "id",
+            "stage",
+            "title",
+            "description",
+            "achieved_at",
+            "sort_order",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+        extra_kwargs = {
+            "description": {"required": False, "allow_blank": True},
+            "achieved_at": {"required": False, "allow_null": True},
+        }
+
+
+class HighlightStageAdminSerializer(serializers.ModelSerializer):
+    items = HighlightItemAdminSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = HighlightStage
+        fields = [
+            "id",
+            "title",
+            "description",
+            "start_date",
+            "end_date",
+            "sort_order",
+            "items",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+        extra_kwargs = {
+            "description": {"required": False, "allow_blank": True},
+            "start_date": {"required": False, "allow_null": True},
+            "end_date": {"required": False, "allow_null": True},
+        }
+
+
+class SortOrderItemSerializer(serializers.Serializer):
+    id = serializers.IntegerField(min_value=1)
+    sort_order = serializers.IntegerField(min_value=0)
+
+
+class ReorderRequestSerializer(serializers.Serializer):
+    ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=False,
+        allow_empty=False,
+    )
+    items = SortOrderItemSerializer(many=True, required=False, allow_empty=False)
+
+    def validate(self, attrs):
+        ids = attrs.get("ids")
+        items = attrs.get("items")
+        if not ids and not items:
+            raise serializers.ValidationError("ids 或 items 至少提供一个")
+        if ids and items:
+            raise serializers.ValidationError("ids 与 items 不能同时提供")
+
+        source = ids if ids else [item["id"] for item in items]
+        if len(source) != len(set(source)):
+            raise serializers.ValidationError("包含重复 id")
+        return attrs
+
+
+class HighlightItemReorderSerializer(SortOrderItemSerializer):
+    stage_id = serializers.IntegerField(min_value=1, required=False)
+
+
+class HighlightReorderRequestSerializer(serializers.Serializer):
+    stages = ReorderRequestSerializer(required=False)
+    items = HighlightItemReorderSerializer(many=True, required=False, allow_empty=False)
+
+    def validate(self, attrs):
+        stages = attrs.get("stages")
+        items = attrs.get("items")
+        if not stages and not items:
+            raise serializers.ValidationError("stages 或 items 至少提供一个")
+
+        if items:
+            item_ids = [item["id"] for item in items]
+            if len(item_ids) != len(set(item_ids)):
+                raise serializers.ValidationError("items 包含重复 id")
+
+        return attrs
 
 
 class TimelineNodePublicSerializer(serializers.ModelSerializer):
