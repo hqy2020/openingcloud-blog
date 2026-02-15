@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentType } from "react";
-import type { SocialGraphLink, SocialGraphNode } from "../../api/home";
+import type { BirthdayReminder, SocialGraphLink, SocialGraphNode, SocialTicker } from "../../api/home";
 import { ScrollReveal } from "../motion/ScrollReveal";
 import { StaggerContainer, StaggerItem } from "../motion/StaggerContainer";
 import { CardSpotlight } from "../ui/CardSpotlight";
@@ -8,6 +8,8 @@ import { CardSpotlight } from "../ui/CardSpotlight";
 type SocialGraphSectionProps = {
   nodes: SocialGraphNode[];
   links: SocialGraphLink[];
+  birthdayReminders: BirthdayReminder[];
+  socialTicker?: SocialTicker | null;
 };
 
 type GraphNode = SocialGraphNode & {
@@ -56,6 +58,23 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
+function toIsoDateText(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function toWeekdayText(date: Date) {
+  const labels = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+  return labels[date.getDay()] ?? "周?";
+}
+
+function fallbackTickerMessage() {
+  const now = new Date();
+  return `今天是 ${toIsoDateText(now)}（${toWeekdayText(now)}），节假日数据暂不可用。`;
+}
+
 function toNodeId(input: unknown) {
   if (typeof input === "string") {
     return input;
@@ -67,13 +86,32 @@ function toNodeId(input: unknown) {
   return "";
 }
 
+function resolveFriendTone(node: GraphNode) {
+  if (node.type !== "friend") {
+    return "neutral";
+  }
+  if (node.honorific === "ms") {
+    return "female";
+  }
+  if (node.honorific === "mr") {
+    return "male";
+  }
+  if (node.label.endsWith("女士")) {
+    return "female";
+  }
+  if (node.label.endsWith("先生")) {
+    return "male";
+  }
+  return "neutral";
+}
+
 function unwrapDefault<T>(moduleValue: unknown): T {
   const first = (moduleValue as { default?: unknown })?.default ?? moduleValue;
   const second = (first as { default?: unknown })?.default ?? first;
   return second as T;
 }
 
-export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
+export function SocialGraphSection({ nodes, links, birthdayReminders, socialTicker }: SocialGraphSectionProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const graphRef = useRef<ForceGraphRuntime | null>(null);
   const [graphSize, setGraphSize] = useState({ width: 960, height: 440 });
@@ -171,6 +209,32 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
     [nodes],
   );
   const hasCompleteGraphData = stageNodes.length > 0 && friendNodes.length > 0 && links.length > 0;
+  const tickerMode = useMemo(() => {
+    const normalizedMode = socialTicker?.mode;
+    if (normalizedMode === "birthday" || normalizedMode === "holiday") {
+      return normalizedMode;
+    }
+    return birthdayReminders.length > 0 ? "birthday" : "holiday";
+  }, [birthdayReminders.length, socialTicker?.mode]);
+  const tickerTitle = tickerMode === "birthday" ? "生日提醒（未来 7 天）" : "今日日期与节假日";
+  const tickerMessages = useMemo(() => {
+    const fromSocialTicker =
+      socialTicker?.items
+        ?.map((item) => String(item?.message || "").trim())
+        .filter((item) => item.length > 0) ?? [];
+    if (fromSocialTicker.length > 0) {
+      return fromSocialTicker;
+    }
+
+    const fromBirthdayReminders = birthdayReminders
+      .map((item) => String(item.message || "").trim())
+      .filter((item) => item.length > 0);
+    if (fromBirthdayReminders.length > 0) {
+      return fromBirthdayReminders;
+    }
+
+    return [fallbackTickerMessage()];
+  }, [birthdayReminders, socialTicker?.items]);
 
   const graphData = useMemo<ForceGraphData>(() => {
     if (!hasCompleteGraphData) {
@@ -184,8 +248,8 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
     const height = graphSize.height;
     const centerX = width / 2;
     const centerY = height / 2;
-    const stageRadiusX = clamp(width * 0.38, 170, 520);
-    const stageRadiusY = clamp(height * 0.34, 120, 240);
+    const stageRadiusX = clamp(width * 0.25, 130, 340);
+    const stageRadiusY = clamp(height * 0.22, 96, 180);
     const edgePadding = 52;
 
     const stageAngles = new Map<string, number>();
@@ -328,9 +392,9 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
     linkForce?.iterations?.(2);
 
     const chargeForce = graph.d3Force("charge") as ForceChargeRuntime | undefined;
-    chargeForce?.strength?.((node) => (node.type === "stage" ? -440 : -185));
+    chargeForce?.strength?.((node) => (node.type === "stage" ? -240 : -108));
     chargeForce?.distanceMin?.(20);
-    chargeForce?.distanceMax?.(560);
+    chargeForce?.distanceMax?.(340);
 
     const centerForce = graph.d3Force("center") as ForceCenterRuntime | undefined;
     centerForce?.x?.(graphSize.width / 2);
@@ -352,6 +416,27 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
         <h2 className="text-2xl font-semibold text-slate-900">社交图谱</h2>
         <span className="text-sm text-slate-500">公开匿名节点：{friendNodes.length}</span>
       </div>
+
+      {tickerMessages.length > 0 ? (
+        <div className="overflow-hidden rounded-xl border border-amber-300/70 bg-amber-100/85 text-amber-900 shadow-sm">
+          <div className="flex items-center gap-2 border-b border-amber-300/55 px-3 py-1.5 text-xs font-medium">
+            <span>{tickerTitle}</span>
+          </div>
+          <div className="overflow-hidden px-2 py-2">
+            <div className="social-ticker-track">
+              {[0, 1].map((copy) => (
+                <div key={copy} className="social-ticker-segment">
+                  {tickerMessages.map((message, index) => (
+                    <span key={`${copy}-${index}`} className="social-ticker-pill">
+                      {message}
+                    </span>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div ref={hostRef} className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 p-2 text-slate-100 shadow-sm">
         {hasCompleteGraphData ? (
@@ -400,16 +485,23 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
                   const isHovered = hoveredNodeId === typedNode.id;
                   const isRelated = highlightedNodeIds?.has(typedNode.id) ?? false;
                   const dimmed = Boolean(highlightedNodeIds) && !isRelated;
+                  const tone = resolveFriendTone(typedNode);
                   const viewScale = Math.max(globalScale, 0.8);
                   const radius = (isStage ? 8.6 : 4.4) / viewScale;
 
                   canvasContext.beginPath();
                   canvasContext.arc(x, y, radius + (isHovered ? 1.2 / viewScale : 0), 0, Math.PI * 2);
+                  let nodeFill = "rgba(203,213,225,0.95)";
+                  if (tone === "female") {
+                    nodeFill = "rgba(249,168,212,0.98)";
+                  } else if (tone === "male") {
+                    nodeFill = "rgba(147,197,253,0.98)";
+                  }
                   canvasContext.fillStyle = dimmed
                     ? "rgba(148,163,184,0.32)"
                     : isStage
                       ? "rgba(248,250,252,0.98)"
-                      : "rgba(203,213,225,0.95)";
+                      : nodeFill;
                   canvasContext.fill();
 
                   if (isStage) {
@@ -433,13 +525,19 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
                     fontSize + 5 / viewScale,
                   );
 
+                  let labelFill = "rgba(203,213,225,0.9)";
+                  if (tone === "female") {
+                    labelFill = "rgba(251,207,232,0.96)";
+                  } else if (tone === "male") {
+                    labelFill = "rgba(191,219,254,0.96)";
+                  }
                   canvasContext.fillStyle = dimmed
                     ? isStage
                       ? "rgba(248,250,252,0.36)"
                       : "rgba(203,213,225,0.34)"
                     : isStage
                       ? "rgba(248,250,252,0.97)"
-                      : "rgba(203,213,225,0.9)";
+                      : labelFill;
                   canvasContext.fillText(label, labelX, labelY);
                 }}
                 nodeCanvasObjectMode={() => "replace"}

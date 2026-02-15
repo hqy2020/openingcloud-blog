@@ -1,7 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import type { HighlightStage, PhotoWallItem, SocialGraphLink, SocialGraphNode, TimelineNode } from "../api/home";
 import { fetchHome } from "../api/home";
-import { ContactSection } from "../components/home/ContactSection";
 import { HeroSection } from "../components/home/HeroSection";
 import { HighlightsSection } from "../components/home/HighlightsSection";
 import { PhotoWallSection } from "../components/home/PhotoWallSection";
@@ -165,6 +164,9 @@ export function HomePage() {
     Array.isArray(payload.highlights) && payload.highlights.length > 0 ? payload.highlights : highlightsFallbackForUx;
   const socialNodesRaw = Array.isArray(payload.social_graph?.nodes) ? payload.social_graph.nodes : [];
   const socialLinksRaw = Array.isArray(payload.social_graph?.links) ? payload.social_graph.links : [];
+  const birthdayReminders = Array.isArray(payload.birthday_reminders) ? payload.birthday_reminders : [];
+  const socialTicker =
+    payload.social_ticker && Array.isArray(payload.social_ticker.items) ? payload.social_ticker : null;
   const socialHasFriend = socialNodesRaw.some((node) => node.type === "friend");
   const socialHasLink = socialLinksRaw.length > 0;
   const socialNodes = socialHasFriend && socialHasLink ? socialNodesRaw : socialGraphFallbackForUx.nodes;
@@ -190,10 +192,14 @@ export function HomePage() {
       <TimelineSection nodes={timelineNodes} />
       <HighlightsSection stages={highlightStages} />
       <TravelSection travel={payload.travel} />
-      <SocialGraphSection links={socialLinks} nodes={socialNodes} />
+      <SocialGraphSection
+        birthdayReminders={birthdayReminders}
+        links={socialLinks}
+        nodes={socialNodes}
+        socialTicker={socialTicker}
+      />
       <PhotoWallSection photos={photoWallItems} />
       <StatsSection stats={payload.stats} />
-      <ContactSection contact={payload.contact} />
     </section>
   );
 }

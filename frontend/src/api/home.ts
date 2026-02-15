@@ -52,6 +52,7 @@ export type SocialGraphNode = {
   label: string;
   stage_key: string;
   order: number;
+  honorific?: "mr" | "ms" | null;
 };
 
 export type SocialGraphLink = {
@@ -62,6 +63,30 @@ export type SocialGraphLink = {
 export type SocialGraphPayload = {
   nodes: SocialGraphNode[];
   links: SocialGraphLink[];
+};
+
+export type BirthdayReminder = {
+  node_id: string;
+  display_name: string;
+  honorific: "mr" | "ms";
+  days_until: number;
+  birthday: string;
+  message: string;
+};
+
+export type SocialTickerItem = {
+  type: "birthday" | "holiday";
+  message: string;
+  days_until: number;
+  date: string;
+  holiday_name: string | null;
+  node_id: string | null;
+  honorific: "mr" | "ms" | null;
+};
+
+export type SocialTicker = {
+  mode: "birthday" | "holiday";
+  items: SocialTickerItem[];
 };
 
 export type PhotoWallItem = {
@@ -87,6 +112,8 @@ export type HomePayload = {
   highlights: HighlightStage[];
   travel: TravelProvince[];
   social_graph: SocialGraphPayload;
+  social_ticker?: SocialTicker;
+  birthday_reminders?: BirthdayReminder[];
   photo_wall: PhotoWallItem[];
   stats: {
     posts_total: number;
@@ -100,6 +127,12 @@ export type HomePayload = {
     views_total: number;
     total_words: number;
     site_days: number;
+    site_launch_date: string;
+    published_posts_delta_week: number;
+    views_delta_week: number;
+    total_words_delta_week: number;
+    tags_delta_week: number;
+    travel_delta_year: number;
   };
   contact: {
     email: string;
