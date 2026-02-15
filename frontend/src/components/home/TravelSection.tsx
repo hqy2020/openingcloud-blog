@@ -33,7 +33,19 @@ type GeoJsonLike = {
   features?: GeoJsonFeature[];
 };
 
+type OrderedTravelCity = {
+  province: string;
+  city: string;
+  notes: string;
+  visited_at: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  cover: string;
+  sort_order: number;
+};
+
 const CHINA_GEOJSON_URL = "https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json";
+const CITY_REVEAL_INTERVAL_MS = 560;
 
 function unwrapDefault<T>(moduleValue: unknown): T {
   const first = (moduleValue as { default?: unknown })?.default ?? moduleValue;
@@ -54,6 +66,8 @@ export function TravelSection({ travel }: TravelSectionProps) {
   const [mapReady, setMapReady] = useState(false);
   const [fallbackHint, setFallbackHint] = useState<string | null>(null);
   const [activeLoad, setActiveLoad] = useState(false);
+  const [revealedCityCount, setRevealedCityCount] = useState(0);
+  const [hasPlayedOnce, setHasPlayedOnce] = useState(false);
   const hostRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -148,31 +162,116 @@ export function TravelSection({ travel }: TravelSectionProps) {
     };
   }, [activeLoad]);
 
-  const option = useMemo(() => {
-    const provinceData = travel.map((item) => ({ name: item.province, value: item.count }));
-    const cityData = travel.flatMap((item) =>
-      item.cities
-        .filter((city) => city.longitude !== null && city.latitude !== null)
-        .map((city) => ({
-          name: city.city,
-          value: [city.longitude, city.latitude, 1],
-          province: item.province,
-        })),
+  const orderedCities = useMemo(() => {
+    const flattened: OrderedTravelCity[] = travel.flatMap((province) =>
+      province.cities.map((city) => ({
+        province: province.province,
+        city: city.city,
+        notes: city.notes,
+        visited_at: city.visited_at,
+        latitude: city.latitude,
+        longitude: city.longitude,
+        cover: city.cover,
+        sort_order: city.sort_order,
+      })),
     );
 
+    return flattened.sort((a, b) => {
+      const aDate = a.visited_at;
+      const bDate = b.visited_at;
+      if (aDate && bDate) {
+        const byDate = aDate.localeCompare(bDate);
+        if (byDate !== 0) {
+          return byDate;
+        }
+      } else if (aDate || bDate) {
+        return aDate ? -1 : 1;
+      }
+
+      const byOrder = a.sort_order - b.sort_order;
+      if (byOrder !== 0) {
+        return byOrder;
+      }
+
+      const byProvince = a.province.localeCompare(b.province, "zh-Hans-CN");
+      if (byProvince !== 0) {
+        return byProvince;
+      }
+      return a.city.localeCompare(b.city, "zh-Hans-CN");
+    });
+  }, [travel]);
+
+  useEffect(() => {
+    if (!activeLoad || !mapReady || hasPlayedOnce || orderedCities.length === 0) {
+      return;
+    }
+
+    setRevealedCityCount(0);
+    let next = 0;
+    const timerId = window.setInterval(() => {
+      next += 1;
+      setRevealedCityCount(next);
+      if (next >= orderedCities.length) {
+        window.clearInterval(timerId);
+        setHasPlayedOnce(true);
+      }
+    }, CITY_REVEAL_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(timerId);
+    };
+  }, [activeLoad, mapReady, hasPlayedOnce, orderedCities.length]);
+
+  useEffect(() => {
+    if (!hasPlayedOnce) {
+      return;
+    }
+    setRevealedCityCount(orderedCities.length);
+  }, [hasPlayedOnce, orderedCities.length]);
+
+  const effectiveRevealedCityCount = hasPlayedOnce ? orderedCities.length : Math.min(revealedCityCount, orderedCities.length);
+  const revealedCities = useMemo(
+    () => orderedCities.slice(0, effectiveRevealedCityCount),
+    [orderedCities, effectiveRevealedCityCount],
+  );
+  const totalProvinceCount = useMemo(() => new Set(travel.map((item) => item.province)).size, [travel]);
+  const revealedProvinceCount = useMemo(() => new Set(revealedCities.map((city) => city.province)).size, [revealedCities]);
+  const displayProvinceCount = Chart && mapReady ? revealedProvinceCount : totalProvinceCount;
+
+  const option = useMemo(() => {
+    const maxProvinceValue = Math.max(1, ...travel.map((item) => Math.max(item.count, item.cities.length)));
+    const provinceCounts = new Map<string, number>();
+    for (const city of revealedCities) {
+      provinceCounts.set(city.province, (provinceCounts.get(city.province) ?? 0) + 1);
+    }
+    const provinceData = travel.map((item) => ({ name: item.province, value: provinceCounts.get(item.province) ?? 0 }));
+    const cityData = revealedCities
+      .filter((city) => city.longitude !== null && city.latitude !== null)
+      .map((city) => ({
+        name: city.city,
+        value: [city.longitude, city.latitude, 1],
+        province: city.province,
+      }));
+
     return {
+      animation: true,
+      animationDuration: 650,
+      animationEasing: "cubicOut",
+      animationDurationUpdate: 520,
+      animationEasingUpdate: "cubicInOut",
       tooltip: {
         trigger: "item",
       },
       visualMap: {
-        min: 0,
-        max: Math.max(1, ...provinceData.map((item) => item.value)),
-        text: ["足迹", "少"],
-        orient: "vertical",
-        right: 10,
-        top: "center",
+        show: false,
+        seriesIndex: 0,
+        min: 1,
+        max: maxProvinceValue,
         inRange: {
-          color: ["#e2e8f0", "#4f46e5"],
+          color: ["#7dd3fc", "#0284c7"],
+        },
+        outOfRange: {
+          color: ["#eef2f7"],
         },
       },
       series: [
@@ -182,15 +281,27 @@ export function TravelSection({ travel }: TravelSectionProps) {
           map: "china",
           roam: false,
           label: { show: false },
+          itemStyle: {
+            borderColor: "#c7d3e3",
+            borderWidth: 1,
+          },
           data: provinceData,
         },
         {
           name: "城市",
           type: "effectScatter",
           coordinateSystem: "geo",
-          rippleEffect: { scale: 3 },
-          symbolSize: 8,
-          itemStyle: { color: "#f97316" },
+          rippleEffect: { scale: 3, brushType: "stroke", period: 4.8 },
+          symbolSize: 10,
+          zlevel: 3,
+          z: 10,
+          itemStyle: {
+            color: "#0ea5e9",
+            borderColor: "#ffffff",
+            borderWidth: 1.5,
+            shadowBlur: 10,
+            shadowColor: "rgba(14, 165, 233, 0.3)",
+          },
           data: cityData,
         },
       ],
@@ -200,14 +311,14 @@ export function TravelSection({ travel }: TravelSectionProps) {
         silent: true,
       },
     };
-  }, [travel]);
+  }, [travel, revealedCities]);
 
   return (
     <ScrollReveal className="space-y-6">
       <div className="flex items-end justify-between">
         <h2 className="text-2xl font-semibold text-slate-900">旅行足迹</h2>
         <span className="text-sm text-slate-500">
-          已点亮 {travel.length} 个省份 / 34
+          已点亮 {displayProvinceCount} 个省份 / 34
         </span>
       </div>
 
