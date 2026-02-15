@@ -272,6 +272,14 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
     return map;
   }, [graphData.nodes]);
 
+  const nodeById = useMemo(() => {
+    const map = new Map<string, GraphNode>();
+    graphData.nodes.forEach((node) => {
+      map.set(node.id, node);
+    });
+    return map;
+  }, [graphData.nodes]);
+
   const connectedByNodeId = useMemo(() => {
     const map = new Map<string, Set<string>>();
     graphData.links.forEach((link) => {
@@ -353,7 +361,7 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
                 ref={graphRef}
                 autoPauseRedraw={false}
                 backgroundColor="#020617"
-                cooldownTicks={0}
+                cooldownTicks={2400}
                 d3AlphaDecay={0.02}
                 d3VelocityDecay={0.24}
                 enableNodeDrag
@@ -437,10 +445,27 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
                 nodeCanvasObjectMode={() => "replace"}
                 nodeLabel={(node: unknown) => (node as GraphNode).label}
                 nodeVal={(node: unknown) => (node as GraphNode).val}
-                onNodeDrag={(node: unknown) => {
+                onNodeDrag={(node: unknown, translate: { x: number; y: number }) => {
                   const typedNode = node as GraphNode;
                   typedNode.fx = typedNode.x;
                   typedNode.fy = typedNode.y;
+
+                  // Give linked nodes a visible "pull" effect while dragging.
+                  const neighborIds = connectedByNodeId.get(typedNode.id);
+                  if (neighborIds) {
+                    neighborIds.forEach((neighborId) => {
+                      const neighbor = nodeById.get(neighborId);
+                      if (!neighbor) {
+                        return;
+                      }
+
+                      const moveRatio = neighbor.type === "stage" ? 0.22 : 0.42;
+                      neighbor.x = (neighbor.x ?? 0) + translate.x * moveRatio;
+                      neighbor.y = (neighbor.y ?? 0) + translate.y * moveRatio;
+                    });
+                  }
+
+                  graphRef.current?.d3ReheatSimulation();
                 }}
                 onNodeDragEnd={(node: unknown) => {
                   const typedNode = node as GraphNode;
