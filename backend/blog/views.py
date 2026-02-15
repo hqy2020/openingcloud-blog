@@ -55,6 +55,13 @@ def api_ok(data, status_code=status.HTTP_200_OK):
     return Response({"ok": True, "data": data}, status=status_code)
 
 
+def api_ok_private(data, status_code=status.HTTP_200_OK):
+    response = api_ok(data, status_code=status_code)
+    response["Cache-Control"] = "private, no-store"
+    response["Vary"] = "Cookie, Authorization"
+    return response
+
+
 def api_error(code, message, status_code):
     return Response({"ok": False, "code": code, "message": message}, status=status_code)
 
@@ -955,7 +962,7 @@ class SocialGraphView(APIView):
 
     def get(self, request):
         payload = SocialGraphPublicSerializer(_social_graph_payload(show_real_name=_is_staff_viewer(request))).data
-        return api_ok(payload)
+        return api_ok_private(payload)
 
 
 class PhotoWallView(APIView):
@@ -970,4 +977,4 @@ class HomeView(APIView):
 
     def get(self, request):
         payload = HomeAggregateSerializer(_home_payload(show_real_name=_is_staff_viewer(request))).data
-        return api_ok(payload)
+        return api_ok_private(payload)

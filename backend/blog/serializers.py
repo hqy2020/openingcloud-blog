@@ -184,6 +184,7 @@ class SocialFriendAdminSerializer(serializers.ModelSerializer):
             "avatar",
             "profile_url",
             "contact",
+            "birthday",
             "is_public",
             "sort_order",
             "created_at",
@@ -195,6 +196,7 @@ class SocialFriendAdminSerializer(serializers.ModelSerializer):
             "avatar": {"required": False, "allow_blank": True},
             "profile_url": {"required": False, "allow_blank": True},
             "contact": {"required": False, "allow_blank": True},
+            "birthday": {"required": False, "allow_null": True},
         }
 
 

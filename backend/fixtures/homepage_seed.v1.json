@@ -460,6 +460,7 @@
       "avatar": "",
       "profile_url": "",
       "contact": "",
+      "birthday": null,
       "is_public": true,
       "sort_order": 1
     },
@@ -472,6 +473,7 @@
       "avatar": "",
       "profile_url": "",
       "contact": "",
+      "birthday": null,
       "is_public": true,
       "sort_order": 2
     },
@@ -484,6 +486,7 @@
       "avatar": "",
       "profile_url": "",
       "contact": "",
+      "birthday": null,
       "is_public": true,
       "sort_order": 3
     },
@@ -496,6 +499,7 @@
       "avatar": "",
       "profile_url": "",
       "contact": "",
+      "birthday": null,
       "is_public": true,
       "sort_order": 4
     },
@@ -508,6 +512,7 @@
       "avatar": "",
       "profile_url": "",
       "contact": "",
+      "birthday": null,
       "is_public": true,
       "sort_order": 5
     },
@@ -520,6 +525,7 @@
       "avatar": "",
       "profile_url": "",
       "contact": "",
+      "birthday": null,
       "is_public": true,
       "sort_order": 6
     },
@@ -532,6 +538,7 @@
       "avatar": "",
       "profile_url": "",
       "contact": "",
+      "birthday": null,
       "is_public": true,
       "sort_order": 7
     },
@@ -544,6 +551,7 @@
       "avatar": "",
       "profile_url": "",
       "contact": "",
+      "birthday": null,
       "is_public": true,
       "sort_order": 8
     },
@@ -556,6 +564,7 @@
       "avatar": "",
       "profile_url": "",
       "contact": "",
+      "birthday": null,
       "is_public": true,
       "sort_order": 9
     },
@@ -568,6 +577,7 @@
       "avatar": "",
       "profile_url": "",
       "contact": "",
+      "birthday": null,
       "is_public": true,
       "sort_order": 10
     },
@@ -580,6 +590,7 @@
       "avatar": "",
       "profile_url": "",
       "contact": "",
+      "birthday": null,
       "is_public": true,
       "sort_order": 11
     }

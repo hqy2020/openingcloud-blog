@@ -290,6 +290,20 @@ class ApiTests(TestCase):
         self.assertEqual(len(friend_nodes), 1)
         self.assertEqual(friend_nodes[0]["label"], "张三")
 
+    def test_social_graph_staff_session_login_shows_real_name(self):
+        admin_user = get_user_model().objects.create_user(
+            username="staff_social_graph_session",
+            password="pass1234",
+            is_staff=True,
+        )
+        self.assertTrue(self.client.login(username=admin_user.username, password="pass1234"))
+
+        resp = self.client.get(reverse("social-graph"))
+        self.assertEqual(resp.status_code, 200)
+        friend_nodes = [node for node in resp.data["data"]["nodes"] if node["type"] == "friend"]
+        self.assertEqual(len(friend_nodes), 1)
+        self.assertEqual(friend_nodes[0]["label"], "张三")
+
     def test_home_staff_login_shows_real_name_in_social_graph(self):
         admin_user = get_user_model().objects.create_user(
             username="staff_home_graph",
@@ -334,6 +348,19 @@ class ApiTests(TestCase):
         self.assertEqual(item["title"], "云海日出")
         self.assertTrue(str(item["image_url"]).startswith("https://"))
         self.assertIn("hqy2020/obsidian-images", item["source_url"])
+
+    def test_social_graph_and_home_responses_are_private(self):
+        social_resp = self.client.get(reverse("social-graph"))
+        home_resp = self.client.get(reverse("home"))
+
+        self.assertEqual(social_resp.status_code, 200)
+        self.assertEqual(home_resp.status_code, 200)
+        self.assertIn("private", str(social_resp.get("Cache-Control", "")).lower())
+        self.assertIn("no-store", str(social_resp.get("Cache-Control", "")).lower())
+        self.assertIn("cookie", str(social_resp.get("Vary", "")).lower())
+        self.assertIn("private", str(home_resp.get("Cache-Control", "")).lower())
+        self.assertIn("no-store", str(home_resp.get("Cache-Control", "")).lower())
+        self.assertIn("cookie", str(home_resp.get("Vary", "")).lower())
 
     def test_sitemap_contains_published_posts_only(self):
         resp = self.client.get("/sitemap.xml")
@@ -938,6 +965,7 @@ class AdminContentCrudApiTests(TestCase):
             relation="同窗",
             stage_key=SocialFriend.StageKey.TONGJI,
             contact="wechat:zhangsan",
+            birthday="2000-09-01",
             is_public=True,
             sort_order=3,
         )
@@ -1103,6 +1131,7 @@ class AdminContentCrudApiTests(TestCase):
                 "relation": "好友",
                 "stage_key": "zju",
                 "contact": "wechat:lisi",
+                "birthday": "2001-01-01",
                 "is_public": True,
                 "sort_order": 8,
             },
@@ -1110,6 +1139,7 @@ class AdminContentCrudApiTests(TestCase):
         )
         self.assertEqual(create_resp.status_code, 201)
         self.assertEqual(create_resp.data["data"]["contact"], "wechat:lisi")
+        self.assertEqual(create_resp.data["data"]["birthday"], "2001-01-01")
         friend_id = create_resp.data["data"]["id"]
 
         filter_resp = self.client.get(reverse("admin-social"), {"stage_key": "zju"})
@@ -1133,12 +1163,13 @@ class AdminContentCrudApiTests(TestCase):
 
         update_resp = self.client.put(
             reverse("admin-social-detail", kwargs={"social_id": friend_id}),
-            {"relation": "同事", "contact": "phone:13800000000", "is_public": False},
+            {"relation": "同事", "contact": "phone:13800000000", "birthday": "2001-05-20", "is_public": False},
             format="json",
         )
         self.assertEqual(update_resp.status_code, 200)
         self.assertFalse(update_resp.data["data"]["is_public"])
         self.assertEqual(update_resp.data["data"]["contact"], "phone:13800000000")
+        self.assertEqual(update_resp.data["data"]["birthday"], "2001-05-20")
 
         delete_resp = self.client.delete(reverse("admin-social-detail", kwargs={"social_id": friend_id}))
         self.assertEqual(delete_resp.status_code, 200)

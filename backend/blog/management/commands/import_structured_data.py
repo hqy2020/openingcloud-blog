@@ -118,6 +118,7 @@ class Command(BaseCommand):
                         "avatar": friend.get("avatar", ""),
                         "profile_url": friend.get("profile_url", ""),
                         "contact": friend.get("contact", ""),
+                        "birthday": parse_date(friend.get("birthday")),
                         "is_public": bool(friend.get("is_public", True)),
                         "sort_order": int(friend.get("sort_order", index)),
                     },

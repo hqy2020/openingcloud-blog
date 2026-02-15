@@ -30,6 +30,7 @@
       "stage_key": "career",
       "honorific": "mr",
       "contact": "",
+      "birthday": null,
       "is_public": true,
       "sort_order": 1
     }
