@@ -292,6 +292,22 @@ class ApiTests(TestCase):
         self.assertEqual(len(friend_nodes), 1)
         self.assertEqual(friend_nodes[0]["label"], "张三")
 
+    def test_social_graph_female_relation_masks_to_ms(self):
+        SocialFriend.objects.create(
+            name="杨彩",
+            public_label="一位大学同学 C",
+            relation="情侣",
+            stage_key=SocialFriend.StageKey.TONGJI,
+            is_public=True,
+            sort_order=3,
+        )
+
+        resp = self.client.get(reverse("social-graph"))
+        self.assertEqual(resp.status_code, 200)
+        friend_nodes = [node for node in resp.data["data"]["nodes"] if node["type"] == "friend"]
+        labels = {node["label"] for node in friend_nodes}
+        self.assertIn("杨女士", labels)
+
     def test_sitemap_contains_published_posts_only(self):
         resp = self.client.get("/sitemap.xml")
         self.assertEqual(resp.status_code, 200)

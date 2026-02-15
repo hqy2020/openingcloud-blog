@@ -165,7 +165,16 @@ class SocialFriend(TimeStampedModel):
             return self.public_label
 
         first_char = base_name[0]
-        suffix = self.Honorific.MS.label if self.honorific == self.Honorific.MS else self.Honorific.MR.label
+        context_text = f"{self.relation or ''} {self.public_label or ''}"
+        female_markers = ("女士", "女友", "妻", "太太", "妈妈", "母亲", "姐姐", "妹妹", "闺蜜", "情侣")
+        male_markers = ("先生", "男友", "丈夫", "爸爸", "父亲", "哥哥", "弟弟", "师兄")
+
+        if any(marker in context_text for marker in female_markers):
+            suffix = self.Honorific.MS.label
+        elif any(marker in context_text for marker in male_markers):
+            suffix = self.Honorific.MR.label
+        else:
+            suffix = self.Honorific.MS.label if self.honorific == self.Honorific.MS else self.Honorific.MR.label
         return f"{first_char}{suffix}"
 
 

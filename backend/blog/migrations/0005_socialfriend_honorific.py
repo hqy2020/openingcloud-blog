@@ -6,7 +6,7 @@ from django.db import migrations, models
 def backfill_honorific(apps, schema_editor):
     SocialFriend = apps.get_model("blog", "SocialFriend")
 
-    female_markers = ("女士", "女友", "妻", "太太", "妈妈", "母亲", "姐姐", "妹妹", "闺蜜")
+    female_markers = ("女士", "女友", "妻", "太太", "妈妈", "母亲", "姐姐", "妹妹", "闺蜜", "情侣")
     male_markers = ("先生", "男友", "丈夫", "爸爸", "父亲", "哥哥", "弟弟", "师兄")
 
     for friend in SocialFriend.objects.all():
