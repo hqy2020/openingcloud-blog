@@ -105,19 +105,6 @@
       "sort_order": 8
     },
     {
-      "title": "SAP 实习",
-      "description": "",
-      "start_date": "2024-06-01",
-      "end_date": "2024-09-01",
-      "type": "career",
-      "impact": "medium",
-      "phase": "实习",
-      "tags": ["career", "internship"],
-      "cover": "",
-      "links": [],
-      "sort_order": 9
-    },
-    {
       "title": "浙江大学 · 硕士",
       "description": "",
       "start_date": "2024-09-01",
@@ -126,6 +113,19 @@
       "impact": "high",
       "phase": "硕士",
       "tags": ["learning", "research"],
+      "cover": "",
+      "links": [],
+      "sort_order": 9
+    },
+    {
+      "title": "SAP 实习",
+      "description": "",
+      "start_date": "2024-06-01",
+      "end_date": "2024-09-01",
+      "type": "career",
+      "impact": "medium",
+      "phase": "实习",
+      "tags": ["career", "internship"],
       "cover": "",
       "links": [],
       "sort_order": 10
@@ -173,7 +173,7 @@
   "highlight_stages": [
     {
       "title": "小学",
-      "description": "",
+      "description": "在好奇与热闹里学会担当，第一次把“坚持”写进日常。",
       "start_date": "2006-09-01",
       "end_date": "2012-07-01",
       "sort_order": 1,
@@ -194,7 +194,7 @@
     },
     {
       "title": "初中",
-      "description": "",
+      "description": "开始把自律当作方法，成绩与责任感一起向上生长。",
       "start_date": "2012-09-01",
       "end_date": "2016-07-01",
       "sort_order": 2,
@@ -215,7 +215,7 @@
     },
     {
       "title": "高中",
-      "description": "",
+      "description": "在高压节奏里稳住心态，把专注力锻成长期能力。",
       "start_date": "2016-09-01",
       "end_date": "2019-07-01",
       "sort_order": 3,
@@ -236,7 +236,7 @@
     },
     {
       "title": "高考",
-      "description": "",
+      "description": "关键一役学会与焦虑并行，把结果交给过程。",
       "start_date": "2019-06-01",
       "end_date": "2019-06-30",
       "sort_order": 4,
@@ -251,7 +251,7 @@
     },
     {
       "title": "同济大学 · 本科",
-      "description": "",
+      "description": "组织、学业与实践并行，逐步形成工程化做事框架。",
       "start_date": "2019-09-01",
       "end_date": "2023-07-01",
       "sort_order": 5,
@@ -314,7 +314,7 @@
     },
     {
       "title": "浙江大学 · 硕士",
-      "description": "",
+      "description": "研究与落地双线推进，输出从“完成”走向“打磨”。",
       "start_date": "2024-09-01",
       "end_date": "2026-03-01",
       "sort_order": 6,
