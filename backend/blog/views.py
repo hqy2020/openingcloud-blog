@@ -86,6 +86,16 @@ def _parse_bool_query(raw_value: str | None):
     return None
 
 
+def _is_staff_viewer(request) -> bool:
+    user = getattr(request, "user", None)
+    if bool(getattr(user, "is_authenticated", False) and getattr(user, "is_staff", False)):
+        return True
+
+    # Support Django admin session auth on API views (without requiring DRF SessionAuthentication).
+    raw_user = getattr(getattr(request, "_request", None), "user", None)
+    return bool(getattr(raw_user, "is_authenticated", False) and getattr(raw_user, "is_staff", False))
+
+
 def _normalize_reorder_items(payload: dict) -> list[dict]:
     ids = payload.get("ids") or []
     if ids:
@@ -699,7 +709,7 @@ def _travel_payload() -> list[dict]:
     return [grouped[province] for province in sorted(grouped.keys())]
 
 
-def _social_graph_payload() -> dict:
+def _social_graph_payload(*, show_real_name: bool = False) -> dict:
     stage_meta = {
         SocialFriend.StageKey.PRIMARY: ("小学", 10),
         SocialFriend.StageKey.MIDDLE: ("初中", 20),
@@ -730,11 +740,12 @@ def _social_graph_payload() -> dict:
     for friend in friends:
         node_id = f"friend-{friend.id}"
         stage_id = f"stage-{friend.stage_key}"
+        friend_label = friend.name if show_real_name else friend.masked_name()
         nodes.append(
             {
                 "id": node_id,
                 "type": "friend",
-                "label": friend.public_label,
+                "label": friend_label,
                 "stage_key": friend.stage_key,
                 "order": 1000 + friend.sort_order,
             }
@@ -789,11 +800,11 @@ def _home_stats_payload() -> dict:
     }
 
 
-def _home_payload() -> dict:
+def _home_payload(*, show_real_name: bool = False) -> dict:
     timeline = TimelineNode.objects.all().order_by("sort_order", "start_date")
     highlights = HighlightStage.objects.prefetch_related("items").order_by("sort_order", "start_date", "id")
     travel = _travel_payload()
-    social_graph = _social_graph_payload()
+    social_graph = _social_graph_payload(show_real_name=show_real_name)
 
     email = getattr(settings, "PUBLIC_CONTACT_EMAIL", "openingclouds@outlook.com")
     github = getattr(settings, "PUBLIC_GITHUB_URL", "https://github.com/hqy2020/openingcloud-blog")
@@ -855,7 +866,7 @@ class SocialGraphView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        payload = SocialGraphPublicSerializer(_social_graph_payload()).data
+        payload = SocialGraphPublicSerializer(_social_graph_payload(show_real_name=_is_staff_viewer(request))).data
         return api_ok(payload)
 
 
@@ -863,5 +874,5 @@ class HomeView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        payload = HomeAggregateSerializer(_home_payload()).data
+        payload = HomeAggregateSerializer(_home_payload(show_real_name=_is_staff_viewer(request))).data
         return api_ok(payload)

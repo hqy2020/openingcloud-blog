@@ -137,10 +137,15 @@ class SocialFriend(TimeStampedModel):
         CAREER = "career", "工作"
         FAMILY = "family", "家庭"
 
+    class Honorific(models.TextChoices):
+        MR = "mr", "先生"
+        MS = "ms", "女士"
+
     name = models.CharField(max_length=100)
     public_label = models.CharField(max_length=100)
     relation = models.CharField(max_length=100, blank=True)
     stage_key = models.CharField(max_length=20, choices=StageKey.choices, default=StageKey.CAREER)
+    honorific = models.CharField(max_length=10, choices=Honorific.choices, default=Honorific.MR)
     avatar = models.URLField(max_length=500, blank=True)
     profile_url = models.URLField(max_length=500, blank=True)
     is_public = models.BooleanField(default=True)
@@ -153,6 +158,15 @@ class SocialFriend(TimeStampedModel):
 
     def __str__(self) -> str:
         return self.public_label
+
+    def masked_name(self) -> str:
+        base_name = str(self.name or "").strip()
+        if not base_name:
+            return self.public_label
+
+        first_char = base_name[0]
+        suffix = self.Honorific.MS.label if self.honorific == self.Honorific.MS else self.Honorific.MR.label
+        return f"{first_char}{suffix}"
 
 
 class HighlightStage(TimeStampedModel):

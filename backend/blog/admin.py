@@ -52,7 +52,7 @@ class TravelPlaceAdmin(SortableAdminMixin, admin.ModelAdmin):
 
 @admin.register(SocialFriend)
 class SocialFriendAdmin(SortableAdminMixin, admin.ModelAdmin):
-    list_display = ["public_label", "stage_key", "relation", "is_public", "sort_order", "updated_at"]
+    list_display = ["public_label", "honorific", "stage_key", "relation", "is_public", "sort_order", "updated_at"]
     list_filter = ["stage_key", "is_public"]
     search_fields = ["name", "public_label", "relation"]
 

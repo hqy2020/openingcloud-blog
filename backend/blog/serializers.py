@@ -179,6 +179,7 @@ class SocialFriendAdminSerializer(serializers.ModelSerializer):
             "public_label",
             "relation",
             "stage_key",
+            "honorific",
             "avatar",
             "profile_url",
             "is_public",

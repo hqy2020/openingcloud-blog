@@ -249,9 +249,48 @@ class ApiTests(TestCase):
 
         friend = friend_nodes[0]
         self.assertIn("label", friend)
+        self.assertEqual(friend["label"], "张先生")
         self.assertNotIn("name", friend)
         self.assertNotIn("profile_url", friend)
         self.assertNotIn("avatar", friend)
+
+    def test_social_graph_staff_login_shows_real_name(self):
+        admin_user = get_user_model().objects.create_user(
+            username="staff_social_graph",
+            password="pass1234",
+            is_staff=True,
+        )
+        login_resp = self.client.post(
+            reverse("auth-login"),
+            {"username": admin_user.username, "password": "pass1234"},
+            format="json",
+        )
+        self.assertEqual(login_resp.status_code, 200)
+
+        resp = self.client.get(reverse("social-graph"))
+        self.assertEqual(resp.status_code, 200)
+        friend_nodes = [node for node in resp.data["data"]["nodes"] if node["type"] == "friend"]
+        self.assertEqual(len(friend_nodes), 1)
+        self.assertEqual(friend_nodes[0]["label"], "张三")
+
+    def test_home_staff_login_shows_real_name_in_social_graph(self):
+        admin_user = get_user_model().objects.create_user(
+            username="staff_home_graph",
+            password="pass1234",
+            is_staff=True,
+        )
+        login_resp = self.client.post(
+            reverse("auth-login"),
+            {"username": admin_user.username, "password": "pass1234"},
+            format="json",
+        )
+        self.assertEqual(login_resp.status_code, 200)
+
+        resp = self.client.get(reverse("home"))
+        self.assertEqual(resp.status_code, 200)
+        friend_nodes = [node for node in resp.data["data"]["social_graph"]["nodes"] if node["type"] == "friend"]
+        self.assertEqual(len(friend_nodes), 1)
+        self.assertEqual(friend_nodes[0]["label"], "张三")
 
     def test_sitemap_contains_published_posts_only(self):
         resp = self.client.get("/sitemap.xml")

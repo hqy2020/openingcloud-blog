@@ -103,6 +103,10 @@ class Command(BaseCommand):
                 valid_stage_keys = {choice[0] for choice in SocialFriend.StageKey.choices}
                 if stage_key not in valid_stage_keys:
                     stage_key = SocialFriend.StageKey.CAREER
+                honorific = friend.get("honorific", SocialFriend.Honorific.MR)
+                valid_honorific = {choice[0] for choice in SocialFriend.Honorific.choices}
+                if honorific not in valid_honorific:
+                    honorific = SocialFriend.Honorific.MR
 
                 SocialFriend.objects.update_or_create(
                     public_label=friend["public_label"],
@@ -110,6 +114,7 @@ class Command(BaseCommand):
                         "name": friend.get("name", friend["public_label"]),
                         "relation": friend.get("relation", ""),
                         "stage_key": stage_key,
+                        "honorific": honorific,
                         "avatar": friend.get("avatar", ""),
                         "profile_url": friend.get("profile_url", ""),
                         "is_public": bool(friend.get("is_public", True)),
