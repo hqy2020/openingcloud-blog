@@ -4,11 +4,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { fetchPosts } from "../api/posts";
 import type { PostSummary } from "../api/posts";
+import { useTheme } from "../app/theme";
 import { FadeIn } from "../components/motion/FadeIn";
 import { BackgroundBeams } from "../components/ui/BackgroundBeams";
+import { BlurRevealImage } from "../components/ui/BlurRevealImage";
 import { CardSpotlight } from "../components/ui/CardSpotlight";
 import { TextGenerateEffect } from "../components/ui/TextGenerateEffect";
 import { getFallbackPosts } from "../data/fallback";
+import { categoryVisuals } from "../theme/categoryVisuals";
 
 type CategoryPageProps = {
   category: "tech" | "learning" | "life";
@@ -35,43 +38,53 @@ const visuals: Record<
     icon: string;
     beams: string[];
     accentText: string;
-    glow: string;
-    accentHex: string;
     badge: string;
-    headerOverlay: string;
+    accentHex: string;
+    glowRgb: string;
+    headerTintLight: string;
+    headerTintDark: string;
   }
 > = {
   tech: {
+    ...categoryVisuals.tech,
     icon: "💻",
     beams: ["#6B917B", "#4F6AE5", "#B5D4BF"],
     accentText: "探索代码世界的边界",
-    glow: "107, 145, 123",
-    accentHex: "#6B917B",
     badge: "ENGINEERING",
-    headerOverlay:
-      "linear-gradient(130deg, rgba(107,145,123,0.34), rgba(79,106,229,0.16) 44%, rgba(255,255,255,0.7))",
   },
   learning: {
+    ...categoryVisuals.learning,
     icon: "📚",
     beams: ["#B8945E", "#D6BD8B", "#4F6AE5"],
     accentText: "把混乱的方法论变成可执行系统",
-    glow: "184, 148, 94",
-    accentHex: "#B8945E",
     badge: "SYSTEM",
-    headerOverlay:
-      "linear-gradient(130deg, rgba(184,148,94,0.36), rgba(214,189,139,0.2) 44%, rgba(255,255,255,0.68))",
   },
   life: {
+    ...categoryVisuals.life,
     icon: "📷",
     beams: ["#9684A8", "#C2B6CF", "#4F6AE5"],
     accentText: "在日常里记录真实、温和、持续的生长",
-    glow: "150, 132, 168",
-    accentHex: "#9684A8",
     badge: "MOMENTS",
-    headerOverlay:
-      "linear-gradient(130deg, rgba(150,132,168,0.36), rgba(194,182,207,0.22) 44%, rgba(255,255,255,0.72))",
   },
 };
+
+const categoryCoverFallbacks: Record<CategoryPageProps["category"], string[]> = {
+  tech: ["/media/covers/tech/cover-tech-abstract-data-flow.png", "/media/covers/tech/cover-tech-floating-code-panels.png"],
+  learning: [
+    "/media/covers/learning/cover-efficiency-amber-desk-tools.png",
+    "/media/covers/learning/cover-efficiency-hourglass-gears.png",
+  ],
+  life: ["/media/covers/life/cover-life-dusk-balcony-tea.png", "/media/covers/life/cover-life-window-plants-twilight.png"],
+};
+
+function resolvePostCover(post: PostSummary, category: CategoryPageProps["category"], index: number) {
+  const normalizedCover = String(post.cover || "").trim();
+  if (normalizedCover) {
+    return normalizedCover;
+  }
+  const pool = categoryCoverFallbacks[category];
+  return pool[index % pool.length];
+}
 
 function formatViews(value: number) {
   if (value >= 1000) {
@@ -87,6 +100,7 @@ function estimateReadMinutes(post: PostSummary) {
 }
 
 export function CategoryPage({ category, title }: CategoryPageProps) {
+  const { isDark } = useTheme();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedTag, setSelectedTag] = useState<string>(() => String(searchParams.get("tag") || "").trim());
   const [sortBy, setSortBy] = useState<"latest" | "views">("latest");
@@ -410,49 +424,67 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
     return sorted;
   }, [effectivePosts, fallbackPosts.length, sortBy]);
 
+  const sectionBorderColor = isDark ? `rgba(${visual.glowRgb},0.42)` : `rgba(${visual.glowRgb},0.18)`;
+  const sectionBackground = isDark
+    ? `linear-gradient(180deg, rgba(2,6,23,0.92), rgba(15,23,42,0.92) 38%, rgba(15,23,42,0.96) 100%)`
+    : `linear-gradient(180deg, rgba(${visual.glowRgb},0.11), rgba(248,249,252,0.88) 34%, rgba(248,249,252,0.98) 100%)`;
+  const headerOverlay = isDark ? visual.headerTintDark : visual.headerTintLight;
+  const cardBackground = isDark
+    ? `linear-gradient(165deg, rgba(15,23,42,0.95), rgba(${visual.glowRgb},0.19))`
+    : `linear-gradient(165deg, rgba(255,255,255,0.95), rgba(${visual.glowRgb},0.08))`;
+  const chipBackground = isDark ? `rgba(${visual.glowRgb},0.22)` : `rgba(${visual.glowRgb},0.14)`;
+  const tagTextColor = isDark ? "#CBD5E1" : "#475569";
+
   return (
     <section
       className="space-y-8 rounded-[28px] border p-4 sm:p-6"
       style={{
-        borderColor: `rgba(${visual.glow},0.18)`,
-        background: `linear-gradient(180deg, rgba(${visual.glow},0.11), rgba(248,249,252,0.88) 34%, rgba(248,249,252,0.98) 100%)`,
+        borderColor: sectionBorderColor,
+        background: sectionBackground,
       }}
     >
       <Helmet>
-        <title>{`${title} | openingClouds`}</title>
+        <title>{`${title} | 启云博客`}</title>
         <meta content={categoryDescriptions[category]} name="description" />
-        <meta content={`${title} | openingClouds`} property="og:title" />
+        <meta content={`${title} | 启云博客`} property="og:title" />
         <meta content={categoryDescriptions[category]} property="og:description" />
         <link href={`https://blog.openingclouds.com/${category}`} rel="canonical" />
       </Helmet>
 
       <FadeIn>
         <header
-          className="relative overflow-hidden rounded-3xl border bg-white/85 p-7 shadow-[0_18px_48px_rgba(15,23,42,0.12)] backdrop-blur sm:p-9"
-          style={{ borderColor: `rgba(${visual.glow},0.3)` }}
+          className={`relative overflow-hidden rounded-3xl border p-7 backdrop-blur sm:p-9 ${
+            isDark
+              ? "bg-slate-900/80 shadow-[0_18px_48px_rgba(2,6,23,0.5)]"
+              : "bg-white/85 shadow-[0_18px_48px_rgba(15,23,42,0.12)]"
+          }`}
+          style={{ borderColor: isDark ? `rgba(${visual.glowRgb},0.44)` : `rgba(${visual.glowRgb},0.3)` }}
         >
           <BackgroundBeams colors={visual.beams} />
-          <div className="pointer-events-none absolute inset-0" style={{ background: visual.headerOverlay }} />
+          <div className="pointer-events-none absolute inset-0" style={{ background: headerOverlay }} />
           <div
             className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full blur-3xl"
-            style={{ background: `rgba(${visual.glow},0.28)` }}
+            style={{ background: isDark ? `rgba(${visual.glowRgb},0.42)` : `rgba(${visual.glowRgb},0.28)` }}
           />
 
           <div className="relative">
-            <p className="text-sm tracking-[0.22em] text-slate-500">{visual.badge}</p>
-            <h1 className="mt-2 flex items-center gap-3 text-3xl font-semibold tracking-tight text-slate-900">
+            <p className={`text-sm tracking-[0.22em] ${isDark ? "text-slate-300" : "text-slate-500"}`}>{visual.badge}</p>
+            <h1 className={`mt-2 flex items-center gap-3 text-3xl font-semibold tracking-tight ${isDark ? "text-slate-50" : "text-slate-900"}`}>
               <span
                 className="inline-flex h-10 w-10 items-center justify-center rounded-xl border text-xl shadow-[0_8px_18px_rgba(15,23,42,0.08)]"
-                style={{ borderColor: `rgba(${visual.glow},0.32)`, background: `rgba(${visual.glow},0.15)` }}
+                style={{
+                  borderColor: isDark ? `rgba(${visual.glowRgb},0.52)` : `rgba(${visual.glowRgb},0.32)`,
+                  background: isDark ? `rgba(${visual.glowRgb},0.28)` : `rgba(${visual.glowRgb},0.15)`,
+                }}
               >
                 {visual.icon}
               </span>
               <span style={{ color: visual.accentHex }}>{title}</span>
             </h1>
-            <p className="mt-3 text-slate-600">
+            <p className={`mt-3 ${isDark ? "text-slate-200" : "text-slate-600"}`}>
               <TextGenerateEffect text={visual.accentText} />
             </p>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className={`mt-1 text-sm ${isDark ? "text-slate-300" : "text-slate-500"}`}>
               {totalCount || effectivePosts.length} 篇文章 · 约 {estimatedWords.toLocaleString()} 字
               {totalCount > 0 && effectivePosts.length < totalCount ? ` · 已加载 ${effectivePosts.length} 篇` : ""}
             </p>
@@ -471,10 +503,16 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
                   key={tagLabel}
                   type="button"
                   onClick={() => handleSelectTag(value)}
-                  className="relative whitespace-nowrap rounded-full border bg-white px-3 py-1.5 text-sm transition"
+                  className={`relative whitespace-nowrap rounded-full border px-3 py-1.5 text-sm transition ${
+                    isDark ? "bg-slate-900/88 hover:bg-slate-800/88" : "bg-white"
+                  }`}
                   style={{
-                    borderColor: active ? `rgba(${visual.glow},0.45)` : "rgba(148,163,184,0.3)",
-                    color: active ? visual.accentHex : "#475569",
+                    borderColor: active
+                      ? `rgba(${visual.glowRgb},${isDark ? "0.64" : "0.45"})`
+                      : isDark
+                        ? "rgba(148,163,184,0.45)"
+                        : "rgba(148,163,184,0.3)",
+                    color: active ? visual.accentHex : tagTextColor,
                   }}
                 >
                   <span className="relative">
@@ -497,13 +535,17 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
           </div>
 
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-slate-500">排序</span>
+            <span className={isDark ? "text-slate-300" : "text-slate-500"}>排序</span>
             <button
               type="button"
-              className="rounded-full border px-3 py-1"
+              className={`rounded-full border px-3 py-1 ${isDark ? "bg-slate-900/84 hover:bg-slate-800/84" : ""}`}
               style={{
-                borderColor: sortBy === "latest" ? `rgba(${visual.glow},0.45)` : "rgba(148,163,184,0.3)",
-                color: sortBy === "latest" ? visual.accentHex : "#64748b",
+                borderColor: sortBy === "latest"
+                  ? `rgba(${visual.glowRgb},${isDark ? "0.62" : "0.45"})`
+                  : isDark
+                    ? "rgba(148,163,184,0.45)"
+                    : "rgba(148,163,184,0.3)",
+                color: sortBy === "latest" ? visual.accentHex : isDark ? "#CBD5E1" : "#64748b",
               }}
               onClick={() => setSortBy("latest")}
             >
@@ -511,10 +553,14 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
             </button>
             <button
               type="button"
-              className="rounded-full border px-3 py-1"
+              className={`rounded-full border px-3 py-1 ${isDark ? "bg-slate-900/84 hover:bg-slate-800/84" : ""}`}
               style={{
-                borderColor: sortBy === "views" ? `rgba(${visual.glow},0.45)` : "rgba(148,163,184,0.3)",
-                color: sortBy === "views" ? visual.accentHex : "#64748b",
+                borderColor: sortBy === "views"
+                  ? `rgba(${visual.glowRgb},${isDark ? "0.62" : "0.45"})`
+                  : isDark
+                    ? "rgba(148,163,184,0.45)"
+                    : "rgba(148,163,184,0.3)",
+                color: sortBy === "views" ? visual.accentHex : isDark ? "#CBD5E1" : "#64748b",
               }}
               onClick={() => setSortBy("views")}
             >
@@ -524,12 +570,13 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
         </div>
       </section>
 
-      {loadingInitial && <p className="text-slate-500">加载中...</p>}
-      {error ? <p className="text-sm text-amber-700">实时数据暂不可用，已展示静态内容。</p> : null}
+      {loadingInitial && <p className={isDark ? "text-slate-300" : "text-slate-500"}>加载中...</p>}
+      {error ? <p className={`text-sm ${isDark ? "text-amber-300" : "text-amber-700"}`}>实时数据暂不可用，已展示静态内容。</p> : null}
 
       <div className="columns-2 gap-3 sm:gap-4">
-        {visiblePosts.map((post) => {
+        {visiblePosts.map((post, index) => {
           const isRecentlyAppended = recentlyAppendedSlugs.includes(post.slug);
+          const coverSrc = resolvePostCover(post, category, index);
           return (
             <motion.div
               key={post.slug}
@@ -542,45 +589,60 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
                   : { duration: 0.24, ease: "easeOut" }
               }
             >
-            <CardSpotlight
-              className="rounded-2xl border bg-white/90 p-5 shadow-[0_12px_32px_rgba(15,23,42,0.08)] backdrop-blur transition duration-200 hover:-translate-y-1 hover:shadow-[0_20px_38px_rgba(15,23,42,0.12)]"
-              style={{
-                borderColor: `rgba(${visual.glow},0.28)`,
-                background: `linear-gradient(165deg, rgba(255,255,255,0.95), rgba(${visual.glow},0.08))`,
-              }}
-              glowColor={visual.glow}
-            >
-              <div
-                className="pointer-events-none absolute left-0 right-0 top-0 h-1.5"
+              <CardSpotlight
+                className={`group rounded-2xl border p-4 backdrop-blur transition duration-200 hover:-translate-y-1 ${
+                  isDark
+                    ? "bg-slate-900/84 shadow-[0_12px_32px_rgba(2,6,23,0.45)] hover:shadow-[0_20px_38px_rgba(2,6,23,0.55)]"
+                    : "bg-white/90 shadow-[0_12px_32px_rgba(15,23,42,0.08)] hover:shadow-[0_20px_38px_rgba(15,23,42,0.12)]"
+                }`}
                 style={{
-                  background: `linear-gradient(90deg, rgba(${visual.glow},0.18), rgba(${visual.glow},0.84), rgba(${visual.glow},0.18))`,
+                  borderColor: isDark ? `rgba(${visual.glowRgb},0.5)` : `rgba(${visual.glowRgb},0.28)`,
+                  background: cardBackground,
                 }}
-              />
+                glowColor={visual.glowRgb}
+              >
+                <div
+                  className="pointer-events-none absolute left-0 right-0 top-0 h-1.5"
+                  style={{
+                    background: `linear-gradient(90deg, rgba(${visual.glowRgb},0.18), rgba(${visual.glowRgb},0.84), rgba(${visual.glowRgb},0.18))`,
+                  }}
+                />
 
-              <h2 className="text-xl font-semibold text-slate-900">
-                <Link className="line-clamp-2 transition hover:opacity-80" style={{ color: visual.accentHex }} to={`/posts/${post.slug}`}>
-                  {post.title}
-                </Link>
-              </h2>
+                <div className={`relative overflow-hidden rounded-xl border ${isDark ? "border-slate-600/70" : "border-slate-200/70"}`}>
+                  <BlurRevealImage
+                    alt={`${post.title} 封面图`}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                    src={coverSrc}
+                    wrapperClassName="aspect-[4/3]"
+                  />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/25 via-transparent to-transparent" />
+                </div>
 
-              <p className="mt-2 text-sm text-slate-600">{post.excerpt || "暂无摘要"}</p>
+                <h2 className={`mt-4 text-xl font-semibold ${isDark ? "text-slate-100" : "text-slate-900"}`}>
+                  <Link className="line-clamp-2 transition hover:opacity-80" style={{ color: visual.accentHex }} to={`/posts/${post.slug}`}>
+                    {post.title}
+                  </Link>
+                </h2>
 
-              <div className="mt-3 flex flex-wrap gap-1">
-                {post.tags.map((tag) => (
-                  <span
-                    key={`${post.slug}-${tag}`}
-                    className="rounded-full px-2 py-1 text-xs"
-                    style={{ background: `rgba(${visual.glow},0.14)`, color: visual.accentHex }}
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
+                <p className={`mt-2 text-sm ${isDark ? "text-slate-300" : "text-slate-600"}`}>{post.excerpt || "暂无摘要"}</p>
 
-              <p className="mt-3 text-xs text-slate-500">
-                {new Date(post.updated_at).toLocaleDateString("zh-CN")} · 👁 {formatViews(post.views_count)} · {estimateReadMinutes(post)} min
-              </p>
-            </CardSpotlight>
+                <div className="mt-3 flex flex-wrap gap-1">
+                  {post.tags.map((tag) => (
+                    <span
+                      key={`${post.slug}-${tag}`}
+                      className="rounded-full px-2 py-1 text-xs"
+                      style={{ background: chipBackground, color: visual.accentHex }}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+
+                <p className={`mt-3 text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+                  {new Date(post.updated_at).toLocaleDateString("zh-CN")} · 👁 {formatViews(post.views_count)} · {estimateReadMinutes(post)} min
+                </p>
+              </CardSpotlight>
             </motion.div>
           );
         })}
@@ -589,12 +651,14 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
       {!loadingInitial && !fallbackPosts.length && hasMore ? (
         <div ref={loadMoreRef} className="flex flex-col items-center gap-2 pt-1">
           {loadingMore ? (
-            <div className="flex items-center gap-2 text-xs text-slate-500">
-              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600" />
+            <div className={`flex items-center gap-2 text-xs ${isDark ? "text-slate-300" : "text-slate-500"}`}>
+              <span
+                className={`h-3.5 w-3.5 animate-spin rounded-full border-2 ${isDark ? "border-slate-500 border-t-slate-100" : "border-slate-300 border-t-slate-600"}`}
+              />
               正在加载更多...
             </div>
           ) : awaitingGesture ? (
-            <div className="flex items-center gap-2 text-xs text-slate-500">
+            <div className={`flex items-center gap-2 text-xs ${isDark ? "text-slate-300" : "text-slate-500"}`}>
               <motion.span
                 className="inline-block text-sm"
                 animate={{ y: [0, 4, 0] }}
@@ -605,19 +669,19 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
               再下拉一下，松手后加载下一页
             </div>
           ) : (
-            <p className="text-xs text-slate-500">滑到底部后，再拖一下即可加载</p>
+            <p className={`text-xs ${isDark ? "text-slate-300" : "text-slate-500"}`}>滑到底部后，再拖一下即可加载</p>
           )}
-          <p className="text-xs text-slate-500">
+          <p className={`text-xs ${isDark ? "text-slate-300" : "text-slate-500"}`}>
             已加载 {effectivePosts.length}/{totalCount} 篇
           </p>
         </div>
       ) : null}
 
       {!loadingInitial && !fallbackPosts.length && !hasMore && effectivePosts.length > 0 ? (
-        <p className="text-center text-xs text-slate-500">已加载全部 {effectivePosts.length} 篇</p>
+        <p className={`text-center text-xs ${isDark ? "text-slate-300" : "text-slate-500"}`}>已加载全部 {effectivePosts.length} 篇</p>
       ) : null}
 
-      {!loadingInitial && effectivePosts.length === 0 ? <p className="text-slate-500">暂无文章</p> : null}
+      {!loadingInitial && effectivePosts.length === 0 ? <p className={isDark ? "text-slate-300" : "text-slate-500"}>暂无文章</p> : null}
     </section>
   );
 }
