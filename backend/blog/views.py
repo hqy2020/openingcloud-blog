@@ -4,11 +4,6 @@ from datetime import date, timedelta
 from pathlib import Path
 from uuid import uuid4
 
-try:
-    from chinese_calendar import get_holiday_detail
-except Exception:  # pragma: no cover - gracefully degrade when holiday lib is unavailable.
-    get_holiday_detail = None
-
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files.storage import default_storage
@@ -24,18 +19,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import (
-    HighlightItem,
-    HighlightStage,
-    HomeStatsSnapshot,
-    PhotoWallImage,
-    Post,
-    PostView,
-    SocialFriend,
-    SyncLog,
-    TimelineNode,
-    TravelPlace,
-)
+from .models import HighlightItem, HighlightStage, PhotoWallImage, Post, PostView, SocialFriend, SyncLog, TimelineNode, TravelPlace
 from .permissions import IsStaffOrSyncToken, IsStaffUser
 from .serializers import (
     AdminImageUploadSerializer,
@@ -65,23 +49,6 @@ from .serializers import (
 from sync.service import reconcile_obsidian_publications, sync_post_payload
 
 OBSIDIAN_IMAGES_REPO_URL = "https://github.com/hqy2020/obsidian-images"
-WEEKDAY_LABELS = ("周一", "周二", "周三", "周四", "周五", "周六", "周日")
-HOLIDAY_NAME_ALIASES = {
-    "new years day": "元旦节",
-    "new year's day": "元旦节",
-    "new_years_day": "元旦节",
-    "new_year's_day": "元旦节",
-    "spring festival": "春节",
-    "chinese new year": "春节",
-    "tomb sweeping day": "清明节",
-    "qingming festival": "清明节",
-    "labour day": "劳动节",
-    "labor day": "劳动节",
-    "dragon boat festival": "端午节",
-    "mid autumn festival": "中秋节",
-    "mid-autumn festival": "中秋节",
-    "national day": "国庆节",
-}
 
 
 def api_ok(data, status_code=status.HTTP_200_OK):
@@ -820,15 +787,6 @@ def _travel_payload() -> list[dict]:
     return [grouped[province] for province in sorted(grouped.keys())]
 
 
-def _resolve_friend_honorific(friend: SocialFriend, masked_label: str) -> str:
-    normalized = str(masked_label or "")
-    if normalized.endswith(SocialFriend.Honorific.MS.label):
-        return SocialFriend.Honorific.MS
-    if normalized.endswith(SocialFriend.Honorific.MR.label):
-        return SocialFriend.Honorific.MR
-    return SocialFriend.Honorific.MS if friend.honorific == SocialFriend.Honorific.MS else SocialFriend.Honorific.MR
-
-
 def _social_graph_payload(*, show_real_name: bool = False) -> dict:
     stage_meta = {
         SocialFriend.StageKey.PRIMARY: ("小学", 10),
@@ -853,7 +811,6 @@ def _social_graph_payload(*, show_real_name: bool = False) -> dict:
                 "label": label,
                 "stage_key": key,
                 "order": order,
-                "honorific": None,
             }
         )
 
@@ -861,9 +818,7 @@ def _social_graph_payload(*, show_real_name: bool = False) -> dict:
     for friend in friends:
         node_id = f"friend-{friend.id}"
         stage_id = f"stage-{friend.stage_key}"
-        masked_label = friend.masked_name()
-        friend_label = friend.name if show_real_name else masked_label
-        resolved_honorific = _resolve_friend_honorific(friend, masked_label)
+        friend_label = friend.name if show_real_name else friend.masked_name()
         nodes.append(
             {
                 "id": node_id,
@@ -871,179 +826,12 @@ def _social_graph_payload(*, show_real_name: bool = False) -> dict:
                 "label": friend_label,
                 "stage_key": friend.stage_key,
                 "order": 1000 + friend.sort_order,
-                "honorific": resolved_honorific,
             }
         )
         links.append({"source": stage_id, "target": node_id})
 
     return {"nodes": nodes, "links": links}
 
-
-def _birthday_on_year(*, month: int, day: int, year: int) -> date:
-    try:
-        return date(year, month, day)
-    except ValueError:
-        if month == 2 and day == 29:
-            return date(year, 2, 28)
-        raise
-
-
-def _birthday_display_name(*, friend: SocialFriend, masked_label: str, show_real_name: bool) -> str:
-    raw_name = str(friend.name or "").strip()
-    if show_real_name and raw_name:
-        return raw_name
-
-    if raw_name:
-        return raw_name[0]
-
-    fallback = str(masked_label or "").strip()
-    if fallback.endswith(SocialFriend.Honorific.MS.label):
-        fallback = fallback[: -len(SocialFriend.Honorific.MS.label)]
-    elif fallback.endswith(SocialFriend.Honorific.MR.label):
-        fallback = fallback[: -len(SocialFriend.Honorific.MR.label)]
-    fallback = fallback.strip()
-    return fallback[:1] if fallback else "这位"
-
-
-def _birthday_reminders_payload(*, show_real_name: bool = False, within_days: int = 7) -> list[dict]:
-    today = timezone.localdate()
-    queryset = SocialFriend.objects.filter(is_public=True, birthday__isnull=False).order_by("sort_order", "id")
-    reminders: list[dict] = []
-
-    for friend in queryset:
-        birthday = friend.birthday
-        if birthday is None:
-            continue
-
-        this_year_birthday = _birthday_on_year(month=birthday.month, day=birthday.day, year=today.year)
-        next_birthday = (
-            this_year_birthday
-            if this_year_birthday >= today
-            else _birthday_on_year(month=birthday.month, day=birthday.day, year=today.year + 1)
-        )
-        days_until = (next_birthday - today).days
-        if days_until < 0 or days_until > within_days:
-            continue
-
-        masked_label = friend.masked_name()
-        honorific = _resolve_friend_honorific(friend, masked_label)
-        honorific_label = "小姐" if honorific == SocialFriend.Honorific.MS else "先生"
-        display_name = _birthday_display_name(friend=friend, masked_label=masked_label, show_real_name=show_real_name)
-        message = f"{display_name}{honorific_label} {days_until} 天后生日"
-        reminders.append(
-            {
-                "node_id": f"friend-{friend.id}",
-                "display_name": display_name,
-                "honorific": honorific,
-                "days_until": days_until,
-                "birthday": next_birthday,
-                "message": message,
-            }
-        )
-
-    reminders.sort(key=lambda item: (int(item["days_until"]), str(item["display_name"])))
-    return reminders
-
-
-def _format_date_with_weekday(raw_date: date) -> str:
-    weekday_label = WEEKDAY_LABELS[raw_date.weekday()]
-    return f"{raw_date.isoformat()}（{weekday_label}）"
-
-
-def _normalize_holiday_name(raw_name: str) -> str:
-    normalized = str(raw_name or "").strip()
-    if not normalized:
-        return normalized
-
-    key = normalized.lower().replace("-", " ").replace("_", " ")
-    key = " ".join(key.split())
-    return HOLIDAY_NAME_ALIASES.get(key, normalized)
-
-
-def _next_statutory_holiday(today: date) -> dict:
-    if get_holiday_detail is None:
-        raise RuntimeError("holiday library unavailable")
-
-    for offset in range(0, 371):
-        check_day = today + timedelta(days=offset)
-        is_holiday, holiday_obj = get_holiday_detail(check_day)
-        if not is_holiday or holiday_obj is None:
-            continue
-
-        holiday_name = _normalize_holiday_name(str(getattr(holiday_obj, "value", holiday_obj) or ""))
-        if not holiday_name:
-            continue
-
-        return {
-            "holiday_date": check_day,
-            "holiday_name": holiday_name,
-            "days_until": offset,
-        }
-
-    raise LookupError("no statutory holiday found within 370 days")
-
-
-def _social_ticker_payload(*, show_real_name: bool = False) -> dict:
-    reminders = _birthday_reminders_payload(show_real_name=show_real_name, within_days=7)
-    if reminders:
-        birthday_items = [
-            {
-                "type": "birthday",
-                "message": item["message"],
-                "days_until": int(item["days_until"]),
-                "date": item["birthday"],
-                "holiday_name": None,
-                "node_id": item["node_id"],
-                "honorific": item["honorific"],
-            }
-            for item in reminders
-        ]
-        return {
-            "mode": "birthday",
-            "items": birthday_items,
-        }
-
-    today = timezone.localdate()
-    today_text = _format_date_with_weekday(today)
-    try:
-        holiday_info = _next_statutory_holiday(today)
-        holiday_date = holiday_info["holiday_date"]
-        holiday_name = str(holiday_info["holiday_name"])
-        days_until = int(holiday_info["days_until"])
-        if days_until == 0:
-            message = f"今天是 {holiday_name}。"
-        else:
-            message = f"今天是 {today_text}，距离{holiday_name}还有 {days_until} 天。"
-
-        return {
-            "mode": "holiday",
-            "items": [
-                {
-                    "type": "holiday",
-                    "message": message,
-                    "days_until": days_until,
-                    "date": holiday_date,
-                    "holiday_name": holiday_name,
-                    "node_id": None,
-                    "honorific": None,
-                }
-            ],
-        }
-    except Exception:
-        return {
-            "mode": "holiday",
-            "items": [
-                {
-                    "type": "holiday",
-                    "message": f"今天是 {today_text}，节假日数据暂不可用。",
-                    "days_until": 0,
-                    "date": today,
-                    "holiday_name": None,
-                    "node_id": None,
-                    "honorific": None,
-                }
-            ],
-        }
 
 def _photo_wall_payload() -> list[dict]:
     queryset = PhotoWallImage.objects.filter(is_public=True).order_by("sort_order", "id")
@@ -1060,61 +848,18 @@ def _photo_wall_payload() -> list[dict]:
     return normalized
 
 
-def _collect_post_tags(queryset) -> set[str]:
-    tags: set[str] = set()
-    for row in queryset.values_list("tags", flat=True):
-        if isinstance(row, list):
-            tags.update(str(item).strip() for item in row if str(item).strip())
-    return tags
-
-
-def _count_post_words(queryset) -> int:
-    return sum(
-        len(str(content or "").replace(" ", "").replace("\n", "").replace("\t", ""))
-        for content in queryset.values_list("content", flat=True)
-    )
-
-
-def _views_delta_week(*, today: date, views_total: int) -> int:
-    snapshot, created = HomeStatsSnapshot.objects.get_or_create(
-        snapshot_date=today,
-        defaults={"views_total": int(views_total)},
-    )
-    if not created and snapshot.views_total != int(views_total):
-        snapshot.views_total = int(views_total)
-        snapshot.save(update_fields=["views_total", "updated_at"])
-
-    baseline_date = today - timedelta(days=7)
-    baseline_snapshot = HomeStatsSnapshot.objects.filter(snapshot_date__lte=baseline_date).order_by("-snapshot_date").first()
-    if baseline_snapshot is None:
-        return 0
-    return int(views_total) - int(baseline_snapshot.views_total)
-
 def _home_stats_payload() -> dict:
-    now = timezone.now()
-    today = timezone.localdate()
-    week_cutoff_dt = now - timedelta(days=7)
-    year_cutoff_day = today - timedelta(days=365)
-
     posts = Post.objects.all()
     published_posts = posts.filter(draft=False)
-    published_posts_before_week = published_posts.filter(created_at__lt=week_cutoff_dt)
-    tags = _collect_post_tags(published_posts)
-    tags_before_week = _collect_post_tags(published_posts_before_week)
+    tags: set[str] = set()
+    for row in published_posts.values_list("tags", flat=True):
+        if isinstance(row, list):
+            tags.update(str(item) for item in row if item)
 
     views_total = PostView.objects.aggregate(total=Sum("views"))["total"] or 0
-    views_total = int(views_total)
-    views_delta_week = _views_delta_week(today=today, views_total=views_total)
 
     stages = HighlightStage.objects.prefetch_related("items")
-    total_words = _count_post_words(published_posts)
-    total_words_before_week = _count_post_words(published_posts_before_week)
-    published_posts_total = published_posts.count()
-
-    travel_total = TravelPlace.objects.count()
-    travel_before_year = TravelPlace.objects.filter(
-        Q(visited_at__lt=year_cutoff_day) | Q(visited_at__isnull=True, created_at__date__lt=year_cutoff_day)
-    ).count()
+    total_words = sum(len(str(content or "").replace(" ", "").replace("\n", "").replace("\t", "")) for content in published_posts.values_list("content", flat=True))
 
     launch_date = None
     configured_launch_date = str(getattr(settings, "SITE_LAUNCH_DATE", "2026-02-01")).strip()
@@ -1129,28 +874,22 @@ def _home_stats_payload() -> dict:
             launch_date = timezone.localdate(first_post_created_at)
 
     if launch_date is None:
-        launch_date = today
+        launch_date = timezone.localdate()
 
-    site_days = max(1, (today - launch_date).days + 1)
+    site_days = max(1, (timezone.localdate() - launch_date).days + 1)
 
     return {
         "posts_total": posts.count(),
-        "published_posts_total": published_posts_total,
+        "published_posts_total": published_posts.count(),
         "timeline_total": TimelineNode.objects.count(),
-        "travel_total": travel_total,
+        "travel_total": TravelPlace.objects.count(),
         "social_total": SocialFriend.objects.filter(is_public=True).count(),
         "highlight_stages_total": stages.count(),
         "highlight_items_total": sum(len(stage.items.all()) for stage in stages),
         "tags_total": len(tags),
-        "views_total": views_total,
+        "views_total": int(views_total),
         "total_words": int(total_words),
         "site_days": int(site_days),
-        "site_launch_date": launch_date.isoformat(),
-        "published_posts_delta_week": published_posts_total - published_posts_before_week.count(),
-        "views_delta_week": int(views_delta_week),
-        "total_words_delta_week": int(total_words) - int(total_words_before_week),
-        "tags_delta_week": len(tags) - len(tags_before_week),
-        "travel_delta_year": int(travel_total) - int(travel_before_year),
     }
 
 
@@ -1159,8 +898,6 @@ def _home_payload(*, show_real_name: bool = False) -> dict:
     highlights = HighlightStage.objects.prefetch_related("items").order_by("sort_order", "start_date", "id")
     travel = _travel_payload()
     social_graph = _social_graph_payload(show_real_name=show_real_name)
-    birthday_reminders = _birthday_reminders_payload(show_real_name=show_real_name, within_days=7)
-    social_ticker = _social_ticker_payload(show_real_name=show_real_name)
     photo_wall = _photo_wall_payload()
 
     email = getattr(settings, "PUBLIC_CONTACT_EMAIL", "openingclouds@outlook.com")
@@ -1185,8 +922,6 @@ def _home_payload(*, show_real_name: bool = False) -> dict:
         "highlights": HighlightStagePublicSerializer(highlights, many=True).data,
         "travel": TravelProvinceSerializer(travel, many=True).data,
         "social_graph": SocialGraphPublicSerializer(social_graph).data,
-        "social_ticker": social_ticker,
-        "birthday_reminders": birthday_reminders,
         "photo_wall": photo_wall,
         "stats": _home_stats_payload(),
         "contact": {

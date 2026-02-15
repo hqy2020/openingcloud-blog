@@ -408,7 +408,6 @@ class SocialGraphNodeSerializer(serializers.Serializer):
     label = serializers.CharField()
     stage_key = serializers.CharField()
     order = serializers.IntegerField()
-    honorific = serializers.ChoiceField(choices=["mr", "ms"], allow_null=True, required=False)
 
 
 class SocialGraphLinkSerializer(serializers.Serializer):
@@ -456,41 +455,11 @@ class HomeStatsSerializer(serializers.Serializer):
     views_total = serializers.IntegerField()
     total_words = serializers.IntegerField()
     site_days = serializers.IntegerField()
-    site_launch_date = serializers.DateField()
-    published_posts_delta_week = serializers.IntegerField()
-    views_delta_week = serializers.IntegerField()
-    total_words_delta_week = serializers.IntegerField()
-    tags_delta_week = serializers.IntegerField()
-    travel_delta_year = serializers.IntegerField()
 
 
 class HomeContactSerializer(serializers.Serializer):
     email = serializers.CharField()
     github = serializers.CharField()
-
-
-class BirthdayReminderSerializer(serializers.Serializer):
-    node_id = serializers.CharField()
-    display_name = serializers.CharField()
-    honorific = serializers.ChoiceField(choices=["mr", "ms"])
-    days_until = serializers.IntegerField(min_value=0, max_value=7)
-    birthday = serializers.DateField()
-    message = serializers.CharField()
-
-
-class SocialTickerItemSerializer(serializers.Serializer):
-    type = serializers.ChoiceField(choices=["birthday", "holiday"])
-    message = serializers.CharField()
-    days_until = serializers.IntegerField(min_value=0)
-    date = serializers.DateField()
-    holiday_name = serializers.CharField(allow_null=True, allow_blank=True, required=False)
-    node_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)
-    honorific = serializers.ChoiceField(choices=["mr", "ms"], allow_null=True, required=False)
-
-
-class SocialTickerSerializer(serializers.Serializer):
-    mode = serializers.ChoiceField(choices=["birthday", "holiday"])
-    items = SocialTickerItemSerializer(many=True)
 
 
 class HomeAggregateSerializer(serializers.Serializer):
@@ -499,8 +468,6 @@ class HomeAggregateSerializer(serializers.Serializer):
     highlights = HighlightStagePublicSerializer(many=True)
     travel = TravelProvinceSerializer(many=True)
     social_graph = SocialGraphPublicSerializer()
-    social_ticker = SocialTickerSerializer()
-    birthday_reminders = BirthdayReminderSerializer(many=True)
     photo_wall = PhotoWallPublicSerializer(many=True)
     stats = HomeStatsSerializer()
     contact = HomeContactSerializer()

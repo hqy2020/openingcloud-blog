@@ -17,20 +17,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from .image_bed import ImageBedUploadError
-from .models import (
-    HighlightItem,
-    HighlightStage,
-    HomeStatsSnapshot,
-    ObsidianDocument,
-    ObsidianSyncRun,
-    PhotoWallImage,
-    Post,
-    PostView,
-    SocialFriend,
-    SyncLog,
-    TimelineNode,
-    TravelPlace,
-)
+from .models import HighlightItem, HighlightStage, PhotoWallImage, Post, PostView, SocialFriend, SyncLog, TimelineNode, TravelPlace
 
 
 class ApiTests(TestCase):
@@ -244,61 +231,14 @@ class ApiTests(TestCase):
         self.assertIn("highlights", payload)
         self.assertIn("travel", payload)
         self.assertIn("social_graph", payload)
-        self.assertIn("social_ticker", payload)
-        self.assertIn("birthday_reminders", payload)
         self.assertIn("photo_wall", payload)
         self.assertIn("stats", payload)
         self.assertIn("contact", payload)
         self.assertGreaterEqual(payload["stats"]["published_posts_total"], 1)
         self.assertIn("total_words", payload["stats"])
         self.assertIn("site_days", payload["stats"])
-        self.assertIn("site_launch_date", payload["stats"])
-        self.assertIn("published_posts_delta_week", payload["stats"])
-        self.assertIn("views_delta_week", payload["stats"])
-        self.assertIn("total_words_delta_week", payload["stats"])
-        self.assertIn("tags_delta_week", payload["stats"])
-        self.assertIn("travel_delta_year", payload["stats"])
         self.assertGreaterEqual(payload["stats"]["total_words"], 1)
         self.assertGreaterEqual(payload["stats"]["site_days"], 1)
-
-    def test_home_stats_delta_payload(self):
-        now = timezone.now()
-        week_ago = now - timedelta(days=8)
-        year_ago = timezone.localdate() - timedelta(days=370)
-
-        old_post = Post.objects.create(
-            title="历史文章",
-            slug="history-post",
-            excerpt="history",
-            content="历史历史",
-            category=Post.Category.TECH,
-            tags=["legacy"],
-            draft=False,
-        )
-        Post.objects.filter(id=old_post.id).update(created_at=week_ago, updated_at=week_ago)
-
-        old_city = TravelPlace.objects.create(
-            province="江苏",
-            city="南京",
-            notes="老足迹",
-            visited_at=year_ago,
-            sort_order=10,
-        )
-        PostView.objects.create(post=self.post, views=10)
-        HomeStatsSnapshot.objects.create(snapshot_date=timezone.localdate() - timedelta(days=8), views_total=4)
-
-        Post.objects.filter(id=self.post.id).update(created_at=now, updated_at=now)
-        TravelPlace.objects.filter(id=old_city.id).update(created_at=week_ago, updated_at=week_ago)
-
-        resp = self.client.get(reverse("home"))
-        self.assertEqual(resp.status_code, 200)
-        stats = resp.data["data"]["stats"]
-
-        self.assertEqual(stats["published_posts_delta_week"], 1)
-        self.assertEqual(stats["views_delta_week"], 6)
-        self.assertEqual(stats["total_words_delta_week"], len("#hello"))
-        self.assertEqual(stats["tags_delta_week"], 2)
-        self.assertEqual(stats["travel_delta_year"], 2)
 
     def test_timeline_api(self):
         resp = self.client.get(reverse("timeline"))
@@ -400,6 +340,16 @@ class ApiTests(TestCase):
         labels = {node["label"] for node in friend_nodes}
         self.assertIn("杨女士", labels)
 
+    def test_photo_wall_api_only_returns_public_remote_images(self):
+        resp = self.client.get(reverse("photo-wall"))
+        self.assertEqual(resp.status_code, 200)
+        rows = resp.data["data"]
+        self.assertEqual(len(rows), 1)
+        item = rows[0]
+        self.assertEqual(item["title"], "云海日出")
+        self.assertTrue(str(item["image_url"]).startswith("https://"))
+        self.assertIn("hqy2020/obsidian-images", item["source_url"])
+
     def test_social_graph_and_home_responses_are_private(self):
         social_resp = self.client.get(reverse("social-graph"))
         home_resp = self.client.get(reverse("home"))
@@ -413,173 +363,6 @@ class ApiTests(TestCase):
         self.assertIn("no-store", str(home_resp.get("Cache-Control", "")).lower())
         self.assertIn("cookie", str(home_resp.get("Vary", "")).lower())
 
-    def test_home_birthday_reminders_within_next_seven_days(self):
-        today = timezone.localdate()
-        soon = today + timedelta(days=3)
-        later = today + timedelta(days=9)
-
-        SocialFriend.objects.create(
-            name="王五",
-            public_label="一位同事",
-            relation="同事",
-            stage_key=SocialFriend.StageKey.CAREER,
-            honorific=SocialFriend.Honorific.MR,
-            birthday=soon.replace(year=2000),
-            is_public=True,
-            sort_order=50,
-        )
-        SocialFriend.objects.create(
-            name="李梅",
-            public_label="一位朋友",
-            relation="朋友",
-            stage_key=SocialFriend.StageKey.CAREER,
-            honorific=SocialFriend.Honorific.MS,
-            birthday=later.replace(year=2000),
-            is_public=True,
-            sort_order=51,
-        )
-
-        resp = self.client.get(reverse("home"))
-        self.assertEqual(resp.status_code, 200)
-        reminders = resp.data["data"]["birthday_reminders"]
-        social_ticker = resp.data["data"]["social_ticker"]
-
-        self.assertTrue(any(item["days_until"] == 3 for item in reminders))
-        self.assertTrue(all(item["days_until"] <= 7 for item in reminders))
-        self.assertFalse(any(item["days_until"] == 9 for item in reminders))
-        self.assertEqual(social_ticker["mode"], "birthday")
-        self.assertGreaterEqual(len(social_ticker["items"]), 1)
-        self.assertTrue(all(item["type"] == "birthday" for item in social_ticker["items"]))
-
-    def test_home_birthday_reminders_public_masks_name(self):
-        today = timezone.localdate()
-        soon = today + timedelta(days=1)
-        SocialFriend.objects.create(
-            name="杨彩",
-            public_label="一位大学同学 C",
-            relation="情侣",
-            stage_key=SocialFriend.StageKey.TONGJI,
-            honorific=SocialFriend.Honorific.MS,
-            birthday=soon.replace(year=2000),
-            is_public=True,
-            sort_order=52,
-        )
-
-        resp = self.client.get(reverse("home"))
-        self.assertEqual(resp.status_code, 200)
-        messages = [item["message"] for item in resp.data["data"]["birthday_reminders"]]
-        self.assertIn("杨小姐 1 天后生日", messages)
-        self.assertNotIn("杨彩小姐 1 天后生日", messages)
-        ticker_messages = [item["message"] for item in resp.data["data"]["social_ticker"]["items"]]
-        self.assertIn("杨小姐 1 天后生日", ticker_messages)
-
-    def test_home_birthday_reminders_staff_shows_real_name(self):
-        today = timezone.localdate()
-        soon = today + timedelta(days=1)
-        SocialFriend.objects.create(
-            name="杨彩",
-            public_label="一位大学同学 C",
-            relation="情侣",
-            stage_key=SocialFriend.StageKey.TONGJI,
-            honorific=SocialFriend.Honorific.MS,
-            birthday=soon.replace(year=2000),
-            is_public=True,
-            sort_order=53,
-        )
-
-        admin_user = get_user_model().objects.create_user(
-            username="staff_birthday_reminder",
-            password="pass1234",
-            is_staff=True,
-        )
-        login_resp = self.client.post(
-            reverse("auth-login"),
-            {"username": admin_user.username, "password": "pass1234"},
-            format="json",
-        )
-        self.assertEqual(login_resp.status_code, 200)
-
-        resp = self.client.get(reverse("home"))
-        self.assertEqual(resp.status_code, 200)
-        messages = [item["message"] for item in resp.data["data"]["birthday_reminders"]]
-        self.assertIn("杨彩小姐 1 天后生日", messages)
-        ticker_messages = [item["message"] for item in resp.data["data"]["social_ticker"]["items"]]
-        self.assertIn("杨彩小姐 1 天后生日", ticker_messages)
-
-    def test_home_social_ticker_falls_back_to_holiday_when_no_birthday(self):
-        today = timezone.localdate()
-        holiday_date = today + timedelta(days=4)
-        with patch(
-            "blog.views._next_statutory_holiday",
-            return_value={"holiday_date": holiday_date, "holiday_name": "清明节", "days_until": 4},
-        ):
-            resp = self.client.get(reverse("home"))
-
-        self.assertEqual(resp.status_code, 200)
-        ticker = resp.data["data"]["social_ticker"]
-        self.assertEqual(ticker["mode"], "holiday")
-        self.assertEqual(len(ticker["items"]), 1)
-        item = ticker["items"][0]
-        self.assertEqual(item["type"], "holiday")
-        self.assertEqual(item["days_until"], 4)
-        self.assertEqual(item["holiday_name"], "清明节")
-        self.assertIn("距离清明节还有 4 天", item["message"])
-
-    def test_home_social_ticker_today_holiday_message(self):
-        today = timezone.localdate()
-        with patch(
-            "blog.views._next_statutory_holiday",
-            return_value={"holiday_date": today, "holiday_name": "春节", "days_until": 0},
-        ):
-            resp = self.client.get(reverse("home"))
-
-        self.assertEqual(resp.status_code, 200)
-        ticker = resp.data["data"]["social_ticker"]
-        self.assertEqual(ticker["mode"], "holiday")
-        self.assertEqual(ticker["items"][0]["message"], "今天是 春节。")
-
-    def test_home_social_ticker_ignores_weekend_without_statutory_holiday(self):
-        today = timezone.localdate()
-        holiday_date = today + timedelta(days=1)
-
-        class FakeHoliday:
-            value = "测试节"
-
-        def fake_holiday_detail(day):
-            if day == today:
-                return True, None
-            if day == holiday_date:
-                return True, FakeHoliday()
-            return False, None
-
-        with patch("blog.views.get_holiday_detail", side_effect=fake_holiday_detail):
-            resp = self.client.get(reverse("home"))
-
-        self.assertEqual(resp.status_code, 200)
-        ticker = resp.data["data"]["social_ticker"]
-        self.assertEqual(ticker["mode"], "holiday")
-        self.assertEqual(ticker["items"][0]["holiday_name"], "测试节")
-        self.assertEqual(ticker["items"][0]["days_until"], 1)
-
-    def test_home_social_ticker_holiday_lookup_failure_degrades_gracefully(self):
-        with patch("blog.views._next_statutory_holiday", side_effect=RuntimeError("boom")):
-            resp = self.client.get(reverse("home"))
-
-        self.assertEqual(resp.status_code, 200)
-        ticker = resp.data["data"]["social_ticker"]
-        self.assertEqual(ticker["mode"], "holiday")
-        self.assertEqual(len(ticker["items"]), 1)
-        self.assertIn("节假日数据暂不可用", ticker["items"][0]["message"])
-
-    def test_photo_wall_api_only_returns_public_remote_images(self):
-        resp = self.client.get(reverse("photo-wall"))
-        self.assertEqual(resp.status_code, 200)
-        rows = resp.data["data"]
-        self.assertEqual(len(rows), 1)
-        item = rows[0]
-        self.assertEqual(item["title"], "云海日出")
-        self.assertTrue(str(item["image_url"]).startswith("https://"))
-        self.assertIn("hqy2020/obsidian-images", item["source_url"])
     def test_sitemap_contains_published_posts_only(self):
         resp = self.client.get("/sitemap.xml")
         self.assertEqual(resp.status_code, 200)
@@ -893,75 +676,6 @@ class AdminApiTests(TestCase):
         self.assertTrue(body["url"].startswith("/media/"))
         self.assertTrue(body["path"].startswith("uploads/"))
         self.assertEqual(body["content_type"], "image/png")
-
-
-class PhotoWallAdminUploadTests(TestCase):
-    def setUp(self):
-        self.client = APIClient()
-        self.staff_user = get_user_model().objects.create_user(
-            username="photo-staff",
-            password="pass1234",
-            is_staff=True,
-            is_superuser=True,
-        )
-        self.normal_user = get_user_model().objects.create_user(
-            username="photo-normal",
-            password="pass1234",
-            is_staff=False,
-        )
-
-    def test_upload_image_requires_login(self):
-        upload = SimpleUploadedFile("cloud.png", b"\x89PNG\r\n\x1a\nmock", content_type="image/png")
-        resp = self.client.post(reverse("admin:blog_photowallimage_upload_image"), {"file": upload})
-        self.assertEqual(resp.status_code, 302)
-        self.assertIn("/admin/login/", str(resp.headers.get("Location", "")))
-
-    def test_upload_image_requires_staff(self):
-        self.client.force_login(self.normal_user)
-        upload = SimpleUploadedFile("cloud.png", b"\x89PNG\r\n\x1a\nmock", content_type="image/png")
-        resp = self.client.post(reverse("admin:blog_photowallimage_upload_image"), {"file": upload})
-        self.assertEqual(resp.status_code, 302)
-        self.assertIn("/admin/login/", str(resp.headers.get("Location", "")))
-
-    def test_upload_image_rejects_invalid_type(self):
-        self.client.force_login(self.staff_user)
-        upload = SimpleUploadedFile("note.txt", b"hello", content_type="text/plain")
-        resp = self.client.post(reverse("admin:blog_photowallimage_upload_image"), {"file": upload})
-        self.assertEqual(resp.status_code, 400)
-        self.assertFalse(resp.json()["ok"])
-
-    def test_upload_image_returns_remote_urls(self):
-        self.client.force_login(self.staff_user)
-        upload = SimpleUploadedFile("cloud.png", b"\x89PNG\r\n\x1a\nmock", content_type="image/png")
-        with patch(
-            "blog.admin.upload_photo_to_obsidian_images",
-            return_value=type(
-                "UploadResult",
-                (),
-                {
-                    "image_url": "https://raw.githubusercontent.com/hqy2020/obsidian-images/main/gallery/mock.png",
-                    "source_url": "https://github.com/hqy2020/obsidian-images/blob/main/gallery/mock.png",
-                    "path": "gallery/mock.png",
-                    "sha": "abc123",
-                },
-            )(),
-        ):
-            resp = self.client.post(reverse("admin:blog_photowallimage_upload_image"), {"file": upload})
-        self.assertEqual(resp.status_code, 200)
-        payload = resp.json()
-        self.assertTrue(payload["ok"])
-        self.assertIn("raw.githubusercontent.com/hqy2020/obsidian-images", payload["data"]["image_url"])
-        self.assertIn("/blob/main/", payload["data"]["source_url"])
-
-    def test_upload_image_propagates_image_bed_error(self):
-        self.client.force_login(self.staff_user)
-        upload = SimpleUploadedFile("cloud.png", b"\x89PNG\r\n\x1a\nmock", content_type="image/png")
-        with patch("blog.admin.upload_photo_to_obsidian_images", side_effect=ImageBedUploadError("token missing")):
-            resp = self.client.post(reverse("admin:blog_photowallimage_upload_image"), {"file": upload})
-        self.assertEqual(resp.status_code, 400)
-        payload = resp.json()
-        self.assertFalse(payload["ok"])
-        self.assertIn("token missing", payload["message"])
 
     def test_obsidian_sync_create(self):
         self.client.force_authenticate(user=self.staff_user)
@@ -1644,193 +1358,3 @@ class AdminContentCrudApiTests(TestCase):
         delete_stage_resp = self.client.delete(reverse("admin-highlight-stage-detail", kwargs={"stage_id": stage_id}))
         self.assertEqual(delete_stage_resp.status_code, 200)
         self.assertFalse(HighlightStage.objects.filter(id=stage_id).exists())
-
-
-class ObsidianDocumentPoolCommandTests(TestCase):
-    def _write_note(self, vault: Path, relative_path: str, content: str) -> Path:
-        path = vault / relative_path
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(content, encoding="utf-8")
-        return path
-
-    def test_sync_obsidian_documents_indexes_full_vault_and_title_fallback(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            vault = Path(temp_dir)
-            self._write_note(vault, "notes/fallback-title.md", "# 标题来自正文\n\n正文")
-
-            call_command("sync_obsidian_documents", str(vault))
-
-            self.assertEqual(ObsidianDocument.objects.count(), 1)
-            doc = ObsidianDocument.objects.first()
-            assert doc is not None
-            self.assertEqual(doc.vault_path, "notes/fallback-title.md")
-            self.assertEqual(doc.title, "标题来自正文")
-            self.assertTrue(doc.source_exists)
-
-            run = ObsidianSyncRun.objects.first()
-            assert run is not None
-            self.assertEqual(run.scanned_count, 1)
-            self.assertEqual(run.created_count, 1)
-            self.assertEqual(run.status, ObsidianSyncRun.Status.SUCCESS)
-
-    def test_sync_obsidian_documents_missing_file_sets_source_missing_and_drafts_post(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            vault = Path(temp_dir)
-            relative_path = "2-Resource（参考资源）/ops/a.md"
-            note = self._write_note(
-                vault,
-                relative_path,
-                "---\ntitle: A\ntags:\n  - publish\n---\n\n正文 A",
-            )
-            linked_post = Post.objects.create(
-                title="A",
-                slug="obs-doc-a",
-                excerpt="",
-                content="旧正文",
-                category=Post.Category.TECH,
-                tags=["legacy"],
-                draft=False,
-                sync_source=Post.SyncSource.OBSIDIAN,
-                obsidian_path=relative_path,
-            )
-
-            call_command("sync_obsidian_documents", str(vault), "--auto-update-published")
-            doc = ObsidianDocument.objects.get(vault_path=relative_path)
-            self.assertEqual(doc.linked_post_id, linked_post.id)
-
-            note.unlink()
-            call_command("sync_obsidian_documents", str(vault), "--missing-behavior", "draft")
-
-            doc.refresh_from_db()
-            linked_post.refresh_from_db()
-            self.assertFalse(doc.source_exists)
-            self.assertTrue(linked_post.draft)
-
-    def test_sync_obsidian_documents_auto_updates_linked_published_post(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            vault = Path(temp_dir)
-            relative_path = "3-Knowledge（知识库）/T_工业技术/update.md"
-            note = self._write_note(
-                vault,
-                relative_path,
-                "---\ntitle: 自动更新\ntags:\n  - publish\n---\n\n旧版本正文",
-            )
-            linked_post = Post.objects.create(
-                title="自动更新",
-                slug="obs-doc-update",
-                excerpt="",
-                content="旧内容",
-                category=Post.Category.TECH,
-                tags=[],
-                draft=False,
-                sync_source=Post.SyncSource.OBSIDIAN,
-                obsidian_path=relative_path,
-            )
-
-            call_command("sync_obsidian_documents", str(vault), "--auto-update-published")
-            linked_post.refresh_from_db()
-            self.assertIn("旧版本正文", linked_post.content)
-
-            note.write_text(
-                "---\ntitle: 自动更新\ntags:\n  - publish\n---\n\n新版本正文",
-                encoding="utf-8",
-            )
-            call_command("sync_obsidian_documents", str(vault), "--auto-update-published")
-
-            linked_post.refresh_from_db()
-            self.assertIn("新版本正文", linked_post.content)
-
-    def test_sync_obsidian_documents_excludes_system_directories(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            vault = Path(temp_dir)
-            self._write_note(vault, "notes/kept.md", "# 保留")
-            self._write_note(vault, ".smart-env/ignored.md", "# 忽略")
-            self._write_note(vault, ".cursor/ignored2.md", "# 忽略2")
-
-            call_command("sync_obsidian_documents", str(vault))
-
-            self.assertTrue(ObsidianDocument.objects.filter(vault_path="notes/kept.md").exists())
-            self.assertFalse(ObsidianDocument.objects.filter(vault_path=".smart-env/ignored.md").exists())
-            self.assertFalse(ObsidianDocument.objects.filter(vault_path=".cursor/ignored2.md").exists())
-
-
-class ObsidianDocumentAdminTests(TestCase):
-    def setUp(self):
-        self.user = get_user_model().objects.create_superuser(
-            username="admin-doc-pool",
-            password="pass1234",
-            email="admin-doc-pool@example.com",
-        )
-        self.client.force_login(self.user)
-
-    def test_admin_publish_and_unpublish_document(self):
-        document = ObsidianDocument.objects.create(
-            vault_path="2-Resource（参考资源）/db/publish.md",
-            title="发布测试",
-            slug_candidate="publish-from-doc",
-            category_candidate=Post.Category.TECH,
-            tags=["publish", "db"],
-            has_publish_tag=True,
-            content="发布正文",
-            excerpt="发布摘要",
-            source_exists=True,
-            first_seen_at=timezone.now(),
-            last_seen_at=timezone.now(),
-            last_indexed_at=timezone.now(),
-        )
-
-        publish_url = reverse("admin:blog_obsidiandocument_publish", args=[document.id])
-        get_resp = self.client.get(publish_url)
-        self.assertEqual(get_resp.status_code, 200)
-
-        post_resp = self.client.post(publish_url)
-        self.assertEqual(post_resp.status_code, 302)
-
-        document.refresh_from_db()
-        self.assertIsNotNone(document.linked_post)
-        self.assertFalse(document.linked_post.draft)
-
-        unpublish_url = reverse("admin:blog_obsidiandocument_unpublish", args=[document.id])
-        unpublish_resp = self.client.post(unpublish_url)
-        self.assertEqual(unpublish_resp.status_code, 302)
-
-        document.refresh_from_db()
-        document.linked_post.refresh_from_db()
-        self.assertTrue(document.linked_post.draft)
-
-    @override_settings(
-        OBSIDIAN_VAULT_PATH="/tmp/non-existent-vault-for-test",
-        OBSIDIAN_VAULT_REPO_URL="https://github.com/hqy2020/GardenOfOpeningClouds.git",
-        OBSIDIAN_VAULT_REPO_BRANCH="main",
-        OBSIDIAN_DOC_SYNC_PUBLISH_TAG="publish",
-    )
-    def test_admin_sync_now_view_handles_missing_vault(self):
-        sync_url = reverse("admin:blog_obsidiandocument_sync_now")
-        get_resp = self.client.get(sync_url)
-        self.assertEqual(get_resp.status_code, 200)
-
-        post_resp = self.client.post(sync_url)
-        self.assertEqual(post_resp.status_code, 302)
-        self.assertEqual(ObsidianSyncRun.objects.count(), 1)
-        run = ObsidianSyncRun.objects.first()
-        assert run is not None
-        self.assertEqual(run.status, ObsidianSyncRun.Status.FAILED)
-
-    @override_settings(
-        OBSIDIAN_VAULT_REPO_URL="https://github.com/hqy2020/GardenOfOpeningClouds.git",
-        OBSIDIAN_VAULT_REPO_BRANCH="main",
-        OBSIDIAN_DOC_SYNC_PUBLISH_TAG="publish",
-    )
-    def test_admin_sync_now_view_runs_command_logic(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            vault = Path(temp_dir)
-            (vault / "notes").mkdir(parents=True, exist_ok=True)
-            (vault / "notes/test.md").write_text("# admin sync now", encoding="utf-8")
-
-            with override_settings(OBSIDIAN_VAULT_PATH=str(vault)):
-                sync_url = reverse("admin:blog_obsidiandocument_sync_now")
-                resp = self.client.post(sync_url)
-
-            self.assertEqual(resp.status_code, 302)
-            self.assertTrue(ObsidianDocument.objects.filter(vault_path="notes/test.md").exists())
-            self.assertTrue(ObsidianSyncRun.objects.filter(trigger=ObsidianSyncRun.Trigger.MANUAL).exists())
