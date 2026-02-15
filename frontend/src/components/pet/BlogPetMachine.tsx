@@ -1,16 +1,26 @@
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { GrassManager, type GrassPatch } from "./GrassManager";
 
 type PetState = "idle" | "walking_to_grass" | "eating";
+type PetFacing = "left" | "right";
 
 type PetPosition = {
   x: number;
   y: number;
 };
 
-const STEP_PX = 3;
 const EAT_DURATION_MS = 1200;
+const START_SPEED_PX = 0.8;
+const MAX_SPEED_PX = 6.2;
+const ACCELERATION_PX = 0.24;
+const ARRIVAL_THRESHOLD_PX = 4;
+// Keep the sheep's mouth anchored to the same world point regardless of facing direction.
+const PET_MOUTH_OFFSET_X_LEFT = 8;
+const PET_MOUTH_OFFSET_X_RIGHT = 44;
+const PET_MOUTH_OFFSET_Y = 24;
+const PET_SHEEP_SRC = "/media/pet/sheep-cutout.png";
+const PET_GRASS_SRC = "/media/pet/grass-cutout.png";
 const INTERACTIVE_SELECTOR = [
   "a",
   "button",
@@ -47,7 +57,10 @@ export function BlogPetMachine() {
     return !(media.matches || (typeof lowMemory === "number" && lowMemory <= 2));
   });
   const [petState, setPetState] = useState<PetState>("idle");
+  const [petFacing, setPetFacing] = useState<PetFacing>("left");
   const [position, setPosition] = useState<PetPosition>({ x: 0, y: 0 });
+  const positionRef = useRef<PetPosition>({ x: 0, y: 0 });
+  const speedRef = useRef(0);
   const [targetPatchId, setTargetPatchId] = useState<string | null>(null);
   const [eatingPatchId, setEatingPatchId] = useState<string | null>(null);
   const [grassPatches, setGrassPatches] = useState<GrassPatch[]>([]);
@@ -67,12 +80,16 @@ export function BlogPetMachine() {
   }, []);
 
   useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
+
+  useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
     const placePet = () => {
-      const safeX = Math.max(24, window.innerWidth - 180);
-      const safeY = Math.max(120, window.innerHeight - 120);
+      const safeX = Math.max(PET_MOUTH_OFFSET_X_RIGHT + 12, window.innerWidth - 140);
+      const safeY = Math.max(PET_MOUTH_OFFSET_Y + 20, window.innerHeight - 96);
       setPosition({ x: safeX, y: safeY });
     };
     placePet();
@@ -87,6 +104,8 @@ export function BlogPetMachine() {
         setTargetPatchId(null);
         setEatingPatchId(null);
         setPetState("idle");
+        setPetFacing("left");
+        speedRef.current = 0;
       });
       return () => window.cancelAnimationFrame(rafId);
     }
@@ -104,7 +123,9 @@ export function BlogPetMachine() {
 
       setGrassPatches([ ...grass.patches ]);
       if (petState === "idle" && !targetPatchId && !eatingPatchId) {
+        setPetFacing(planted.x >= positionRef.current.x ? "right" : "left");
         setTargetPatchId(planted.id);
+        speedRef.current = 0;
         setPetState("walking_to_grass");
       }
     };
@@ -114,16 +135,37 @@ export function BlogPetMachine() {
   }, [eatingPatchId, enabled, grass, petState, targetPatchId]);
 
   useEffect(() => {
-    if (!enabled || petState !== "walking_to_grass" || !targetPatchId) {
+    if (!enabled || petState !== "idle" || grassPatches.length === 0 || eatingPatchId) {
+      return;
+    }
+    const nextPatch = findNearestPatch(positionRef.current, grassPatches, null);
+    if (!nextPatch) {
+      return;
+    }
+    const rafId = window.requestAnimationFrame(() => {
+      setPetFacing(nextPatch.x >= positionRef.current.x ? "right" : "left");
+      setTargetPatchId(nextPatch.id);
+      speedRef.current = 0;
+      setPetState("walking_to_grass");
+    });
+    return () => window.cancelAnimationFrame(rafId);
+  }, [eatingPatchId, enabled, grassPatches, petState]);
+
+  useEffect(() => {
+    if (!enabled || petState !== "walking_to_grass") {
       return;
     }
 
     const timer = window.setInterval(() => {
-      const activeTarget = grass.findById(targetPatchId);
+      const activeTarget = findNearestPatch(positionRef.current, grass.patches, eatingPatchId);
       if (!activeTarget) {
         setTargetPatchId(null);
+        speedRef.current = 0;
         setPetState("idle");
         return;
+      }
+      if (targetPatchId !== activeTarget.id) {
+        setTargetPatchId(activeTarget.id);
       }
 
       setPosition((current) => {
@@ -131,21 +173,29 @@ export function BlogPetMachine() {
         const dy = activeTarget.y - current.y;
         const distance = Math.hypot(dx, dy);
 
-        if (distance <= STEP_PX) {
+        if (Math.abs(dx) > 0.5) {
+          setPetFacing(dx > 0 ? "right" : "left");
+        }
+
+        speedRef.current = Math.min(MAX_SPEED_PX, Math.max(START_SPEED_PX, speedRef.current + ACCELERATION_PX));
+        const step = Math.min(distance, speedRef.current);
+
+        if (distance <= ARRIVAL_THRESHOLD_PX || step >= distance) {
           setPetState("eating");
           setEatingPatchId(activeTarget.id);
+          speedRef.current = 0;
           return { x: activeTarget.x, y: activeTarget.y };
         }
 
         return {
-          x: current.x + (dx / distance) * STEP_PX,
-          y: current.y + (dy / distance) * STEP_PX,
+          x: current.x + (dx / distance) * step,
+          y: current.y + (dy / distance) * step,
         };
       });
     }, 16);
 
     return () => window.clearInterval(timer);
-  }, [enabled, grass, petState, targetPatchId]);
+  }, [eatingPatchId, enabled, grass.patches, petState, targetPatchId]);
 
   useEffect(() => {
     if (!enabled || petState !== "eating" || !eatingPatchId) {
@@ -155,24 +205,22 @@ export function BlogPetMachine() {
     const timer = window.setTimeout(() => {
       grass.removeById(eatingPatchId);
       const remainingPatches = [ ...grass.patches ];
-      const nextPatch = findNearestPatch(position, remainingPatches, null);
       setGrassPatches(remainingPatches);
       setEatingPatchId(null);
-      if (nextPatch) {
-        setTargetPatchId(nextPatch.id);
-        setPetState("walking_to_grass");
-      } else {
-        setTargetPatchId(null);
-        setPetState("idle");
-      }
+      speedRef.current = 0;
+      setTargetPatchId(null);
+      setPetState("idle");
     }, EAT_DURATION_MS);
 
     return () => window.clearTimeout(timer);
-  }, [eatingPatchId, enabled, grass, petState, position]);
+  }, [eatingPatchId, enabled, grass, petState]);
 
   if (!enabled) {
     return null;
   }
+
+  const petRenderX = position.x - (petFacing === "right" ? PET_MOUTH_OFFSET_X_RIGHT : PET_MOUTH_OFFSET_X_LEFT);
+  const petRenderY = position.y - PET_MOUTH_OFFSET_Y;
 
   return (
     <>
@@ -183,8 +231,8 @@ export function BlogPetMachine() {
             return (
               <motion.div
                 key={patch.id}
-                className="absolute h-8 w-8"
-                style={{ left: patch.x - 16, top: patch.y - 26, transformOrigin: "center bottom" }}
+                className="absolute h-8 w-14"
+                style={{ left: patch.x - 28, top: patch.y - 22, transformOrigin: "center bottom" }}
                 initial={{ scale: 0, y: 16, opacity: 0 }}
                 animate={
                   eating
@@ -198,9 +246,12 @@ export function BlogPetMachine() {
                     : { scale: { duration: 0.26, ease: "easeOut" }, y: { duration: 0.26, ease: "easeOut" }, opacity: { duration: 0.26, ease: "easeOut" }, rotate: { duration: 1.8, repeat: Infinity, ease: "easeInOut" } }
                 }
               >
-                <span className="absolute bottom-0 left-1.5 h-4 w-1.5 rotate-[-20deg] rounded-full bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.25)]" />
-                <span className="absolute bottom-0 left-3 h-6 w-1.5 rounded-full bg-emerald-600 shadow-[0_0_4px_rgba(5,150,105,0.25)]" />
-                <span className="absolute bottom-0 left-[18px] h-4 w-1.5 rotate-[18deg] rounded-full bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.25)]" />
+                <img
+                  src={PET_GRASS_SRC}
+                  alt=""
+                  className="h-full w-full select-none object-fill [transform:scaleY(0.72)]"
+                  draggable={false}
+                />
               </motion.div>
             );
           })}
@@ -209,10 +260,11 @@ export function BlogPetMachine() {
 
       <div
         className="pointer-events-none fixed left-0 top-0 z-40"
-        style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
+        style={{ transform: `translate(${petRenderX}px, ${petRenderY}px)` }}
       >
         <motion.div
-          className="rounded-full bg-white/92 px-3 py-1 text-xs text-slate-700 shadow-lg ring-1 ring-slate-200/70"
+          aria-label={`pet-${petState}`}
+          className="text-3xl leading-none [filter:drop-shadow(0_4px_8px_rgba(15,23,42,0.3))]"
           animate={
             petState === "walking_to_grass"
               ? { x: [0, 1.6, 0, -1.6, 0], y: [0, -1.2, 0] }
@@ -222,7 +274,12 @@ export function BlogPetMachine() {
           }
           transition={{ duration: petState === "eating" ? 0.5 : 0.8, repeat: Infinity, ease: "easeInOut" }}
         >
-          🐑 {petState}
+          <span
+            className="inline-block will-change-transform"
+            style={{ transform: `scaleX(${petFacing === "right" ? -1 : 1})` }}
+          >
+            <img src={PET_SHEEP_SRC} alt="" className="h-14 w-auto select-none" draggable={false} />
+          </span>
         </motion.div>
       </div>
     </>
