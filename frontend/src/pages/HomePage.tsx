@@ -175,9 +175,9 @@ export function HomePage() {
   return (
     <section className="space-y-12">
       <Helmet>
-        <title>openingClouds | Tech · Efficiency · Life</title>
+        <title>启云博客</title>
         <meta content="在云层之上，记录技术、效率与生活。" name="description" />
-        <meta content="openingClouds" property="og:title" />
+        <meta content="启云博客" property="og:title" />
         <meta content="在云层之上，记录技术、效率与生活。" property="og:description" />
         <meta content="/og-cloudscape-card.png" property="og:image" />
         <link href="https://blog.openingclouds.com/" rel="canonical" />

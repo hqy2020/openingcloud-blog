@@ -6,6 +6,8 @@ import ReactMarkdown from "react-markdown";
 import { Link, useParams } from "react-router-dom";
 import remarkGfm from "remark-gfm";
 import { fetchPostBySlug, incrementPostViews } from "../api/posts";
+import { useTheme } from "../app/theme";
+import { BlurRevealImage } from "../components/ui/BlurRevealImage";
 import { useAsync } from "../hooks/useAsync";
 
 type HeadingItem = {
@@ -26,6 +28,12 @@ const categoryPathMap: Record<"tech" | "learning" | "life", string> = {
   tech: "/tech",
   learning: "/learning",
   life: "/life",
+};
+
+const detailCoverFallbackMap: Record<"tech" | "learning" | "life", string> = {
+  tech: "/media/covers/tech/cover-tech-floating-code-panels.png",
+  learning: "/media/covers/learning/cover-efficiency-hourglass-gears.png",
+  life: "/media/covers/life/cover-life-window-plants-twilight.png",
 };
 
 function toHeadingId(text: string) {
@@ -125,22 +133,35 @@ function estimateReadingMinutes(markdown: string) {
 
 function resolveMarkdownAssetUrl(src: string) {
   const value = src.trim();
-  if (!value || value.startsWith("/") || value.startsWith("./") || value.startsWith("../")) {
+  if (!value) {
     return value;
   }
+
+  if (value.startsWith("assets/")) {
+    return `/media/library/${value.slice("assets/".length)}`;
+  }
+  if (value.startsWith("./assets/")) {
+    return `/media/library/${value.slice("./assets/".length)}`;
+  }
+  if (value.startsWith("/")) {
+    return value;
+  }
+
   try {
     const parsed = new URL(value);
     const isLegacyHost = parsed.hostname.toLowerCase() === "blog.openingclouds.com";
     if (isLegacyHost && typeof window !== "undefined" && window.location.hostname !== parsed.hostname) {
       return `${window.location.origin}${parsed.pathname}${parsed.search}${parsed.hash}`;
     }
-  } catch {
     return value;
+  } catch {
+    const normalized = value.replace(/^(\.\/)+/, "").replace(/^(\.\.\/)+/, "");
+    return `/${normalized}`;
   }
-  return value;
 }
 
 export function PostDetailPage() {
+  const { isDark } = useTheme();
   const { slug = "" } = useParams();
   const { data, loading, error } = useAsync(() => fetchPostBySlug(slug), [slug]);
   const { scrollYProgress } = useScroll();
@@ -237,16 +258,17 @@ export function PostDetailPage() {
   };
 
   if (loading) {
-    return <p className="text-slate-500">加载中...</p>;
+    return <p className={isDark ? "text-slate-300" : "text-slate-500"}>加载中...</p>;
   }
 
   if (error || !data) {
-    return <p className="text-rose-600">{error || "文章不存在"}</p>;
+    return <p className={isDark ? "text-rose-300" : "text-rose-600"}>{error || "文章不存在"}</p>;
   }
 
   const postTags = Array.isArray(data.tags)
     ? data.tags.map((tag) => String(tag).trim()).filter((tag) => tag.length > 0)
     : [];
+  const detailCover = String(data.cover || "").trim() || detailCoverFallbackMap[data.category];
 
   const markdownComponents = {
     h2: ({ children, ...props }: HTMLAttributes<HTMLHeadingElement>) => {
@@ -257,7 +279,13 @@ export function PostDetailPage() {
         <h2
           {...props}
           className={`mt-8 scroll-mt-24 rounded-md px-1 text-2xl font-semibold transition-colors ${
-            isActive ? "bg-indigo-50/70 text-indigo-700 ring-1 ring-indigo-100" : "text-slate-900"
+            isActive
+              ? isDark
+                ? "bg-indigo-500/20 text-indigo-200 ring-1 ring-indigo-400/40"
+                : "bg-indigo-50/70 text-indigo-700 ring-1 ring-indigo-100"
+              : isDark
+                ? "text-slate-100"
+                : "text-slate-900"
           }`}
           id={id}
         >
@@ -273,7 +301,13 @@ export function PostDetailPage() {
         <h3
           {...props}
           className={`mt-6 scroll-mt-24 rounded-md px-1 text-xl font-semibold transition-colors ${
-            isActive ? "bg-indigo-50/70 text-indigo-700 ring-1 ring-indigo-100" : "text-slate-800"
+            isActive
+              ? isDark
+                ? "bg-indigo-500/20 text-indigo-200 ring-1 ring-indigo-400/40"
+                : "bg-indigo-50/70 text-indigo-700 ring-1 ring-indigo-100"
+              : isDark
+                ? "text-slate-200"
+                : "text-slate-800"
           }`}
           id={id}
         >
@@ -282,7 +316,7 @@ export function PostDetailPage() {
       );
     },
     p: ({ children, ...props }: HTMLAttributes<HTMLParagraphElement>) => (
-      <p {...props} className="mt-4 leading-8 text-slate-700">
+      <p {...props} className={`mt-4 leading-8 ${isDark ? "text-slate-200" : "text-slate-700"}`}>
         {children}
       </p>
     ),
@@ -290,19 +324,25 @@ export function PostDetailPage() {
       const isInline = !(className ?? "").includes("language-");
       if (isInline) {
         return (
-          <code {...props} className="rounded bg-slate-100 px-1 py-0.5 text-sm text-slate-800">
+          <code
+            {...props}
+            className={`rounded px-1 py-0.5 text-sm ${isDark ? "bg-slate-700/70 text-slate-100" : "bg-slate-100 text-slate-800"}`}
+          >
             {children}
           </code>
         );
       }
       return (
-        <code {...props} className="block overflow-x-auto rounded-xl bg-slate-900 p-4 text-sm text-slate-100">
+        <code
+          {...props}
+          className={`block overflow-x-auto rounded-xl p-4 text-sm ${isDark ? "bg-slate-950 text-slate-100" : "bg-slate-900 text-slate-100"}`}
+        >
           {children}
         </code>
       );
     },
     ul: ({ children, ...props }: HTMLAttributes<HTMLUListElement>) => (
-      <ul {...props} className="mt-4 list-disc space-y-2 pl-6 text-slate-700">
+      <ul {...props} className={`mt-4 list-disc space-y-2 pl-6 ${isDark ? "text-slate-200" : "text-slate-700"}`}>
         {children}
       </ul>
     ),
@@ -315,7 +355,11 @@ export function PostDetailPage() {
           href={link || undefined}
           target={isExternal ? "_blank" : undefined}
           rel={isExternal ? "noopener noreferrer nofollow" : undefined}
-          className="font-medium text-indigo-700 underline decoration-indigo-300 underline-offset-4 transition hover:text-indigo-800 hover:decoration-indigo-500"
+          className={`font-medium underline underline-offset-4 transition ${
+            isDark
+              ? "text-indigo-300 decoration-indigo-400 hover:text-indigo-200 hover:decoration-indigo-300"
+              : "text-indigo-700 decoration-indigo-300 hover:text-indigo-800 hover:decoration-indigo-500"
+          }`}
         >
           {children}
         </a>
@@ -324,13 +368,15 @@ export function PostDetailPage() {
     img: ({ src, alt, ...props }: ImgHTMLAttributes<HTMLImageElement>) => {
       const initialSrc = resolveMarkdownAssetUrl(String(src ?? ""));
       return (
-        <figure className="mt-5 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+        <figure
+          className={`mt-5 overflow-hidden rounded-xl border ${isDark ? "border-slate-700 bg-slate-900/88" : "border-slate-200 bg-slate-50"}`}
+        >
           <img
             {...props}
             src={initialSrc}
             alt={String(alt ?? "")}
             loading="lazy"
-            className="max-h-[460px] w-full object-contain bg-white"
+            className={`max-h-[460px] w-full object-contain ${isDark ? "bg-slate-950" : "bg-white"}`}
             onError={(event) => {
               const img = event.currentTarget;
               if (img.dataset.fallbackTried === "1") {
@@ -348,7 +394,15 @@ export function PostDetailPage() {
               }
             }}
           />
-          {alt ? <figcaption className="border-t border-slate-200 bg-white px-3 py-2 text-sm text-slate-500">{alt}</figcaption> : null}
+          {alt ? (
+            <figcaption
+              className={`border-t px-3 py-2 text-sm ${
+                isDark ? "border-slate-700 bg-slate-900/95 text-slate-300" : "border-slate-200 bg-white text-slate-500"
+              }`}
+            >
+              {alt}
+            </figcaption>
+          ) : null}
         </figure>
       );
     },
@@ -357,28 +411,44 @@ export function PostDetailPage() {
   return (
     <section className="space-y-6">
       <Helmet>
-        <title>{`${data.title} | openingClouds`}</title>
-        <meta content={data.excerpt || "openingClouds 文章详情"} name="description" />
+        <title>{`${data.title} | 启云博客`}</title>
+        <meta content={data.excerpt || "启云博客文章详情"} name="description" />
         <meta content={data.title} property="og:title" />
-        <meta content={data.excerpt || "openingClouds 文章详情"} property="og:description" />
-        <meta content={data.cover || "/og-cloudscape-card.png"} property="og:image" />
+        <meta content={data.excerpt || "启云博客文章详情"} property="og:description" />
+        <meta content={detailCover || "/og-cloudscape-card.png"} property="og:image" />
         <link href={`https://blog.openingclouds.com/posts/${data.slug}`} rel="canonical" />
       </Helmet>
 
-      <div className="pointer-events-none fixed inset-x-0 top-0 z-40 h-1 bg-slate-200/85 backdrop-blur-sm">
+      <div
+        className={`pointer-events-none fixed inset-x-0 top-0 z-40 h-1 backdrop-blur-sm ${isDark ? "bg-slate-800/85" : "bg-slate-200/85"}`}
+      >
         <motion.div className="h-full origin-left bg-indigo-600" style={{ scaleX: smoothProgress }} />
       </div>
 
-      {data.cover ? (
-        <img alt={data.title} className="h-72 w-full rounded-2xl object-cover shadow" src={data.cover} />
-      ) : null}
+      <div className={`relative overflow-hidden rounded-2xl border shadow ${isDark ? "border-slate-700" : "border-slate-200"}`}>
+        <BlurRevealImage
+          alt={`${data.title} 封面`}
+          className="h-full w-full object-cover"
+          src={detailCover}
+          wrapperClassName="h-72"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/18 via-transparent to-transparent" />
+      </div>
 
       <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_260px]">
-        <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">{data.title}</h1>
+        <article
+          className={`rounded-2xl border p-6 shadow-sm ${
+            isDark ? "border-slate-700 bg-slate-900/84 text-slate-100" : "border-slate-200 bg-white text-slate-900"
+          }`}
+        >
+          <h1 className={`text-3xl font-bold tracking-tight ${isDark ? "text-slate-100" : "text-slate-900"}`}>{data.title}</h1>
 
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-500">
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+          <div className={`mt-3 flex flex-wrap items-center gap-2 text-sm ${isDark ? "text-slate-300" : "text-slate-500"}`}>
+            <span
+              className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                isDark ? "bg-slate-800 text-slate-100" : "bg-slate-100 text-slate-700"
+              }`}
+            >
               {categoryLabelMap[data.category]}
             </span>
             <span>{new Date(data.updated_at).toLocaleDateString("zh-CN")}</span>
@@ -394,15 +464,19 @@ export function PostDetailPage() {
             </ReactMarkdown>
           </div>
 
-          <div className="mt-10 space-y-4 border-t border-slate-200 pt-5">
+          <div className={`mt-10 space-y-4 border-t pt-5 ${isDark ? "border-slate-700" : "border-slate-200"}`}>
             {postTags.length > 0 ? (
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-medium text-slate-500">文末标签</span>
+                <span className={`text-sm font-medium ${isDark ? "text-slate-300" : "text-slate-500"}`}>文末标签</span>
                 {postTags.map((tag) => (
                   <Link
                     key={`post-tag-${tag}`}
                     to={`${categoryPathMap[data.category]}?tag=${encodeURIComponent(tag)}`}
-                    className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+                    className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+                      isDark
+                        ? "border-slate-600 bg-slate-800 text-slate-100 hover:border-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-200"
+                        : "border-slate-200 bg-slate-50 text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+                    }`}
                   >
                     #{tag}
                   </Link>
@@ -413,7 +487,11 @@ export function PostDetailPage() {
             <div>
               <Link
                 to={categoryPathMap[data.category]}
-                className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100"
+                className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium transition ${
+                  isDark
+                    ? "border-indigo-400/50 bg-indigo-500/20 text-indigo-200 hover:border-indigo-300 hover:bg-indigo-500/30"
+                    : "border-indigo-200 bg-indigo-50 text-indigo-700 hover:border-indigo-300 hover:bg-indigo-100"
+                }`}
               >
                 返回{categoryLabelMap[data.category]}分类
               </Link>
@@ -421,17 +499,25 @@ export function PostDetailPage() {
           </div>
         </article>
 
-        <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-4 shadow-sm xl:sticky xl:top-8">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">目录</h2>
+        <aside
+          className={`h-fit rounded-2xl border p-4 shadow-sm xl:sticky xl:top-8 ${
+            isDark ? "border-slate-700 bg-slate-900/84" : "border-slate-200 bg-white"
+          }`}
+        >
+          <h2 className={`text-sm font-semibold uppercase tracking-wide ${isDark ? "text-slate-300" : "text-slate-500"}`}>目录</h2>
           <ul className="mt-3 space-y-2 text-sm">
-            {headings.length === 0 ? <li className="text-slate-400">暂无目录</li> : null}
+            {headings.length === 0 ? <li className={isDark ? "text-slate-500" : "text-slate-400"}>暂无目录</li> : null}
             {headings.map((item) => (
               <li key={item.id} className={item.level === 3 ? "pl-3" : ""}>
                 <a
                   className={`block rounded-md px-2 py-1 transition ${
                     activeHeadingId === item.id
-                      ? "bg-indigo-100 font-semibold text-indigo-800 ring-1 ring-indigo-200"
-                      : "text-slate-700 hover:bg-slate-50 hover:text-indigo-700"
+                      ? isDark
+                        ? "bg-indigo-500/20 font-semibold text-indigo-200 ring-1 ring-indigo-400/40"
+                        : "bg-indigo-100 font-semibold text-indigo-800 ring-1 ring-indigo-200"
+                      : isDark
+                        ? "text-slate-200 hover:bg-slate-800 hover:text-indigo-200"
+                        : "text-slate-700 hover:bg-slate-50 hover:text-indigo-700"
                   }`}
                   href={`#${item.id}`}
                   onClick={(event) => {

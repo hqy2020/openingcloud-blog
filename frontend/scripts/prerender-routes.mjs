@@ -9,28 +9,28 @@ const distDir = path.resolve(__dirname, "..", "dist");
 const routes = [
   {
     route: "/",
-    title: "openingClouds | Tech · Efficiency · Life",
+    title: "启云博客",
     description: "在云层之上，记录技术、效率与生活。",
-    marker: "openingClouds",
+    marker: "启云博客",
     canonical: "https://blog.openingclouds.com/",
   },
   {
     route: "/tech",
-    title: "技术 | openingClouds",
+    title: "技术 | 启云博客",
     description: "技术实践、系统设计与工程复盘。",
     marker: "技术",
     canonical: "https://blog.openingclouds.com/tech",
   },
   {
     route: "/learning",
-    title: "效率 | openingClouds",
+    title: "效率 | 启云博客",
     description: "效率系统、学习方法和个人生产力。",
     marker: "效率",
     canonical: "https://blog.openingclouds.com/learning",
   },
   {
     route: "/life",
-    title: "生活 | openingClouds",
+    title: "生活 | 启云博客",
     description: "旅行、日常观察与生活记录。",
     marker: "生活",
     canonical: "https://blog.openingclouds.com/life",
