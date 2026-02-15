@@ -25,16 +25,6 @@ function typeBadge(type: TimelineNode["type"]) {
   }
 }
 
-function impactBadge(impact: TimelineNode["impact"]) {
-  if (impact === "high") {
-    return { label: "重点节点", badge: "bg-indigo-600 text-white ring-1 ring-indigo-300" };
-  }
-  if (impact === "medium") {
-    return { label: "一般节点", badge: "bg-slate-100 text-slate-700" };
-  }
-  return { label: "轻量节点", badge: "bg-slate-50 text-slate-500" };
-}
-
 function formatPeriod(node: TimelineNode) {
   if (!node.end_date) {
     return node.start_date;
@@ -70,16 +60,21 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
         <StaggerContainer className="flex min-w-max items-start gap-5" stagger={0.06}>
           {nodes.map((node, idx) => {
             const typeMeta = typeBadge(node.type);
-            const impactMeta = impactBadge(node.impact);
+            const isHighlighted = node.impact === "high";
 
             return (
               <StaggerItem key={`${node.title}-${node.start_date}-${idx}`} className="w-72">
                 <CardSpotlight
                   className={[
-                    "rounded-2xl border bg-white/90 p-5 shadow-[0_12px_32px_rgba(15,23,42,0.08)] backdrop-blur",
-                    node.impact === "high" ? "border-indigo-300/90" : "border-slate-200/80",
+                    "relative overflow-hidden rounded-2xl border bg-white/90 p-5 backdrop-blur",
+                    isHighlighted
+                      ? "border-indigo-300/90 shadow-[0_14px_40px_rgba(79,106,229,0.2)] ring-1 ring-indigo-200/80"
+                      : "border-slate-200/80 shadow-[0_12px_32px_rgba(15,23,42,0.08)]",
                   ].join(" ")}
                 >
+                  {isHighlighted ? (
+                    <span className="pointer-events-none absolute inset-x-6 top-0 h-1 rounded-b-full bg-gradient-to-r from-indigo-300 via-violet-300 to-sky-300" />
+                  ) : null}
                   <div className="mb-3 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span
@@ -91,11 +86,12 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
                       />
                       <span className={`rounded-full px-2 py-1 text-xs font-medium ${typeMeta.badge}`}>{typeMeta.label}</span>
                     </div>
-                    <span className={`rounded-full px-2 py-1 text-xs font-medium ${impactMeta.badge}`}>{impactMeta.label}</span>
                   </div>
                   <h3 className="text-lg font-semibold text-slate-900">{node.title}</h3>
                   <p className="mt-2 text-sm text-slate-500">{formatPeriod(node)}</p>
-                  <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-700">{node.description || "暂无描述"}</p>
+                  {node.description ? (
+                    <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-700">{node.description}</p>
+                  ) : null}
                 </CardSpotlight>
               </StaggerItem>
             );
