@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from django.contrib import admin
+from django.http import HttpRequest, JsonResponse
 from adminsortable2.admin import SortableAdminMixin, SortableInlineAdminMixin
 
+from .image_bed import ImageBedUploadError, upload_photo_to_obsidian_images
 from .models import (
     HighlightItem,
     HighlightStage,
@@ -73,6 +77,63 @@ class PhotoWallImageAdmin(SortableAdminMixin, admin.ModelAdmin):
     list_display = ["title", "captured_at", "is_public", "sort_order", "updated_at"]
     list_filter = ["is_public"]
     search_fields = ["title", "description", "image_url", "source_url"]
+
+    allowed_content_types = {"image/jpeg", "image/png", "image/webp"}
+    allowed_extensions = {".jpg", ".jpeg", ".png", ".webp"}
+    max_upload_size = 8 * 1024 * 1024
+
+    class Media:
+        js = ("blog/admin/photo_wall_upload.js",)
+        css = {"all": ("blog/admin/photo_wall_upload.css",)}
+
+    def get_urls(self):
+        custom_urls = [
+            self._upload_url(),
+        ]
+        return custom_urls + super().get_urls()
+
+    def _upload_url(self):
+        from django.urls import path
+
+        return path(
+            "upload-image/",
+            self.admin_site.admin_view(self.upload_image_view),
+            name="blog_photowallimage_upload_image",
+        )
+
+    def upload_image_view(self, request: HttpRequest):
+        if request.method != "POST":
+            return JsonResponse({"ok": False, "message": "仅支持 POST"}, status=405)
+
+        upload = request.FILES.get("file")
+        if upload is None:
+            return JsonResponse({"ok": False, "message": "缺少 file 字段"}, status=400)
+
+        suffix = Path(str(upload.name or "")).suffix.lower()
+        content_type = str(getattr(upload, "content_type", "")).lower()
+        if upload.size > self.max_upload_size:
+            return JsonResponse({"ok": False, "message": "图片大小不能超过 8MB"}, status=400)
+        if content_type not in self.allowed_content_types and suffix not in self.allowed_extensions:
+            return JsonResponse({"ok": False, "message": "仅支持 jpg/png/webp 格式"}, status=400)
+
+        try:
+            result = upload_photo_to_obsidian_images(upload, operator=getattr(request.user, "username", ""))
+        except ImageBedUploadError as exc:
+            return JsonResponse({"ok": False, "message": str(exc)}, status=400)
+
+        return JsonResponse(
+            {
+                "ok": True,
+                "data": {
+                    "image_url": result.image_url,
+                    "source_url": result.source_url,
+                    "path": result.path,
+                    "sha": result.sha,
+                    "size": upload.size,
+                    "content_type": content_type,
+                },
+            }
+        )
 
 
 class HighlightItemInline(SortableInlineAdminMixin, admin.TabularInline):

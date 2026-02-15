@@ -16,6 +16,7 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from .image_bed import ImageBedUploadError
 from .models import HighlightItem, HighlightStage, PhotoWallImage, Post, PostView, SocialFriend, SyncLog, TimelineNode, TravelPlace
 
 
@@ -922,6 +923,76 @@ class AdminApiTests(TestCase):
         post_b.refresh_from_db()
         self.assertTrue(post_b.draft)
         self.assertEqual(resp.data["data"]["drafted"], 1)
+
+
+class PhotoWallAdminUploadTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.staff_user = get_user_model().objects.create_user(
+            username="photo-staff",
+            password="pass1234",
+            is_staff=True,
+            is_superuser=True,
+        )
+        self.normal_user = get_user_model().objects.create_user(
+            username="photo-normal",
+            password="pass1234",
+            is_staff=False,
+        )
+
+    def test_upload_image_requires_login(self):
+        upload = SimpleUploadedFile("cloud.png", b"\x89PNG\r\n\x1a\nmock", content_type="image/png")
+        resp = self.client.post(reverse("admin:blog_photowallimage_upload_image"), {"file": upload})
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("/admin/login/", str(resp.headers.get("Location", "")))
+
+    def test_upload_image_requires_staff(self):
+        self.client.force_login(self.normal_user)
+        upload = SimpleUploadedFile("cloud.png", b"\x89PNG\r\n\x1a\nmock", content_type="image/png")
+        resp = self.client.post(reverse("admin:blog_photowallimage_upload_image"), {"file": upload})
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("/admin/login/", str(resp.headers.get("Location", "")))
+
+    def test_upload_image_rejects_invalid_type(self):
+        self.client.force_login(self.staff_user)
+        upload = SimpleUploadedFile("note.txt", b"hello", content_type="text/plain")
+        resp = self.client.post(reverse("admin:blog_photowallimage_upload_image"), {"file": upload})
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(resp.json()["ok"])
+
+    def test_upload_image_returns_remote_urls(self):
+        self.client.force_login(self.staff_user)
+        upload = SimpleUploadedFile("cloud.png", b"\x89PNG\r\n\x1a\nmock", content_type="image/png")
+        with patch(
+            "blog.admin.upload_photo_to_obsidian_images",
+            return_value=type(
+                "UploadResult",
+                (),
+                {
+                    "image_url": "https://raw.githubusercontent.com/hqy2020/obsidian-images/main/gallery/mock.png",
+                    "source_url": "https://github.com/hqy2020/obsidian-images/blob/main/gallery/mock.png",
+                    "path": "gallery/mock.png",
+                    "sha": "abc123",
+                },
+            )(),
+        ):
+            resp = self.client.post(reverse("admin:blog_photowallimage_upload_image"), {"file": upload})
+
+        self.assertEqual(resp.status_code, 200)
+        payload = resp.json()
+        self.assertTrue(payload["ok"])
+        self.assertIn("raw.githubusercontent.com/hqy2020/obsidian-images", payload["data"]["image_url"])
+        self.assertIn("/blob/main/", payload["data"]["source_url"])
+
+    def test_upload_image_propagates_image_bed_error(self):
+        self.client.force_login(self.staff_user)
+        upload = SimpleUploadedFile("cloud.png", b"\x89PNG\r\n\x1a\nmock", content_type="image/png")
+        with patch("blog.admin.upload_photo_to_obsidian_images", side_effect=ImageBedUploadError("token missing")):
+            resp = self.client.post(reverse("admin:blog_photowallimage_upload_image"), {"file": upload})
+        self.assertEqual(resp.status_code, 400)
+        payload = resp.json()
+        self.assertFalse(payload["ok"])
+        self.assertIn("token missing", payload["message"])
 
 
 class AdminContentCrudApiTests(TestCase):

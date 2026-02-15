@@ -1,0 +1,68 @@
+.photo-wall-upload-panel {
+  margin: 14px 0 18px;
+  padding: 12px 14px;
+  border: 1px solid #d8dee6;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.photo-wall-upload-dropzone {
+  border: 2px dashed #9fb0c4;
+  border-radius: 8px;
+  padding: 20px 12px;
+  text-align: center;
+  background: #ffffff;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.photo-wall-upload-dropzone:hover,
+.photo-wall-upload-dropzone.dragover {
+  border-color: #1f6feb;
+  background: #f2f7ff;
+}
+
+.photo-wall-upload-dropzone.uploading {
+  opacity: 0.65;
+  cursor: progress;
+}
+
+.photo-wall-upload-title {
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.photo-wall-upload-subtitle {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.photo-wall-upload-status {
+  min-height: 22px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #0369a1;
+}
+
+.photo-wall-upload-status.error {
+  color: #b91c1c;
+}
+
+.photo-wall-upload-preview {
+  display: none;
+  margin-top: 10px;
+}
+
+.photo-wall-upload-preview.ready {
+  display: block;
+}
+
+.photo-wall-upload-preview img {
+  max-height: 260px;
+  max-width: 100%;
+  border: 1px solid #d8dee6;
+  border-radius: 6px;
+  background: #fff;
+}
