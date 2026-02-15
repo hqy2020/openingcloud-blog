@@ -92,38 +92,48 @@ export function AppLayout() {
           </NavLink>
 
           <nav
-            className={`order-3 mt-1 flex w-full items-center justify-center gap-1 rounded-full border p-1 text-sm font-medium sm:order-none sm:mt-0 sm:mx-0 sm:w-full sm:justify-stretch ${
+            className={`order-3 mt-1 mx-auto flex w-[92%] items-center justify-center rounded-[28px] border p-1 text-sm font-medium sm:order-none sm:mt-0 sm:w-[80%] sm:justify-stretch ${
               isDark ? "glass-surface-dark" : "glass-surface-light"
             }`}
             style={sharedSurfaceStyle}
           >
-            {links.map((item) => (
-              <NavLink key={item.to} className="flex-1 rounded-full transition" to={item.to}>
-                {({ isActive }) => (
-                  <span className="relative block min-w-[4.2rem] px-3.5 py-1.5 text-center sm:min-w-0 sm:w-full sm:px-4 sm:py-2">
-                    {isActive ? (
-                      <motion.span
-                        layoutId="nav-pill"
-                        className="absolute inset-0 rounded-full"
-                        style={activePillStyle}
-                        transition={{ type: "spring", stiffness: 420, damping: 32 }}
-                      />
-                    ) : null}
-                    <span
-                      className={`relative transition-colors ${
-                        isActive
-                          ? ""
-                          : isDark
-                            ? "text-slate-300 hover:text-slate-50"
-                            : "text-slate-600 hover:text-slate-900"
-                      }`}
-                      style={isActive ? { color: isDark ? "#E2ECFF" : visual.accentHex } : undefined}
-                    >
-                      {item.label}
+            {links.map((item, index) => (
+              <div key={item.to} className="relative flex min-w-0 flex-1 items-stretch">
+                {index > 0 ? (
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none absolute left-0 top-1/2 z-[1] h-5 -translate-y-1/2 border-l ${
+                      isDark ? "border-slate-600/75" : "border-slate-300/85"
+                    }`}
+                  />
+                ) : null}
+                <NavLink className="flex-1 rounded-[20px] transition" to={item.to}>
+                  {({ isActive }) => (
+                    <span className="relative block min-w-[4.2rem] rounded-[20px] px-3.5 py-1.5 text-center sm:min-w-0 sm:w-full sm:px-4 sm:py-2">
+                      {isActive ? (
+                        <motion.span
+                          layoutId="nav-pill"
+                          className="absolute inset-0 rounded-[20px]"
+                          style={activePillStyle}
+                          transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                        />
+                      ) : null}
+                      <span
+                        className={`relative transition-colors ${
+                          isActive
+                            ? ""
+                            : isDark
+                              ? "text-slate-300 hover:text-slate-50"
+                              : "text-slate-600 hover:text-slate-900"
+                        }`}
+                        style={isActive ? { color: isDark ? "#E2ECFF" : visual.accentHex } : undefined}
+                      >
+                        {item.label}
+                      </span>
                     </span>
-                  </span>
-                )}
-              </NavLink>
+                  )}
+                </NavLink>
+              </div>
             ))}
           </nav>
 
