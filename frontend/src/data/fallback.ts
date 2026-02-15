@@ -149,6 +149,12 @@ export const fallbackHomePayload: HomePayload = {
     views_total: 0,
     total_words: 0,
     site_days: 1,
+    site_launch_date: "2026-02-01",
+    published_posts_delta_week: 0,
+    views_delta_week: 0,
+    total_words_delta_week: 0,
+    tags_delta_week: 0,
+    travel_delta_year: 0,
   },
   contact: {
     email: "hqy200091@163.com",
