@@ -41,6 +41,8 @@ class Post(TimeStampedModel):
 
     class Meta:
         ordering = ["-created_at"]
+        verbose_name = "文章"
+        verbose_name_plural = "文章"
 
     def __str__(self) -> str:
         return self.title
@@ -64,6 +66,8 @@ class PostView(models.Model):
 
     class Meta:
         ordering = ["-views"]
+        verbose_name = "文章阅读"
+        verbose_name_plural = "文章阅读"
 
     def __str__(self) -> str:
         return f"{self.post.slug}: {self.views}"
@@ -96,6 +100,8 @@ class TimelineNode(TimeStampedModel):
 
     class Meta:
         ordering = ["sort_order", "start_date"]
+        verbose_name = "人生足迹"
+        verbose_name_plural = "人生足迹"
 
     def __str__(self) -> str:
         return self.title
@@ -114,6 +120,8 @@ class TravelPlace(TimeStampedModel):
     class Meta:
         ordering = ["sort_order", "province", "city"]
         unique_together = ("province", "city")
+        verbose_name = "旅行足迹"
+        verbose_name_plural = "旅行足迹"
 
     def __str__(self) -> str:
         return f"{self.province}-{self.city}"
@@ -140,6 +148,8 @@ class SocialFriend(TimeStampedModel):
 
     class Meta:
         ordering = ["sort_order", "name"]
+        verbose_name = "社交图谱"
+        verbose_name_plural = "社交图谱"
 
     def __str__(self) -> str:
         return self.public_label
@@ -154,6 +164,8 @@ class HighlightStage(TimeStampedModel):
 
     class Meta:
         ordering = ["sort_order", "start_date", "id"]
+        verbose_name = "高光阶段"
+        verbose_name_plural = "高光阶段"
 
     def __str__(self) -> str:
         return self.title
@@ -168,6 +180,8 @@ class HighlightItem(TimeStampedModel):
 
     class Meta:
         ordering = ["sort_order", "achieved_at", "id"]
+        verbose_name = "高光条目"
+        verbose_name_plural = "高光条目"
 
     def __str__(self) -> str:
         return self.title
@@ -215,6 +229,8 @@ class SyncLog(TimeStampedModel):
 
     class Meta:
         ordering = ["-started_at", "-id"]
+        verbose_name = "同步日志"
+        verbose_name_plural = "同步日志"
 
     def __str__(self) -> str:
         return f"{self.slug or '-'} [{self.source}/{self.mode}] {self.status}"
