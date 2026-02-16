@@ -27,3 +27,14 @@ frontend/dist/
 
 # Logs
 *.log
+
+# Large binary assets
+assets/*.dmg
+
+# SQLite backups & WAL
+*.bak.*
+*.sqlite3-shm
+*.sqlite3-wal
+
+# Temporary files
+tmp_*

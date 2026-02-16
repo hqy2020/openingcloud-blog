@@ -3,7 +3,6 @@ set -euo pipefail
 
 WORKSPACE="/Users/openingcloud/openingcloud-blog"
 VAULT_PATH="/Users/openingcloud/Documents/GardenOfOpeningClouds"
-BASE_URL="${OBSIDIAN_SYNC_BASE_URL:-http://47.99.42.71/api}"
 TOKEN_ENV="${OBSIDIAN_SYNC_TOKEN_ENV:-OBSIDIAN_SYNC_TOKEN}"
 LOG_DIR="${OBSIDIAN_SYNC_LOG_DIR:-$HOME/Library/Logs}"
 LOG_FILE="${LOG_DIR}/obsidian-sync.log"
@@ -15,6 +14,8 @@ if [[ -f "$ENV_FILE" ]]; then
   # shellcheck disable=SC1090
   source "$ENV_FILE"
 fi
+
+BASE_URL="${OBSIDIAN_SYNC_BASE_URL:-https://blog.oc.slgneon.cn/api}"
 
 if [[ -n "${!TOKEN_ENV:-}" ]]; then
   export "${TOKEN_ENV}=${!TOKEN_ENV}"
