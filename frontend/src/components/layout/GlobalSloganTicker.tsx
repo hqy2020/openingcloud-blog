@@ -18,7 +18,91 @@ function toWeekdayText(date: Date) {
 
 function fallbackTickerMessage() {
   const now = new Date();
-  return `今天是 ${toIsoDateText(now)}（${toWeekdayText(now)}），节假日数据暂不可用。`;
+  const todayStr = toIsoDateText(now);
+  const weekday = toWeekdayText(now);
+
+  const todayHoliday = findHolidayByDate(todayStr);
+  if (todayHoliday) {
+    return `今天是 ${todayStr}（${weekday}），${todayHoliday} 🎉`;
+  }
+
+  const next = findNextHoliday(now);
+  if (next) {
+    return `今天是 ${todayStr}（${weekday}），距${next.name}还有 ${next.daysUntil} 天`;
+  }
+
+  return `今天是 ${todayStr}（${weekday}）`;
+}
+
+/* ── Chinese holidays (static table) ──────────── */
+
+type HolidayEntry = { month: number; day: number; name: string };
+
+const FIXED_HOLIDAYS: HolidayEntry[] = [
+  { month: 1, day: 1, name: "元旦" },
+  { month: 3, day: 8, name: "妇女节" },
+  { month: 5, day: 1, name: "劳动节" },
+  { month: 5, day: 4, name: "青年节" },
+  { month: 6, day: 1, name: "儿童节" },
+  { month: 10, day: 1, name: "国庆节" },
+];
+
+// Lunar holidays are year-specific; cover a few years for reliability.
+const LUNAR_HOLIDAYS: Record<number, HolidayEntry[]> = {
+  2025: [
+    { month: 1, day: 29, name: "春节" },
+    { month: 2, day: 12, name: "元宵节" },
+    { month: 4, day: 4, name: "清明节" },
+    { month: 5, day: 31, name: "端午节" },
+    { month: 10, day: 6, name: "中秋节" },
+  ],
+  2026: [
+    { month: 2, day: 17, name: "春节" },
+    { month: 3, day: 3, name: "元宵节" },
+    { month: 4, day: 5, name: "清明节" },
+    { month: 6, day: 19, name: "端午节" },
+    { month: 9, day: 25, name: "中秋节" },
+  ],
+  2027: [
+    { month: 2, day: 6, name: "春节" },
+    { month: 2, day: 20, name: "元宵节" },
+    { month: 4, day: 5, name: "清明节" },
+    { month: 6, day: 9, name: "端午节" },
+    { month: 9, day: 15, name: "中秋节" },
+  ],
+};
+
+function getHolidaysForYear(year: number): HolidayEntry[] {
+  return [...FIXED_HOLIDAYS, ...(LUNAR_HOLIDAYS[year] ?? [])];
+}
+
+function findHolidayByDate(dateStr: string): string | null {
+  const d = new Date(dateStr);
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1;
+  const day = d.getDate();
+  const match = getHolidaysForYear(year).find((h) => h.month === month && h.day === day);
+  return match?.name ?? null;
+}
+
+function findNextHoliday(now: Date): { name: string; daysUntil: number } | null {
+  const year = now.getFullYear();
+  const todayMs = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+  const candidates: { name: string; ms: number }[] = [];
+  for (const y of [year, year + 1]) {
+    for (const h of getHolidaysForYear(y)) {
+      const ms = new Date(y, h.month - 1, h.day).getTime();
+      if (ms > todayMs) {
+        candidates.push({ name: h.name, ms });
+      }
+    }
+  }
+
+  if (candidates.length === 0) return null;
+  candidates.sort((a, b) => a.ms - b.ms);
+  const daysUntil = Math.round((candidates[0].ms - todayMs) / 86_400_000);
+  return { name: candidates[0].name, daysUntil };
 }
 
 function rgba(rgb: string, alpha: number) {
