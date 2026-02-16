@@ -1,0 +1,25 @@
+{% extends "admin/base_site.html" %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    /* Normalize theme-toggle icon visual size across auto/dark/light states. */
+    .theme-toggle svg {
+      height: 1.4rem;
+      width: 1.4rem;
+      transform-origin: center;
+    }
+
+    .theme-toggle svg.theme-icon-when-auto {
+      transform: scale(0.96);
+    }
+
+    .theme-toggle svg.theme-icon-when-dark {
+      transform: scale(1.02);
+    }
+
+    .theme-toggle svg.theme-icon-when-light {
+      transform: scale(0.9);
+    }
+  </style>
+{% endblock %}

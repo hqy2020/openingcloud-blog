@@ -164,9 +164,6 @@ export function HomePage() {
     Array.isArray(payload.highlights) && payload.highlights.length > 0 ? payload.highlights : highlightsFallbackForUx;
   const socialNodesRaw = Array.isArray(payload.social_graph?.nodes) ? payload.social_graph.nodes : [];
   const socialLinksRaw = Array.isArray(payload.social_graph?.links) ? payload.social_graph.links : [];
-  const birthdayReminders = Array.isArray(payload.birthday_reminders) ? payload.birthday_reminders : [];
-  const socialTicker =
-    payload.social_ticker && Array.isArray(payload.social_ticker.items) ? payload.social_ticker : null;
   const socialHasFriend = socialNodesRaw.some((node) => node.type === "friend");
   const socialHasLink = socialLinksRaw.length > 0;
   const socialNodes = socialHasFriend && socialHasLink ? socialNodesRaw : socialGraphFallbackForUx.nodes;
@@ -192,12 +189,7 @@ export function HomePage() {
       <TimelineSection nodes={timelineNodes} />
       <HighlightsSection stages={highlightStages} />
       <TravelSection travel={payload.travel} />
-      <SocialGraphSection
-        birthdayReminders={birthdayReminders}
-        links={socialLinks}
-        nodes={socialNodes}
-        socialTicker={socialTicker}
-      />
+      <SocialGraphSection links={socialLinks} nodes={socialNodes} />
       <PhotoWallSection photos={photoWallItems} />
       <StatsSection stats={payload.stats} />
     </section>

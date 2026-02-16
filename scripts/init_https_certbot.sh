@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-DOMAIN=${1:-blog.openingclouds.com}
+DOMAIN=${1:-openingclouds.ccwu.cc}
 EMAIL=${2:-}
 
 if [ -z "$EMAIL" ]; then
@@ -11,8 +11,9 @@ fi
 
 mkdir -p ./certbot/conf ./certbot/www
 
-# Start HTTP stack first (for ACME challenge)
-NGINX_CONF_FILE=./nginx/nginx.conf docker compose up -d backend nginx
+# Start HTTP stack first (for ACME challenge). Use https compose overlay
+# so nginx mounts ./certbot/www and can serve ACME challenge files.
+NGINX_CONF_FILE=./nginx/nginx.conf docker compose -f docker-compose.yml -f docker-compose.https.yml up -d backend nginx certbot
 
 # Request certificate
 

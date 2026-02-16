@@ -110,7 +110,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "blog.authentication.CookieJWTAuthentication",
-        "rest_framework.authentication.SessionAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.AllowAny",
@@ -164,6 +163,10 @@ LOGIN_COOKIE_NAME = os.getenv("LOGIN_COOKIE_NAME", "oc_access_token")
 REFRESH_COOKIE_NAME = os.getenv("REFRESH_COOKIE_NAME", "oc_refresh_token")
 COOKIE_DOMAIN = os.getenv("COOKIE_DOMAIN")
 OBSIDIAN_SYNC_TOKEN = os.getenv("OBSIDIAN_SYNC_TOKEN", "")
+OBSIDIAN_VAULT_PATH = os.getenv("OBSIDIAN_VAULT_PATH", "/srv/openingcloud-vault/GardenOfOpeningClouds")
+OBSIDIAN_VAULT_REPO_URL = os.getenv("OBSIDIAN_VAULT_REPO_URL", "https://github.com/hqy2020/GardenOfOpeningClouds.git")
+OBSIDIAN_VAULT_REPO_BRANCH = os.getenv("OBSIDIAN_VAULT_REPO_BRANCH", "main")
+OBSIDIAN_DOC_SYNC_PUBLISH_TAG = os.getenv("OBSIDIAN_DOC_SYNC_PUBLISH_TAG", "publish")
 OBSIDIAN_IMAGES_GITHUB_TOKEN = os.getenv("OBSIDIAN_IMAGES_GITHUB_TOKEN", "")
 OBSIDIAN_IMAGES_REPO_OWNER = os.getenv("OBSIDIAN_IMAGES_REPO_OWNER", "hqy2020")
 OBSIDIAN_IMAGES_REPO_NAME = os.getenv("OBSIDIAN_IMAGES_REPO_NAME", "obsidian-images")

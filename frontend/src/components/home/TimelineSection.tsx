@@ -57,16 +57,16 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
       <div className="relative overflow-x-auto pb-4">
         <FadeIn className="absolute left-0 top-9 h-[2px] min-w-full bg-gradient-to-r from-[#4F6AE5]/45 via-[#9684A8]/40 to-[#B8945E]/35" />
 
-        <StaggerContainer className="flex min-w-max items-start gap-5" stagger={0.06}>
+        <StaggerContainer className="flex min-w-max items-stretch gap-5" stagger={0.06}>
           {nodes.map((node, idx) => {
             const typeMeta = typeBadge(node.type);
             const isHighlighted = node.impact === "high";
 
             return (
-              <StaggerItem key={`${node.title}-${node.start_date}-${idx}`} className="w-72">
+              <StaggerItem key={`${node.title}-${node.start_date}-${idx}`} className="h-[236px] w-72">
                 <CardSpotlight
                   className={[
-                    "relative overflow-hidden rounded-2xl border bg-white/90 p-5 backdrop-blur",
+                    "relative flex h-[236px] flex-col overflow-hidden rounded-2xl border bg-white/90 p-5 backdrop-blur",
                     isHighlighted
                       ? "border-indigo-300/90 shadow-[0_14px_40px_rgba(79,106,229,0.2)] ring-1 ring-indigo-200/80"
                       : "border-slate-200/80 shadow-[0_12px_32px_rgba(15,23,42,0.08)]",
@@ -87,11 +87,15 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
                       <span className={`rounded-full px-2 py-1 text-xs font-medium ${typeMeta.badge}`}>{typeMeta.label}</span>
                     </div>
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-900">{node.title}</h3>
+                  <h3 className="line-clamp-2 min-h-[56px] text-lg font-semibold text-slate-900">{node.title}</h3>
                   <p className="mt-2 text-sm text-slate-500">{formatPeriod(node)}</p>
-                  {node.description ? (
-                    <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-700">{node.description}</p>
-                  ) : null}
+                  <div className="mt-3 min-h-[72px]">
+                    {node.description ? (
+                      <p className="line-clamp-3 text-sm leading-6 text-slate-700">{node.description}</p>
+                    ) : (
+                      <p className="invisible line-clamp-3 text-sm leading-6">占位文案占位文案占位文案</p>
+                    )}
+                  </div>
                 </CardSpotlight>
               </StaggerItem>
             );

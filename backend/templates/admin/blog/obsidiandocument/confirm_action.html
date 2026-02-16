@@ -1,0 +1,20 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div id="content-main">
+  <h1>{{ title }}</h1>
+  <p><strong>标题：</strong>{{ document.title }}</p>
+  <p><strong>路径：</strong><code>{{ document.vault_path }}</code></p>
+  {% if action == "publish" %}
+    <p>确认将该文档发布到博客前台？</p>
+  {% else %}
+    <p>确认将该文档下线为草稿？</p>
+  {% endif %}
+
+  <form method="post" style="margin-top: 16px;">
+    {% csrf_token %}
+    <input type="submit" value="确认" class="default">
+    <a href="{% url 'admin:blog_obsidiandocument_changelist' %}" style="margin-left: 12px;">取消</a>
+  </form>
+</div>
+{% endblock %}

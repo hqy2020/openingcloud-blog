@@ -1,8 +1,11 @@
 import { motion } from "motion/react";
 import type { CSSProperties } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
+import type { HomePayload } from "../../api/home";
 import { useTheme } from "../../app/theme";
 import { resolveAccentByPath } from "../../theme/categoryVisuals";
+import { ContactSection } from "../home/ContactSection";
+import { GlobalSloganTicker } from "./GlobalSloganTicker";
 import { BlogPetMachine } from "../pet/BlogPetMachine";
 
 const links = [
@@ -11,6 +14,11 @@ const links = [
   { to: "/life", label: "生活" },
 ];
 
+const footerContact: HomePayload["contact"] = {
+  email: "hqy200091@163.com",
+  github: "https://github.com/hqy2020",
+};
+
 function rgba(rgb: string, alpha: number) {
   return `rgba(${rgb},${alpha})`;
 }
@@ -18,26 +26,26 @@ function rgba(rgb: string, alpha: number) {
 function ThemeToggleIcon({ isDark }: { isDark: boolean }) {
   if (isDark) {
     return (
-      <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.9" />
+      <svg aria-hidden="true" className="h-[1.1rem] w-[1.1rem]" fill="none" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
         <path
           d="M12 2.5v2.2m0 14.6v2.2M5.3 5.3l1.6 1.6m10.2 10.2 1.6 1.6M2.5 12h2.2m14.6 0h2.2M5.3 18.7l1.6-1.6m10.2-10.2 1.6-1.6"
           stroke="currentColor"
           strokeLinecap="round"
-          strokeWidth="1.9"
+          strokeWidth="1.8"
         />
       </svg>
     );
   }
 
   return (
-    <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">
+    <svg aria-hidden="true" className="h-[1.1rem] w-[1.1rem]" fill="none" viewBox="0 0 24 24">
       <path
         d="M20 14.2A8.5 8.5 0 1 1 9.8 4 7 7 0 0 0 20 14.2Z"
         stroke="currentColor"
         strokeLinecap="round"
         strokeLinejoin="round"
-        strokeWidth="1.9"
+        strokeWidth="1.8"
       />
     </svg>
   );
@@ -45,7 +53,7 @@ function ThemeToggleIcon({ isDark }: { isDark: boolean }) {
 
 function AdminEntryIcon() {
   return (
-    <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24">
+    <svg aria-hidden="true" className="h-[1.1rem] w-[1.1rem]" fill="none" viewBox="0 0 24 24">
       <rect height="14" rx="3" stroke="currentColor" strokeWidth="1.8" width="14" x="5" y="5" />
       <path d="m9.2 10.2 2.1 1.8-2.1 1.8m4.1 0h2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
     </svg>
@@ -86,13 +94,13 @@ export function AppLayout() {
   return (
     <div className={`min-h-screen ${isDark ? "bg-slate-950 text-slate-100" : "bg-[#F6F7FB] text-slate-900"}`}>
       <header className="sticky top-0 z-30 border-b backdrop-blur-xl" style={headerStyle}>
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-2.5 sm:grid sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-3 sm:py-3">
+        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-1.5 sm:grid sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-2.5 sm:py-2">
           <NavLink aria-label="返回首页" className="inline-flex items-center justify-center" title="首页" to="/">
-            <img alt="启云博客" className="h-9 w-auto select-none sm:h-10" src={logoSrc} />
+            <img alt="启云博客" className="h-8 w-auto select-none sm:h-9" src={logoSrc} />
           </NavLink>
 
           <nav
-            className={`order-3 mt-1 mx-auto flex w-[92%] items-center justify-center rounded-[28px] border p-1 text-sm font-medium sm:order-none sm:mt-0 sm:w-[80%] sm:justify-stretch ${
+            className={`order-3 mt-0.5 mx-auto flex w-[92%] items-center justify-center rounded-[24px] border p-0.5 text-sm font-medium sm:order-none sm:mt-0 sm:w-[80%] sm:justify-stretch ${
               isDark ? "glass-surface-dark" : "glass-surface-light"
             }`}
             style={sharedSurfaceStyle}
@@ -109,11 +117,11 @@ export function AppLayout() {
                 ) : null}
                 <NavLink className="flex-1 rounded-[20px] transition" to={item.to}>
                   {({ isActive }) => (
-                    <span className="relative block min-w-[4.2rem] rounded-[20px] px-3.5 py-1.5 text-center sm:min-w-0 sm:w-full sm:px-4 sm:py-2">
+                    <span className="relative block min-w-[4.2rem] rounded-[18px] px-3 py-1 text-center sm:min-w-0 sm:w-full sm:px-3.5 sm:py-1.5">
                       {isActive ? (
                         <motion.span
                           layoutId="nav-pill"
-                          className="absolute inset-0 rounded-[20px]"
+                          className="absolute inset-0 rounded-[18px]"
                           style={activePillStyle}
                           transition={{ type: "spring", stiffness: 420, damping: 32 }}
                         />
@@ -142,7 +150,7 @@ export function AppLayout() {
               href="/admin/"
               aria-label="后台管理"
               title="后台管理"
-              className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition sm:h-10 sm:w-10 ${
+              className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition ${
                 isDark ? "glass-surface-dark text-slate-100 hover:text-white" : "glass-surface-light text-slate-700 hover:text-slate-900"
               }`}
               style={sharedSurfaceStyle}
@@ -152,7 +160,7 @@ export function AppLayout() {
 
             <button
               aria-label={isDark ? "切换到浅色模式" : "切换到深色模式"}
-              className={`inline-flex h-10 w-10 items-center justify-center rounded-full border transition sm:h-11 sm:w-11 ${
+              className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition ${
                 isDark ? "glass-surface-dark" : "glass-surface-light"
               }`}
               style={{ ...sharedSurfaceStyle, color: isDark ? "#FCD34D" : "#334155" }}
@@ -163,8 +171,9 @@ export function AppLayout() {
             </button>
           </div>
         </div>
+        <GlobalSloganTicker accentRgb={visual.glowRgb} isDark={isDark} />
         <div
-          className="pointer-events-none absolute inset-x-0 -bottom-5 h-5"
+          className="pointer-events-none absolute inset-x-0 -bottom-4 h-4"
           style={{
             background: isDark
               ? `linear-gradient(180deg, ${rgba(visual.glowRgb, 0.2)}, rgba(15,23,42,0))`
@@ -177,8 +186,15 @@ export function AppLayout() {
         <Outlet />
       </main>
 
-      <footer className={`mx-auto mt-12 w-full max-w-6xl px-4 pb-10 text-sm ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-        © {new Date().getFullYear()} openingClouds
+      <footer
+        className={`mt-12 w-full border-t ${
+          isDark ? "border-slate-800/80 text-slate-400" : "border-slate-200/90 text-slate-500"
+        }`}
+      >
+        <div className="mx-auto w-full max-w-6xl px-4 pb-10 pt-4 text-sm">
+          <ContactSection contact={footerContact} variant="footer" />
+          <p className="mt-4 text-xs">© {new Date().getFullYear()} openingClouds</p>
+        </div>
       </footer>
       <BlogPetMachine />
     </div>

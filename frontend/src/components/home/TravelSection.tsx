@@ -60,6 +60,42 @@ function isGeoJsonLike(value: unknown): value is GeoJsonLike {
   return Array.isArray((value as GeoJsonLike).features);
 }
 
+function formatVisitedAtLabel(value: string | null | undefined) {
+  if (!value) {
+    return "时间未记录";
+  }
+  const parts = value.split("-");
+  if (parts.length !== 3) {
+    return value;
+  }
+  const [year, month, day] = parts;
+  return `${year}年${Number(month)}月${Number(day)}日`;
+}
+
+function formatCityTooltip(params: unknown) {
+  if (!params || typeof params !== "object") {
+    return "";
+  }
+  const payload = params as {
+    seriesType?: string;
+    data?: {
+      name?: string;
+      province?: string;
+      visitedAt?: string | null;
+    };
+  };
+
+  if (payload.seriesType !== "effectScatter") {
+    return "";
+  }
+
+  const city = payload.data?.name ?? "未知城市";
+  const province = payload.data?.province ?? "";
+  const visitedAt = formatVisitedAtLabel(payload.data?.visitedAt);
+  const cityLine = province ? `${province} · ${city}` : city;
+  return `${cityLine}<br/>${visitedAt}`;
+}
+
 export function TravelSection({ travel }: TravelSectionProps) {
   const [Chart, setChart] = useState<ComponentType<EChartsLikeProps> | null>(null);
   const [echartsRuntime, setEchartsRuntime] = useState<EChartsRuntime | null>(null);
@@ -239,18 +275,13 @@ export function TravelSection({ travel }: TravelSectionProps) {
   const displayProvinceCount = Chart && mapReady ? revealedProvinceCount : totalProvinceCount;
 
   const option = useMemo(() => {
-    const maxProvinceValue = Math.max(1, ...travel.map((item) => Math.max(item.count, item.cities.length)));
-    const provinceCounts = new Map<string, number>();
-    for (const city of revealedCities) {
-      provinceCounts.set(city.province, (provinceCounts.get(city.province) ?? 0) + 1);
-    }
-    const provinceData = travel.map((item) => ({ name: item.province, value: provinceCounts.get(item.province) ?? 0 }));
     const cityData = revealedCities
       .filter((city) => city.longitude !== null && city.latitude !== null)
       .map((city) => ({
         name: city.city,
         value: [city.longitude, city.latitude, 1],
         province: city.province,
+        visitedAt: city.visited_at,
       }));
 
     return {
@@ -261,32 +292,9 @@ export function TravelSection({ travel }: TravelSectionProps) {
       animationEasingUpdate: "cubicInOut",
       tooltip: {
         trigger: "item",
-      },
-      visualMap: {
-        show: false,
-        seriesIndex: 0,
-        min: 1,
-        max: maxProvinceValue,
-        inRange: {
-          color: ["#7dd3fc", "#0284c7"],
-        },
-        outOfRange: {
-          color: ["#eef2f7"],
-        },
+        formatter: (params: unknown) => formatCityTooltip(params),
       },
       series: [
-        {
-          name: "省份",
-          type: "map",
-          map: "china",
-          roam: false,
-          label: { show: false },
-          itemStyle: {
-            borderColor: "#c7d3e3",
-            borderWidth: 1,
-          },
-          data: provinceData,
-        },
         {
           name: "城市",
           type: "effectScatter",
@@ -309,9 +317,17 @@ export function TravelSection({ travel }: TravelSectionProps) {
         map: "china",
         roam: false,
         silent: true,
+        itemStyle: {
+          areaColor: "#eef2f7",
+          borderColor: "#c7d3e3",
+          borderWidth: 1,
+        },
+        emphasis: {
+          disabled: true,
+        },
       },
     };
-  }, [travel, revealedCities]);
+  }, [revealedCities]);
 
   return (
     <ScrollReveal className="space-y-6">

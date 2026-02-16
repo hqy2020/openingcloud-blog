@@ -156,3 +156,23 @@ python manage.py sync_obsidian /Users/openingcloud/Documents/GardenOfOpeningClou
 - Script: `/Users/openingcloud/openingcloud-blog/scripts/obsidian_sync_remote.sh`
 - Agent plist: `/Users/openingcloud/Library/LaunchAgents/com.openingcloud.obsidian-sync.plist`
 - Optional local env file for launchd: `/Users/openingcloud/.config/openingcloud/obsidian-sync.env`
+
+## Obsidian document pool (full vault)
+
+Build full-vault index into `ObsidianDocument` and optionally auto-update linked published posts:
+
+```bash
+cd backend
+source .venv/bin/activate
+python manage.py sync_obsidian_documents /srv/openingcloud-vault/GardenOfOpeningClouds \
+  --trigger scheduled \
+  --auto-update-published \
+  --missing-behavior draft \
+  --publish-tag publish
+```
+
+Server helper script (for cron `0 2 * * *`):
+
+```bash
+./scripts/obsidian_sync_server.sh
+```

@@ -1,0 +1,15 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div id="content-main">
+  <h1>{{ title }}</h1>
+  <p>确认立即同步 Obsidian 文档池？</p>
+  <p><strong>Vault 路径：</strong><code>{{ vault_path }}</code></p>
+
+  <form method="post" style="margin-top: 16px;">
+    {% csrf_token %}
+    <input type="submit" value="开始同步" class="default">
+    <a href="{% url 'admin:blog_obsidiandocument_changelist' %}" style="margin-left: 12px;">取消</a>
+  </form>
+</div>
+{% endblock %}

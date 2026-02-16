@@ -9,6 +9,7 @@ import { FadeIn } from "../components/motion/FadeIn";
 import { BackgroundBeams } from "../components/ui/BackgroundBeams";
 import { BlurRevealImage } from "../components/ui/BlurRevealImage";
 import { CardSpotlight } from "../components/ui/CardSpotlight";
+import { GenerativeCover } from "../components/ui/GenerativeCover";
 import { TextGenerateEffect } from "../components/ui/TextGenerateEffect";
 import { getFallbackPosts } from "../data/fallback";
 import { categoryVisuals } from "../theme/categoryVisuals";
@@ -68,22 +69,9 @@ const visuals: Record<
   },
 };
 
-const categoryCoverFallbacks: Record<CategoryPageProps["category"], string[]> = {
-  tech: ["/media/covers/tech/cover-tech-abstract-data-flow.png", "/media/covers/tech/cover-tech-floating-code-panels.png"],
-  learning: [
-    "/media/covers/learning/cover-efficiency-amber-desk-tools.png",
-    "/media/covers/learning/cover-efficiency-hourglass-gears.png",
-  ],
-  life: ["/media/covers/life/cover-life-dusk-balcony-tea.png", "/media/covers/life/cover-life-window-plants-twilight.png"],
-};
-
-function resolvePostCover(post: PostSummary, category: CategoryPageProps["category"], index: number) {
+function resolvePostCover(post: PostSummary): string | null {
   const normalizedCover = String(post.cover || "").trim();
-  if (normalizedCover) {
-    return normalizedCover;
-  }
-  const pool = categoryCoverFallbacks[category];
-  return pool[index % pool.length];
+  return normalizedCover || null;
 }
 
 function formatViews(value: number) {
@@ -576,7 +564,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
       <div className="columns-2 gap-3 sm:gap-4">
         {visiblePosts.map((post, index) => {
           const isRecentlyAppended = recentlyAppendedSlugs.includes(post.slug);
-          const coverSrc = resolvePostCover(post, category, index);
+          const coverSrc = resolvePostCover(post);
           return (
             <motion.div
               key={post.slug}
@@ -609,13 +597,21 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
                 />
 
                 <div className={`relative overflow-hidden rounded-xl border ${isDark ? "border-slate-600/70" : "border-slate-200/70"}`}>
-                  <BlurRevealImage
-                    alt={`${post.title} 封面图`}
-                    className="h-full w-full object-cover"
-                    loading="lazy"
-                    src={coverSrc}
-                    wrapperClassName="aspect-[4/3]"
-                  />
+                  {coverSrc ? (
+                    <BlurRevealImage
+                      alt={`${post.title} 封面图`}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                      src={coverSrc}
+                      wrapperClassName="aspect-[4/3]"
+                    />
+                  ) : (
+                    <GenerativeCover
+                      category={category}
+                      className="aspect-[4/3]"
+                      seed={post.slug}
+                    />
+                  )}
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/25 via-transparent to-transparent" />
                 </div>
 

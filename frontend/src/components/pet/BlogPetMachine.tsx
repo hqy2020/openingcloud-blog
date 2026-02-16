@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GrassManager, type GrassPatch } from "./GrassManager";
 
-type PetState = "idle" | "walking_to_grass" | "eating";
+type PetState = "at_home_idle" | "walking_to_grass" | "eating" | "returning_home";
 type PetFacing = "left" | "right";
 
 type PetPosition = {
@@ -11,16 +11,33 @@ type PetPosition = {
 };
 
 const EAT_DURATION_MS = 1200;
+const CHAT_CYCLE_MS = 6000;
+const RETURN_HOME_DELAY_MS = 10_000;
 const START_SPEED_PX = 0.8;
 const MAX_SPEED_PX = 6.2;
 const ACCELERATION_PX = 0.24;
 const ARRIVAL_THRESHOLD_PX = 4;
+const HOME_ARRIVAL_THRESHOLD_PX = 8;
 // Keep the sheep's mouth anchored to the same world point regardless of facing direction.
 const PET_MOUTH_OFFSET_X_LEFT = 8;
 const PET_MOUTH_OFFSET_X_RIGHT = 44;
 const PET_MOUTH_OFFSET_Y = 24;
 const PET_SHEEP_SRC = "/media/pet/sheep-cutout.png";
 const PET_GRASS_SRC = "/media/pet/grass-cutout.png";
+const PET_CLOUD_HOME_SRC = "/media/pet/clouds-home-clean.png";
+const PET_CHAT_LINES = [
+  "咩咩，我在云上等你喂草呀～",
+  "今天也要一起把博客养肥一点吗？",
+  "轻点一下地面，我就开吃啦！",
+  "我先在云上巡逻，等你的草信号。",
+  "咩～别让我饿太久，我会想你。",
+];
+const CLOUD_HOME_WIDTH = 168;
+const CLOUD_HOME_HEIGHT = 168;
+const CLOUD_HOME_RIGHT = 14;
+const CLOUD_HOME_BOTTOM = 10;
+const CLOUD_HOME_ANCHOR_X = 74;
+const CLOUD_HOME_ANCHOR_Y = 72;
 const INTERACTIVE_SELECTOR = [
   "a",
   "button",
@@ -32,6 +49,19 @@ const INTERACTIVE_SELECTOR = [
   "[role='link']",
   "[contenteditable='true']",
 ].join(",");
+
+function createHomeAnchor(viewportWidth: number, viewportHeight: number): PetPosition {
+  const cloudLeft = viewportWidth - CLOUD_HOME_WIDTH - CLOUD_HOME_RIGHT;
+  const cloudTop = viewportHeight - CLOUD_HOME_HEIGHT - CLOUD_HOME_BOTTOM;
+  return {
+    x: Math.max(PET_MOUTH_OFFSET_X_RIGHT + 12, cloudLeft + CLOUD_HOME_ANCHOR_X),
+    y: Math.max(PET_MOUTH_OFFSET_Y + 16, cloudTop + CLOUD_HOME_ANCHOR_Y),
+  };
+}
+
+function isNearPosition(from: PetPosition, to: PetPosition, threshold = HOME_ARRIVAL_THRESHOLD_PX) {
+  return Math.hypot(from.x - to.x, from.y - to.y) <= threshold;
+}
 
 function findNearestPatch(position: PetPosition, patches: GrassPatch[], excludedId: string | null) {
   return patches.reduce<GrassPatch | null>((nearest, patch) => {
@@ -48,6 +78,10 @@ function findNearestPatch(position: PetPosition, patches: GrassPatch[], excluded
 }
 
 export function BlogPetMachine() {
+  const initialHomeAnchor =
+    typeof window === "undefined"
+      ? createHomeAnchor(0, 0)
+      : createHomeAnchor(window.innerWidth, window.innerHeight);
   const [enabled, setEnabled] = useState(() => {
     if (typeof window === "undefined") {
       return true;
@@ -56,14 +90,17 @@ export function BlogPetMachine() {
     const lowMemory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
     return !(media.matches || (typeof lowMemory === "number" && lowMemory <= 2));
   });
-  const [petState, setPetState] = useState<PetState>("idle");
+  const [petState, setPetState] = useState<PetState>("at_home_idle");
   const [petFacing, setPetFacing] = useState<PetFacing>("left");
-  const [position, setPosition] = useState<PetPosition>({ x: 0, y: 0 });
-  const positionRef = useRef<PetPosition>({ x: 0, y: 0 });
+  const [homeAnchor, setHomeAnchor] = useState<PetPosition>(initialHomeAnchor);
+  const homeAnchorRef = useRef<PetPosition>(initialHomeAnchor);
+  const [position, setPosition] = useState<PetPosition>(initialHomeAnchor);
+  const positionRef = useRef<PetPosition>(initialHomeAnchor);
   const speedRef = useRef(0);
   const [targetPatchId, setTargetPatchId] = useState<string | null>(null);
   const [eatingPatchId, setEatingPatchId] = useState<string | null>(null);
   const [grassPatches, setGrassPatches] = useState<GrassPatch[]>([]);
+  const [chatIndex, setChatIndex] = useState(0);
   const grass = useMemo(() => new GrassManager(10, 200), []);
 
   useEffect(() => {
@@ -87,15 +124,19 @@ export function BlogPetMachine() {
     if (typeof window === "undefined") {
       return;
     }
-    const placePet = () => {
-      const safeX = Math.max(PET_MOUTH_OFFSET_X_RIGHT + 12, window.innerWidth - 140);
-      const safeY = Math.max(PET_MOUTH_OFFSET_Y + 20, window.innerHeight - 96);
-      setPosition({ x: safeX, y: safeY });
+    const placeHome = () => {
+      const previousHome = homeAnchorRef.current;
+      const nextHome = createHomeAnchor(window.innerWidth, window.innerHeight);
+      homeAnchorRef.current = nextHome;
+      setHomeAnchor(nextHome);
+      if (petState === "at_home_idle" && isNearPosition(positionRef.current, previousHome, HOME_ARRIVAL_THRESHOLD_PX + 6)) {
+        setPosition(nextHome);
+      }
     };
-    placePet();
-    window.addEventListener("resize", placePet);
-    return () => window.removeEventListener("resize", placePet);
-  }, []);
+    placeHome();
+    window.addEventListener("resize", placeHome);
+    return () => window.removeEventListener("resize", placeHome);
+  }, [petState]);
 
   useEffect(() => {
     if (!enabled) {
@@ -103,8 +144,9 @@ export function BlogPetMachine() {
         setGrassPatches([]);
         setTargetPatchId(null);
         setEatingPatchId(null);
-        setPetState("idle");
+        setPetState("at_home_idle");
         setPetFacing("left");
+        setPosition(homeAnchorRef.current);
         speedRef.current = 0;
       });
       return () => window.cancelAnimationFrame(rafId);
@@ -122,7 +164,7 @@ export function BlogPetMachine() {
       }
 
       setGrassPatches([ ...grass.patches ]);
-      if (petState === "idle" && !targetPatchId && !eatingPatchId) {
+      if ((petState === "at_home_idle" || petState === "returning_home") && !eatingPatchId) {
         setPetFacing(planted.x >= positionRef.current.x ? "right" : "left");
         setTargetPatchId(planted.id);
         speedRef.current = 0;
@@ -132,10 +174,10 @@ export function BlogPetMachine() {
 
     window.addEventListener("click", onClick);
     return () => window.removeEventListener("click", onClick);
-  }, [eatingPatchId, enabled, grass, petState, targetPatchId]);
+  }, [eatingPatchId, enabled, grass, petState]);
 
   useEffect(() => {
-    if (!enabled || petState !== "idle" || grassPatches.length === 0 || eatingPatchId) {
+    if (!enabled || petState !== "at_home_idle" || grassPatches.length === 0 || eatingPatchId) {
       return;
     }
     const nextPatch = findNearestPatch(positionRef.current, grassPatches, null);
@@ -152,25 +194,59 @@ export function BlogPetMachine() {
   }, [eatingPatchId, enabled, grassPatches, petState]);
 
   useEffect(() => {
-    if (!enabled || petState !== "walking_to_grass") {
+    if (!enabled || (petState !== "walking_to_grass" && petState !== "returning_home")) {
       return;
     }
 
     const timer = window.setInterval(() => {
-      const activeTarget = findNearestPatch(positionRef.current, grass.patches, eatingPatchId);
-      if (!activeTarget) {
-        setTargetPatchId(null);
-        speedRef.current = 0;
-        setPetState("idle");
+      if (petState === "walking_to_grass") {
+        const activeTarget = findNearestPatch(positionRef.current, grass.patches, eatingPatchId);
+        if (!activeTarget) {
+          setTargetPatchId(null);
+          speedRef.current = 0;
+          setPetState("at_home_idle");
+          setPetFacing("left");
+          return;
+        }
+        if (targetPatchId !== activeTarget.id) {
+          setTargetPatchId(activeTarget.id);
+        }
+
+        setPosition((current) => {
+          const dx = activeTarget.x - current.x;
+          const dy = activeTarget.y - current.y;
+          const distance = Math.hypot(dx, dy);
+
+          if (Math.abs(dx) > 0.5) {
+            setPetFacing(dx > 0 ? "right" : "left");
+          }
+
+          speedRef.current = Math.min(MAX_SPEED_PX, Math.max(START_SPEED_PX, speedRef.current + ACCELERATION_PX));
+          const step = Math.min(distance, speedRef.current);
+
+          if (distance <= ARRIVAL_THRESHOLD_PX || step >= distance) {
+            speedRef.current = 0;
+            setPetState("eating");
+            setEatingPatchId(activeTarget.id);
+            return { x: activeTarget.x, y: activeTarget.y };
+          }
+
+          return {
+            x: current.x + (dx / distance) * step,
+            y: current.y + (dy / distance) * step,
+          };
+        });
         return;
       }
-      if (targetPatchId !== activeTarget.id) {
-        setTargetPatchId(activeTarget.id);
+
+      const homeTarget = homeAnchorRef.current;
+      if (petState === "returning_home") {
+        setTargetPatchId(null);
       }
 
       setPosition((current) => {
-        const dx = activeTarget.x - current.x;
-        const dy = activeTarget.y - current.y;
+        const dx = homeTarget.x - current.x;
+        const dy = homeTarget.y - current.y;
         const distance = Math.hypot(dx, dy);
 
         if (Math.abs(dx) > 0.5) {
@@ -181,10 +257,11 @@ export function BlogPetMachine() {
         const step = Math.min(distance, speedRef.current);
 
         if (distance <= ARRIVAL_THRESHOLD_PX || step >= distance) {
-          setPetState("eating");
-          setEatingPatchId(activeTarget.id);
           speedRef.current = 0;
-          return { x: activeTarget.x, y: activeTarget.y };
+          setPetState("at_home_idle");
+          setEatingPatchId(null);
+          setPetFacing("left");
+          return { x: homeTarget.x, y: homeTarget.y };
         }
 
         return {
@@ -208,17 +285,82 @@ export function BlogPetMachine() {
       setGrassPatches(remainingPatches);
       setEatingPatchId(null);
       speedRef.current = 0;
+
+      if (remainingPatches.length > 0) {
+        const nextPatch = findNearestPatch(positionRef.current, remainingPatches, null);
+        if (nextPatch) {
+          setPetFacing(nextPatch.x >= positionRef.current.x ? "right" : "left");
+          setTargetPatchId(nextPatch.id);
+          setPetState("walking_to_grass");
+          return;
+        }
+      }
+
       setTargetPatchId(null);
-      setPetState("idle");
+      setPetState("at_home_idle");
     }, EAT_DURATION_MS);
 
     return () => window.clearTimeout(timer);
   }, [eatingPatchId, enabled, grass, petState]);
 
+  useEffect(() => {
+    if (!enabled || grassPatches.length > 0 || petState === "walking_to_grass" || petState === "eating" || petState === "returning_home") {
+      return;
+    }
+
+    if (isNearPosition(positionRef.current, homeAnchorRef.current)) {
+      if (petState !== "at_home_idle") {
+        setPetState("at_home_idle");
+      }
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      if (grass.patches.length > 0) {
+        return;
+      }
+      const current = positionRef.current;
+      const home = homeAnchorRef.current;
+      if (isNearPosition(current, home)) {
+        setPosition(home);
+        setPetState("at_home_idle");
+        setPetFacing("left");
+        return;
+      }
+      setPetFacing(home.x >= current.x ? "right" : "left");
+      setTargetPatchId(null);
+      setEatingPatchId(null);
+      speedRef.current = 0;
+      setPetState("returning_home");
+    }, RETURN_HOME_DELAY_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [enabled, grass.patches, grassPatches.length, petState]);
+
+  const showHomeBubble = petState === "at_home_idle" && grassPatches.length === 0 && isNearPosition(position, homeAnchor, HOME_ARRIVAL_THRESHOLD_PX + 2);
+
+  useEffect(() => {
+    if (!enabled || !showHomeBubble) {
+      return;
+    }
+    const timer = window.setInterval(() => {
+      setChatIndex((prev) => (prev + 1) % PET_CHAT_LINES.length);
+    }, CHAT_CYCLE_MS);
+    return () => window.clearInterval(timer);
+  }, [enabled, showHomeBubble]);
+
+  useEffect(() => {
+    if (showHomeBubble) {
+      setChatIndex(0);
+    }
+  }, [showHomeBubble]);
+
   if (!enabled) {
     return null;
   }
 
+  const cloudRenderX = homeAnchor.x - CLOUD_HOME_ANCHOR_X;
+  const cloudRenderY = homeAnchor.y - CLOUD_HOME_ANCHOR_Y;
   const petRenderX = position.x - (petFacing === "right" ? PET_MOUTH_OFFSET_X_RIGHT : PET_MOUTH_OFFSET_X_LEFT);
   const petRenderY = position.y - PET_MOUTH_OFFSET_Y;
 
@@ -258,15 +400,44 @@ export function BlogPetMachine() {
         </AnimatePresence>
       </div>
 
+      <div className="pointer-events-none fixed left-0 top-0 z-40" style={{ transform: `translate(${cloudRenderX}px, ${cloudRenderY}px)` }}>
+        <motion.img
+          src={PET_CLOUD_HOME_SRC}
+          alt=""
+          className="h-[168px] w-[168px] select-none object-contain opacity-95"
+          draggable={false}
+          animate={{ y: [0, -2, 0] }}
+          transition={{ duration: 4.8, repeat: Infinity, ease: "easeInOut" }}
+        />
+      </div>
+
       <div
         className="pointer-events-none fixed left-0 top-0 z-40"
         style={{ transform: `translate(${petRenderX}px, ${petRenderY}px)` }}
       >
+        <AnimatePresence mode="wait">
+          {showHomeBubble ? (
+            <motion.div
+              key={`pet-bubble-${chatIndex}`}
+              className="pointer-events-none absolute bottom-[56px] right-[6px] w-[220px]"
+              initial={{ opacity: 0, y: 8, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 6, scale: 0.98 }}
+              transition={{ duration: 0.24, ease: "easeOut" }}
+            >
+              <div className="relative rounded-2xl border border-slate-200/85 bg-white/95 px-3 py-2 text-xs text-slate-700 shadow-[0_8px_18px_rgba(15,23,42,0.08)]">
+                {PET_CHAT_LINES[chatIndex]}
+                <span className="absolute -bottom-1.5 right-8 h-3 w-3 rotate-45 border-b border-r border-slate-200/85 bg-white/95" />
+              </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+
         <motion.div
           aria-label={`pet-${petState}`}
           className="text-3xl leading-none [filter:drop-shadow(0_4px_8px_rgba(15,23,42,0.3))]"
           animate={
-            petState === "walking_to_grass"
+            petState === "walking_to_grass" || petState === "returning_home"
               ? { x: [0, 1.6, 0, -1.6, 0], y: [0, -1.2, 0] }
               : petState === "eating"
                 ? { rotate: [0, -8, 0, -8, 0] }

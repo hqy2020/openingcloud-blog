@@ -1,13 +1,14 @@
 import { motion, useScroll, useSpring } from "motion/react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AnchorHTMLAttributes, HTMLAttributes, ImgHTMLAttributes, ReactNode } from "react";
 import { Helmet } from "react-helmet-async";
 import ReactMarkdown from "react-markdown";
 import { Link, useParams } from "react-router-dom";
 import remarkGfm from "remark-gfm";
-import { fetchPostBySlug, incrementPostViews } from "../api/posts";
+import { fetchPostBySlug, incrementPostViews, togglePostLike } from "../api/posts";
 import { useTheme } from "../app/theme";
 import { BlurRevealImage } from "../components/ui/BlurRevealImage";
+import { GenerativeCover } from "../components/ui/GenerativeCover";
 import { useAsync } from "../hooks/useAsync";
 
 type HeadingItem = {
@@ -28,12 +29,6 @@ const categoryPathMap: Record<"tech" | "learning" | "life", string> = {
   tech: "/tech",
   learning: "/learning",
   life: "/life",
-};
-
-const detailCoverFallbackMap: Record<"tech" | "learning" | "life", string> = {
-  tech: "/media/covers/tech/cover-tech-floating-code-panels.png",
-  learning: "/media/covers/learning/cover-efficiency-hourglass-gears.png",
-  life: "/media/covers/life/cover-life-window-plants-twilight.png",
 };
 
 function toHeadingId(text: string) {
@@ -181,6 +176,44 @@ export function PostDetailPage() {
 
   const headings = useMemo(() => extractHeadings(data?.content ?? ""), [data?.content]);
   const readMinutes = useMemo(() => estimateReadingMinutes(data?.content ?? ""), [data?.content]);
+
+  const [liked, setLiked] = useState(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("liked-posts") || "[]") as string[];
+      return stored.includes(slug);
+    } catch {
+      return false;
+    }
+  });
+  const [likesCount, setLikesCount] = useState(data?.likes_count ?? 0);
+  const [likeLoading, setLikeLoading] = useState(false);
+
+  useEffect(() => {
+    if (data) {
+      setLikesCount(data.likes_count);
+    }
+  }, [data]);
+
+  const handleToggleLike = useCallback(async () => {
+    if (likeLoading || !slug) return;
+    setLikeLoading(true);
+    try {
+      const result = await togglePostLike(slug);
+      setLiked(result.liked);
+      setLikesCount(result.likes);
+      try {
+        const stored = JSON.parse(localStorage.getItem("liked-posts") || "[]") as string[];
+        const set = new Set(stored);
+        if (result.liked) {
+          set.add(slug);
+        } else {
+          set.delete(slug);
+        }
+        localStorage.setItem("liked-posts", JSON.stringify([...set]));
+      } catch { /* ignore storage errors */ }
+    } catch { /* ignore network errors */ }
+    setLikeLoading(false);
+  }, [slug, likeLoading]);
   const headingIdLookup = useMemo(() => {
     const source = new Map<string, string[]>();
     for (const item of headings) {
@@ -268,7 +301,7 @@ export function PostDetailPage() {
   const postTags = Array.isArray(data.tags)
     ? data.tags.map((tag) => String(tag).trim()).filter((tag) => tag.length > 0)
     : [];
-  const detailCover = String(data.cover || "").trim() || detailCoverFallbackMap[data.category];
+  const detailCover = String(data.cover || "").trim() || null;
 
   const markdownComponents = {
     h2: ({ children, ...props }: HTMLAttributes<HTMLHeadingElement>) => {
@@ -426,12 +459,20 @@ export function PostDetailPage() {
       </div>
 
       <div className={`relative overflow-hidden rounded-2xl border shadow ${isDark ? "border-slate-700" : "border-slate-200"}`}>
-        <BlurRevealImage
-          alt={`${data.title} 封面`}
-          className="h-full w-full object-cover"
-          src={detailCover}
-          wrapperClassName="h-72"
-        />
+        {detailCover ? (
+          <BlurRevealImage
+            alt={`${data.title} 封面`}
+            className="h-full w-full object-cover"
+            src={detailCover}
+            wrapperClassName="h-72"
+          />
+        ) : (
+          <GenerativeCover
+            category={data.category}
+            className="h-72"
+            seed={data.slug}
+          />
+        )}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/18 via-transparent to-transparent" />
       </div>
 
@@ -465,6 +506,38 @@ export function PostDetailPage() {
           </div>
 
           <div className={`mt-10 space-y-4 border-t pt-5 ${isDark ? "border-slate-700" : "border-slate-200"}`}>
+            <div className="flex flex-col items-center gap-2 py-4">
+              <motion.button
+                type="button"
+                disabled={likeLoading}
+                onClick={handleToggleLike}
+                whileTap={{ scale: 0.9 }}
+                className={`flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-medium transition ${
+                  liked
+                    ? isDark
+                      ? "border-rose-400/50 bg-rose-500/20 text-rose-300 hover:bg-rose-500/30"
+                      : "border-rose-300 bg-rose-50 text-rose-600 hover:bg-rose-100"
+                    : isDark
+                      ? "border-slate-600 bg-slate-800 text-slate-300 hover:border-slate-500 hover:bg-slate-700"
+                      : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300 hover:bg-slate-100"
+                }`}
+              >
+                <motion.span
+                  key={liked ? "liked" : "unliked"}
+                  initial={{ scale: 0.6, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                  className="text-lg"
+                >
+                  {liked ? "❤️" : "🤍"}
+                </motion.span>
+                觉得不错？给这篇文章一个赞
+              </motion.button>
+              <span className={`text-sm ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+                {likesCount > 0 ? `${likesCount} 人觉得很赞` : "成为第一个点赞的人"}
+              </span>
+            </div>
+
             {postTags.length > 0 ? (
               <div className="flex flex-wrap items-center gap-2">
                 <span className={`text-sm font-medium ${isDark ? "text-slate-300" : "text-slate-500"}`}>文末标签</span>

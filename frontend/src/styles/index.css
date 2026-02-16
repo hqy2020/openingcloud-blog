@@ -101,7 +101,6 @@ pre {
 .social-ticker-track {
   display: flex;
   width: max-content;
-  min-width: 100%;
   will-change: transform;
   animation: social-ticker-scroll 24s linear infinite;
 }
@@ -109,21 +108,46 @@ pre {
 .social-ticker-segment {
   display: flex;
   align-items: center;
+  gap: 2.4rem;
   flex-shrink: 0;
+  padding-right: 2.4rem;
 }
 
-.social-ticker-pill {
+.global-slogan-strip {
+  overflow: hidden;
+}
+
+.global-slogan-label {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.global-slogan-item {
   display: inline-flex;
   align-items: center;
   white-space: nowrap;
-  margin-right: 0.8rem;
-  border-radius: 999px;
-  border: 1px solid rgba(217, 119, 6, 0.28);
-  background: rgba(255, 255, 255, 0.72);
-  color: #92400e;
-  padding: 0.32rem 0.7rem;
-  font-size: 0.78rem;
-  line-height: 1.1;
+  font-size: 0.88rem;
+  font-weight: 500;
+  line-height: 1.2;
+  opacity: 0.96;
+}
+
+@media (max-width: 640px) {
+  .social-ticker-segment {
+    gap: 1.6rem;
+    padding-right: 1.6rem;
+  }
+
+  .global-slogan-label {
+    display: none;
+  }
+
+  .global-slogan-item {
+    font-size: 0.8rem;
+  }
 }
 
 @keyframes social-ticker-scroll {

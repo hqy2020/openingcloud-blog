@@ -53,7 +53,8 @@ export function StaggerItem({ children, className }: PropsWithChildren<{ classNa
     <motion.div
       className={className}
       variants={{
-        hidden: { opacity: 0, y: 14 },
+        // Keep cards visible even before IntersectionObserver marks the section in-view.
+        hidden: { opacity: 1, y: 14 },
         visible: {
           opacity: 1,
           y: 0,

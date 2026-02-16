@@ -9,6 +9,9 @@ DEFAULT_EXCLUDED_DIR_NAMES = (
     ".trash",
     ".ai-team",
     ".claude",
+    ".cursor",
+    ".smart-env",
+    ".serena",
     "模版",
     "Templates",
 )

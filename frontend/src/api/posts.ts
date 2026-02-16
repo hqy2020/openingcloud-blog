@@ -9,6 +9,7 @@ export type PostSummary = {
   cover: string;
   draft: boolean;
   views_count: number;
+  likes_count: number;
   created_at: string;
   updated_at: string;
 };
@@ -50,4 +51,9 @@ export async function fetchPostBySlug(slug: string) {
 export async function incrementPostViews(slug: string) {
   const { data } = await apiClient.post(`/posts/${slug}/view/`);
   return data.data as { slug: string; views: number; throttled: boolean };
+}
+
+export async function togglePostLike(slug: string) {
+  const { data } = await apiClient.post(`/posts/${slug}/like/`);
+  return data.data as { slug: string; likes: number; liked: boolean };
 }
