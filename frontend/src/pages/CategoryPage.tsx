@@ -436,7 +436,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
         <meta content={categoryDescriptions[category]} name="description" />
         <meta content={`${title} | 启云博客`} property="og:title" />
         <meta content={categoryDescriptions[category]} property="og:description" />
-        <link href={`https://blog.openingclouds.com/${category}`} rel="canonical" />
+        <link href={`https://blog.oc.slgneon.cn/${category}`} rel="canonical" />
       </Helmet>
 
       <FadeIn>
@@ -562,7 +562,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
       {error ? <p className={`text-sm ${isDark ? "text-amber-300" : "text-amber-700"}`}>实时数据暂不可用，已展示静态内容。</p> : null}
 
       <div className="columns-2 gap-3 sm:gap-4">
-        {visiblePosts.map((post, index) => {
+        {visiblePosts.map((post) => {
           const isRecentlyAppended = recentlyAppendedSlugs.includes(post.slug);
           const coverSrc = resolvePostCover(post);
           return (

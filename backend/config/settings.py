@@ -26,7 +26,7 @@ DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
 
 ALLOWED_HOSTS = parse_csv_env(
     "DJANGO_ALLOWED_HOSTS",
-    "127.0.0.1,localhost,testserver,47.99.42.71,blog.openingclouds.com",
+    "127.0.0.1,localhost,testserver,47.99.42.71,blog.oc.slgneon.cn",
 )
 
 INSTALLED_APPS = [
@@ -110,6 +110,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "blog.authentication.CookieJWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.AllowAny",
@@ -128,8 +129,8 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
-CORS_DEFAULT = "http://localhost:5173,http://127.0.0.1:5173,http://47.99.42.71" if DEBUG else "https://blog.openingclouds.com"
-CSRF_DEFAULT = "http://localhost:5173,http://127.0.0.1:5173,http://47.99.42.71" if DEBUG else "https://blog.openingclouds.com"
+CORS_DEFAULT = "http://localhost:5173,http://127.0.0.1:5173,http://47.99.42.71" if DEBUG else "https://blog.oc.slgneon.cn"
+CSRF_DEFAULT = "http://localhost:5173,http://127.0.0.1:5173,http://47.99.42.71" if DEBUG else "https://blog.oc.slgneon.cn"
 
 CORS_ALLOWED_ORIGINS = parse_csv_env("DJANGO_CORS_ALLOWED_ORIGINS", CORS_DEFAULT)
 CORS_ALLOW_CREDENTIALS = True
