@@ -468,6 +468,12 @@ class HomeStatsSerializer(serializers.Serializer):
     views_total = serializers.IntegerField()
     total_words = serializers.IntegerField()
     site_days = serializers.IntegerField()
+    site_launch_date = serializers.CharField()
+    published_posts_delta_week = serializers.IntegerField()
+    views_delta_week = serializers.IntegerField()
+    total_words_delta_week = serializers.IntegerField()
+    tags_delta_week = serializers.IntegerField()
+    travel_delta_year = serializers.IntegerField()
 
 
 class HomeContactSerializer(serializers.Serializer):
