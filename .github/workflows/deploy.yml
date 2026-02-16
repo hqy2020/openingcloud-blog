@@ -112,33 +112,32 @@ jobs:
           name: frontend-dist
           path: frontend/dist
 
-      - name: Skip when deploy secrets missing
-        if: ${{ secrets.ECS_HOST == '' || secrets.ECS_USER == '' || secrets.ECS_SSH_KEY == '' }}
-        run: echo "Deployment skipped (missing ECS secrets)."
-
-      - name: Setup SSH
-        if: ${{ secrets.ECS_HOST != '' && secrets.ECS_USER != '' && secrets.ECS_SSH_KEY != '' }}
+      - name: Deploy to ECS
+        env:
+          ECS_HOST: ${{ secrets.ECS_HOST }}
+          ECS_USER: ${{ secrets.ECS_USER }}
+          ECS_SSH_KEY: ${{ secrets.ECS_SSH_KEY }}
+          BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/openingclouds-backend:${{ github.sha }}
         run: |
+          if [ -z "$ECS_HOST" ] || [ -z "$ECS_USER" ] || [ -z "$ECS_SSH_KEY" ]; then
+            echo "Deployment skipped (missing ECS secrets)."
+            exit 0
+          fi
+
           mkdir -p ~/.ssh
-          echo "${{ secrets.ECS_SSH_KEY }}" > ~/.ssh/id_rsa
+          echo "$ECS_SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.ECS_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H "$ECS_HOST" >> ~/.ssh/known_hosts
 
-      - name: Sync files to ECS
-        if: ${{ secrets.ECS_HOST != '' && secrets.ECS_USER != '' && secrets.ECS_SSH_KEY != '' }}
-        run: |
           rsync -az --delete \
             --exclude ".git" \
             --exclude "backend/.venv" \
-            ./ ${{ secrets.ECS_USER }}@${{ secrets.ECS_HOST }}:/opt/openingclouds-blog/
+            ./ "${ECS_USER}@${ECS_HOST}:/opt/openingclouds-blog/"
 
-      - name: Deploy on ECS
-        if: ${{ secrets.ECS_HOST != '' && secrets.ECS_USER != '' && secrets.ECS_SSH_KEY != '' }}
-        run: |
-          ssh ${{ secrets.ECS_USER }}@${{ secrets.ECS_HOST }} << 'EOF'
+          ssh "${ECS_USER}@${ECS_HOST}" << DEPLOY
             set -e
             cd /opt/openingclouds-blog
-            export BACKEND_IMAGE=ghcr.io/${{ github.repository_owner }}/openingclouds-backend:${{ github.sha }}
+            export BACKEND_IMAGE='${BACKEND_IMAGE}'
             docker compose pull backend || true
             docker compose up -d --remove-orphans
-          EOF
+          DEPLOY
