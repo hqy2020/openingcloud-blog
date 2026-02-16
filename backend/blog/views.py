@@ -938,11 +938,29 @@ def _home_stats_payload() -> dict:
 
     site_days = max(1, (timezone.localdate() - launch_date).days + 1)
 
+    one_week_ago = timezone.now() - timedelta(days=7)
+    posts_week_ago = published_posts.filter(created_at__lte=one_week_ago)
+    published_posts_delta_week = published_posts.count() - posts_week_ago.count()
+
+    tags_week_ago: set[str] = set()
+    for row in posts_week_ago.values_list("tags", flat=True):
+        if isinstance(row, list):
+            tags_week_ago.update(str(item) for item in row if item)
+    tags_delta_week = len(tags) - len(tags_week_ago)
+
+    words_week_ago = _count_post_words(posts_week_ago)
+    total_words_delta_week = int(total_words) - words_week_ago
+
+    one_year_ago = timezone.localdate() - timedelta(days=365)
+    travel_total = TravelPlace.objects.count()
+    travel_year_ago = TravelPlace.objects.filter(visited_at__lte=one_year_ago).count()
+    travel_delta_year = travel_total - travel_year_ago
+
     return {
         "posts_total": posts.count(),
         "published_posts_total": published_posts.count(),
         "timeline_total": TimelineNode.objects.count(),
-        "travel_total": TravelPlace.objects.count(),
+        "travel_total": travel_total,
         "social_total": SocialFriend.objects.filter(is_public=True).count(),
         "highlight_stages_total": stages.count(),
         "highlight_items_total": sum(len(stage.items.all()) for stage in stages),
@@ -950,6 +968,12 @@ def _home_stats_payload() -> dict:
         "views_total": int(views_total),
         "total_words": int(total_words),
         "site_days": int(site_days),
+        "site_launch_date": launch_date.isoformat(),
+        "published_posts_delta_week": published_posts_delta_week,
+        "views_delta_week": views_delta_week,
+        "total_words_delta_week": total_words_delta_week,
+        "tags_delta_week": tags_delta_week,
+        "travel_delta_year": travel_delta_year,
     }
 
 
