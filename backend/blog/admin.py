@@ -74,11 +74,15 @@ class ObsidianVaultRootFilter(admin.SimpleListFilter):
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ["title", "category", "draft", "views_count", "sync_source", "updated_at"]
+    list_display = ["title", "category", "is_published", "views_count", "sync_source", "updated_at"]
     list_filter = ["category", "draft", "sync_source"]
     search_fields = ["title", "slug"]
     prepopulated_fields = {"slug": ("title",)}
     readonly_fields = ["created_at", "updated_at", "last_synced_at", "views_count"]
+
+    @admin.display(boolean=True, description="已发布", ordering="draft")
+    def is_published(self, obj: Post) -> bool:
+        return not obj.draft
     fieldsets = (
         ("基础", {"fields": ("title", "slug", "excerpt", "category", "tags", "cover")}),
         ("正文", {"fields": ("content",)}),
