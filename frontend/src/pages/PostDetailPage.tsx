@@ -1,11 +1,11 @@
 import { motion, useScroll, useSpring } from "motion/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AnchorHTMLAttributes, HTMLAttributes, ImgHTMLAttributes, ReactNode } from "react";
 import { Helmet } from "react-helmet-async";
 import ReactMarkdown from "react-markdown";
 import { Link, useParams } from "react-router-dom";
 import remarkGfm from "remark-gfm";
-import { fetchPostBySlug, incrementPostViews, togglePostLike } from "../api/posts";
+import { fetchPostBySlug, fetchPostLikeStatus, incrementPostViews, togglePostLike } from "../api/posts";
 import { useTheme } from "../app/theme";
 import { BlurRevealImage } from "../components/ui/BlurRevealImage";
 import { GenerativeCover } from "../components/ui/GenerativeCover";
@@ -177,15 +177,9 @@ export function PostDetailPage() {
   const headings = useMemo(() => extractHeadings(data?.content ?? ""), [data?.content]);
   const readMinutes = useMemo(() => estimateReadingMinutes(data?.content ?? ""), [data?.content]);
 
-  const [liked, setLiked] = useState(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem("liked-posts") || "[]") as string[];
-      return stored.includes(slug);
-    } catch {
-      return false;
-    }
-  });
+  const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(data?.likes_count ?? 0);
+  const likeLoadingRef = useRef(false);
   const [likeLoading, setLikeLoading] = useState(false);
 
   useEffect(() => {
@@ -194,26 +188,31 @@ export function PostDetailPage() {
     }
   }, [data]);
 
+  useEffect(() => {
+    if (!slug) return;
+    let cancelled = false;
+    fetchPostLikeStatus(slug)
+      .then((result) => {
+        if (cancelled) return;
+        setLiked(result.liked);
+        setLikesCount(result.likes);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [slug]);
+
   const handleToggleLike = useCallback(async () => {
-    if (likeLoading || !slug) return;
+    if (likeLoadingRef.current || !slug) return;
+    likeLoadingRef.current = true;
     setLikeLoading(true);
     try {
       const result = await togglePostLike(slug);
       setLiked(result.liked);
       setLikesCount(result.likes);
-      try {
-        const stored = JSON.parse(localStorage.getItem("liked-posts") || "[]") as string[];
-        const set = new Set(stored);
-        if (result.liked) {
-          set.add(slug);
-        } else {
-          set.delete(slug);
-        }
-        localStorage.setItem("liked-posts", JSON.stringify([...set]));
-      } catch { /* ignore storage errors */ }
     } catch { /* ignore network errors */ }
+    likeLoadingRef.current = false;
     setLikeLoading(false);
-  }, [slug, likeLoading]);
+  }, [slug]);
   const headingIdLookup = useMemo(() => {
     const source = new Map<string, string[]>();
     for (const item of headings) {

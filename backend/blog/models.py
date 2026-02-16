@@ -93,6 +93,20 @@ class PostLike(models.Model):
         return f"{self.post.slug}: {self.likes}"
 
 
+class PostLikeVote(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="like_votes")
+    ip_hash = models.CharField(max_length=64, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("post", "ip_hash")
+        verbose_name = "点赞投票"
+        verbose_name_plural = "点赞投票"
+
+    def __str__(self) -> str:
+        return f"{self.post.slug}: {self.ip_hash[:8]}"
+
+
 class HomeStatsSnapshot(TimeStampedModel):
     snapshot_date = models.DateField(unique=True, db_index=True)
     views_total = models.PositiveIntegerField(default=0)

@@ -25,6 +25,7 @@ from .models import (
     PhotoWallImage,
     Post,
     PostLike,
+    PostLikeVote,
     PostView,
     SocialFriend,
     SyncLog,
@@ -233,29 +234,47 @@ class IncrementPostView(APIView):
 class TogglePostLike(APIView):
     permission_classes = [AllowAny]
 
+    @staticmethod
+    def _get_ip_hash(request) -> str:
+        import hashlib
+
+        raw = (
+            request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")[0].strip()
+            or request.META.get("REMOTE_ADDR")
+            or "unknown"
+        )
+        return hashlib.sha256(raw.encode()).hexdigest()[:32]
+
+    def get(self, request, slug):
+        try:
+            post = Post.objects.get(slug=slug, draft=False)
+        except Post.DoesNotExist:
+            return api_error("not_found", "文章不存在", status.HTTP_404_NOT_FOUND)
+
+        ip_hash = self._get_ip_hash(request)
+        liked = PostLikeVote.objects.filter(post=post, ip_hash=ip_hash).exists()
+        likes = PostLikeVote.objects.filter(post=post).count()
+        return api_ok({"slug": slug, "likes": likes, "liked": liked})
+
     def post(self, request, slug):
         try:
             post = Post.objects.get(slug=slug, draft=False)
         except Post.DoesNotExist:
             return api_error("not_found", "文章不存在", status.HTTP_404_NOT_FOUND)
 
-        ident = request.META.get("HTTP_X_FORWARDED_FOR") or request.META.get("REMOTE_ADDR") or "unknown"
-        cache_key = f"post-like:{slug}:{ident}"
+        ip_hash = self._get_ip_hash(request)
+        vote = PostLikeVote.objects.filter(post=post, ip_hash=ip_hash).first()
 
-        record, _ = PostLike.objects.get_or_create(post=post)
+        if vote:
+            vote.delete()
+            liked = False
+        else:
+            PostLikeVote.objects.create(post=post, ip_hash=ip_hash)
+            liked = True
 
-        if cache.get(cache_key):
-            # Already liked — undo
-            PostLike.objects.filter(post=post, likes__gt=0).update(likes=F("likes") - 1)
-            cache.delete(cache_key)
-            record.refresh_from_db()
-            return api_ok({"slug": slug, "likes": record.likes, "liked": False})
-
-        # Like
-        PostLike.objects.filter(post=post).update(likes=F("likes") + 1)
-        cache.set(cache_key, True, timeout=int(timedelta(days=30).total_seconds()))
-        record.refresh_from_db()
-        return api_ok({"slug": slug, "likes": record.likes, "liked": True})
+        likes = PostLikeVote.objects.filter(post=post).count()
+        PostLike.objects.update_or_create(post=post, defaults={"likes": likes})
+        return api_ok({"slug": slug, "likes": likes, "liked": liked})
 
 
 class LoginView(APIView):

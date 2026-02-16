@@ -57,3 +57,8 @@ export async function togglePostLike(slug: string) {
   const { data } = await apiClient.post(`/posts/${slug}/like/`);
   return data.data as { slug: string; likes: number; liked: boolean };
 }
+
+export async function fetchPostLikeStatus(slug: string) {
+  const { data } = await apiClient.get(`/posts/${slug}/like/`);
+  return data.data as { slug: string; likes: number; liked: boolean };
+}
