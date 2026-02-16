@@ -23,9 +23,13 @@ class LoginSerializer(serializers.Serializer):
 
 class PostListSerializer(serializers.ModelSerializer):
     views_count = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
 
     def get_views_count(self, obj):
         return getattr(getattr(obj, "view_record", None), "views", 0)
+
+    def get_likes_count(self, obj):
+        return getattr(getattr(obj, "like_record", None), "likes", 0)
 
     class Meta:
         model = Post
@@ -38,6 +42,7 @@ class PostListSerializer(serializers.ModelSerializer):
             "cover",
             "draft",
             "views_count",
+            "likes_count",
             "created_at",
             "updated_at",
         ]
@@ -45,9 +50,13 @@ class PostListSerializer(serializers.ModelSerializer):
 
 class PostDetailSerializer(serializers.ModelSerializer):
     views_count = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
 
     def get_views_count(self, obj):
         return getattr(getattr(obj, "view_record", None), "views", 0)
+
+    def get_likes_count(self, obj):
+        return getattr(getattr(obj, "like_record", None), "likes", 0)
 
     class Meta:
         model = Post
@@ -61,6 +70,7 @@ class PostDetailSerializer(serializers.ModelSerializer):
             "cover",
             "draft",
             "views_count",
+            "likes_count",
             "created_at",
             "updated_at",
         ]
@@ -181,6 +191,7 @@ class SocialFriendAdminSerializer(serializers.ModelSerializer):
             "relation",
             "stage_key",
             "honorific",
+            "gender",
             "avatar",
             "profile_url",
             "contact",
@@ -408,6 +419,8 @@ class SocialGraphNodeSerializer(serializers.Serializer):
     label = serializers.CharField()
     stage_key = serializers.CharField()
     order = serializers.IntegerField()
+    honorific = serializers.ChoiceField(choices=["mr", "ms"], allow_null=True, required=False)
+    gender = serializers.ChoiceField(choices=["male", "female", "unknown"], allow_null=True, required=False)
 
 
 class SocialGraphLinkSerializer(serializers.Serializer):

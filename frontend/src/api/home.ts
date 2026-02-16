@@ -53,6 +53,7 @@ export type SocialGraphNode = {
   stage_key: string;
   order: number;
   honorific?: "mr" | "ms" | "classmate" | "junior_m" | "junior_f" | "senior_m" | "teacher" | null;
+  gender?: "male" | "female" | "unknown" | null;
 };
 
 export type SocialGraphLink = {

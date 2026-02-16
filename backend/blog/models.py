@@ -58,6 +58,12 @@ class Post(TimeStampedModel):
             return self.view_record.views
         return 0
 
+    @property
+    def likes_count(self) -> int:
+        if hasattr(self, "like_record"):
+            return self.like_record.likes
+        return 0
+
 
 class PostView(models.Model):
     post = models.OneToOneField(Post, on_delete=models.CASCADE, related_name="view_record")
@@ -71,6 +77,33 @@ class PostView(models.Model):
 
     def __str__(self) -> str:
         return f"{self.post.slug}: {self.views}"
+
+
+class PostLike(models.Model):
+    post = models.OneToOneField(Post, on_delete=models.CASCADE, related_name="like_record")
+    likes = models.PositiveIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-likes"]
+        verbose_name = "文章点赞"
+        verbose_name_plural = "文章点赞"
+
+    def __str__(self) -> str:
+        return f"{self.post.slug}: {self.likes}"
+
+
+class HomeStatsSnapshot(TimeStampedModel):
+    snapshot_date = models.DateField(unique=True, db_index=True)
+    views_total = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["-snapshot_date"]
+        verbose_name = "首页统计快照"
+        verbose_name_plural = "首页统计快照"
+
+    def __str__(self) -> str:
+        return f"{self.snapshot_date}: {self.views_total}"
 
 
 class TimelineNode(TimeStampedModel):
@@ -146,11 +179,17 @@ class SocialFriend(TimeStampedModel):
         SENIOR_M = "senior_m", "师兄"
         TEACHER = "teacher", "老师"
 
+    class Gender(models.TextChoices):
+        MALE = "male", "男"
+        FEMALE = "female", "女"
+        UNKNOWN = "unknown", "未知"
+
     name = models.CharField(max_length=100)
     public_label = models.CharField(max_length=100)
     relation = models.CharField(max_length=100, blank=True)
     stage_key = models.CharField(max_length=20, choices=StageKey.choices, default=StageKey.CAREER)
     honorific = models.CharField(max_length=10, choices=Honorific.choices, default=Honorific.MR)
+    gender = models.CharField(max_length=10, choices=Gender.choices, default=Gender.UNKNOWN)
     avatar = models.URLField(max_length=500, blank=True)
     profile_url = models.URLField(max_length=500, blank=True)
     contact = models.CharField(max_length=255, blank=True, verbose_name="联系方式")
@@ -240,6 +279,82 @@ class HighlightItem(TimeStampedModel):
 
     def __str__(self) -> str:
         return self.title
+
+
+class ObsidianDocument(TimeStampedModel):
+    vault_path = models.CharField(max_length=500, unique=True, db_index=True)
+    title = models.CharField(max_length=255)
+    slug_candidate = models.SlugField(max_length=255, blank=True)
+    category_candidate = models.CharField(max_length=20, choices=Post.Category.choices, default=Post.Category.LEARNING)
+    tags = models.JSONField(default=list, blank=True)
+    has_publish_tag = models.BooleanField(default=False, db_index=True)
+    content = models.TextField(blank=True)
+    excerpt = models.TextField(blank=True)
+    file_hash = models.CharField(max_length=40, blank=True)
+    source_mtime = models.DateTimeField(null=True, blank=True)
+    source_exists = models.BooleanField(default=True, db_index=True)
+    first_seen_at = models.DateTimeField(null=True, blank=True)
+    last_seen_at = models.DateTimeField(null=True, blank=True)
+    last_indexed_at = models.DateTimeField(null=True, blank=True)
+    linked_post = models.ForeignKey(
+        Post,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="obsidian_documents",
+    )
+
+    class Meta:
+        ordering = ["-last_indexed_at", "vault_path"]
+        verbose_name = "Obsidian 文档池"
+        verbose_name_plural = "Obsidian 文档池"
+
+    def __str__(self) -> str:
+        return f"{self.vault_path} ({self.title})"
+
+
+class ObsidianSyncRun(TimeStampedModel):
+    class Trigger(models.TextChoices):
+        SCHEDULED = "scheduled", "定时"
+        MANUAL = "manual", "手动"
+
+    class Status(models.TextChoices):
+        SUCCESS = "success", "成功"
+        FAILED = "failed", "失败"
+
+    trigger = models.CharField(max_length=20, choices=Trigger.choices, default=Trigger.MANUAL)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.SUCCESS)
+    repo_url = models.CharField(max_length=500, blank=True)
+    repo_branch = models.CharField(max_length=100, blank=True)
+    repo_commit = models.CharField(max_length=64, blank=True)
+    scanned_count = models.PositiveIntegerField(default=0)
+    created_count = models.PositiveIntegerField(default=0)
+    updated_count = models.PositiveIntegerField(default=0)
+    missing_count = models.PositiveIntegerField(default=0)
+    published_updated_count = models.PositiveIntegerField(default=0)
+    drafted_count = models.PositiveIntegerField(default=0)
+    started_at = models.DateTimeField()
+    finished_at = models.DateTimeField()
+    duration_ms = models.PositiveIntegerField(default=0)
+    message = models.TextField(blank=True)
+    operator = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="obsidian_sync_runs",
+    )
+
+    class Meta:
+        ordering = ["-started_at", "-id"]
+        verbose_name = "Obsidian 同步运行"
+        verbose_name_plural = "Obsidian 同步运行"
+
+    def __str__(self) -> str:
+        return (
+            f"{self.started_at:%Y-%m-%d %H:%M:%S} "
+            f"[{self.get_trigger_display()}] {self.get_status_display()}"
+        )
 
 
 class SyncLog(TimeStampedModel):

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentType } from "react";
-import type { BirthdayReminder, SocialGraphLink, SocialGraphNode, SocialTicker } from "../../api/home";
+import type { SocialGraphLink, SocialGraphNode } from "../../api/home";
 import { ScrollReveal } from "../motion/ScrollReveal";
 import { StaggerContainer, StaggerItem } from "../motion/StaggerContainer";
 import { CardSpotlight } from "../ui/CardSpotlight";
@@ -8,8 +8,6 @@ import { CardSpotlight } from "../ui/CardSpotlight";
 type SocialGraphSectionProps = {
   nodes: SocialGraphNode[];
   links: SocialGraphLink[];
-  birthdayReminders: BirthdayReminder[];
-  socialTicker?: SocialTicker | null;
 };
 
 type GraphNode = SocialGraphNode & {
@@ -58,23 +56,6 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
-function toIsoDateText(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function toWeekdayText(date: Date) {
-  const labels = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
-  return labels[date.getDay()] ?? "周?";
-}
-
-function fallbackTickerMessage() {
-  const now = new Date();
-  return `今天是 ${toIsoDateText(now)}（${toWeekdayText(now)}），节假日数据暂不可用。`;
-}
-
 function toNodeId(input: unknown) {
   if (typeof input === "string") {
     return input;
@@ -89,6 +70,12 @@ function toNodeId(input: unknown) {
 function resolveFriendTone(node: GraphNode) {
   if (node.type !== "friend") {
     return "neutral";
+  }
+  if (node.gender === "female") {
+    return "female";
+  }
+  if (node.gender === "male") {
+    return "male";
   }
   if (node.honorific === "ms") {
     return "female";
@@ -111,7 +98,7 @@ function unwrapDefault<T>(moduleValue: unknown): T {
   return second as T;
 }
 
-export function SocialGraphSection({ nodes, links, birthdayReminders, socialTicker }: SocialGraphSectionProps) {
+export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const graphRef = useRef<ForceGraphRuntime | null>(null);
   const [graphSize, setGraphSize] = useState({ width: 960, height: 440 });
@@ -209,32 +196,6 @@ export function SocialGraphSection({ nodes, links, birthdayReminders, socialTick
     [nodes],
   );
   const hasCompleteGraphData = stageNodes.length > 0 && friendNodes.length > 0 && links.length > 0;
-  const tickerMode = useMemo(() => {
-    const normalizedMode = socialTicker?.mode;
-    if (normalizedMode === "birthday" || normalizedMode === "holiday") {
-      return normalizedMode;
-    }
-    return birthdayReminders.length > 0 ? "birthday" : "holiday";
-  }, [birthdayReminders.length, socialTicker?.mode]);
-  const tickerTitle = tickerMode === "birthday" ? "生日提醒（未来 7 天）" : "今日日期与节假日";
-  const tickerMessages = useMemo(() => {
-    const fromSocialTicker =
-      socialTicker?.items
-        ?.map((item) => String(item?.message || "").trim())
-        .filter((item) => item.length > 0) ?? [];
-    if (fromSocialTicker.length > 0) {
-      return fromSocialTicker;
-    }
-
-    const fromBirthdayReminders = birthdayReminders
-      .map((item) => String(item.message || "").trim())
-      .filter((item) => item.length > 0);
-    if (fromBirthdayReminders.length > 0) {
-      return fromBirthdayReminders;
-    }
-
-    return [fallbackTickerMessage()];
-  }, [birthdayReminders, socialTicker?.items]);
 
   const graphData = useMemo<ForceGraphData>(() => {
     if (!hasCompleteGraphData) {
@@ -319,8 +280,8 @@ export function SocialGraphSection({ nodes, links, birthdayReminders, socialTick
           id: `${source.id}-${target.id}-${index}`,
           source: source.id,
           target: target.id,
-          distance: connectsStage ? (sameStage ? 86 : 106) : 70,
-          strength: connectsStage ? 0.28 : 0.16,
+          distance: connectsStage ? (sameStage ? 100 : 128) : 84,
+          strength: connectsStage ? 0.24 : 0.14,
         };
       })
       .filter((item): item is GraphLink => item !== null);
@@ -389,12 +350,12 @@ export function SocialGraphSection({ nodes, links, birthdayReminders, socialTick
     const linkForce = graph.d3Force("link") as ForceLinkRuntime | undefined;
     linkForce?.distance?.((link) => link.distance);
     linkForce?.strength?.((link) => link.strength);
-    linkForce?.iterations?.(2);
+    linkForce?.iterations?.(3);
 
     const chargeForce = graph.d3Force("charge") as ForceChargeRuntime | undefined;
-    chargeForce?.strength?.((node) => (node.type === "stage" ? -240 : -108));
+    chargeForce?.strength?.((node) => (node.type === "stage" ? -320 : -140));
     chargeForce?.distanceMin?.(20);
-    chargeForce?.distanceMax?.(340);
+    chargeForce?.distanceMax?.(420);
 
     const centerForce = graph.d3Force("center") as ForceCenterRuntime | undefined;
     centerForce?.x?.(graphSize.width / 2);
@@ -402,7 +363,7 @@ export function SocialGraphSection({ nodes, links, birthdayReminders, socialTick
 
     graph.d3ReheatSimulation();
     const fitTimer = window.setTimeout(() => {
-      graph.zoomToFit(620, 78);
+      graph.zoomToFit(620, 88);
     }, 260);
 
     return () => {
@@ -417,27 +378,6 @@ export function SocialGraphSection({ nodes, links, birthdayReminders, socialTick
         <span className="text-sm text-slate-500">公开匿名节点：{friendNodes.length}</span>
       </div>
 
-      {tickerMessages.length > 0 ? (
-        <div className="overflow-hidden rounded-xl border border-amber-300/70 bg-amber-100/85 text-amber-900 shadow-sm">
-          <div className="flex items-center gap-2 border-b border-amber-300/55 px-3 py-1.5 text-xs font-medium">
-            <span>{tickerTitle}</span>
-          </div>
-          <div className="overflow-hidden px-2 py-2">
-            <div className="social-ticker-track">
-              {[0, 1].map((copy) => (
-                <div key={copy} className="social-ticker-segment">
-                  {tickerMessages.map((message, index) => (
-                    <span key={`${copy}-${index}`} className="social-ticker-pill">
-                      {message}
-                    </span>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : null}
-
       <div ref={hostRef} className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 p-2 text-slate-100 shadow-sm">
         {hasCompleteGraphData ? (
           <div className="relative mx-auto overflow-hidden rounded-xl" style={{ width: graphSize.width, height: graphSize.height }}>
@@ -446,9 +386,9 @@ export function SocialGraphSection({ nodes, links, birthdayReminders, socialTick
                 ref={graphRef}
                 autoPauseRedraw={false}
                 backgroundColor="#020617"
-                cooldownTicks={2400}
-                d3AlphaDecay={0.02}
-                d3VelocityDecay={0.24}
+                cooldownTicks={2800}
+                d3AlphaDecay={0.018}
+                d3VelocityDecay={0.28}
                 enableNodeDrag
                 enablePanInteraction
                 enableZoomInteraction
@@ -491,11 +431,11 @@ export function SocialGraphSection({ nodes, links, birthdayReminders, socialTick
 
                   canvasContext.beginPath();
                   canvasContext.arc(x, y, radius + (isHovered ? 1.2 / viewScale : 0), 0, Math.PI * 2);
-                  let nodeFill = "rgba(203,213,225,0.95)";
+                  let nodeFill = "rgba(148,163,184,0.95)";
                   if (tone === "female") {
-                    nodeFill = "rgba(249,168,212,0.98)";
+                    nodeFill = "rgba(244,114,182,0.98)";
                   } else if (tone === "male") {
-                    nodeFill = "rgba(147,197,253,0.98)";
+                    nodeFill = "rgba(96,165,250,0.98)";
                   }
                   canvasContext.fillStyle = dimmed
                     ? "rgba(148,163,184,0.32)"

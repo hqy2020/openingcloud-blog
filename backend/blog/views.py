@@ -19,7 +19,18 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import HighlightItem, HighlightStage, PhotoWallImage, Post, PostView, SocialFriend, SyncLog, TimelineNode, TravelPlace
+from .models import (
+    HighlightItem,
+    HighlightStage,
+    PhotoWallImage,
+    Post,
+    PostLike,
+    PostView,
+    SocialFriend,
+    SyncLog,
+    TimelineNode,
+    TravelPlace,
+)
 from .permissions import IsStaffOrSyncToken, IsStaffUser
 from .serializers import (
     AdminImageUploadSerializer,
@@ -158,7 +169,7 @@ class PostListView(generics.ListAPIView):
     permission_classes = [AllowAny]
 
     def get_queryset(self):
-        queryset = Post.objects.filter(draft=False).select_related("view_record")
+        queryset = Post.objects.filter(draft=False).select_related("view_record", "like_record")
         category = self.request.query_params.get("category")
         tag = self.request.query_params.get("tag")
         sort = self.request.query_params.get("sort", "latest")
@@ -189,7 +200,7 @@ class PostDetailView(generics.RetrieveAPIView):
     lookup_field = "slug"
 
     def get_queryset(self):
-        return Post.objects.filter(draft=False).select_related("view_record")
+        return Post.objects.filter(draft=False).select_related("view_record", "like_record")
 
     def retrieve(self, request, *args, **kwargs):
         response = super().retrieve(request, *args, **kwargs)
@@ -217,6 +228,34 @@ class IncrementPostView(APIView):
 
         record = PostView.objects.get(post=post)
         return api_ok({"slug": slug, "views": record.views, "throttled": False})
+
+
+class TogglePostLike(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, slug):
+        try:
+            post = Post.objects.get(slug=slug, draft=False)
+        except Post.DoesNotExist:
+            return api_error("not_found", "文章不存在", status.HTTP_404_NOT_FOUND)
+
+        ident = request.META.get("HTTP_X_FORWARDED_FOR") or request.META.get("REMOTE_ADDR") or "unknown"
+        cache_key = f"post-like:{slug}:{ident}"
+
+        record, _ = PostLike.objects.get_or_create(post=post)
+
+        if cache.get(cache_key):
+            # Already liked — undo
+            PostLike.objects.filter(post=post, likes__gt=0).update(likes=F("likes") - 1)
+            cache.delete(cache_key)
+            record.refresh_from_db()
+            return api_ok({"slug": slug, "likes": record.likes, "liked": False})
+
+        # Like
+        PostLike.objects.filter(post=post).update(likes=F("likes") + 1)
+        cache.set(cache_key, True, timeout=int(timedelta(days=30).total_seconds()))
+        record.refresh_from_db()
+        return api_ok({"slug": slug, "likes": record.likes, "liked": True})
 
 
 class LoginView(APIView):
@@ -811,6 +850,8 @@ def _social_graph_payload(*, show_real_name: bool = False) -> dict:
                 "label": label,
                 "stage_key": key,
                 "order": order,
+                "honorific": None,
+                "gender": None,
             }
         )
 
@@ -826,6 +867,8 @@ def _social_graph_payload(*, show_real_name: bool = False) -> dict:
                 "label": friend_label,
                 "stage_key": friend.stage_key,
                 "order": 1000 + friend.sort_order,
+                "honorific": friend.honorific,
+                "gender": friend.gender,
             }
         )
         links.append({"source": stage_id, "target": node_id})
@@ -848,6 +891,21 @@ def _photo_wall_payload() -> list[dict]:
     return normalized
 
 
+def _collect_post_tags(queryset) -> set[str]:
+    tags: set[str] = set()
+    for row in queryset.values_list("tags", flat=True):
+        if isinstance(row, list):
+            tags.update(str(item).strip() for item in row if str(item).strip())
+    return tags
+
+
+def _count_post_words(queryset) -> int:
+    return sum(
+        len(str(content or "").replace(" ", "").replace("\n", "").replace("\t", ""))
+        for content in queryset.values_list("content", flat=True)
+    )
+
+
 def _home_stats_payload() -> dict:
     posts = Post.objects.all()
     published_posts = posts.filter(draft=False)
@@ -857,6 +915,8 @@ def _home_stats_payload() -> dict:
             tags.update(str(item) for item in row if item)
 
     views_total = PostView.objects.aggregate(total=Sum("views"))["total"] or 0
+    views_total = int(views_total)
+    views_delta_week = 0
 
     stages = HighlightStage.objects.prefetch_related("items")
     total_words = sum(len(str(content or "").replace(" ", "").replace("\n", "").replace("\t", "")) for content in published_posts.values_list("content", flat=True))

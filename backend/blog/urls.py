@@ -39,6 +39,7 @@ from .views import (
     PostListView,
     SocialGraphView,
     TimelineView,
+    TogglePostLike,
     TravelView,
 )
 
@@ -48,6 +49,7 @@ urlpatterns = [
     path("posts/", PostListView.as_view(), name="posts-list"),
     path("posts/<slug:slug>/", PostDetailView.as_view(), name="posts-detail"),
     path("posts/<slug:slug>/view/", IncrementPostView.as_view(), name="posts-view"),
+    path("posts/<slug:slug>/like/", TogglePostLike.as_view(), name="posts-like"),
     path("timeline/", TimelineView.as_view(), name="timeline"),
     path("highlights/", HighlightsView.as_view(), name="highlights"),
     path("travel/", TravelView.as_view(), name="travel"),
