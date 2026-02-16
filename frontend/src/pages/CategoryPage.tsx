@@ -83,8 +83,8 @@ function formatViews(value: number) {
 }
 
 function estimateReadMinutes(post: PostSummary) {
-  const estimatedWords = Math.max(80, Math.round((post.excerpt || "").length * 2.6));
-  return Math.max(1, Math.round(estimatedWords / 280));
+  const words = post.word_count || 0;
+  return Math.max(1, Math.round(words / 280));
 }
 
 export function CategoryPage({ category, title }: CategoryPageProps) {
@@ -380,7 +380,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
 
   const visual = visuals[category];
   const estimatedWords = useMemo(
-    () => effectivePosts.reduce((sum, post) => sum + Math.max(0, Math.round((post.excerpt || "").length * 2.6)), 0),
+    () => effectivePosts.reduce((sum, post) => sum + (post.word_count || 0), 0),
     [effectivePosts],
   );
   const visiblePosts = useMemo(() => {

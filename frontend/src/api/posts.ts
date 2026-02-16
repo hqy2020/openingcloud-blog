@@ -10,6 +10,7 @@ export type PostSummary = {
   draft: boolean;
   views_count: number;
   likes_count: number;
+  word_count: number;
   created_at: string;
   updated_at: string;
 };

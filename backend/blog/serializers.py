@@ -24,12 +24,17 @@ class LoginSerializer(serializers.Serializer):
 class PostListSerializer(serializers.ModelSerializer):
     views_count = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
+    word_count = serializers.SerializerMethodField()
 
     def get_views_count(self, obj):
         return getattr(getattr(obj, "view_record", None), "views", 0)
 
     def get_likes_count(self, obj):
         return getattr(getattr(obj, "like_record", None), "likes", 0)
+
+    def get_word_count(self, obj):
+        content = obj.content or ""
+        return len(content.replace(" ", "").replace("\n", "").replace("\t", ""))
 
     class Meta:
         model = Post
@@ -43,6 +48,7 @@ class PostListSerializer(serializers.ModelSerializer):
             "draft",
             "views_count",
             "likes_count",
+            "word_count",
             "created_at",
             "updated_at",
         ]
