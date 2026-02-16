@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-python manage.py migrate --noinput
+python manage.py migrate --noinput || echo "WARNING: migrate failed, continuing startup"
 python manage.py collectstatic --noinput
 
 exec gunicorn config.wsgi:application \

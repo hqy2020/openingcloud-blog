@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-DOMAIN=${1:-openingclouds.ccwu.cc}
+DOMAIN=${1:-blog.oc.slgneon.cn}
 EMAIL=${2:-}
 
 if [ -z "$EMAIL" ]; then

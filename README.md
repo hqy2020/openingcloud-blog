@@ -99,7 +99,7 @@ python manage.py sqlite_write_stress_test --concurrency 10 --rounds 20 --strict 
 
 ```bash
 # 1) issue certificate
-./scripts/init_https_certbot.sh blog.openingclouds.com your-email@example.com
+./scripts/init_https_certbot.sh blog.oc.slgneon.cn your-email@example.com
 
 # 2) start HTTPS stack
 ./scripts/start_https_stack.sh

@@ -73,7 +73,7 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "--remote-base-url",
-            default="https://blog.openingclouds.com/api",
+            default="https://blog.oc.slgneon.cn/api",
             help="Remote API base URL (used when --target remote)",
         )
         parser.add_argument(

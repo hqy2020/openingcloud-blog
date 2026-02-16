@@ -179,7 +179,7 @@ export function HomePage() {
         <meta content="启云博客" property="og:title" />
         <meta content="在云层之上，记录技术、效率与生活。" property="og:description" />
         <meta content="/og-cloudscape-card.png" property="og:image" />
-        <link href="https://blog.openingclouds.com/" rel="canonical" />
+        <link href="https://blog.oc.slgneon.cn/" rel="canonical" />
       </Helmet>
 
       {loading ? <p className="text-sm text-slate-500">首页数据加载中...</p> : null}
