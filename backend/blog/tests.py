@@ -340,6 +340,23 @@ class ApiTests(TestCase):
         labels = {node["label"] for node in friend_nodes}
         self.assertIn("杨女士", labels)
 
+    def test_social_graph_custom_honorific_masks_with_selected_suffix(self):
+        SocialFriend.objects.create(
+            name="王五",
+            public_label="一位同门",
+            relation="实验室伙伴",
+            stage_key=SocialFriend.StageKey.ZJU,
+            honorific=SocialFriend.Honorific.CLASSMATE,
+            is_public=True,
+            sort_order=4,
+        )
+
+        resp = self.client.get(reverse("social-graph"))
+        self.assertEqual(resp.status_code, 200)
+        friend_nodes = [node for node in resp.data["data"]["nodes"] if node["type"] == "friend"]
+        labels = {node["label"] for node in friend_nodes}
+        self.assertIn("王同学", labels)
+
     def test_photo_wall_api_only_returns_public_remote_images(self):
         resp = self.client.get(reverse("photo-wall"))
         self.assertEqual(resp.status_code, 200)

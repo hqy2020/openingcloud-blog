@@ -140,6 +140,11 @@ class SocialFriend(TimeStampedModel):
     class Honorific(models.TextChoices):
         MR = "mr", "先生"
         MS = "ms", "女士"
+        CLASSMATE = "classmate", "同学"
+        JUNIOR_M = "junior_m", "学弟"
+        JUNIOR_F = "junior_f", "学妹"
+        SENIOR_M = "senior_m", "师兄"
+        TEACHER = "teacher", "老师"
 
     name = models.CharField(max_length=100)
     public_label = models.CharField(max_length=100)
@@ -167,6 +172,9 @@ class SocialFriend(TimeStampedModel):
             return self.public_label
 
         first_char = base_name[0]
+        if self.honorific not in {self.Honorific.MR, self.Honorific.MS}:
+            return f"{first_char}{self.get_honorific_display()}"
+
         context_text = f"{self.relation or ''} {self.public_label or ''}"
         female_markers = ("女士", "女友", "妻", "太太", "妈妈", "母亲", "姐姐", "妹妹", "闺蜜", "情侣")
         male_markers = ("先生", "男友", "丈夫", "爸爸", "父亲", "哥哥", "弟弟", "师兄")

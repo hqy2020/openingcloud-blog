@@ -52,7 +52,7 @@ export type SocialGraphNode = {
   label: string;
   stage_key: string;
   order: number;
-  honorific?: "mr" | "ms" | null;
+  honorific?: "mr" | "ms" | "classmate" | "junior_m" | "junior_f" | "senior_m" | "teacher" | null;
 };
 
 export type SocialGraphLink = {
@@ -68,7 +68,7 @@ export type SocialGraphPayload = {
 export type BirthdayReminder = {
   node_id: string;
   display_name: string;
-  honorific: "mr" | "ms";
+  honorific: "mr" | "ms" | "classmate" | "junior_m" | "junior_f" | "senior_m" | "teacher";
   days_until: number;
   birthday: string;
   message: string;
@@ -81,7 +81,7 @@ export type SocialTickerItem = {
   date: string;
   holiday_name: string | null;
   node_id: string | null;
-  honorific: "mr" | "ms" | null;
+  honorific: "mr" | "ms" | "classmate" | "junior_m" | "junior_f" | "senior_m" | "teacher" | null;
 };
 
 export type SocialTicker = {
