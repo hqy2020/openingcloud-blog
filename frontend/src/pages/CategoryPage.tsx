@@ -608,7 +608,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
                   ) : (
                     <GenerativeCover
                       category={category}
-                      className="aspect-[4/3]"
+                      className="aspect-[3/1]"
                       seed={post.slug}
                     />
                   )}

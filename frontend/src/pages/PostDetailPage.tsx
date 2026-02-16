@@ -144,7 +144,7 @@ function resolveMarkdownAssetUrl(src: string) {
 
   try {
     const parsed = new URL(value);
-    const isLegacyHost = parsed.hostname.toLowerCase() === "blog.openingclouds.com";
+    const isLegacyHost = parsed.hostname.toLowerCase() === "blog.oc.slgneon.cn";
     if (isLegacyHost && typeof window !== "undefined" && window.location.hostname !== parsed.hostname) {
       return `${window.location.origin}${parsed.pathname}${parsed.search}${parsed.hash}`;
     }
@@ -417,7 +417,7 @@ export function PostDetailPage() {
               }
               try {
                 const parsed = new URL(img.currentSrc || img.src, window.location.origin);
-                if (parsed.hostname.toLowerCase() !== "blog.openingclouds.com") {
+                if (parsed.hostname.toLowerCase() !== "blog.oc.slgneon.cn") {
                   return;
                 }
                 img.dataset.fallbackTried = "1";
@@ -449,7 +449,7 @@ export function PostDetailPage() {
         <meta content={data.title} property="og:title" />
         <meta content={data.excerpt || "启云博客文章详情"} property="og:description" />
         <meta content={detailCover || "/og-cloudscape-card.png"} property="og:image" />
-        <link href={`https://blog.openingclouds.com/posts/${data.slug}`} rel="canonical" />
+        <link href={`https://blog.oc.slgneon.cn/posts/${data.slug}`} rel="canonical" />
       </Helmet>
 
       <div
@@ -469,7 +469,7 @@ export function PostDetailPage() {
         ) : (
           <GenerativeCover
             category={data.category}
-            className="h-72"
+            className="h-40"
             seed={data.slug}
           />
         )}
