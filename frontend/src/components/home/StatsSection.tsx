@@ -13,10 +13,10 @@ type DeltaKey =
   | "published_posts_delta_week"
   | "views_delta_week"
   | "total_words_delta_week"
-  | "tags_delta_week"
+  | "likes_delta_week"
   | "travel_delta_year";
 
-type StatValueKey = "published_posts_total" | "views_total" | "total_words" | "travel_total" | "site_days" | "tags_total";
+type StatValueKey = "published_posts_total" | "views_total" | "total_words" | "likes_total" | "travel_total" | "site_days";
 
 type StatItem = {
   key: StatValueKey;
@@ -30,9 +30,9 @@ const statItems: StatItem[] = [
   { key: "published_posts_total", label: "已发布文章", deltaKey: "published_posts_delta_week", deltaLabel: "较上周" },
   { key: "views_total", label: "总阅读量", deltaKey: "views_delta_week", deltaLabel: "较上周" },
   { key: "total_words", label: "总字数", deltaKey: "total_words_delta_week", deltaLabel: "较上周" },
+  { key: "likes_total", label: "点赞数", deltaKey: "likes_delta_week", deltaLabel: "较上周" },
   { key: "travel_total", label: "旅行城市", deltaKey: "travel_delta_year", deltaLabel: "较去年" },
   { key: "site_days", label: "建站天数", note: (stats) => `起算于 ${stats.site_launch_date}` },
-  { key: "tags_total", label: "标签数", deltaKey: "tags_delta_week", deltaLabel: "较上周" },
 ];
 
 const numberFormatter = new Intl.NumberFormat("zh-CN");

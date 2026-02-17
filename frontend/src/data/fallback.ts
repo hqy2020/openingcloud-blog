@@ -155,6 +155,8 @@ export const fallbackHomePayload: HomePayload = {
     total_words_delta_week: 0,
     tags_delta_week: 0,
     travel_delta_year: 0,
+    likes_total: 0,
+    likes_delta_week: 0,
   },
   contact: {
     email: "hqy200091@163.com",

@@ -480,6 +480,8 @@ class HomeStatsSerializer(serializers.Serializer):
     total_words_delta_week = serializers.IntegerField()
     tags_delta_week = serializers.IntegerField()
     travel_delta_year = serializers.IntegerField()
+    likes_total = serializers.IntegerField()
+    likes_delta_week = serializers.IntegerField()
 
 
 class HomeContactSerializer(serializers.Serializer):

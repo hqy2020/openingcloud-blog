@@ -975,6 +975,9 @@ def _home_stats_payload() -> dict:
     travel_year_ago = TravelPlace.objects.filter(visited_at__lte=one_year_ago).count()
     travel_delta_year = travel_total - travel_year_ago
 
+    likes_total = PostLike.objects.aggregate(total=Sum("likes"))["total"] or 0
+    likes_delta_week = PostLikeVote.objects.filter(created_at__gte=one_week_ago).count()
+
     return {
         "posts_total": posts.count(),
         "published_posts_total": published_posts.count(),
@@ -993,6 +996,8 @@ def _home_stats_payload() -> dict:
         "total_words_delta_week": total_words_delta_week,
         "tags_delta_week": tags_delta_week,
         "travel_delta_year": travel_delta_year,
+        "likes_total": int(likes_total),
+        "likes_delta_week": likes_delta_week,
     }
 
 
