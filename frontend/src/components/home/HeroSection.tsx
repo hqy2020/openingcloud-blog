@@ -1,5 +1,6 @@
-import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useGithubFollowers } from "../../hooks/useGithubFollowers";
 import { HeroAtmosphereCanvas } from "./hero/HeroAtmosphereCanvas";
 
 type HeroSectionProps = {
@@ -10,9 +11,97 @@ type HeroSectionProps = {
     fallback_image: string;
     fallback_video: string;
   };
+  githubUrl: string;
 };
 
-export function HeroSection({ hero }: HeroSectionProps) {
+const DEFAULT_GITHUB_PROFILE = "https://github.com/hqy2020";
+
+function resolveGithubProfile(url: string) {
+  const raw = String(url || "").trim();
+  if (!raw) {
+    return {
+      profileUrl: DEFAULT_GITHUB_PROFILE,
+      handle: "hqy2020",
+    };
+  }
+
+  try {
+    const candidate = raw.startsWith("http://") || raw.startsWith("https://") ? raw : `https://${raw}`;
+    const parsed = new URL(candidate);
+    const pathSegments = parsed.pathname.split("/").filter(Boolean);
+    const handle = (pathSegments[0] ?? "").replace(/^@/, "");
+    if (parsed.hostname.toLowerCase().endsWith("github.com") && handle) {
+      return {
+        profileUrl: `https://github.com/${handle}`,
+        handle,
+      };
+    }
+    return {
+      profileUrl: candidate,
+      handle: "GitHub",
+    };
+  } catch {
+    return {
+      profileUrl: DEFAULT_GITHUB_PROFILE,
+      handle: "hqy2020",
+    };
+  }
+}
+
+function AnimatedFollowerCount({ value }: { value: number }) {
+  const reduceMotion = Boolean(useReducedMotion());
+  const [display, setDisplay] = useState(0);
+  const previousRef = useRef(0);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      setDisplay(value);
+      previousRef.current = value;
+      return;
+    }
+
+    let raf = 0;
+    const start = performance.now();
+    const duration = 700;
+    const from = previousRef.current;
+    const delta = value - from;
+
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - start) / duration);
+      setDisplay(Math.round(from + delta * progress));
+      if (progress < 1) {
+        raf = window.requestAnimationFrame(tick);
+      } else {
+        previousRef.current = value;
+      }
+    };
+
+    raf = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(raf);
+  }, [value, reduceMotion]);
+
+  return <>{display.toLocaleString("zh-CN")}</>;
+}
+
+function FollowerBadge({ count }: { count: number | null }) {
+  return (
+    <AnimatePresence>
+      {count !== null && (
+        <motion.span
+          initial={{ opacity: 0, scale: 0.8, width: 0 }}
+          animate={{ opacity: 1, scale: 1, width: "auto" }}
+          exit={{ opacity: 0, scale: 0.8, width: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="inline-flex items-center overflow-hidden rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium tabular-nums"
+        >
+          <AnimatedFollowerCount value={count} />
+        </motion.span>
+      )}
+    </AnimatePresence>
+  );
+}
+
+export function HeroSection({ hero, githubUrl }: HeroSectionProps) {
   const [index, setIndex] = useState(0);
   const [mobile, setMobile] = useState(false);
   const [allowVideo, setAllowVideo] = useState(false);
@@ -53,6 +142,9 @@ export function HeroSection({ hero }: HeroSectionProps) {
   }, []);
 
   const activeSlogan = useMemo(() => hero.slogans[index] ?? hero.slogans[0] ?? "", [hero.slogans, index]);
+  const githubProfile = useMemo(() => resolveGithubProfile(githubUrl), [githubUrl]);
+  const followLabel = githubProfile.handle === "GitHub" ? "关注 GitHub" : `关注 GitHub @${githubProfile.handle}`;
+  const followers = useGithubFollowers(githubProfile.handle);
 
   return (
     <section className="relative left-1/2 min-h-[100vh] w-screen -translate-x-1/2 overflow-hidden bg-[#1C2E57] text-white">
@@ -104,6 +196,29 @@ export function HeroSection({ hero }: HeroSectionProps) {
         </motion.h1>
 
         <p className="mt-4 max-w-2xl text-base text-slate-200 sm:text-lg">{hero.subtitle}</p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45, duration: 0.45, ease: "easeOut" }}
+          className="group relative mt-8"
+        >
+          <div className="pointer-events-none absolute -inset-3 rounded-full bg-[#4F6AE5]/0 blur-xl transition-colors duration-300 group-hover:bg-[#4F6AE5]/15" />
+          <a
+            aria-label={followLabel}
+            className="relative inline-flex items-center gap-2.5 rounded-full border border-white/35 bg-white/10 px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(10,22,62,0.35)] backdrop-blur transition-all duration-200 hover:scale-[1.03] hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/75"
+            href={githubProfile.profileUrl}
+            rel="noopener noreferrer"
+            target="_blank"
+            title="打开 GitHub 主页并关注"
+          >
+            <svg aria-hidden="true" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.59 2 12.25c0 4.53 2.87 8.38 6.84 9.74.5.1.68-.22.68-.49 0-.24-.01-.88-.01-1.73-2.78.62-3.37-1.38-3.37-1.38-.46-1.2-1.11-1.52-1.11-1.52-.91-.63.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.35 1.12 2.92.86.09-.67.35-1.12.63-1.37-2.22-.26-4.55-1.14-4.55-5.08 0-1.12.39-2.04 1.03-2.76-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05A9.3 9.3 0 0 1 12 6.45c.85 0 1.7.12 2.5.36 1.9-1.33 2.74-1.05 2.74-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.64 1.03 2.76 0 3.95-2.33 4.82-4.56 5.08.36.32.67.95.67 1.91 0 1.38-.01 2.5-.01 2.84 0 .27.18.6.69.49A10.26 10.26 0 0 0 22 12.25C22 6.59 17.52 2 12 2z" />
+            </svg>
+            <span>{followLabel}</span>
+            <FollowerBadge count={followers} />
+          </a>
+        </motion.div>
 
         <div className="mt-10 h-16 overflow-hidden">
           <AnimatePresence mode="wait">
