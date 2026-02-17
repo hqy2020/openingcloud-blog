@@ -185,7 +185,7 @@ export function HomePage() {
       {loading ? <p className="text-sm text-slate-500">首页数据加载中...</p> : null}
       {!loading && error ? <p className="text-sm text-amber-700">实时数据暂不可用，已展示静态内容。</p> : null}
 
-      <HeroSection hero={payload.hero} />
+      <HeroSection hero={payload.hero} githubUrl={payload.contact?.github ?? fallbackHomePayload.contact.github} />
       <TimelineSection nodes={timelineNodes} />
       <HighlightsSection stages={highlightStages} />
       <TravelSection travel={payload.travel} />
