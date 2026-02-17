@@ -225,12 +225,11 @@ def sync_post_payload(
                         existing.cover = data["cover"]
                         changed_fields.add("cover")
 
-                    existing.category = data["category"]
                     existing.draft = False
                     existing.obsidian_path = data["obsidian_path"]
                     existing.last_synced_at = now
                     existing.sync_source = Post.SyncSource.OBSIDIAN
-                    changed_fields.update(["category", "draft", "obsidian_path", "last_synced_at", "sync_source"])
+                    changed_fields.update(["draft", "obsidian_path", "last_synced_at", "sync_source"])
 
                     existing.save(update_fields=sorted(changed_fields))
                     post = existing
@@ -238,6 +237,8 @@ def sync_post_payload(
                 else:
                     if existing:
                         for key, value in defaults.items():
+                            if key == "category":
+                                continue
                             setattr(existing, key, value)
                         existing.slug = data["slug"]
                         existing.save()
