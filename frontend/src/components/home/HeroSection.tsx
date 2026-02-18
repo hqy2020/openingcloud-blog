@@ -12,6 +12,7 @@ type HeroSectionProps = {
     fallback_video: string;
   };
   githubUrl: string;
+  siteVisits?: number;
 };
 
 const DEFAULT_GITHUB_PROFILE = "https://github.com/hqy2020";
@@ -101,7 +102,7 @@ function FollowerBadge({ count }: { count: number | null }) {
   );
 }
 
-export function HeroSection({ hero, githubUrl }: HeroSectionProps) {
+export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
   const [index, setIndex] = useState(0);
   const [mobile, setMobile] = useState(false);
   const [allowVideo, setAllowVideo] = useState(false);
@@ -201,23 +202,41 @@ export function HeroSection({ hero, githubUrl }: HeroSectionProps) {
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.45, duration: 0.45, ease: "easeOut" }}
-          className="group relative mt-8"
+          className="mt-8 flex flex-wrap items-center justify-center gap-3"
         >
-          <div className="pointer-events-none absolute -inset-3 rounded-full bg-[#4F6AE5]/0 blur-xl transition-colors duration-300 group-hover:bg-[#4F6AE5]/15" />
-          <a
-            aria-label={followLabel}
-            className="relative inline-flex items-center gap-2.5 rounded-full border border-white/35 bg-white/10 px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(10,22,62,0.35)] backdrop-blur transition-all duration-200 hover:scale-[1.03] hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/75"
-            href={githubProfile.profileUrl}
-            rel="noopener noreferrer"
-            target="_blank"
-            title="打开 GitHub 主页并关注"
-          >
-            <svg aria-hidden="true" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2C6.48 2 2 6.59 2 12.25c0 4.53 2.87 8.38 6.84 9.74.5.1.68-.22.68-.49 0-.24-.01-.88-.01-1.73-2.78.62-3.37-1.38-3.37-1.38-.46-1.2-1.11-1.52-1.11-1.52-.91-.63.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.35 1.12 2.92.86.09-.67.35-1.12.63-1.37-2.22-.26-4.55-1.14-4.55-5.08 0-1.12.39-2.04 1.03-2.76-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05A9.3 9.3 0 0 1 12 6.45c.85 0 1.7.12 2.5.36 1.9-1.33 2.74-1.05 2.74-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.64 1.03 2.76 0 3.95-2.33 4.82-4.56 5.08.36.32.67.95.67 1.91 0 1.38-.01 2.5-.01 2.84 0 .27.18.6.69.49A10.26 10.26 0 0 0 22 12.25C22 6.59 17.52 2 12 2z" />
-            </svg>
-            <span>{followLabel}</span>
-            <FollowerBadge count={followers} />
-          </a>
+          <div className="group relative">
+            <div className="pointer-events-none absolute -inset-3 rounded-full bg-[#4F6AE5]/0 blur-xl transition-colors duration-300 group-hover:bg-[#4F6AE5]/15" />
+            <a
+              aria-label={followLabel}
+              className="relative inline-flex items-center gap-2.5 rounded-full border border-white/35 bg-white/10 px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(10,22,62,0.35)] backdrop-blur transition-all duration-200 hover:scale-[1.03] hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/75"
+              href={githubProfile.profileUrl}
+              rel="noopener noreferrer"
+              target="_blank"
+              title="打开 GitHub 主页并关注"
+            >
+              <svg aria-hidden="true" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.59 2 12.25c0 4.53 2.87 8.38 6.84 9.74.5.1.68-.22.68-.49 0-.24-.01-.88-.01-1.73-2.78.62-3.37-1.38-3.37-1.38-.46-1.2-1.11-1.52-1.11-1.52-.91-.63.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.35 1.12 2.92.86.09-.67.35-1.12.63-1.37-2.22-.26-4.55-1.14-4.55-5.08 0-1.12.39-2.04 1.03-2.76-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05A9.3 9.3 0 0 1 12 6.45c.85 0 1.7.12 2.5.36 1.9-1.33 2.74-1.05 2.74-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.64 1.03 2.76 0 3.95-2.33 4.82-4.56 5.08.36.32.67.95.67 1.91 0 1.38-.01 2.5-.01 2.84 0 .27.18.6.69.49A10.26 10.26 0 0 0 22 12.25C22 6.59 17.52 2 12 2z" />
+              </svg>
+              <span>{followLabel}</span>
+              <FollowerBadge count={followers} />
+            </a>
+          </div>
+
+          {typeof siteVisits === "number" && siteVisits > 0 && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.7, duration: 0.35, ease: "easeOut" }}
+              className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/8 px-5 py-3 text-sm font-medium text-white/90 backdrop-blur"
+            >
+              <svg aria-hidden="true" className="h-4 w-4 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7Z" />
+              </svg>
+              <span className="tabular-nums"><AnimatedFollowerCount value={siteVisits} /></span>
+              <span className="text-white/55">visits</span>
+            </motion.div>
+          )}
         </motion.div>
 
         <div className="mt-10 h-16 overflow-hidden">
