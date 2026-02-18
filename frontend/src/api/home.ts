@@ -112,6 +112,21 @@ export type PinnedPost = {
   created_at: string;
 };
 
+export type GithubProject = {
+  name: string;
+  full_name: string;
+  description: string;
+  html_url: string;
+  language: string;
+  topics: string[];
+  homepage_url: string;
+  stars_count: number;
+  forks_count: number;
+  open_issues_count: number;
+  cover: string;
+  sort_order: number;
+};
+
 export type HomePayload = {
   hero: {
     title: string;
@@ -128,6 +143,7 @@ export type HomePayload = {
   birthday_reminders?: BirthdayReminder[];
   photo_wall: PhotoWallItem[];
   pinned_posts: PinnedPost[];
+  projects: GithubProject[];
   stats: {
     posts_total: number;
     published_posts_total: number;

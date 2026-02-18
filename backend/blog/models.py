@@ -441,3 +441,28 @@ class SiteVisit(models.Model):
 
     def __str__(self) -> str:
         return f"{self.path} ({self.created_at:%Y-%m-%d %H:%M})"
+
+
+class GithubProject(TimeStampedModel):
+    name = models.CharField(max_length=255)
+    full_name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True)
+    html_url = models.URLField(max_length=500)
+    language = models.CharField(max_length=100, blank=True)
+    topics = models.JSONField(default=list, blank=True)
+    homepage_url = models.URLField(max_length=500, blank=True)
+    stars_count = models.PositiveIntegerField(default=0)
+    forks_count = models.PositiveIntegerField(default=0)
+    open_issues_count = models.PositiveIntegerField(default=0)
+    is_public = models.BooleanField(default=True)
+    sort_order = models.PositiveIntegerField(default=0, db_index=True)
+    cover = models.URLField(max_length=500, blank=True)
+    synced_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["sort_order", "name"]
+        verbose_name = "开源项目"
+        verbose_name_plural = "开源项目"
+
+    def __str__(self) -> str:
+        return self.full_name

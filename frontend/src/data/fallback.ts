@@ -138,6 +138,7 @@ export const fallbackHomePayload: HomePayload = {
     },
   ],
   pinned_posts: [],
+  projects: [],
   stats: {
     posts_total: 0,
     published_posts_total: 0,

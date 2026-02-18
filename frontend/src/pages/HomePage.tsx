@@ -1,8 +1,9 @@
 import { Helmet } from "react-helmet-async";
-import type { HighlightStage, PhotoWallItem, PinnedPost, SocialGraphLink, SocialGraphNode, TimelineNode } from "../api/home";
+import type { HighlightStage, PhotoWallItem, PinnedPost, SocialGraphLink, SocialGraphNode, TimelineNode, GithubProject } from "../api/home";
 import { fetchHome } from "../api/home";
 import { HeroSection } from "../components/home/HeroSection";
 import { HighlightsSection } from "../components/home/HighlightsSection";
+import { OpenSourceProjectsSection } from "../components/home/OpenSourceProjectsSection";
 import { PhotoWallSection } from "../components/home/PhotoWallSection";
 import { PinnedPostsSidebar } from "../components/home/PinnedPostsSidebar";
 import { SocialGraphSection } from "../components/home/SocialGraphSection";
@@ -172,6 +173,7 @@ export function HomePage() {
   const photoWallItems =
     Array.isArray(payload.photo_wall) && payload.photo_wall.length > 0 ? payload.photo_wall : photoWallFallbackForUx;
   const pinnedPosts: PinnedPost[] = Array.isArray(payload.pinned_posts) ? payload.pinned_posts : [];
+  const projects: GithubProject[] = Array.isArray(payload.projects) ? payload.projects : [];
 
   return (
     <section>
@@ -198,6 +200,7 @@ export function HomePage() {
           <TravelSection travel={payload.travel} />
           <SocialGraphSection links={socialLinks} nodes={socialNodes} />
           <PhotoWallSection photos={photoWallItems} />
+          <OpenSourceProjectsSection projects={projects} />
           <StatsSection stats={payload.stats} />
         </div>
 

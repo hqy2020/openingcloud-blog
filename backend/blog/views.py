@@ -20,6 +20,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import (
+    GithubProject,
     HighlightItem,
     HighlightStage,
     PhotoWallImage,
@@ -40,6 +41,9 @@ from .serializers import (
     AdminObsidianReconcileResponseSerializer,
     AdminObsidianSyncRequestSerializer,
     AdminObsidianSyncResponseSerializer,
+    GithubImportRequestSerializer,
+    GithubProjectAdminSerializer,
+    GithubProjectPublicSerializer,
     HighlightItemAdminSerializer,
     HighlightReorderRequestSerializer,
     HighlightStageAdminSerializer,
@@ -1126,6 +1130,7 @@ def _home_payload(*, show_real_name: bool = False) -> dict:
         .select_related("view_record", "like_record")
         .order_by("pin_order", "-created_at")[:12]
     )
+    projects = GithubProject.objects.filter(is_public=True).order_by("sort_order", "name")[:6]
 
     email = getattr(settings, "PUBLIC_CONTACT_EMAIL", "openingclouds@outlook.com")
     github = getattr(settings, "PUBLIC_GITHUB_URL", "https://github.com/hqy2020/openingcloud-blog")
@@ -1151,12 +1156,93 @@ def _home_payload(*, show_real_name: bool = False) -> dict:
         "social_graph": SocialGraphPublicSerializer(social_graph).data,
         "photo_wall": photo_wall,
         "pinned_posts": PinnedPostSerializer(pinned_qs, many=True).data,
+        "projects": GithubProjectPublicSerializer(projects, many=True).data,
         "stats": _home_stats_payload(),
         "contact": {
             "email": email,
             "github": github,
         },
     }
+
+
+class AdminProjectListCreateView(AdminListCreateView):
+    serializer_class = GithubProjectAdminSerializer
+    queryset = GithubProject.objects.all()
+
+    def get_queryset(self):
+        queryset = GithubProject.objects.all()
+        keyword = str(self.request.query_params.get("q", "")).strip()
+        public_only = _parse_bool_query(self.request.query_params.get("is_public"))
+        sort = str(self.request.query_params.get("sort", "order")).strip()
+
+        if keyword:
+            queryset = queryset.filter(
+                Q(name__icontains=keyword) | Q(full_name__icontains=keyword) | Q(description__icontains=keyword)
+            )
+        if public_only is not None:
+            queryset = queryset.filter(is_public=public_only)
+
+        if sort == "latest":
+            return queryset.order_by("-updated_at", "-id")
+        if sort == "stars":
+            return queryset.order_by("-stars_count", "-id")
+        return queryset.order_by("sort_order", "name", "id")
+
+
+class AdminProjectDetailView(AdminDetailView):
+    serializer_class = GithubProjectAdminSerializer
+    queryset = GithubProject.objects.all()
+    lookup_field = "id"
+    lookup_url_kwarg = "project_id"
+
+
+class AdminProjectReorderView(AdminReorderView):
+    model = GithubProject
+
+
+class AdminProjectImportGithubView(APIView):
+    permission_classes = [IsAuthenticated, IsStaffUser]
+
+    def post(self, request):
+        serializer = GithubImportRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        repo_url = serializer.validated_data["repo_url"].rstrip("/")
+        from urllib.parse import urlparse as _urlparse
+
+        parsed = _urlparse(repo_url)
+        parts = [p for p in parsed.path.strip("/").split("/") if p]
+        owner, repo = parts[0], parts[1]
+        api_url = f"https://api.github.com/repos/{owner}/{repo}"
+
+        import json
+        import urllib.request
+
+        req = urllib.request.Request(api_url, headers={"Accept": "application/vnd.github.v3+json", "User-Agent": "openingcloud-blog"})
+        try:
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                gh_data = json.loads(resp.read().decode())
+        except Exception as exc:
+            return api_error("github_fetch_failed", f"GitHub API 请求失败: {exc}", status.HTTP_502_BAD_GATEWAY)
+
+        full_name = gh_data.get("full_name", f"{owner}/{repo}")
+        defaults = {
+            "name": gh_data.get("name", repo),
+            "description": gh_data.get("description") or "",
+            "html_url": gh_data.get("html_url", repo_url),
+            "language": gh_data.get("language") or "",
+            "topics": gh_data.get("topics") or [],
+            "homepage_url": gh_data.get("homepage") or "",
+            "stars_count": gh_data.get("stargazers_count", 0),
+            "forks_count": gh_data.get("forks_count", 0),
+            "open_issues_count": gh_data.get("open_issues_count", 0),
+            "synced_at": timezone.now(),
+        }
+
+        project, created = GithubProject.objects.update_or_create(full_name=full_name, defaults=defaults)
+        data = GithubProjectAdminSerializer(project).data
+        data["_created"] = created
+        return api_ok(data, status_code=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
 class TimelineView(APIView):

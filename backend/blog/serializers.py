@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 
-from .models import HighlightItem, HighlightStage, PhotoWallImage, Post, SocialFriend, TimelineNode, TravelPlace
+from .models import GithubProject, HighlightItem, HighlightStage, PhotoWallImage, Post, SocialFriend, TimelineNode, TravelPlace
 
 
 class LoginSerializer(serializers.Serializer):
@@ -523,6 +523,7 @@ class HomeAggregateSerializer(serializers.Serializer):
     social_graph = SocialGraphPublicSerializer()
     photo_wall = PhotoWallPublicSerializer(many=True)
     pinned_posts = serializers.ListField(child=serializers.DictField())
+    projects = serializers.ListField(child=serializers.DictField())
     stats = HomeStatsSerializer()
     contact = HomeContactSerializer()
 
@@ -604,3 +605,68 @@ class AdminObsidianReconcileResponseSerializer(serializers.Serializer):
     drafted = serializers.IntegerField()
     deleted = serializers.IntegerField()
     sync_log_id = serializers.IntegerField()
+
+
+class GithubProjectAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GithubProject
+        fields = [
+            "id",
+            "name",
+            "full_name",
+            "description",
+            "html_url",
+            "language",
+            "topics",
+            "homepage_url",
+            "stars_count",
+            "forks_count",
+            "open_issues_count",
+            "is_public",
+            "sort_order",
+            "cover",
+            "synced_at",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+        extra_kwargs = {
+            "description": {"required": False, "allow_blank": True},
+            "language": {"required": False, "allow_blank": True},
+            "homepage_url": {"required": False, "allow_blank": True},
+            "cover": {"required": False, "allow_blank": True},
+            "synced_at": {"required": False, "allow_null": True},
+        }
+
+
+class GithubProjectPublicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GithubProject
+        fields = [
+            "name",
+            "full_name",
+            "description",
+            "html_url",
+            "language",
+            "topics",
+            "homepage_url",
+            "stars_count",
+            "forks_count",
+            "open_issues_count",
+            "cover",
+            "sort_order",
+        ]
+
+
+class GithubImportRequestSerializer(serializers.Serializer):
+    repo_url = serializers.URLField()
+
+    def validate_repo_url(self, value: str):
+        url = str(value or "").strip().rstrip("/")
+        parsed = urlparse(url)
+        if parsed.netloc.lower() != "github.com":
+            raise serializers.ValidationError("仅支持 github.com 链接")
+        parts = [p for p in parsed.path.strip("/").split("/") if p]
+        if len(parts) < 2:
+            raise serializers.ValidationError("URL 格式无效，需要 github.com/owner/repo")
+        return url
