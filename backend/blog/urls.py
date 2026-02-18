@@ -3,6 +3,7 @@ from __future__ import annotations
 from django.urls import path
 
 from .views import (
+    AdminAnalyticsView,
     AdminImageUploadView,
     AdminHighlightItemCreateView,
     AdminHighlightItemDetailView,
@@ -37,6 +38,7 @@ from .views import (
     PhotoWallView,
     PostDetailView,
     PostListView,
+    RecordSiteVisitView,
     SocialGraphView,
     TimelineView,
     TogglePostLike,
@@ -50,6 +52,7 @@ urlpatterns = [
     path("posts/<slug:slug>/", PostDetailView.as_view(), name="posts-detail"),
     path("posts/<slug:slug>/view/", IncrementPostView.as_view(), name="posts-view"),
     path("posts/<slug:slug>/like/", TogglePostLike.as_view(), name="posts-like"),
+    path("visit/", RecordSiteVisitView.as_view(), name="record-site-visit"),
     path("timeline/", TimelineView.as_view(), name="timeline"),
     path("highlights/", HighlightsView.as_view(), name="highlights"),
     path("travel/", TravelView.as_view(), name="travel"),
@@ -104,4 +107,6 @@ urlpatterns = [
     path("admin/highlights/reorder/", AdminHighlightReorderView.as_view()),
     path("admin/obsidian-sync/", AdminObsidianSyncView.as_view(), name="admin-obsidian-sync"),
     path("admin/obsidian-sync/reconcile/", AdminObsidianReconcileView.as_view(), name="admin-obsidian-reconcile"),
+    path("admin/analytics", AdminAnalyticsView.as_view(), name="admin-analytics"),
+    path("admin/analytics/", AdminAnalyticsView.as_view()),
 ]

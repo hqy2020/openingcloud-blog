@@ -15,5 +15,18 @@
     <div><strong>总阅读量</strong><div>{{ dashboard_stats.total_views }}</div></div>
   </div>
 </div>
+
+<div style="margin-bottom: 20px; padding: 16px; background: #eef2ff; border-radius: 8px;">
+  <h2 style="margin-top: 0;">站点访问</h2>
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px;">
+    <div><strong>总访问量</strong><div>{{ dashboard_stats.site_visits_total }}</div></div>
+    <div><strong>独立访客</strong><div>{{ dashboard_stats.unique_visitors }}</div></div>
+    <div><strong>今日访问</strong><div>{{ dashboard_stats.today_visits }}</div></div>
+  </div>
+  <div style="margin-top: 12px;">
+    <a href="{% url 'admin:blog_sitevisit_analytics' %}" style="color: #4f46e5; font-weight: 500;">查看详细分析 &rarr;</a>
+  </div>
+</div>
+
 {{ block.super }}
 {% endblock %}

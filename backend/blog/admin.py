@@ -25,6 +25,7 @@ from .models import (
     Post,
     PostLike,
     PostView,
+    SiteVisit,
     SocialFriend,
     SyncLog,
     TimelineNode,
@@ -517,6 +518,43 @@ class SyncLogAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(SiteVisit)
+class SiteVisitAdmin(admin.ModelAdmin):
+    list_display = ["path", "referrer_domain", "ip_hash_short", "created_at"]
+    list_filter = ["referrer_domain"]
+    search_fields = ["path", "referrer", "referrer_domain"]
+    date_hierarchy = "created_at"
+    readonly_fields = ["path", "referrer", "referrer_domain", "ip_hash", "user_agent", "created_at"]
+
+    @admin.display(description="IP (前8位)")
+    def ip_hash_short(self, obj: SiteVisit) -> str:
+        return obj.ip_hash[:8] if obj.ip_hash else "-"
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def get_urls(self):
+        custom_urls = [
+            path(
+                "analytics/",
+                self.admin_site.admin_view(self.analytics_view),
+                name="blog_sitevisit_analytics",
+            ),
+        ]
+        return custom_urls + super().get_urls()
+
+    def analytics_view(self, request: HttpRequest):
+        context = {
+            **self.admin_site.each_context(request),
+            "opts": self.model._meta,
+            "title": "站点访问分析",
+        }
+        return TemplateResponse(request, "admin/blog/sitevisit/analytics.html", context)
 
 
 admin.site.site_header = "openingClouds 管理后台"

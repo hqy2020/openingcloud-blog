@@ -4,6 +4,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import type { HomePayload } from "../../api/home";
 import { useTheme } from "../../app/theme";
 import { resolveAccentByPath } from "../../theme/categoryVisuals";
+import { usePageVisitTracker } from "../../hooks/usePageVisitTracker";
 import { ContactSection } from "../home/ContactSection";
 import { GlobalSloganTicker } from "./GlobalSloganTicker";
 import { BlogPetMachine } from "../pet/BlogPetMachine";
@@ -63,6 +64,7 @@ function AdminEntryIcon() {
 export function AppLayout() {
   const { isDark, toggleTheme } = useTheme();
   const location = useLocation();
+  usePageVisitTracker();
   const visual = resolveAccentByPath(location.pathname);
   const logoSrc = isDark ? "/brand/logo-icon-white.png" : "/brand/logo-icon-ink.png";
 

@@ -418,3 +418,24 @@ class SyncLog(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.slug or '-'} [{self.source}/{self.mode}] {self.status}"
+
+
+class SiteVisit(models.Model):
+    path = models.CharField(max_length=500, db_index=True)
+    referrer = models.URLField(max_length=1000, blank=True)
+    referrer_domain = models.CharField(max_length=255, blank=True, db_index=True)
+    ip_hash = models.CharField(max_length=64, db_index=True)
+    user_agent = models.CharField(max_length=500, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "站点访问"
+        verbose_name_plural = "站点访问"
+        indexes = [
+            models.Index(fields=["path", "created_at"]),
+            models.Index(fields=["referrer_domain", "created_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.path} ({self.created_at:%Y-%m-%d %H:%M})"

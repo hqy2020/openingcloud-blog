@@ -136,6 +136,8 @@ export type HomePayload = {
     travel_delta_year: number;
     likes_total: number;
     likes_delta_week: number;
+    site_visits_total: number;
+    unique_visitors_total: number;
   };
   contact: {
     email: string;

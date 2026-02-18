@@ -1,0 +1,196 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}站点访问分析{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<style>
+  .analytics-wrap { max-width: 1100px; margin: 0 auto; }
+  .analytics-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+  .analytics-header h1 { margin: 0; font-size: 1.5rem; }
+  .range-select { padding: 6px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .kpi-card { background: #f6f7fb; border-radius: 8px; padding: 16px; text-align: center; }
+  .kpi-card .value { font-size: 1.75rem; font-weight: 700; color: #1e293b; }
+  .kpi-card .label { font-size: 0.85rem; color: #64748b; margin-top: 4px; }
+  .chart-row { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 24px; }
+  @media (min-width: 768px) { .chart-row { grid-template-columns: 2fr 1fr; } }
+  .chart-box { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; }
+  .chart-box h3 { margin: 0 0 12px; font-size: 1rem; color: #334155; }
+  .top-pages table { width: 100%; border-collapse: collapse; }
+  .top-pages th, .top-pages td { text-align: left; padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 0.875rem; }
+  .top-pages th { color: #64748b; font-weight: 600; }
+  .top-pages td:last-child { text-align: right; font-weight: 600; }
+  .loading-msg { text-align: center; padding: 40px; color: #94a3b8; }
+  .back-link { display: inline-block; margin-bottom: 16px; color: #4f46e5; text-decoration: none; font-size: 0.875rem; }
+  .back-link:hover { text-decoration: underline; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="analytics-wrap">
+  <a class="back-link" href="{% url 'admin:blog_sitevisit_changelist' %}">&larr; 返回访问列表</a>
+
+  <div class="analytics-header">
+    <h1>站点访问分析</h1>
+    <select class="range-select" id="rangeSelect">
+      <option value="7">最近 7 天</option>
+      <option value="30" selected>最近 30 天</option>
+      <option value="90">最近 90 天</option>
+      <option value="365">最近一年</option>
+    </select>
+  </div>
+
+  <div id="kpiSection" class="kpi-grid">
+    <div class="loading-msg" style="grid-column: 1/-1;">加载中...</div>
+  </div>
+
+  <div class="chart-row">
+    <div class="chart-box">
+      <h3>每日访问趋势</h3>
+      <canvas id="trendChart" height="220"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>来源分布</h3>
+      <canvas id="referrerChart" height="220"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-box top-pages">
+    <h3>热门页面</h3>
+    <table>
+      <thead><tr><th>页面路径</th><th>访问量</th></tr></thead>
+      <tbody id="topPagesBody">
+        <tr><td colspan="2" class="loading-msg">加载中...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+(function() {
+  let trendChart = null;
+  let referrerChart = null;
+
+  function getCookie(name) {
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    return match ? match[2] : null;
+  }
+
+  async function loadAnalytics(days) {
+    const resp = await fetch('/api/admin/analytics/?days=' + days, {
+      credentials: 'include',
+      headers: { 'X-CSRFToken': getCookie('csrftoken') || '' },
+    });
+    const json = await resp.json();
+    return json.data;
+  }
+
+  function renderKPI(data) {
+    const items = [
+      { label: '总访问量', value: data.total_visits },
+      { label: '独立访客', value: data.unique_visitors },
+      { label: '今日访问', value: data.today_visits },
+      { label: '本周访问', value: data.week_visits },
+      { label: '本月访问', value: data.month_visits },
+    ];
+    document.getElementById('kpiSection').innerHTML = items.map(function(item) {
+      return '<div class="kpi-card"><div class="value">' + item.value.toLocaleString() + '</div><div class="label">' + item.label + '</div></div>';
+    }).join('');
+  }
+
+  function renderTrend(data) {
+    const ctx = document.getElementById('trendChart').getContext('2d');
+    if (trendChart) trendChart.destroy();
+    trendChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: data.daily_trend.map(function(d) { return d.date; }),
+        datasets: [{
+          label: '访问量',
+          data: data.daily_trend.map(function(d) { return d.count; }),
+          borderColor: '#4f46e5',
+          backgroundColor: 'rgba(79,70,229,0.08)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 2,
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { maxTicksLimit: 10, font: { size: 11 } } },
+          y: { beginAtZero: true, ticks: { precision: 0 } },
+        },
+      },
+    });
+  }
+
+  function renderReferrer(data) {
+    const ctx = document.getElementById('referrerChart').getContext('2d');
+    if (referrerChart) referrerChart.destroy();
+    const items = data.top_referrers.slice(0, 8);
+    if (items.length === 0) {
+      ctx.font = '14px sans-serif';
+      ctx.fillStyle = '#94a3b8';
+      ctx.textAlign = 'center';
+      ctx.fillText('暂无来源数据', ctx.canvas.width / 2, 110);
+      return;
+    }
+    referrerChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: items.map(function(d) { return d.referrer_domain; }),
+        datasets: [{
+          label: '访问量',
+          data: items.map(function(d) { return d.count; }),
+          backgroundColor: '#818cf8',
+          borderRadius: 4,
+        }],
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { beginAtZero: true, ticks: { precision: 0 } },
+          y: { ticks: { font: { size: 11 } } },
+        },
+      },
+    });
+  }
+
+  function renderTopPages(data) {
+    var tbody = document.getElementById('topPagesBody');
+    if (!data.top_pages.length) {
+      tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;color:#94a3b8;padding:20px;">暂无数据</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.top_pages.map(function(item) {
+      return '<tr><td>' + item.path + '</td><td>' + item.count.toLocaleString() + '</td></tr>';
+    }).join('');
+  }
+
+  async function refresh(days) {
+    try {
+      var data = await loadAnalytics(days);
+      renderKPI(data);
+      renderTrend(data);
+      renderReferrer(data);
+      renderTopPages(data);
+    } catch (err) {
+      document.getElementById('kpiSection').innerHTML = '<div class="loading-msg" style="grid-column:1/-1;color:#ef4444;">加载失败: ' + err.message + '</div>';
+    }
+  }
+
+  document.getElementById('rangeSelect').addEventListener('change', function() {
+    refresh(parseInt(this.value));
+  });
+
+  refresh(30);
+})();
+</script>
+{% endblock %}

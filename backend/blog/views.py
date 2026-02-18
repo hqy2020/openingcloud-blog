@@ -27,6 +27,7 @@ from .models import (
     PostLike,
     PostLikeVote,
     PostView,
+    SiteVisit,
     SocialFriend,
     SyncLog,
     TimelineNode,
@@ -275,6 +276,113 @@ class TogglePostLike(APIView):
         likes = PostLikeVote.objects.filter(post=post).count()
         PostLike.objects.update_or_create(post=post, defaults={"likes": likes})
         return api_ok({"slug": slug, "likes": likes, "liked": liked})
+
+
+class RecordSiteVisitView(APIView):
+    permission_classes = [AllowAny]
+
+    @staticmethod
+    def _get_ip_hash(request) -> str:
+        import hashlib
+
+        raw = (
+            request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")[0].strip()
+            or request.META.get("REMOTE_ADDR")
+            or "unknown"
+        )
+        return hashlib.sha256(raw.encode()).hexdigest()[:32]
+
+    def post(self, request):
+        from urllib.parse import urlparse
+
+        path = str(request.data.get("path", "") or "").strip()[:500]
+        referrer = str(request.data.get("referrer", "") or "").strip()[:1000]
+
+        if not path:
+            return api_error("invalid", "path is required", status.HTTP_400_BAD_REQUEST)
+
+        ip_hash = self._get_ip_hash(request)
+        cache_key = f"site-visit-throttle:{ip_hash}:{path}"
+        if cache.get(cache_key):
+            return api_ok({"recorded": False, "throttled": True})
+
+        referrer_domain = ""
+        if referrer:
+            try:
+                referrer_domain = urlparse(referrer).netloc[:255]
+            except Exception:
+                pass
+
+        user_agent = str(request.META.get("HTTP_USER_AGENT", ""))[:500]
+
+        SiteVisit.objects.create(
+            path=path,
+            referrer=referrer,
+            referrer_domain=referrer_domain,
+            ip_hash=ip_hash,
+            user_agent=user_agent,
+        )
+        cache.set(cache_key, True, timeout=int(timedelta(minutes=5).total_seconds()))
+        return api_ok({"recorded": True, "throttled": False})
+
+
+class AdminAnalyticsView(APIView):
+    permission_classes = [IsAuthenticated, IsStaffUser]
+
+    def get(self, request):
+        from django.db.models import Count
+        from django.db.models.functions import TruncDate
+
+        days = int(request.query_params.get("days", 30))
+        days = min(max(days, 1), 365)
+        since = timezone.now() - timedelta(days=days)
+
+        visits = SiteVisit.objects.filter(created_at__gte=since)
+
+        total_visits = visits.count()
+        unique_visitors = visits.values("ip_hash").distinct().count()
+
+        today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_visits = SiteVisit.objects.filter(created_at__gte=today_start).count()
+
+        week_start = timezone.now() - timedelta(days=7)
+        week_visits = SiteVisit.objects.filter(created_at__gte=week_start).count()
+
+        month_start = timezone.now() - timedelta(days=30)
+        month_visits = SiteVisit.objects.filter(created_at__gte=month_start).count()
+
+        top_referrers = list(
+            visits.exclude(referrer_domain="")
+            .values("referrer_domain")
+            .annotate(count=Count("id"))
+            .order_by("-count")[:10]
+        )
+
+        top_pages = list(
+            visits.values("path")
+            .annotate(count=Count("id"))
+            .order_by("-count")[:10]
+        )
+
+        daily_trend = list(
+            visits.annotate(date=TruncDate("created_at"))
+            .values("date")
+            .annotate(count=Count("id"))
+            .order_by("date")
+        )
+        for item in daily_trend:
+            item["date"] = item["date"].isoformat()
+
+        return api_ok_private({
+            "total_visits": total_visits,
+            "unique_visitors": unique_visitors,
+            "today_visits": today_visits,
+            "week_visits": week_visits,
+            "month_visits": month_visits,
+            "top_referrers": top_referrers,
+            "top_pages": top_pages,
+            "daily_trend": daily_trend,
+        })
 
 
 class LoginView(APIView):
@@ -978,6 +1086,9 @@ def _home_stats_payload() -> dict:
     likes_total = PostLike.objects.aggregate(total=Sum("likes"))["total"] or 0
     likes_delta_week = PostLikeVote.objects.filter(created_at__gte=one_week_ago).count()
 
+    site_visits_total = SiteVisit.objects.count()
+    unique_visitors_total = SiteVisit.objects.values("ip_hash").distinct().count()
+
     return {
         "posts_total": posts.count(),
         "published_posts_total": published_posts.count(),
@@ -998,6 +1109,8 @@ def _home_stats_payload() -> dict:
         "travel_delta_year": travel_delta_year,
         "likes_total": int(likes_total),
         "likes_delta_week": likes_delta_week,
+        "site_visits_total": site_visits_total,
+        "unique_visitors_total": unique_visitors_total,
     }
 
 
