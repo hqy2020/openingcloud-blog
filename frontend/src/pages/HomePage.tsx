@@ -191,8 +191,8 @@ export function HomePage() {
         <HeroSection hero={payload.hero} githubUrl={payload.contact?.github ?? fallbackHomePayload.contact.github} siteVisits={payload.stats.site_visits_total} />
       </div>
 
-      <div className="relative mt-12 lg:flex lg:gap-8">
-        <div className="min-w-0 flex-1 space-y-12">
+      <div className="relative mt-12">
+        <div className="space-y-12">
           <TimelineSection nodes={timelineNodes} />
           <HighlightsSection stages={highlightStages} />
           <TravelSection travel={payload.travel} />
@@ -202,11 +202,7 @@ export function HomePage() {
         </div>
 
         {pinnedPosts.length > 0 && (
-          <aside className="hidden lg:block lg:w-64 xl:w-72 flex-shrink-0">
-            <div className="sticky top-24">
-              <PinnedPostsSidebar posts={pinnedPosts} />
-            </div>
-          </aside>
+          <PinnedPostsSidebar posts={pinnedPosts} />
         )}
       </div>
     </section>
