@@ -48,6 +48,7 @@ from .serializers import (
     LoginSerializer,
     PhotoWallImageAdminSerializer,
     PhotoWallPublicSerializer,
+    PinnedPostSerializer,
     PostAdminSerializer,
     PostDetailSerializer,
     PostListSerializer,
@@ -1120,6 +1121,11 @@ def _home_payload(*, show_real_name: bool = False) -> dict:
     travel = _travel_payload()
     social_graph = _social_graph_payload(show_real_name=show_real_name)
     photo_wall = _photo_wall_payload()
+    pinned_qs = (
+        Post.objects.filter(draft=False, is_pinned=True)
+        .select_related("view_record", "like_record")
+        .order_by("pin_order", "-created_at")[:12]
+    )
 
     email = getattr(settings, "PUBLIC_CONTACT_EMAIL", "openingclouds@outlook.com")
     github = getattr(settings, "PUBLIC_GITHUB_URL", "https://github.com/hqy2020/openingcloud-blog")
@@ -1144,6 +1150,7 @@ def _home_payload(*, show_real_name: bool = False) -> dict:
         "travel": TravelProvinceSerializer(travel, many=True).data,
         "social_graph": SocialGraphPublicSerializer(social_graph).data,
         "photo_wall": photo_wall,
+        "pinned_posts": PinnedPostSerializer(pinned_qs, many=True).data,
         "stats": _home_stats_payload(),
         "contact": {
             "email": email,

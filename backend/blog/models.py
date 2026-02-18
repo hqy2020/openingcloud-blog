@@ -31,6 +31,8 @@ class Post(TimeStampedModel):
     tags = models.JSONField(default=list, blank=True)
     cover = models.URLField(max_length=500, blank=True)
     draft = models.BooleanField(default=True)
+    is_pinned = models.BooleanField(default=False, db_index=True, verbose_name="置顶")
+    pin_order = models.PositiveSmallIntegerField(default=0, db_index=True, verbose_name="置顶排序")
     obsidian_path = models.CharField(max_length=500, blank=True)
     last_synced_at = models.DateTimeField(null=True, blank=True)
     sync_source = models.CharField(

@@ -82,6 +82,30 @@ class PostDetailSerializer(serializers.ModelSerializer):
         ]
 
 
+class PinnedPostSerializer(serializers.ModelSerializer):
+    views_count = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
+
+    def get_views_count(self, obj):
+        return getattr(getattr(obj, "view_record", None), "views", 0)
+
+    def get_likes_count(self, obj):
+        return getattr(getattr(obj, "like_record", None), "likes", 0)
+
+    class Meta:
+        model = Post
+        fields = [
+            "title",
+            "slug",
+            "excerpt",
+            "category",
+            "cover",
+            "views_count",
+            "likes_count",
+            "created_at",
+        ]
+
+
 class PostAdminSerializer(serializers.ModelSerializer):
     views_count = serializers.SerializerMethodField(read_only=True)
 
@@ -498,6 +522,7 @@ class HomeAggregateSerializer(serializers.Serializer):
     travel = TravelProvinceSerializer(many=True)
     social_graph = SocialGraphPublicSerializer()
     photo_wall = PhotoWallPublicSerializer(many=True)
+    pinned_posts = serializers.ListField(child=serializers.DictField())
     stats = HomeStatsSerializer()
     contact = HomeContactSerializer()
 

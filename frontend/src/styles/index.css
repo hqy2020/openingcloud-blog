@@ -160,6 +160,42 @@ pre {
   }
 }
 
+.pinned-sidebar-viewport {
+  overflow: hidden;
+  mask-image: linear-gradient(180deg, transparent 0%, black 8%, black 92%, transparent 100%);
+}
+
+.pinned-sidebar-track {
+  display: flex;
+  flex-direction: column;
+}
+
+.pinned-sidebar-animate {
+  animation: pinned-vertical-scroll 30s linear infinite;
+}
+
+.pinned-sidebar-animate:hover {
+  animation-play-state: paused;
+}
+
+.pinned-sidebar-segment {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  padding-bottom: 0.75rem;
+}
+
+@keyframes pinned-vertical-scroll {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(-50%);
+  }
+}
+
 .blur-reveal-media {
   filter: blur(10px) saturate(0.94);
   opacity: 0.92;
@@ -187,6 +223,10 @@ pre {
 
 @media (prefers-reduced-motion: reduce) {
   .social-ticker-track {
+    animation: none;
+  }
+
+  .pinned-sidebar-animate {
     animation: none;
   }
 

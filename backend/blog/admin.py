@@ -75,8 +75,8 @@ class ObsidianVaultRootFilter(admin.SimpleListFilter):
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ["title", "category", "is_published", "views_count", "sync_source", "updated_at"]
-    list_filter = ["category", "draft", "sync_source"]
+    list_display = ["title", "category", "is_published", "is_pinned", "views_count", "sync_source", "updated_at"]
+    list_filter = ["category", "draft", "is_pinned", "sync_source"]
     search_fields = ["title", "slug"]
     prepopulated_fields = {"slug": ("title",)}
     readonly_fields = ["created_at", "updated_at", "last_synced_at", "views_count"]
@@ -87,9 +87,20 @@ class PostAdmin(admin.ModelAdmin):
     fieldsets = (
         ("基础", {"fields": ("title", "slug", "excerpt", "category", "tags", "cover")}),
         ("正文", {"fields": ("content",)}),
-        ("状态", {"fields": ("draft", "sync_source", "obsidian_path", "last_synced_at", "views_count")}),
+        ("状态", {"fields": ("draft", "is_pinned", "pin_order", "sync_source", "obsidian_path", "last_synced_at", "views_count")}),
         ("时间", {"fields": ("created_at", "updated_at")}),
     )
+    actions = ["make_pinned", "make_unpinned"]
+
+    @admin.action(description="置顶选中文章")
+    def make_pinned(self, request, queryset):
+        updated = queryset.update(is_pinned=True)
+        self.message_user(request, f"已置顶 {updated} 篇文章", level=messages.SUCCESS)
+
+    @admin.action(description="取消置顶选中文章")
+    def make_unpinned(self, request, queryset):
+        updated = queryset.update(is_pinned=False)
+        self.message_user(request, f"已取消置顶 {updated} 篇文章", level=messages.SUCCESS)
 
 
 @admin.register(PostView)

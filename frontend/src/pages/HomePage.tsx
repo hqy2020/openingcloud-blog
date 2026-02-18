@@ -1,9 +1,10 @@
 import { Helmet } from "react-helmet-async";
-import type { HighlightStage, PhotoWallItem, SocialGraphLink, SocialGraphNode, TimelineNode } from "../api/home";
+import type { HighlightStage, PhotoWallItem, PinnedPost, SocialGraphLink, SocialGraphNode, TimelineNode } from "../api/home";
 import { fetchHome } from "../api/home";
 import { HeroSection } from "../components/home/HeroSection";
 import { HighlightsSection } from "../components/home/HighlightsSection";
 import { PhotoWallSection } from "../components/home/PhotoWallSection";
+import { PinnedPostsSidebar } from "../components/home/PinnedPostsSidebar";
 import { SocialGraphSection } from "../components/home/SocialGraphSection";
 import { StatsSection } from "../components/home/StatsSection";
 import { TimelineSection } from "../components/home/TimelineSection";
@@ -170,9 +171,10 @@ export function HomePage() {
   const socialLinks = socialHasFriend && socialHasLink ? socialLinksRaw : socialGraphFallbackForUx.links;
   const photoWallItems =
     Array.isArray(payload.photo_wall) && payload.photo_wall.length > 0 ? payload.photo_wall : photoWallFallbackForUx;
+  const pinnedPosts: PinnedPost[] = Array.isArray(payload.pinned_posts) ? payload.pinned_posts : [];
 
   return (
-    <section className="space-y-12">
+    <section>
       <Helmet>
         <title>启云博客</title>
         <meta content="在云层之上，记录技术、效率与生活。" name="description" />
@@ -185,13 +187,28 @@ export function HomePage() {
       {loading ? <p className="text-sm text-slate-500">首页数据加载中...</p> : null}
       {!loading && error ? <p className="text-sm text-amber-700">实时数据暂不可用，已展示静态内容。</p> : null}
 
-      <HeroSection hero={payload.hero} githubUrl={payload.contact?.github ?? fallbackHomePayload.contact.github} siteVisits={payload.stats.site_visits_total} />
-      <TimelineSection nodes={timelineNodes} />
-      <HighlightsSection stages={highlightStages} />
-      <TravelSection travel={payload.travel} />
-      <SocialGraphSection links={socialLinks} nodes={socialNodes} />
-      <PhotoWallSection photos={photoWallItems} />
-      <StatsSection stats={payload.stats} />
+      <div className="space-y-12">
+        <HeroSection hero={payload.hero} githubUrl={payload.contact?.github ?? fallbackHomePayload.contact.github} siteVisits={payload.stats.site_visits_total} />
+      </div>
+
+      <div className="relative mt-12 lg:flex lg:gap-8">
+        <div className="min-w-0 flex-1 space-y-12">
+          <TimelineSection nodes={timelineNodes} />
+          <HighlightsSection stages={highlightStages} />
+          <TravelSection travel={payload.travel} />
+          <SocialGraphSection links={socialLinks} nodes={socialNodes} />
+          <PhotoWallSection photos={photoWallItems} />
+          <StatsSection stats={payload.stats} />
+        </div>
+
+        {pinnedPosts.length > 0 && (
+          <aside className="hidden lg:block lg:w-64 xl:w-72 flex-shrink-0">
+            <div className="sticky top-24">
+              <PinnedPostsSidebar posts={pinnedPosts} />
+            </div>
+          </aside>
+        )}
+      </div>
     </section>
   );
 }

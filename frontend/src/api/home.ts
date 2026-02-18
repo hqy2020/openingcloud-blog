@@ -101,6 +101,17 @@ export type PhotoWallItem = {
   sort_order: number;
 };
 
+export type PinnedPost = {
+  title: string;
+  slug: string;
+  excerpt: string;
+  category: "tech" | "learning" | "life";
+  cover: string;
+  views_count: number;
+  likes_count: number;
+  created_at: string;
+};
+
 export type HomePayload = {
   hero: {
     title: string;
@@ -116,6 +127,7 @@ export type HomePayload = {
   social_ticker?: SocialTicker;
   birthday_reminders?: BirthdayReminder[];
   photo_wall: PhotoWallItem[];
+  pinned_posts: PinnedPost[];
   stats: {
     posts_total: number;
     published_posts_total: number;
