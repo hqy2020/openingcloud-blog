@@ -378,6 +378,50 @@ export function PostDetailPage() {
         {children}
       </ul>
     ),
+    table: ({ children, ...props }: HTMLAttributes<HTMLTableElement>) => (
+      <div className="mt-5 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+        <table
+          {...props}
+          className={`w-full border-collapse text-sm ${isDark ? "text-slate-200" : "text-slate-700"}`}
+        >
+          {children}
+        </table>
+      </div>
+    ),
+    thead: ({ children, ...props }: HTMLAttributes<HTMLTableSectionElement>) => (
+      <thead
+        {...props}
+        className={isDark ? "bg-slate-800/80" : "bg-slate-50"}
+      >
+        {children}
+      </thead>
+    ),
+    th: ({ children, ...props }: HTMLAttributes<HTMLTableCellElement>) => (
+      <th
+        {...props}
+        className={`border-b px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide ${
+          isDark ? "border-slate-700 text-slate-300" : "border-slate-200 text-slate-600"
+        }`}
+      >
+        {children}
+      </th>
+    ),
+    td: ({ children, ...props }: HTMLAttributes<HTMLTableCellElement>) => (
+      <td
+        {...props}
+        className={`border-b px-4 py-2.5 ${isDark ? "border-slate-700/60" : "border-slate-100"}`}
+      >
+        {children}
+      </td>
+    ),
+    tr: ({ children, ...props }: HTMLAttributes<HTMLTableRowElement>) => (
+      <tr
+        {...props}
+        className={`transition-colors ${isDark ? "hover:bg-slate-800/50" : "hover:bg-slate-50/80"}`}
+      >
+        {children}
+      </tr>
+    ),
     a: ({ children, href, ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) => {
       const link = String(href ?? "").trim();
       const isExternal = /^https?:\/\//i.test(link);
