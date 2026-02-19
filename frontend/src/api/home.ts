@@ -166,6 +166,9 @@ export type HomePayload = {
     likes_delta_week: number;
     site_visits_total: number;
     unique_visitors_total: number;
+    site_visits_delta_week: number;
+    last_travel_date: string;
+    total_updates: number;
   };
   contact: {
     email: string;

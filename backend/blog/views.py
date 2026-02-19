@@ -1116,6 +1116,16 @@ def _home_stats_payload() -> dict:
         "likes_delta_week": likes_delta_week,
         "site_visits_total": site_visits_total,
         "unique_visitors_total": unique_visitors_total,
+        "site_visits_delta_week": SiteVisit.objects.filter(created_at__gte=one_week_ago).count(),
+        "last_travel_date": (
+            lambda d: d.isoformat() if d else ""
+        )(
+            TravelPlace.objects.filter(visited_at__isnull=False)
+            .order_by("-visited_at")
+            .values_list("visited_at", flat=True)
+            .first()
+        ),
+        "total_updates": published_posts.count(),
     }
 
 

@@ -508,6 +508,9 @@ class HomeStatsSerializer(serializers.Serializer):
     likes_delta_week = serializers.IntegerField()
     site_visits_total = serializers.IntegerField()
     unique_visitors_total = serializers.IntegerField()
+    site_visits_delta_week = serializers.IntegerField()
+    last_travel_date = serializers.CharField(allow_blank=True)
+    total_updates = serializers.IntegerField()
 
 
 class HomeContactSerializer(serializers.Serializer):
