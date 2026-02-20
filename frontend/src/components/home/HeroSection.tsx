@@ -201,7 +201,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
         <img
           alt="云海背景"
           className={`h-full w-full object-cover ${
-            isDark ? "opacity-42 saturate-[0.76] brightness-[0.48]" : "opacity-82 saturate-[1.18] brightness-[1.08]"
+            isDark ? "opacity-48 saturate-[0.7] brightness-[0.4]" : "opacity-82 saturate-[1.18] brightness-[1.08]"
           }`}
           src={hero.fallback_image}
           loading="eager"
@@ -211,7 +211,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
             key={heroVideoKey}
             autoPlay
             className={`absolute inset-0 h-full w-full object-cover ${
-              isDark ? "opacity-84 saturate-[0.94] brightness-[0.84]" : "opacity-46 saturate-[1.1] brightness-[1.05]"
+              isDark ? "opacity-80 saturate-[0.86] brightness-[0.72]" : "opacity-46 saturate-[1.1] brightness-[1.05]"
             }`}
             loop
             muted
@@ -226,14 +226,14 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
 
       <motion.div
         className={`pointer-events-none absolute -top-32 left-1/2 h-[42rem] w-[42rem] -translate-x-1/2 rounded-full blur-3xl ${
-          isDark ? "bg-[#60A5FA]/12" : "bg-[#FFE0A9]/28"
+          isDark ? "bg-[#60A5FA]/8" : "bg-[#FFE0A9]/28"
         }`}
         animate={reducedMotion ? undefined : { opacity: [0.2, 0.34, 0.2], x: [-20, 16, -20] }}
         transition={reducedMotion ? undefined : { duration: 8.2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
       />
       <motion.div
         className={`pointer-events-none absolute -right-24 top-12 h-[24rem] w-[24rem] rounded-full blur-3xl ${
-          isDark ? "bg-[#38BDF8]/14" : "bg-[#A9C4FF]/22"
+          isDark ? "bg-[#38BDF8]/10" : "bg-[#A9C4FF]/22"
         }`}
         animate={reducedMotion ? undefined : { opacity: [0.12, 0.24, 0.12], y: [-10, 16, -10] }}
         transition={reducedMotion ? undefined : { duration: 9.5, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
@@ -241,7 +241,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
       <div
         className={`pointer-events-none absolute inset-0 ${
           isDark
-            ? "bg-[radial-gradient(circle_at_50%_-4%,rgba(125,211,252,0.22),transparent_36%),radial-gradient(circle_at_16%_18%,rgba(56,189,248,0.15),transparent_46%),radial-gradient(circle_at_84%_14%,rgba(129,140,248,0.13),transparent_40%),linear-gradient(180deg,rgba(2,6,23,0.24),rgba(2,6,23,0.58)_72%,rgba(2,6,23,0.76))]"
+            ? "bg-[radial-gradient(circle_at_50%_-4%,rgba(125,211,252,0.16),transparent_36%),radial-gradient(circle_at_16%_18%,rgba(56,189,248,0.11),transparent_46%),radial-gradient(circle_at_84%_14%,rgba(129,140,248,0.1),transparent_40%),linear-gradient(180deg,rgba(2,6,23,0.46),rgba(2,6,23,0.72)_68%,rgba(2,6,23,0.88))]"
             : "bg-[radial-gradient(circle_at_50%_0%,rgba(255,236,190,0.38),transparent_32%),radial-gradient(circle_at_16%_18%,rgba(92,124,223,0.28),transparent_44%),radial-gradient(circle_at_84%_14%,rgba(170,190,255,0.26),transparent_38%),linear-gradient(180deg,rgba(16,32,74,0.1),rgba(10,24,60,0.42)_72%,rgba(8,16,44,0.58))]"
         }`}
       />
@@ -258,7 +258,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
           <span className="bg-gradient-to-r from-[#4F6AE5] via-[#84A3FF] to-[#C7D6FF] bg-clip-text text-transparent">Clouds</span>
         </motion.h1>
 
-        <p className={`mt-4 max-w-2xl text-base sm:text-lg ${isDark ? "text-slate-100 drop-shadow-[0_4px_14px_rgba(2,6,23,0.65)]" : "text-slate-200"}`}>
+        <p className={`mt-4 max-w-2xl text-base sm:text-lg ${isDark ? "text-slate-200/95 drop-shadow-[0_4px_14px_rgba(2,6,23,0.7)]" : "text-slate-200"}`}>
           {hero.subtitle}
         </p>
 
@@ -333,7 +333,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -16 }}
               transition={{ duration: 0.45, ease: "easeOut" }}
-              className={`text-lg font-medium sm:text-2xl ${isDark ? "text-[#F3F7FF] drop-shadow-[0_4px_14px_rgba(2,6,23,0.68)]" : "text-[#EAF0FF]"}`}
+              className={`text-lg font-medium sm:text-2xl ${isDark ? "text-slate-200 drop-shadow-[0_4px_14px_rgba(2,6,23,0.72)]" : "text-[#EAF0FF]"}`}
             >
               {activeSlogan}
             </motion.div>
@@ -344,7 +344,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.65, duration: 0.4 }}
-          className={`mt-10 flex flex-wrap items-center justify-center gap-2 text-xs tracking-[0.28em] ${isDark ? "text-slate-200" : "text-slate-300"}`}
+          className={`mt-10 flex flex-wrap items-center justify-center gap-2 text-xs tracking-[0.28em] ${isDark ? "text-slate-300" : "text-slate-300"}`}
         >
           <span className="rounded-full border border-white/20 px-3 py-1">Tech</span>
           <span className="rounded-full border border-white/20 px-3 py-1">Efficiency</span>
@@ -354,7 +354,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
         <motion.div
           animate={{ y: [0, 8, 0], opacity: [0.7, 1, 0.7] }}
           transition={{ duration: 1.8, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-          className={`absolute bottom-8 text-xs uppercase tracking-[0.22em] ${isDark ? "text-slate-200" : "text-slate-300"}`}
+          className={`absolute bottom-8 text-xs uppercase tracking-[0.22em] ${isDark ? "text-slate-300" : "text-slate-300"}`}
         >
           Scroll
         </motion.div>

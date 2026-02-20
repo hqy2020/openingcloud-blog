@@ -138,7 +138,7 @@ export function AppLayout() {
   };
 
   return (
-    <div className={`min-h-screen ${isDark ? "bg-slate-950 text-slate-200" : "bg-[#F6F7FB] text-slate-900"}`}>
+    <div className={`min-h-screen ${isDark ? "bg-slate-950 text-slate-300" : "bg-[#F6F7FB] text-slate-900"}`}>
       <header className="sticky top-0 z-30 border-b backdrop-blur-xl" style={headerStyle}>
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-1.5 sm:grid sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-2.5 sm:py-2">
           <NavLink aria-label="返回首页" className="inline-flex items-center justify-center" title="首页" to="/">

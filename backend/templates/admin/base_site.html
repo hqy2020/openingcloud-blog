@@ -3,6 +3,33 @@
 {% block extrastyle %}
   {{ block.super }}
   <style>
+    html[data-theme="dark"],
+    html.dark {
+      --body-bg: #060b18;
+      --darkened-bg: #101a30;
+      --body-fg: #c3d3eb;
+      --body-loud-color: #e7efff;
+      --body-quiet-color: #99afd0;
+      --hairline-color: rgba(96, 123, 162, 0.56);
+      --border-color: rgba(96, 123, 162, 0.56);
+      --link-fg: #7dd3fc;
+      --link-hover-color: #a5e4ff;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      html[data-theme="auto"] {
+        --body-bg: #060b18;
+        --darkened-bg: #101a30;
+        --body-fg: #c3d3eb;
+        --body-loud-color: #e7efff;
+        --body-quiet-color: #99afd0;
+        --hairline-color: rgba(96, 123, 162, 0.56);
+        --border-color: rgba(96, 123, 162, 0.56);
+        --link-fg: #7dd3fc;
+        --link-hover-color: #a5e4ff;
+      }
+    }
+
     /* Normalize theme-toggle icon visual size across auto/dark/light states. */
     .theme-toggle svg {
       height: 1.4rem;

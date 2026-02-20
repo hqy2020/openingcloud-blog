@@ -3,18 +3,51 @@
 {% block extrahead %}
 {{ block.super }}
 <style>
+  :root {
+    --oc-card-bg: var(--darkened-bg, #f8fafc);
+    --oc-card-border: var(--hairline-color, #d5deea);
+    --oc-card-text: var(--body-fg, #1f2937);
+    --oc-card-strong: var(--body-loud-color, #0f172a);
+    --oc-card-muted: var(--body-quiet-color, #64748b);
+    --oc-card-link: var(--link-fg, #2563eb);
+    --oc-metric-bg: var(--body-bg, #ffffff);
+  }
+
+  html[data-theme="dark"],
+  html.dark {
+    --oc-card-bg: rgba(14, 23, 43, 0.92);
+    --oc-card-border: rgba(92, 118, 156, 0.62);
+    --oc-card-text: #c3d3eb;
+    --oc-card-strong: #e7efff;
+    --oc-card-muted: #9aafcf;
+    --oc-card-link: #7dd3fc;
+    --oc-metric-bg: rgba(19, 31, 56, 0.88);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    html[data-theme="auto"] {
+      --oc-card-bg: rgba(14, 23, 43, 0.92);
+      --oc-card-border: rgba(92, 118, 156, 0.62);
+      --oc-card-text: #c3d3eb;
+      --oc-card-strong: #e7efff;
+      --oc-card-muted: #9aafcf;
+      --oc-card-link: #7dd3fc;
+      --oc-metric-bg: rgba(19, 31, 56, 0.88);
+    }
+  }
+
   .oc-dashboard-card {
     margin-bottom: 20px;
     padding: 16px;
-    border: 1px solid var(--hairline-color);
+    border: 1px solid var(--oc-card-border);
     border-radius: 12px;
-    background: var(--darkened-bg);
-    color: var(--body-fg);
+    background: var(--oc-card-bg);
+    color: var(--oc-card-text);
   }
 
   .oc-dashboard-card h2 {
     margin: 0 0 12px;
-    color: var(--body-loud-color);
+    color: var(--oc-card-strong);
     font-size: 1.1rem;
   }
 
@@ -26,21 +59,21 @@
 
   .oc-dashboard-metric {
     padding: 10px 12px;
-    border: 1px solid var(--hairline-color);
+    border: 1px solid var(--oc-card-border);
     border-radius: 10px;
-    background: var(--body-bg);
+    background: var(--oc-metric-bg);
   }
 
   .oc-dashboard-metric strong {
     display: block;
     margin-bottom: 6px;
-    color: var(--body-quiet-color);
+    color: var(--oc-card-muted);
     font-size: 0.86rem;
     letter-spacing: 0.02em;
   }
 
   .oc-dashboard-metric .value {
-    color: var(--body-loud-color);
+    color: var(--oc-card-strong);
     font-weight: 700;
     font-size: 1.25rem;
     line-height: 1.2;
@@ -51,7 +84,7 @@
   }
 
   .oc-dashboard-link {
-    color: var(--link-fg);
+    color: var(--oc-card-link);
     font-weight: 600;
     text-decoration: none;
   }

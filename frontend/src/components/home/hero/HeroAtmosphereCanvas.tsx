@@ -114,9 +114,9 @@ export function HeroAtmosphereCanvas({ mobile = false, reducedMotion = false, th
 
       const sunBloom = context.createRadialGradient(width * 0.52, height * 0.04, 0, width * 0.52, height * 0.04, height * 0.82);
       if (isDarkTheme) {
-        sunBloom.addColorStop(0, "rgba(191, 219, 254, 0.2)");
-        sunBloom.addColorStop(0.2, "rgba(125, 211, 252, 0.12)");
-        sunBloom.addColorStop(0.42, "rgba(99, 102, 241, 0.09)");
+        sunBloom.addColorStop(0, "rgba(191, 219, 254, 0.14)");
+        sunBloom.addColorStop(0.2, "rgba(125, 211, 252, 0.08)");
+        sunBloom.addColorStop(0.42, "rgba(99, 102, 241, 0.06)");
         sunBloom.addColorStop(1, "rgba(30, 41, 59, 0)");
       } else {
         sunBloom.addColorStop(0, "rgba(255, 228, 170, 0.42)");
