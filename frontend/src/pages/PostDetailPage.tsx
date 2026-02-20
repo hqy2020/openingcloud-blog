@@ -316,7 +316,7 @@ export function PostDetailPage() {
                 ? "bg-indigo-500/20 text-indigo-200 ring-1 ring-indigo-400/40"
                 : "bg-indigo-50/70 text-indigo-700 ring-1 ring-indigo-100"
               : isDark
-                ? "text-slate-100"
+                ? "text-slate-200"
                 : "text-slate-900"
           }`}
           id={id}
@@ -338,7 +338,7 @@ export function PostDetailPage() {
                 ? "bg-indigo-500/20 text-indigo-200 ring-1 ring-indigo-400/40"
                 : "bg-indigo-50/70 text-indigo-700 ring-1 ring-indigo-100"
               : isDark
-                ? "text-slate-200"
+                ? "text-slate-300"
                 : "text-slate-800"
           }`}
           id={id}
@@ -348,7 +348,7 @@ export function PostDetailPage() {
       );
     },
     p: ({ children, ...props }: HTMLAttributes<HTMLParagraphElement>) => (
-      <p {...props} className={`mt-4 leading-8 ${isDark ? "text-slate-200" : "text-slate-700"}`}>
+      <p {...props} className={`mt-4 leading-8 ${isDark ? "text-slate-300" : "text-slate-700"}`}>
         {children}
       </p>
     ),
@@ -358,7 +358,7 @@ export function PostDetailPage() {
         return (
           <code
             {...props}
-            className={`rounded px-1 py-0.5 text-sm ${isDark ? "bg-slate-700/70 text-slate-100" : "bg-slate-100 text-slate-800"}`}
+            className={`rounded px-1 py-0.5 text-sm ${isDark ? "bg-slate-700/70 text-slate-200" : "bg-slate-100 text-slate-800"}`}
           >
             {children}
           </code>
@@ -374,7 +374,7 @@ export function PostDetailPage() {
       );
     },
     ul: ({ children, ...props }: HTMLAttributes<HTMLUListElement>) => (
-      <ul {...props} className={`mt-4 list-disc space-y-2 pl-6 ${isDark ? "text-slate-200" : "text-slate-700"}`}>
+      <ul {...props} className={`mt-4 list-disc space-y-2 pl-6 ${isDark ? "text-slate-300" : "text-slate-700"}`}>
         {children}
       </ul>
     ),
@@ -382,7 +382,7 @@ export function PostDetailPage() {
       <div className="mt-5 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
         <table
           {...props}
-          className={`w-full border-collapse text-sm ${isDark ? "text-slate-200" : "text-slate-700"}`}
+          className={`w-full border-collapse text-sm ${isDark ? "text-slate-300" : "text-slate-700"}`}
         >
           {children}
         </table>
@@ -400,7 +400,7 @@ export function PostDetailPage() {
       <th
         {...props}
         className={`border-b px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide ${
-          isDark ? "border-slate-700 text-slate-300" : "border-slate-200 text-slate-600"
+          isDark ? "border-slate-700 text-slate-400" : "border-slate-200 text-slate-600"
         }`}
       >
         {children}
@@ -473,7 +473,7 @@ export function PostDetailPage() {
           {alt ? (
             <figcaption
               className={`border-t px-3 py-2 text-sm ${
-                isDark ? "border-slate-700 bg-slate-900/95 text-slate-300" : "border-slate-200 bg-white text-slate-500"
+                isDark ? "border-slate-700 bg-slate-900/95 text-slate-400" : "border-slate-200 bg-white text-slate-500"
               }`}
             >
               {alt}
@@ -522,15 +522,15 @@ export function PostDetailPage() {
       <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_260px]">
         <article
           className={`rounded-2xl border p-6 shadow-sm ${
-            isDark ? "border-slate-700 bg-slate-900/84 text-slate-100" : "border-slate-200 bg-white text-slate-900"
+            isDark ? "border-slate-700 bg-slate-900/84 text-slate-200" : "border-slate-200 bg-white text-slate-900"
           }`}
         >
-          <h1 className={`text-3xl font-bold tracking-tight ${isDark ? "text-slate-100" : "text-slate-900"}`}>{data.title}</h1>
+          <h1 className={`text-3xl font-bold tracking-tight ${isDark ? "text-slate-200" : "text-slate-900"}`}>{data.title}</h1>
 
-          <div className={`mt-3 flex flex-wrap items-center gap-2 text-sm ${isDark ? "text-slate-300" : "text-slate-500"}`}>
+          <div className={`mt-3 flex flex-wrap items-center gap-2 text-sm ${isDark ? "text-slate-400" : "text-slate-500"}`}>
             <span
               className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                isDark ? "bg-slate-800 text-slate-100" : "bg-slate-100 text-slate-700"
+                isDark ? "bg-slate-800 text-slate-200" : "bg-slate-100 text-slate-700"
               }`}
             >
               {categoryLabelMap[data.category]}
@@ -561,7 +561,7 @@ export function PostDetailPage() {
                       ? "border-rose-400/50 bg-rose-500/20 text-rose-300 hover:bg-rose-500/30"
                       : "border-rose-300 bg-rose-50 text-rose-600 hover:bg-rose-100"
                     : isDark
-                      ? "border-slate-600 bg-slate-800 text-slate-300 hover:border-slate-500 hover:bg-slate-700"
+                      ? "border-slate-600 bg-slate-800 text-slate-400 hover:border-slate-500 hover:bg-slate-700"
                       : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300 hover:bg-slate-100"
                 }`}
               >
@@ -576,21 +576,21 @@ export function PostDetailPage() {
                 </motion.span>
                 觉得不错？给这篇文章一个赞
               </motion.button>
-              <span className={`text-sm ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+              <span className={`text-sm ${isDark ? "text-slate-500" : "text-slate-500"}`}>
                 {likesCount > 0 ? `${likesCount} 人觉得很赞` : "成为第一个点赞的人"}
               </span>
             </div>
 
             {postTags.length > 0 ? (
               <div className="flex flex-wrap items-center gap-2">
-                <span className={`text-sm font-medium ${isDark ? "text-slate-300" : "text-slate-500"}`}>文末标签</span>
+                <span className={`text-sm font-medium ${isDark ? "text-slate-400" : "text-slate-500"}`}>文末标签</span>
                 {postTags.map((tag) => (
                   <Link
                     key={`post-tag-${tag}`}
                     to={`${categoryPathMap[data.category]}?tag=${encodeURIComponent(tag)}`}
                     className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
                       isDark
-                        ? "border-slate-600 bg-slate-800 text-slate-100 hover:border-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-200"
+                        ? "border-slate-600 bg-slate-800 text-slate-200 hover:border-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-200"
                         : "border-slate-200 bg-slate-50 text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
                     }`}
                   >
@@ -620,7 +620,7 @@ export function PostDetailPage() {
             isDark ? "border-slate-700 bg-slate-900/84" : "border-slate-200 bg-white"
           }`}
         >
-          <h2 className={`text-sm font-semibold uppercase tracking-wide ${isDark ? "text-slate-300" : "text-slate-500"}`}>目录</h2>
+          <h2 className={`text-sm font-semibold uppercase tracking-wide ${isDark ? "text-slate-400" : "text-slate-500"}`}>目录</h2>
           <ul className="mt-3 space-y-2 text-sm">
             {headings.length === 0 ? <li className={isDark ? "text-slate-500" : "text-slate-400"}>暂无目录</li> : null}
             {headings.map((item) => (
@@ -632,7 +632,7 @@ export function PostDetailPage() {
                         ? "bg-indigo-500/20 font-semibold text-indigo-200 ring-1 ring-indigo-400/40"
                         : "bg-indigo-100 font-semibold text-indigo-800 ring-1 ring-indigo-200"
                       : isDark
-                        ? "text-slate-200 hover:bg-slate-800 hover:text-indigo-200"
+                        ? "text-slate-300 hover:bg-slate-800 hover:text-indigo-200"
                         : "text-slate-700 hover:bg-slate-50 hover:text-indigo-700"
                   }`}
                   href={`#${item.id}`}

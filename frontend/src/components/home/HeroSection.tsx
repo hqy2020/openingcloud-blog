@@ -1,5 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTheme } from "../../app/theme";
 import { useGithubFollowers } from "../../hooks/useGithubFollowers";
 import { HeroAtmosphereCanvas } from "./hero/HeroAtmosphereCanvas";
 
@@ -16,6 +17,7 @@ type HeroSectionProps = {
 };
 
 const DEFAULT_GITHUB_PROFILE = "https://github.com/hqy2020";
+const DARK_HERO_VIDEO_SRC = "/media/hero/hero-dark-clouds.mp4";
 
 function resolveGithubProfile(url: string) {
   const raw = String(url || "").trim();
@@ -103,6 +105,7 @@ function FollowerBadge({ count }: { count: number | null }) {
 }
 
 export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
+  const { isDark, theme } = useTheme();
   const [index, setIndex] = useState(0);
   const [mobile, setMobile] = useState(false);
   const [allowVideo, setAllowVideo] = useState(false);
@@ -146,43 +149,58 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
   const githubProfile = useMemo(() => resolveGithubProfile(githubUrl), [githubUrl]);
   const followLabel = githubProfile.handle === "GitHub" ? "关注 GitHub" : `关注 GitHub @${githubProfile.handle}`;
   const followers = useGithubFollowers(githubProfile.handle);
+  const heroVideoSource = isDark ? DARK_HERO_VIDEO_SRC : hero.fallback_video;
 
   return (
-    <section className="relative left-1/2 min-h-[100vh] w-screen -translate-x-1/2 overflow-hidden bg-[#1C2E57] text-white">
+    <section className={`relative left-1/2 min-h-[100vh] w-screen -translate-x-1/2 overflow-hidden text-white ${isDark ? "bg-[#060D1E]" : "bg-[#1C2E57]"}`}>
       <div className="absolute inset-0">
         <img
           alt="云海背景"
-          className="h-full w-full object-cover opacity-82 saturate-[1.18] brightness-[1.08]"
+          className={`h-full w-full object-cover ${
+            isDark ? "opacity-76 saturate-[0.86] brightness-[0.72]" : "opacity-82 saturate-[1.18] brightness-[1.08]"
+          }`}
           src={hero.fallback_image}
           loading="eager"
         />
-        {allowVideo && hero.fallback_video ? (
+        {allowVideo && heroVideoSource ? (
           <video
             autoPlay
-            className="absolute inset-0 h-full w-full object-cover opacity-46 saturate-[1.1] brightness-[1.05]"
+            className={`absolute inset-0 h-full w-full object-cover ${
+              isDark ? "opacity-58 saturate-[0.88] brightness-[0.66]" : "opacity-46 saturate-[1.1] brightness-[1.05]"
+            }`}
             loop
             muted
             playsInline
             preload="metadata"
           >
-            <source src={hero.fallback_video} type="video/mp4" />
+            <source src={heroVideoSource} type="video/mp4" />
           </video>
         ) : null}
       </div>
 
-      <HeroAtmosphereCanvas mobile={mobile} reducedMotion={reducedMotion} />
+      <HeroAtmosphereCanvas mobile={mobile} reducedMotion={reducedMotion} themeMode={theme} />
 
       <motion.div
-        className="pointer-events-none absolute -top-32 left-1/2 h-[42rem] w-[42rem] -translate-x-1/2 rounded-full bg-[#FFE0A9]/28 blur-3xl"
+        className={`pointer-events-none absolute -top-32 left-1/2 h-[42rem] w-[42rem] -translate-x-1/2 rounded-full blur-3xl ${
+          isDark ? "bg-[#60A5FA]/12" : "bg-[#FFE0A9]/28"
+        }`}
         animate={reducedMotion ? undefined : { opacity: [0.2, 0.34, 0.2], x: [-20, 16, -20] }}
         transition={reducedMotion ? undefined : { duration: 8.2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
       />
       <motion.div
-        className="pointer-events-none absolute -right-24 top-12 h-[24rem] w-[24rem] rounded-full bg-[#A9C4FF]/22 blur-3xl"
+        className={`pointer-events-none absolute -right-24 top-12 h-[24rem] w-[24rem] rounded-full blur-3xl ${
+          isDark ? "bg-[#38BDF8]/14" : "bg-[#A9C4FF]/22"
+        }`}
         animate={reducedMotion ? undefined : { opacity: [0.12, 0.24, 0.12], y: [-10, 16, -10] }}
         transition={reducedMotion ? undefined : { duration: 9.5, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
       />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,236,190,0.38),transparent_32%),radial-gradient(circle_at_16%_18%,rgba(92,124,223,0.28),transparent_44%),radial-gradient(circle_at_84%_14%,rgba(170,190,255,0.26),transparent_38%),linear-gradient(180deg,rgba(16,32,74,0.1),rgba(10,24,60,0.42)_72%,rgba(8,16,44,0.58))]" />
+      <div
+        className={`pointer-events-none absolute inset-0 ${
+          isDark
+            ? "bg-[radial-gradient(circle_at_50%_-2%,rgba(96,165,250,0.16),transparent_34%),radial-gradient(circle_at_16%_18%,rgba(56,189,248,0.12),transparent_44%),radial-gradient(circle_at_84%_14%,rgba(99,102,241,0.14),transparent_38%),linear-gradient(180deg,rgba(2,6,23,0.46),rgba(2,6,23,0.74)_72%,rgba(2,6,23,0.9))]"
+            : "bg-[radial-gradient(circle_at_50%_0%,rgba(255,236,190,0.38),transparent_32%),radial-gradient(circle_at_16%_18%,rgba(92,124,223,0.28),transparent_44%),radial-gradient(circle_at_84%_14%,rgba(170,190,255,0.26),transparent_38%),linear-gradient(180deg,rgba(16,32,74,0.1),rgba(10,24,60,0.42)_72%,rgba(8,16,44,0.58))]"
+        }`}
+      />
 
       <div className="relative mx-auto flex min-h-[100vh] w-full max-w-6xl flex-col items-center justify-center px-6 text-center sm:px-10">
         <motion.h1

@@ -421,7 +421,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
     ? `linear-gradient(165deg, rgba(15,23,42,0.95), rgba(${visual.glowRgb},0.19))`
     : `linear-gradient(165deg, rgba(255,255,255,0.95), rgba(${visual.glowRgb},0.08))`;
   const chipBackground = isDark ? `rgba(${visual.glowRgb},0.22)` : `rgba(${visual.glowRgb},0.14)`;
-  const tagTextColor = isDark ? "#CBD5E1" : "#475569";
+  const tagTextColor = isDark ? "#9CAEC9" : "#475569";
 
   return (
     <section
@@ -456,8 +456,8 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
           />
 
           <div className="relative">
-            <p className={`text-sm tracking-[0.22em] ${isDark ? "text-slate-300" : "text-slate-500"}`}>{visual.badge}</p>
-            <h1 className={`mt-2 flex items-center gap-3 text-3xl font-semibold tracking-tight ${isDark ? "text-slate-50" : "text-slate-900"}`}>
+            <p className={`text-sm tracking-[0.22em] ${isDark ? "text-slate-400" : "text-slate-500"}`}>{visual.badge}</p>
+            <h1 className={`mt-2 flex items-center gap-3 text-3xl font-semibold tracking-tight ${isDark ? "text-slate-200" : "text-slate-900"}`}>
               <span
                 className="inline-flex h-10 w-10 items-center justify-center rounded-xl border text-xl shadow-[0_8px_18px_rgba(15,23,42,0.08)]"
                 style={{
@@ -469,10 +469,10 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
               </span>
               <span style={{ color: visual.accentHex }}>{title}</span>
             </h1>
-            <p className={`mt-3 ${isDark ? "text-slate-200" : "text-slate-600"}`}>
+            <p className={`mt-3 ${isDark ? "text-slate-300" : "text-slate-600"}`}>
               <TextGenerateEffect text={visual.accentText} />
             </p>
-            <p className={`mt-1 text-sm ${isDark ? "text-slate-300" : "text-slate-500"}`}>
+            <p className={`mt-1 text-sm ${isDark ? "text-slate-400" : "text-slate-500"}`}>
               {totalCount || effectivePosts.length} 篇文章 · 约 {estimatedWords.toLocaleString()} 字
               {totalCount > 0 && effectivePosts.length < totalCount ? ` · 已加载 ${effectivePosts.length} 篇` : ""}
             </p>
@@ -523,7 +523,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
           </div>
 
           <div className="flex items-center gap-2 text-sm">
-            <span className={isDark ? "text-slate-300" : "text-slate-500"}>排序</span>
+            <span className={isDark ? "text-slate-400" : "text-slate-500"}>排序</span>
             <button
               type="button"
               className={`rounded-full border px-3 py-1 ${isDark ? "bg-slate-900/84 hover:bg-slate-800/84" : ""}`}
@@ -533,7 +533,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
                   : isDark
                     ? "rgba(148,163,184,0.45)"
                     : "rgba(148,163,184,0.3)",
-                color: sortBy === "latest" ? visual.accentHex : isDark ? "#CBD5E1" : "#64748b",
+                color: sortBy === "latest" ? visual.accentHex : isDark ? "#9CAEC9" : "#64748b",
               }}
               onClick={() => setSortBy("latest")}
             >
@@ -548,7 +548,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
                   : isDark
                     ? "rgba(148,163,184,0.45)"
                     : "rgba(148,163,184,0.3)",
-                color: sortBy === "views" ? visual.accentHex : isDark ? "#CBD5E1" : "#64748b",
+                color: sortBy === "views" ? visual.accentHex : isDark ? "#9CAEC9" : "#64748b",
               }}
               onClick={() => setSortBy("views")}
             >
@@ -558,7 +558,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
         </div>
       </section>
 
-      {loadingInitial && <p className={isDark ? "text-slate-300" : "text-slate-500"}>加载中...</p>}
+      {loadingInitial && <p className={isDark ? "text-slate-400" : "text-slate-500"}>加载中...</p>}
       {error ? <p className={`text-sm ${isDark ? "text-amber-300" : "text-amber-700"}`}>实时数据暂不可用，已展示静态内容。</p> : null}
 
       <div className="columns-2 gap-3 sm:gap-4">
@@ -615,13 +615,13 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/25 via-transparent to-transparent" />
                 </div>
 
-                <h2 className={`mt-4 text-xl font-semibold ${isDark ? "text-slate-100" : "text-slate-900"}`}>
+                <h2 className={`mt-4 text-xl font-semibold ${isDark ? "text-slate-200" : "text-slate-900"}`}>
                   <Link className="line-clamp-2 transition hover:opacity-80" style={{ color: visual.accentHex }} to={`/posts/${post.slug}`}>
                     {post.title}
                   </Link>
                 </h2>
 
-                <p className={`mt-2 text-sm ${isDark ? "text-slate-300" : "text-slate-600"}`}>{post.excerpt || "暂无摘要"}</p>
+                <p className={`mt-2 text-sm ${isDark ? "text-slate-400" : "text-slate-600"}`}>{post.excerpt || "暂无摘要"}</p>
 
                 <div className="mt-3 flex flex-wrap gap-1">
                   {post.tags.map((tag) => (
@@ -635,7 +635,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
                   ))}
                 </div>
 
-                <p className={`mt-3 text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+                <p className={`mt-3 text-xs ${isDark ? "text-slate-500" : "text-slate-500"}`}>
                   {new Date(post.updated_at).toLocaleDateString("zh-CN")} · 👁 {formatViews(post.views_count)} · {estimateReadMinutes(post)} min
                 </p>
               </CardSpotlight>
@@ -647,14 +647,14 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
       {!loadingInitial && !fallbackPosts.length && hasMore ? (
         <div ref={loadMoreRef} className="flex flex-col items-center gap-2 pt-1">
           {loadingMore ? (
-            <div className={`flex items-center gap-2 text-xs ${isDark ? "text-slate-300" : "text-slate-500"}`}>
+            <div className={`flex items-center gap-2 text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>
               <span
-                className={`h-3.5 w-3.5 animate-spin rounded-full border-2 ${isDark ? "border-slate-500 border-t-slate-100" : "border-slate-300 border-t-slate-600"}`}
+                className={`h-3.5 w-3.5 animate-spin rounded-full border-2 ${isDark ? "border-slate-600 border-t-slate-300" : "border-slate-300 border-t-slate-600"}`}
               />
               正在加载更多...
             </div>
           ) : awaitingGesture ? (
-            <div className={`flex items-center gap-2 text-xs ${isDark ? "text-slate-300" : "text-slate-500"}`}>
+            <div className={`flex items-center gap-2 text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>
               <motion.span
                 className="inline-block text-sm"
                 animate={{ y: [0, 4, 0] }}
@@ -665,19 +665,19 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
               再下拉一下，松手后加载下一页
             </div>
           ) : (
-            <p className={`text-xs ${isDark ? "text-slate-300" : "text-slate-500"}`}>滑到底部后，再拖一下即可加载</p>
+            <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>滑到底部后，再拖一下即可加载</p>
           )}
-          <p className={`text-xs ${isDark ? "text-slate-300" : "text-slate-500"}`}>
+          <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>
             已加载 {effectivePosts.length}/{totalCount} 篇
           </p>
         </div>
       ) : null}
 
       {!loadingInitial && !fallbackPosts.length && !hasMore && effectivePosts.length > 0 ? (
-        <p className={`text-center text-xs ${isDark ? "text-slate-300" : "text-slate-500"}`}>已加载全部 {effectivePosts.length} 篇</p>
+        <p className={`text-center text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>已加载全部 {effectivePosts.length} 篇</p>
       ) : null}
 
-      {!loadingInitial && effectivePosts.length === 0 ? <p className={isDark ? "text-slate-300" : "text-slate-500"}>暂无文章</p> : null}
+      {!loadingInitial && effectivePosts.length === 0 ? <p className={isDark ? "text-slate-400" : "text-slate-500"}>暂无文章</p> : null}
     </section>
   );
 }

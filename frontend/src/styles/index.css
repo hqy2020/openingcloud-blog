@@ -32,7 +32,7 @@ html.dark body {
     radial-gradient(circle at 12% -20%, rgba(30, 64, 175, 0.35), transparent 48%),
     radial-gradient(circle at 86% 6%, rgba(30, 58, 138, 0.28), transparent 44%),
     linear-gradient(180deg, #020617 0%, #0f172a 40%, #111827 100%);
-  color: #e2e8f0;
+  color: #c7d4e8;
 }
 
 .glass-surface-light {
@@ -70,16 +70,28 @@ html.dark .border-slate-200\/80 {
   border-color: rgba(100, 116, 139, 0.52);
 }
 
-html.dark .text-slate-900,
-html.dark .text-slate-800,
-html.dark .text-slate-700 {
-  color: #e2e8f0;
+html.dark .text-slate-900 {
+  color: #d6e1f2;
 }
 
-html.dark .text-slate-600,
-html.dark .text-slate-500,
+html.dark .text-slate-800 {
+  color: #cbd7eb;
+}
+
+html.dark .text-slate-700 {
+  color: #bccae1;
+}
+
+html.dark .text-slate-600 {
+  color: #adbed8;
+}
+
+html.dark .text-slate-500 {
+  color: #9caecb;
+}
+
 html.dark .text-slate-400 {
-  color: #cbd5e1;
+  color: #8e9fbf;
 }
 
 h1,

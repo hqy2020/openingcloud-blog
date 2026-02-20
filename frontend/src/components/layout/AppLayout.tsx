@@ -5,6 +5,7 @@ import type { HomePayload } from "../../api/home";
 import { useTheme } from "../../app/theme";
 import { resolveAccentByPath } from "../../theme/categoryVisuals";
 import { usePageVisitTracker } from "../../hooks/usePageVisitTracker";
+import { useSiteAudio } from "../../hooks/useSiteAudio";
 import { ContactSection } from "../home/ContactSection";
 import { GlobalSloganTicker } from "./GlobalSloganTicker";
 import { BlogPetMachine } from "../pet/BlogPetMachine";
@@ -52,6 +53,43 @@ function ThemeToggleIcon({ isDark }: { isDark: boolean }) {
   );
 }
 
+function AudioToggleIcon({ enabled, playing }: { enabled: boolean; playing: boolean }) {
+  if (!enabled) {
+    return (
+      <svg aria-hidden="true" className="h-[1.1rem] w-[1.1rem]" fill="none" viewBox="0 0 24 24">
+        <path
+          d="M14.8 6.1a8.5 8.5 0 0 1 0 11.8M17.8 3.2a12.7 12.7 0 0 1 0 17.6M10.3 8.4l-2.7 2.3H5.2v2.6h2.4l2.7 2.3V8.4Z"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.8"
+        />
+        <path d="m4.5 4.5 15 15" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg aria-hidden="true" className="h-[1.1rem] w-[1.1rem]" fill="none" viewBox="0 0 24 24">
+      <path
+        d="M10.3 8.4l-2.7 2.3H5.2v2.6h2.4l2.7 2.3V8.4Zm4.5-2.3a8.5 8.5 0 0 1 0 11.8"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+      {playing ? (
+        <path
+          d="M17.8 3.2a12.7 12.7 0 0 1 0 17.6"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeWidth="1.8"
+        />
+      ) : null}
+    </svg>
+  );
+}
+
 function AdminEntryIcon() {
   return (
     <svg aria-hidden="true" className="h-[1.1rem] w-[1.1rem]" fill="none" viewBox="0 0 24 24">
@@ -62,9 +100,14 @@ function AdminEntryIcon() {
 }
 
 export function AppLayout() {
-  const { isDark, toggleTheme } = useTheme();
+  const { theme, isDark, toggleTheme } = useTheme();
   const location = useLocation();
   usePageVisitTracker();
+  const isHomeRoute = location.pathname === "/";
+  const { enabled: audioEnabled, playing: audioPlaying, toggleEnabled: toggleAudio, ready: audioReady } = useSiteAudio({
+    theme,
+    homeRouteActive: isHomeRoute,
+  });
   const visual = resolveAccentByPath(location.pathname);
   const logoSrc = isDark ? "/brand/logo-icon-white.png" : "/brand/logo-icon-ink.png";
 
@@ -94,7 +137,7 @@ export function AppLayout() {
   };
 
   return (
-    <div className={`min-h-screen ${isDark ? "bg-slate-950 text-slate-100" : "bg-[#F6F7FB] text-slate-900"}`}>
+    <div className={`min-h-screen ${isDark ? "bg-slate-950 text-slate-200" : "bg-[#F6F7FB] text-slate-900"}`}>
       <header className="sticky top-0 z-30 border-b backdrop-blur-xl" style={headerStyle}>
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-1.5 sm:grid sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-2.5 sm:py-2">
           <NavLink aria-label="返回首页" className="inline-flex items-center justify-center" title="首页" to="/">
@@ -136,7 +179,7 @@ export function AppLayout() {
                               ? "text-slate-300 hover:text-slate-50"
                               : "text-slate-600 hover:text-slate-900"
                         }`}
-                        style={isActive ? { color: isDark ? "#E2ECFF" : visual.accentHex } : undefined}
+                        style={isActive ? { color: isDark ? "#D1DCF0" : visual.accentHex } : undefined}
                       >
                         {item.label}
                       </span>
@@ -153,12 +196,36 @@ export function AppLayout() {
               aria-label="后台管理"
               title="后台管理"
               className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition ${
-                isDark ? "glass-surface-dark text-slate-100 hover:text-white" : "glass-surface-light text-slate-700 hover:text-slate-900"
+                isDark ? "glass-surface-dark text-slate-200 hover:text-slate-50" : "glass-surface-light text-slate-700 hover:text-slate-900"
               }`}
               style={sharedSurfaceStyle}
             >
               <AdminEntryIcon />
             </a>
+
+            <button
+              aria-label={audioEnabled ? "关闭背景音乐" : "开启背景音乐"}
+              className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition ${
+                isDark ? "glass-surface-dark" : "glass-surface-light"
+              }`}
+              disabled={!audioReady}
+              onClick={toggleAudio}
+              style={{
+                ...sharedSurfaceStyle,
+                color: audioEnabled
+                  ? isDark
+                    ? "#A5F3FC"
+                    : "#0F766E"
+                  : isDark
+                    ? "#94A3B8"
+                    : "#64748B",
+                opacity: audioReady ? 1 : 0.72,
+              }}
+              title={audioEnabled ? "背景音乐已开启" : "背景音乐已关闭"}
+              type="button"
+            >
+              <AudioToggleIcon enabled={audioEnabled} playing={audioPlaying} />
+            </button>
 
             <button
               aria-label={isDark ? "切换到浅色模式" : "切换到深色模式"}
