@@ -59,10 +59,14 @@ html.dark .bg-slate-50,
 html.dark .bg-slate-50\/70,
 html.dark .bg-slate-50\/80,
 html.dark .bg-slate-50\/85,
+html.dark .bg-slate-50\/90,
 html.dark .bg-slate-100,
 html.dark .bg-slate-100\/70,
 html.dark .bg-slate-100\/80,
-html.dark .bg-slate-100\/85 {
+html.dark .bg-slate-100\/85,
+html.dark .bg-slate-100\/90,
+html.dark .bg-slate-200,
+html.dark .bg-slate-200\/80 {
   background-color: rgba(15, 23, 42, 0.86);
 }
 

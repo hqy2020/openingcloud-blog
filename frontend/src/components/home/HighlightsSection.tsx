@@ -15,47 +15,53 @@ type HighlightTheme = {
   glowColor: string;
 };
 
+const HIGHLIGHT_CARD_BASE =
+  "border-slate-200/80 bg-white/90 shadow-[0_12px_32px_rgba(15,23,42,0.08)] dark:border-slate-700/85 dark:bg-slate-900/88 dark:shadow-[0_14px_36px_rgba(2,6,23,0.5)]";
+
+const HIGHLIGHT_ITEM_BASE =
+  "border-slate-200/80 bg-slate-50/70 text-slate-700 dark:border-slate-600/80 dark:bg-slate-800/88 dark:text-slate-200";
+
 const HIGHLIGHT_THEMES: HighlightTheme[] = [
   {
-    cardClass: "border-slate-200/80 bg-white/90 shadow-[0_12px_32px_rgba(15,23,42,0.08)] ring-1 ring-sky-100/70",
-    itemClass: "border-slate-200/80 bg-slate-50/70 text-slate-700 dark:border-slate-600/80 dark:bg-slate-800/90 dark:text-slate-200",
-    dateClass: "text-slate-500",
-    summaryClass: "text-slate-700",
+    cardClass: `${HIGHLIGHT_CARD_BASE} ring-1 ring-sky-100/70 dark:ring-sky-800/45`,
+    itemClass: HIGHLIGHT_ITEM_BASE,
+    dateClass: "text-slate-500 dark:text-slate-400",
+    summaryClass: "text-slate-700 dark:text-slate-200",
     glowColor: "125, 170, 230",
   },
   {
-    cardClass: "border-slate-200/80 bg-white/90 shadow-[0_12px_32px_rgba(15,23,42,0.08)] ring-1 ring-blue-100/70",
-    itemClass: "border-slate-200/80 bg-slate-50/70 text-slate-700 dark:border-slate-600/80 dark:bg-slate-800/90 dark:text-slate-200",
-    dateClass: "text-slate-500",
-    summaryClass: "text-slate-700",
+    cardClass: `${HIGHLIGHT_CARD_BASE} ring-1 ring-blue-100/70 dark:ring-blue-800/45`,
+    itemClass: HIGHLIGHT_ITEM_BASE,
+    dateClass: "text-slate-500 dark:text-slate-400",
+    summaryClass: "text-slate-700 dark:text-slate-200",
     glowColor: "129, 161, 223",
   },
   {
-    cardClass: "border-slate-200/80 bg-white/90 shadow-[0_12px_32px_rgba(15,23,42,0.08)] ring-1 ring-indigo-100/70",
-    itemClass: "border-slate-200/80 bg-slate-50/70 text-slate-700 dark:border-slate-600/80 dark:bg-slate-800/90 dark:text-slate-200",
-    dateClass: "text-slate-500",
-    summaryClass: "text-slate-700",
+    cardClass: `${HIGHLIGHT_CARD_BASE} ring-1 ring-indigo-100/70 dark:ring-indigo-800/45`,
+    itemClass: HIGHLIGHT_ITEM_BASE,
+    dateClass: "text-slate-500 dark:text-slate-400",
+    summaryClass: "text-slate-700 dark:text-slate-200",
     glowColor: "147, 150, 196",
   },
   {
-    cardClass: "border-slate-200/80 bg-white/90 shadow-[0_12px_32px_rgba(15,23,42,0.08)] ring-1 ring-slate-100/70",
-    itemClass: "border-slate-200/80 bg-slate-50/70 text-slate-700 dark:border-slate-600/80 dark:bg-slate-800/90 dark:text-slate-200",
-    dateClass: "text-slate-600",
-    summaryClass: "text-slate-700",
+    cardClass: `${HIGHLIGHT_CARD_BASE} ring-1 ring-slate-100/70 dark:ring-slate-700/55`,
+    itemClass: HIGHLIGHT_ITEM_BASE,
+    dateClass: "text-slate-600 dark:text-slate-400",
+    summaryClass: "text-slate-700 dark:text-slate-200",
     glowColor: "148, 163, 184",
   },
   {
-    cardClass: "border-slate-200/80 bg-white/90 shadow-[0_12px_32px_rgba(15,23,42,0.08)] ring-1 ring-stone-100/70",
-    itemClass: "border-slate-200/80 bg-slate-50/70 text-slate-700 dark:border-slate-600/80 dark:bg-slate-800/90 dark:text-slate-200",
-    dateClass: "text-slate-500",
-    summaryClass: "text-slate-700",
+    cardClass: `${HIGHLIGHT_CARD_BASE} ring-1 ring-stone-100/70 dark:ring-stone-700/45`,
+    itemClass: HIGHLIGHT_ITEM_BASE,
+    dateClass: "text-slate-500 dark:text-slate-400",
+    summaryClass: "text-slate-700 dark:text-slate-200",
     glowColor: "171, 153, 128",
   },
   {
-    cardClass: "border-slate-200/80 bg-white/90 shadow-[0_12px_32px_rgba(15,23,42,0.08)] ring-1 ring-amber-100/80",
-    itemClass: "border-slate-200/80 bg-slate-50/70 text-slate-700 dark:border-slate-600/80 dark:bg-slate-800/90 dark:text-slate-200",
-    dateClass: "text-slate-500",
-    summaryClass: "text-slate-700",
+    cardClass: `${HIGHLIGHT_CARD_BASE} ring-1 ring-amber-100/80 dark:ring-amber-800/45`,
+    itemClass: HIGHLIGHT_ITEM_BASE,
+    dateClass: "text-slate-500 dark:text-slate-400",
+    summaryClass: "text-slate-700 dark:text-slate-200",
     glowColor: "195, 161, 110",
   },
 ];
@@ -126,11 +132,11 @@ export function HighlightsSection({ stages }: HighlightsSectionProps) {
     return (
       <ScrollReveal className="space-y-6">
         <div className="flex items-end justify-between">
-          <h2 className="text-2xl font-semibold text-slate-900">高光时刻</h2>
-          <span className="text-sm text-slate-500">0 个阶段</span>
+          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">高光时刻</h2>
+          <span className="text-sm text-slate-500 dark:text-slate-400">0 个阶段</span>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white/80 px-5 py-6 text-sm text-slate-600">
+        <div className="rounded-2xl border border-slate-200 bg-white/80 px-5 py-6 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/84 dark:text-slate-300">
           暂无高光数据，请先在后台补充阶段与成就。
         </div>
       </ScrollReveal>
@@ -140,8 +146,8 @@ export function HighlightsSection({ stages }: HighlightsSectionProps) {
   return (
     <ScrollReveal className="space-y-6">
       <div className="flex items-end justify-between">
-        <h2 className="text-2xl font-semibold text-slate-900">高光时刻</h2>
-        <span className="text-sm text-slate-500">{stages.length} 个阶段</span>
+        <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">高光时刻</h2>
+        <span className="text-sm text-slate-500 dark:text-slate-400">{stages.length} 个阶段</span>
       </div>
 
       <StaggerContainer className="grid gap-5 md:grid-cols-2 xl:grid-cols-3" stagger={0.07}>
@@ -157,7 +163,7 @@ export function HighlightsSection({ stages }: HighlightsSectionProps) {
                 ].join(" ")}
                 glowColor={theme.glowColor}
               >
-                <h3 className="text-lg font-semibold text-slate-900">{stage.title}</h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{stage.title}</h3>
                 <p className={`mt-1 text-xs ${theme.dateClass}`}>
                   {stage.start_date || ""}
                   {stage.end_date ? ` - ${stage.end_date}` : ""}

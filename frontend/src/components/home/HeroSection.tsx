@@ -152,6 +152,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
   const followers = useGithubFollowers(githubProfile.handle);
   const heroVideoSource = isDark ? DARK_HERO_VIDEO_SRC : hero.fallback_video;
   const allowVideo = !mobile && (isDark || (!reducedMotion && networkFast));
+  const titleShadow = isDark ? "drop-shadow-[0_8px_22px_rgba(2,6,23,0.82)]" : "drop-shadow-[0_8px_18px_rgba(8,24,54,0.42)]";
 
   return (
     <section className={`relative left-1/2 min-h-[100vh] w-screen -translate-x-1/2 overflow-hidden text-white ${isDark ? "bg-[#060D1E]" : "bg-[#1C2E57]"}`}>
@@ -159,7 +160,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
         <img
           alt="云海背景"
           className={`h-full w-full object-cover ${
-            isDark ? "opacity-76 saturate-[0.86] brightness-[0.72]" : "opacity-82 saturate-[1.18] brightness-[1.08]"
+            isDark ? "opacity-42 saturate-[0.76] brightness-[0.48]" : "opacity-82 saturate-[1.18] brightness-[1.08]"
           }`}
           src={hero.fallback_image}
           loading="eager"
@@ -168,7 +169,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
           <video
             autoPlay
             className={`absolute inset-0 h-full w-full object-cover ${
-              isDark ? "opacity-58 saturate-[0.88] brightness-[0.66]" : "opacity-46 saturate-[1.1] brightness-[1.05]"
+              isDark ? "opacity-84 saturate-[0.94] brightness-[0.84]" : "opacity-46 saturate-[1.1] brightness-[1.05]"
             }`}
             loop
             muted
@@ -199,7 +200,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
       <div
         className={`pointer-events-none absolute inset-0 ${
           isDark
-            ? "bg-[radial-gradient(circle_at_50%_-2%,rgba(96,165,250,0.16),transparent_34%),radial-gradient(circle_at_16%_18%,rgba(56,189,248,0.12),transparent_44%),radial-gradient(circle_at_84%_14%,rgba(99,102,241,0.14),transparent_38%),linear-gradient(180deg,rgba(2,6,23,0.46),rgba(2,6,23,0.74)_72%,rgba(2,6,23,0.9))]"
+            ? "bg-[radial-gradient(circle_at_50%_-4%,rgba(125,211,252,0.22),transparent_36%),radial-gradient(circle_at_16%_18%,rgba(56,189,248,0.15),transparent_46%),radial-gradient(circle_at_84%_14%,rgba(129,140,248,0.13),transparent_40%),linear-gradient(180deg,rgba(2,6,23,0.24),rgba(2,6,23,0.58)_72%,rgba(2,6,23,0.76))]"
             : "bg-[radial-gradient(circle_at_50%_0%,rgba(255,236,190,0.38),transparent_32%),radial-gradient(circle_at_16%_18%,rgba(92,124,223,0.28),transparent_44%),radial-gradient(circle_at_84%_14%,rgba(170,190,255,0.26),transparent_38%),linear-gradient(180deg,rgba(16,32,74,0.1),rgba(10,24,60,0.42)_72%,rgba(8,16,44,0.58))]"
         }`}
       />
@@ -209,14 +210,16 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
-          className="text-5xl tracking-tight sm:text-7xl"
+          className={`text-5xl tracking-tight sm:text-7xl ${titleShadow}`}
           style={{ fontFamily: "'LXGW WenKai', 'Kaiti SC', serif" }}
         >
           opening
           <span className="bg-gradient-to-r from-[#4F6AE5] via-[#84A3FF] to-[#C7D6FF] bg-clip-text text-transparent">Clouds</span>
         </motion.h1>
 
-        <p className="mt-4 max-w-2xl text-base text-slate-200 sm:text-lg">{hero.subtitle}</p>
+        <p className={`mt-4 max-w-2xl text-base sm:text-lg ${isDark ? "text-slate-100 drop-shadow-[0_4px_14px_rgba(2,6,23,0.65)]" : "text-slate-200"}`}>
+          {hero.subtitle}
+        </p>
 
         <motion.div
           initial={{ opacity: 0, y: 14 }}
@@ -267,7 +270,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -16 }}
               transition={{ duration: 0.45, ease: "easeOut" }}
-              className="text-lg font-medium text-[#EAF0FF] sm:text-2xl"
+              className={`text-lg font-medium sm:text-2xl ${isDark ? "text-[#F3F7FF] drop-shadow-[0_4px_14px_rgba(2,6,23,0.68)]" : "text-[#EAF0FF]"}`}
             >
               {activeSlogan}
             </motion.div>
@@ -278,7 +281,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.65, duration: 0.4 }}
-          className="mt-10 flex flex-wrap items-center justify-center gap-2 text-xs tracking-[0.28em] text-slate-300"
+          className={`mt-10 flex flex-wrap items-center justify-center gap-2 text-xs tracking-[0.28em] ${isDark ? "text-slate-200" : "text-slate-300"}`}
         >
           <span className="rounded-full border border-white/20 px-3 py-1">Tech</span>
           <span className="rounded-full border border-white/20 px-3 py-1">Efficiency</span>
@@ -288,7 +291,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
         <motion.div
           animate={{ y: [0, 8, 0], opacity: [0.7, 1, 0.7] }}
           transition={{ duration: 1.8, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-          className="absolute bottom-8 text-xs uppercase tracking-[0.22em] text-slate-300"
+          className={`absolute bottom-8 text-xs uppercase tracking-[0.22em] ${isDark ? "text-slate-200" : "text-slate-300"}`}
         >
           Scroll
         </motion.div>

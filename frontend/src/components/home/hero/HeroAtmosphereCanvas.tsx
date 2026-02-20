@@ -58,7 +58,7 @@ export function HeroAtmosphereCanvas({ mobile = false, reducedMotion = false, th
       height: randomRange(90, 190),
       speed: randomRange(isDarkTheme ? 6 : 8, isDarkTheme ? 14 : 18),
       phase: randomRange(0, Math.PI * 2) + index * 0.35,
-      alpha: randomRange(isDarkTheme ? 0.06 : 0.08, isDarkTheme ? 0.12 : 0.16),
+      alpha: randomRange(isDarkTheme ? 0.05 : 0.08, isDarkTheme ? 0.1 : 0.16),
     }));
 
     const particleCount = mobile ? (isDarkTheme ? 24 : 30) : isDarkTheme ? 42 : 56;
@@ -101,9 +101,9 @@ export function HeroAtmosphereCanvas({ mobile = false, reducedMotion = false, th
 
       const haze = context.createLinearGradient(0, 0, 0, height);
       if (isDarkTheme) {
-        haze.addColorStop(0, "rgba(10, 20, 44, 0.14)");
-        haze.addColorStop(0.45, "rgba(8, 16, 38, 0.34)");
-        haze.addColorStop(1, "rgba(2, 6, 23, 0.62)");
+        haze.addColorStop(0, "rgba(14, 30, 66, 0.08)");
+        haze.addColorStop(0.45, "rgba(8, 16, 38, 0.2)");
+        haze.addColorStop(1, "rgba(2, 6, 23, 0.42)");
       } else {
         haze.addColorStop(0, "rgba(74, 109, 185, 0.1)");
         haze.addColorStop(0.45, "rgba(40, 69, 136, 0.2)");
@@ -114,9 +114,9 @@ export function HeroAtmosphereCanvas({ mobile = false, reducedMotion = false, th
 
       const sunBloom = context.createRadialGradient(width * 0.52, height * 0.04, 0, width * 0.52, height * 0.04, height * 0.82);
       if (isDarkTheme) {
-        sunBloom.addColorStop(0, "rgba(147, 197, 253, 0.16)");
-        sunBloom.addColorStop(0.2, "rgba(96, 165, 250, 0.1)");
-        sunBloom.addColorStop(0.42, "rgba(99, 102, 241, 0.08)");
+        sunBloom.addColorStop(0, "rgba(191, 219, 254, 0.2)");
+        sunBloom.addColorStop(0.2, "rgba(125, 211, 252, 0.12)");
+        sunBloom.addColorStop(0.42, "rgba(99, 102, 241, 0.09)");
         sunBloom.addColorStop(1, "rgba(30, 41, 59, 0)");
       } else {
         sunBloom.addColorStop(0, "rgba(255, 228, 170, 0.42)");
@@ -144,8 +144,8 @@ export function HeroAtmosphereCanvas({ mobile = false, reducedMotion = false, th
         const radius = cloud.width * 0.74;
         const gradient = context.createRadialGradient(cx, cy, 0, cx, cy, radius);
         if (isDarkTheme) {
-          gradient.addColorStop(0, `rgba(176, 210, 255, ${cloud.alpha * 0.72})`);
-          gradient.addColorStop(0.55, `rgba(82, 118, 176, ${cloud.alpha * 0.44})`);
+          gradient.addColorStop(0, `rgba(176, 210, 255, ${cloud.alpha * 0.58})`);
+          gradient.addColorStop(0.55, `rgba(82, 118, 176, ${cloud.alpha * 0.3})`);
           gradient.addColorStop(1, "rgba(15, 23, 42, 0)");
         } else {
           gradient.addColorStop(0, `rgba(216, 232, 255, ${cloud.alpha * 1.15})`);
