@@ -215,6 +215,42 @@ pre {
   }
 }
 
+.barrage-sidebar-viewport {
+  overflow: hidden;
+  mask-image: linear-gradient(180deg, transparent 0%, black 8%, black 92%, transparent 100%);
+}
+
+.barrage-sidebar-track {
+  display: flex;
+  flex-direction: column;
+}
+
+.barrage-sidebar-animate {
+  animation: barrage-vertical-scroll 26s linear infinite;
+}
+
+.barrage-sidebar-animate:hover {
+  animation-play-state: paused;
+}
+
+.barrage-sidebar-segment {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  flex-shrink: 0;
+  padding-bottom: 0.65rem;
+}
+
+@keyframes barrage-vertical-scroll {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(-50%);
+  }
+}
+
 .blur-reveal-media {
   filter: blur(10px) saturate(0.94);
   opacity: 0.92;
@@ -246,6 +282,10 @@ pre {
   }
 
   .pinned-sidebar-animate {
+    animation: none;
+  }
+
+  .barrage-sidebar-animate {
     animation: none;
   }
 

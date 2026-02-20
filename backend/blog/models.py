@@ -109,6 +109,30 @@ class PostLikeVote(models.Model):
         return f"{self.post.slug}: {self.ip_hash[:8]}"
 
 
+class HomeLike(models.Model):
+    likes = models.PositiveIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "首页点赞"
+        verbose_name_plural = "首页点赞"
+
+    def __str__(self) -> str:
+        return f"home: {self.likes}"
+
+
+class HomeLikeVote(models.Model):
+    ip_hash = models.CharField(max_length=64, unique=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "首页点赞投票"
+        verbose_name_plural = "首页点赞投票"
+
+    def __str__(self) -> str:
+        return f"home: {self.ip_hash[:8]}"
+
+
 class HomeStatsSnapshot(TimeStampedModel):
     snapshot_date = models.DateField(unique=True, db_index=True)
     views_total = models.PositiveIntegerField(default=0)
@@ -441,6 +465,41 @@ class SiteVisit(models.Model):
 
     def __str__(self) -> str:
         return f"{self.path} ({self.created_at:%Y-%m-%d %H:%M})"
+
+
+class BarrageComment(TimeStampedModel):
+    class ReviewStatus(models.TextChoices):
+        PENDING = "pending", "待审核"
+        APPROVED = "approved", "已通过"
+        REJECTED = "rejected", "已拒绝"
+
+    nickname = models.CharField(max_length=40, default="匿名云友")
+    content = models.CharField(max_length=200)
+    page_path = models.CharField(max_length=500, blank=True)
+    status = models.CharField(max_length=20, choices=ReviewStatus.choices, default=ReviewStatus.PENDING, db_index=True)
+    ip_hash = models.CharField(max_length=64, db_index=True)
+    user_agent = models.CharField(max_length=500, blank=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reviewed_barrage_comments",
+    )
+    review_note = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        ordering = ["-reviewed_at", "-created_at", "-id"]
+        verbose_name = "弹幕评论"
+        verbose_name_plural = "弹幕评论"
+        indexes = [
+            models.Index(fields=["status", "reviewed_at"]),
+            models.Index(fields=["status", "created_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.nickname}: {self.content[:24]}"
 
 
 class GithubProject(TimeStampedModel):

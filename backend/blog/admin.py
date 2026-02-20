@@ -10,6 +10,7 @@ from django.http import Http404, HttpRequest, HttpResponseRedirect, JsonResponse
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.html import format_html, format_html_join
+from django.utils import timezone
 from adminsortable2.admin import SortableAdminMixin, SortableInlineAdminMixin
 
 from .image_bed import ImageBedUploadError, upload_photo_to_obsidian_images
@@ -17,6 +18,7 @@ from sync.document_pool import sync_obsidian_documents
 from sync.service import sync_post_payload
 
 from .models import (
+    BarrageComment,
     HighlightItem,
     HighlightStage,
     ObsidianDocument,
@@ -113,6 +115,65 @@ class PostViewAdmin(admin.ModelAdmin):
 class PostLikeAdmin(admin.ModelAdmin):
     list_display = ["post", "likes", "updated_at"]
     search_fields = ["post__title", "post__slug"]
+
+
+@admin.register(BarrageComment)
+class BarrageCommentAdmin(admin.ModelAdmin):
+    list_display = ["nickname", "content_preview", "status", "page_path", "created_at", "reviewed_at", "reviewed_by"]
+    list_filter = ["status", "created_at", "reviewed_at"]
+    search_fields = ["nickname", "content", "page_path", "ip_hash"]
+    readonly_fields = ["ip_hash", "user_agent", "created_at", "updated_at", "reviewed_at", "reviewed_by"]
+    actions = ["mark_approved", "mark_rejected", "mark_pending"]
+
+    fieldsets = (
+        ("评论", {"fields": ("nickname", "content", "page_path", "status", "review_note")}),
+        ("审核", {"fields": ("reviewed_at", "reviewed_by")}),
+        ("来源", {"fields": ("ip_hash", "user_agent")}),
+        ("时间", {"fields": ("created_at", "updated_at")}),
+    )
+
+    @admin.display(description="评论内容")
+    def content_preview(self, obj: BarrageComment) -> str:
+        text = str(obj.content or "")
+        return text if len(text) <= 36 else f"{text[:36]}..."
+
+    @admin.action(description="审核通过选中评论")
+    def mark_approved(self, request, queryset):
+        updated = queryset.update(
+            status=BarrageComment.ReviewStatus.APPROVED,
+            reviewed_at=timezone.now(),
+            reviewed_by=request.user,
+        )
+        self.message_user(request, f"已通过 {updated} 条评论", level=messages.SUCCESS)
+
+    @admin.action(description="拒绝选中评论")
+    def mark_rejected(self, request, queryset):
+        updated = queryset.update(
+            status=BarrageComment.ReviewStatus.REJECTED,
+            reviewed_at=timezone.now(),
+            reviewed_by=request.user,
+        )
+        self.message_user(request, f"已拒绝 {updated} 条评论", level=messages.WARNING)
+
+    @admin.action(description="重置为待审核")
+    def mark_pending(self, request, queryset):
+        updated = queryset.update(
+            status=BarrageComment.ReviewStatus.PENDING,
+            reviewed_at=None,
+            reviewed_by=None,
+        )
+        self.message_user(request, f"已重置 {updated} 条评论为待审核", level=messages.INFO)
+
+    def save_model(self, request, obj: BarrageComment, form, change):
+        if obj.status == BarrageComment.ReviewStatus.PENDING:
+            obj.reviewed_at = None
+            obj.reviewed_by = None
+        elif obj.status in {BarrageComment.ReviewStatus.APPROVED, BarrageComment.ReviewStatus.REJECTED}:
+            if not obj.reviewed_at:
+                obj.reviewed_at = timezone.now()
+            if not obj.reviewed_by:
+                obj.reviewed_by = request.user
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(TimelineNode)

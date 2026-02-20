@@ -20,9 +20,12 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import (
+    BarrageComment,
     GithubProject,
     HighlightItem,
     HighlightStage,
+    HomeLike,
+    HomeLikeVote,
     PhotoWallImage,
     Post,
     PostLike,
@@ -36,6 +39,8 @@ from .models import (
 )
 from .permissions import IsStaffOrSyncToken, IsStaffUser
 from .serializers import (
+    BarrageCommentPublicSerializer,
+    BarrageCommentSubmitSerializer,
     AdminImageUploadSerializer,
     AdminObsidianReconcileRequestSerializer,
     AdminObsidianReconcileResponseSerializer,
@@ -283,6 +288,52 @@ class TogglePostLike(APIView):
         return api_ok({"slug": slug, "likes": likes, "liked": liked})
 
 
+class ToggleHomeLike(APIView):
+    permission_classes = [AllowAny]
+
+    @staticmethod
+    def _get_ip_hash(request) -> str:
+        import hashlib
+
+        raw = (
+            request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")[0].strip()
+            or request.META.get("REMOTE_ADDR")
+            or "unknown"
+        )
+        return hashlib.sha256(raw.encode()).hexdigest()[:32]
+
+    @staticmethod
+    def _current_likes() -> int:
+        record = HomeLike.objects.order_by("-id").first()
+        if record:
+            return int(record.likes)
+        return int(HomeLikeVote.objects.count())
+
+    def get(self, request):
+        ip_hash = self._get_ip_hash(request)
+        liked = HomeLikeVote.objects.filter(ip_hash=ip_hash).exists()
+        return api_ok({"likes": self._current_likes(), "liked": liked})
+
+    def post(self, request):
+        ip_hash = self._get_ip_hash(request)
+        vote = HomeLikeVote.objects.filter(ip_hash=ip_hash).first()
+        if vote:
+            vote.delete()
+            liked = False
+        else:
+            HomeLikeVote.objects.create(ip_hash=ip_hash)
+            liked = True
+
+        likes = int(HomeLikeVote.objects.count())
+        summary = HomeLike.objects.order_by("id").first()
+        if summary is None:
+            HomeLike.objects.create(likes=likes)
+        else:
+            summary.likes = likes
+            summary.save(update_fields=["likes", "updated_at"])
+        return api_ok({"likes": likes, "liked": liked})
+
+
 class RecordSiteVisitView(APIView):
     permission_classes = [AllowAny]
 
@@ -329,6 +380,65 @@ class RecordSiteVisitView(APIView):
         )
         cache.set(cache_key, True, timeout=int(timedelta(minutes=5).total_seconds()))
         return api_ok({"recorded": True, "throttled": False})
+
+
+class BarrageCommentListCreateView(APIView):
+    permission_classes = [AllowAny]
+
+    @staticmethod
+    def _get_ip_hash(request) -> str:
+        import hashlib
+
+        raw = (
+            request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")[0].strip()
+            or request.META.get("REMOTE_ADDR")
+            or "unknown"
+        )
+        return hashlib.sha256(raw.encode()).hexdigest()[:32]
+
+    def get(self, request):
+        raw_limit = request.query_params.get("limit", "40")
+        try:
+            limit = int(raw_limit)
+        except (TypeError, ValueError):
+            limit = 40
+        limit = min(max(limit, 1), 80)
+
+        queryset = (
+            BarrageComment.objects.filter(status=BarrageComment.ReviewStatus.APPROVED)
+            .order_by("-reviewed_at", "-created_at", "-id")[:limit]
+        )
+        payload = BarrageCommentPublicSerializer(queryset, many=True).data
+        return api_ok(payload)
+
+    def post(self, request):
+        serializer = BarrageCommentSubmitSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        ip_hash = self._get_ip_hash(request)
+        cache_key = f"barrage-comment-throttle:{ip_hash}"
+        if cache.get(cache_key):
+            return api_error("throttled", "发言太快，请稍后再试", status.HTTP_429_TOO_MANY_REQUESTS)
+
+        data = serializer.validated_data
+        comment = BarrageComment.objects.create(
+            nickname=data.get("nickname") or "匿名云友",
+            content=data["content"],
+            page_path=data.get("page_path", ""),
+            ip_hash=ip_hash,
+            user_agent=str(request.META.get("HTTP_USER_AGENT", ""))[:500],
+            status=BarrageComment.ReviewStatus.PENDING,
+        )
+        cache.set(cache_key, True, timeout=int(timedelta(seconds=30).total_seconds()))
+
+        return api_ok(
+            {
+                "id": comment.id,
+                "status": comment.status,
+                "submitted": True,
+            },
+            status_code=status.HTTP_201_CREATED,
+        )
 
 
 class AdminAnalyticsView(APIView):
@@ -1088,8 +1198,13 @@ def _home_stats_payload() -> dict:
     travel_year_ago = TravelPlace.objects.filter(visited_at__lte=one_year_ago).count()
     travel_delta_year = travel_total - travel_year_ago
 
-    likes_total = PostLike.objects.aggregate(total=Sum("likes"))["total"] or 0
-    likes_delta_week = PostLikeVote.objects.filter(created_at__gte=one_week_ago).count()
+    post_likes_total = PostLike.objects.aggregate(total=Sum("likes"))["total"] or 0
+    home_likes_total = HomeLikeVote.objects.count()
+    likes_total = int(post_likes_total) + int(home_likes_total)
+    likes_delta_week = (
+        PostLikeVote.objects.filter(created_at__gte=one_week_ago).count()
+        + HomeLikeVote.objects.filter(created_at__gte=one_week_ago).count()
+    )
 
     site_visits_total = SiteVisit.objects.count()
     unique_visitors_total = SiteVisit.objects.values("ip_hash").distinct().count()
@@ -1112,7 +1227,7 @@ def _home_stats_payload() -> dict:
         "total_words_delta_week": total_words_delta_week,
         "tags_delta_week": tags_delta_week,
         "travel_delta_year": travel_delta_year,
-        "likes_total": int(likes_total),
+        "likes_total": likes_total,
         "likes_delta_week": likes_delta_week,
         "site_visits_total": site_visits_total,
         "unique_visitors_total": unique_visitors_total,

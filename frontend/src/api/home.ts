@@ -181,6 +181,21 @@ export async function fetchHome() {
   return data.data as HomePayload;
 }
 
+export type HomeLikeState = {
+  likes: number;
+  liked: boolean;
+};
+
+export async function fetchHomeLikeStatus() {
+  const { data } = await apiClient.get("/home/like/");
+  return data.data as HomeLikeState;
+}
+
+export async function toggleHomeLike() {
+  const { data } = await apiClient.post("/home/like/");
+  return data.data as HomeLikeState;
+}
+
 export async function fetchTimeline() {
   const { data } = await apiClient.get("/timeline/");
   return data.data as TimelineNode[];

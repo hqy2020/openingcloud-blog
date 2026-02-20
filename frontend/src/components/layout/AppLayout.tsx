@@ -9,6 +9,7 @@ import { useSiteAudio } from "../../hooks/useSiteAudio";
 import { ContactSection } from "../home/ContactSection";
 import { GlobalSloganTicker } from "./GlobalSloganTicker";
 import { BlogPetMachine } from "../pet/BlogPetMachine";
+import { BarrageCommentsSidebar } from "./BarrageCommentsSidebar";
 
 const links = [
   { to: "/tech", label: "技术" },
@@ -265,6 +266,7 @@ export function AppLayout() {
           <p className="mt-4 text-xs">© {new Date().getFullYear()} openingClouds</p>
         </div>
       </footer>
+      <BarrageCommentsSidebar />
       <BlogPetMachine />
     </div>
   );

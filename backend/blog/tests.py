@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -17,12 +18,28 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from .image_bed import ImageBedUploadError
-from .models import HighlightItem, HighlightStage, PhotoWallImage, Post, PostView, SocialFriend, SyncLog, TimelineNode, TravelPlace
+from .models import (
+    BarrageComment,
+    HighlightItem,
+    HighlightStage,
+    HomeLike,
+    HomeLikeVote,
+    PhotoWallImage,
+    Post,
+    PostLike,
+    PostLikeVote,
+    PostView,
+    SocialFriend,
+    SyncLog,
+    TimelineNode,
+    TravelPlace,
+)
 
 
 class ApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
+        cache.clear()
         self.post = Post.objects.create(
             title="Hello",
             slug="hello",
@@ -220,6 +237,102 @@ class ApiTests(TestCase):
         self.assertEqual(second.status_code, 200)
         self.assertEqual(PostView.objects.get(post=self.post).views, 1)
         self.assertTrue(second.data["data"]["throttled"])
+
+    def test_toggle_home_like_and_status(self):
+        status_before = self.client.get(reverse("home-like"), REMOTE_ADDR="1.2.3.4")
+        self.assertEqual(status_before.status_code, 200)
+        self.assertEqual(status_before.data["data"]["likes"], 0)
+        self.assertFalse(status_before.data["data"]["liked"])
+
+        liked_resp = self.client.post(reverse("home-like"), REMOTE_ADDR="1.2.3.4")
+        self.assertEqual(liked_resp.status_code, 200)
+        self.assertEqual(liked_resp.data["data"]["likes"], 1)
+        self.assertTrue(liked_resp.data["data"]["liked"])
+        self.assertEqual(HomeLikeVote.objects.count(), 1)
+        self.assertEqual(HomeLike.objects.first().likes, 1)  # type: ignore[union-attr]
+
+        status_after = self.client.get(reverse("home-like"), REMOTE_ADDR="1.2.3.4")
+        self.assertEqual(status_after.status_code, 200)
+        self.assertEqual(status_after.data["data"]["likes"], 1)
+        self.assertTrue(status_after.data["data"]["liked"])
+
+        unliked_resp = self.client.post(reverse("home-like"), REMOTE_ADDR="1.2.3.4")
+        self.assertEqual(unliked_resp.status_code, 200)
+        self.assertEqual(unliked_resp.data["data"]["likes"], 0)
+        self.assertFalse(unliked_resp.data["data"]["liked"])
+        self.assertEqual(HomeLikeVote.objects.count(), 0)
+        self.assertEqual(HomeLike.objects.first().likes, 0)  # type: ignore[union-attr]
+
+    def test_home_stats_include_home_likes_in_total(self):
+        PostLike.objects.create(post=self.post, likes=2)
+        PostLikeVote.objects.create(post=self.post, ip_hash="post-ip")
+
+        like_home = self.client.post(reverse("home-like"), REMOTE_ADDR="8.8.8.8")
+        self.assertEqual(like_home.status_code, 200)
+
+        home_resp = self.client.get(reverse("home"))
+        self.assertEqual(home_resp.status_code, 200)
+        stats = home_resp.data["data"]["stats"]
+        self.assertEqual(stats["likes_total"], 3)
+        self.assertEqual(stats["likes_delta_week"], 2)
+
+    def test_barrage_comments_only_returns_approved(self):
+        BarrageComment.objects.create(
+            nickname="A",
+            content="pending",
+            status=BarrageComment.ReviewStatus.PENDING,
+            ip_hash="ip-a",
+        )
+        approved = BarrageComment.objects.create(
+            nickname="B",
+            content="approved",
+            status=BarrageComment.ReviewStatus.APPROVED,
+            ip_hash="ip-b",
+            reviewed_at=timezone.now(),
+        )
+        BarrageComment.objects.create(
+            nickname="C",
+            content="rejected",
+            status=BarrageComment.ReviewStatus.REJECTED,
+            ip_hash="ip-c",
+            reviewed_at=timezone.now(),
+        )
+
+        resp = self.client.get(reverse("barrage-comments"))
+        self.assertEqual(resp.status_code, 200)
+        rows = resp.data["data"]
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["id"], approved.id)
+        self.assertEqual(rows[0]["content"], "approved")
+
+    def test_barrage_comment_submit_creates_pending(self):
+        resp = self.client.post(
+            reverse("barrage-comments"),
+            {
+                "nickname": "  云友  ",
+                "content": "  留言测试  ",
+                "page_path": "/tech",
+            },
+            format="json",
+            REMOTE_ADDR="1.2.3.4",
+        )
+        self.assertEqual(resp.status_code, 201)
+        self.assertTrue(resp.data["data"]["submitted"])
+
+        comment = BarrageComment.objects.get(id=resp.data["data"]["id"])
+        self.assertEqual(comment.nickname, "云友")
+        self.assertEqual(comment.content, "留言测试")
+        self.assertEqual(comment.page_path, "/tech")
+        self.assertEqual(comment.status, BarrageComment.ReviewStatus.PENDING)
+
+    def test_barrage_comment_submit_throttled(self):
+        payload = {"content": "第一条"}
+        first = self.client.post(reverse("barrage-comments"), payload, format="json", REMOTE_ADDR="5.6.7.8")
+        second = self.client.post(reverse("barrage-comments"), {"content": "第二条"}, format="json", REMOTE_ADDR="5.6.7.8")
+
+        self.assertEqual(first.status_code, 201)
+        self.assertEqual(second.status_code, 429)
+        self.assertEqual(second.data["code"], "throttled")
 
     def test_public_home_shape(self):
         resp = self.client.get(reverse("home"))

@@ -1,5 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { fetchHomeLikeStatus, toggleHomeLike } from "../../api/home";
 import { useTheme } from "../../app/theme";
 import { useGithubFollowers } from "../../hooks/useGithubFollowers";
 import { HeroAtmosphereCanvas } from "./hero/HeroAtmosphereCanvas";
@@ -110,6 +111,10 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
   const [mobile, setMobile] = useState(false);
   const [networkFast, setNetworkFast] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [homeLiked, setHomeLiked] = useState(false);
+  const [homeLikes, setHomeLikes] = useState<number | null>(null);
+  const [homeLikeLoading, setHomeLikeLoading] = useState(false);
+  const homeLikeLoadingRef = useRef(false);
 
   useEffect(() => {
     if (hero.slogans.length <= 1) {
@@ -146,13 +151,49 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    fetchHomeLikeStatus()
+      .then((result) => {
+        if (cancelled) {
+          return;
+        }
+        setHomeLiked(result.liked);
+        setHomeLikes(result.likes);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const activeSlogan = useMemo(() => hero.slogans[index] ?? hero.slogans[0] ?? "", [hero.slogans, index]);
   const githubProfile = useMemo(() => resolveGithubProfile(githubUrl), [githubUrl]);
   const followLabel = githubProfile.handle === "GitHub" ? "关注 GitHub" : `关注 GitHub @${githubProfile.handle}`;
   const followers = useGithubFollowers(githubProfile.handle);
   const heroVideoSource = isDark ? DARK_HERO_VIDEO_SRC : hero.fallback_video;
+  const heroVideoKey = `${theme}-${heroVideoSource}`;
   const allowVideo = !mobile && (isDark || (!reducedMotion && networkFast));
   const titleShadow = isDark ? "drop-shadow-[0_8px_22px_rgba(2,6,23,0.82)]" : "drop-shadow-[0_8px_18px_rgba(8,24,54,0.42)]";
+  const homeLikeLabel = homeLiked ? "取消首页点赞" : "点赞首页";
+
+  const handleToggleHomeLike = async () => {
+    if (homeLikeLoadingRef.current) {
+      return;
+    }
+    homeLikeLoadingRef.current = true;
+    setHomeLikeLoading(true);
+    try {
+      const result = await toggleHomeLike();
+      setHomeLiked(result.liked);
+      setHomeLikes(result.likes);
+    } catch {
+      // Ignore transient network failures and keep current UI state.
+    } finally {
+      homeLikeLoadingRef.current = false;
+      setHomeLikeLoading(false);
+    }
+  };
 
   return (
     <section className={`relative left-1/2 min-h-[100vh] w-screen -translate-x-1/2 overflow-hidden text-white ${isDark ? "bg-[#060D1E]" : "bg-[#1C2E57]"}`}>
@@ -167,6 +208,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
         />
         {allowVideo && heroVideoSource ? (
           <video
+            key={heroVideoKey}
             autoPlay
             className={`absolute inset-0 h-full w-full object-cover ${
               isDark ? "opacity-84 saturate-[0.94] brightness-[0.84]" : "opacity-46 saturate-[1.1] brightness-[1.05]"
@@ -175,9 +217,8 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
             muted
             playsInline
             preload="metadata"
-          >
-            <source src={heroVideoSource} type="video/mp4" />
-          </video>
+            src={heroVideoSource}
+          />
         ) : null}
       </div>
 
@@ -260,6 +301,28 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
               <span className="text-white/55">visits</span>
             </motion.div>
           )}
+
+          <motion.button
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.78, duration: 0.35, ease: "easeOut" }}
+            className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/8 px-5 py-3 text-sm font-medium text-white/90 backdrop-blur transition hover:bg-white/18 disabled:cursor-not-allowed disabled:opacity-70"
+            type="button"
+            onClick={handleToggleHomeLike}
+            disabled={homeLikeLoading}
+            aria-label={homeLikeLabel}
+            title={homeLikeLabel}
+          >
+            <svg aria-hidden="true" className={`h-4 w-4 ${homeLiked ? "text-rose-300" : "text-white/70"}`} fill={homeLiked ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 20.3 4.4 12.9a4.7 4.7 0 0 1 6.7-6.6L12 7.2l.9-.9a4.7 4.7 0 0 1 6.7 6.6L12 20.3Z"
+              />
+            </svg>
+            <span className="tabular-nums">{homeLikes ?? 0}</span>
+            <span className="text-white/55">likes</span>
+          </motion.button>
         </motion.div>
 
         <div className="mt-10 h-16 overflow-hidden">

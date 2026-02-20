@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 
-from .models import GithubProject, HighlightItem, HighlightStage, PhotoWallImage, Post, SocialFriend, TimelineNode, TravelPlace
+from .models import BarrageComment, GithubProject, HighlightItem, HighlightStage, PhotoWallImage, Post, SocialFriend, TimelineNode, TravelPlace
 
 
 class LoginSerializer(serializers.Serializer):
@@ -475,6 +475,38 @@ class PhotoWallPublicSerializer(serializers.ModelSerializer):
             "width",
             "height",
             "sort_order",
+        ]
+
+
+class BarrageCommentSubmitSerializer(serializers.Serializer):
+    nickname = serializers.CharField(required=False, allow_blank=True, max_length=40)
+    content = serializers.CharField(max_length=200)
+    page_path = serializers.CharField(required=False, allow_blank=True, max_length=500)
+
+    def validate_nickname(self, value: str):
+        nickname = str(value or "").strip()
+        return nickname[:40]
+
+    def validate_content(self, value: str):
+        content = str(value or "").strip()
+        if not content:
+            raise serializers.ValidationError("评论内容不能为空")
+        return content[:200]
+
+    def validate_page_path(self, value: str):
+        page_path = str(value or "").strip()
+        return page_path[:500]
+
+
+class BarrageCommentPublicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BarrageComment
+        fields = [
+            "id",
+            "nickname",
+            "content",
+            "created_at",
+            "reviewed_at",
         ]
 
 
