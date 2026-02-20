@@ -56,10 +56,13 @@ html.dark .bg-white\/85,
 html.dark .bg-white\/90,
 html.dark .bg-white\/95,
 html.dark .bg-slate-50,
+html.dark .bg-slate-50\/70,
 html.dark .bg-slate-50\/80,
 html.dark .bg-slate-50\/85,
 html.dark .bg-slate-100,
-html.dark .bg-slate-100\/70 {
+html.dark .bg-slate-100\/70,
+html.dark .bg-slate-100\/80,
+html.dark .bg-slate-100\/85 {
   background-color: rgba(15, 23, 42, 0.86);
 }
 
@@ -71,27 +74,27 @@ html.dark .border-slate-200\/80 {
 }
 
 html.dark .text-slate-900 {
-  color: #d6e1f2;
+  color: #edf3ff;
 }
 
 html.dark .text-slate-800 {
-  color: #cbd7eb;
+  color: #e2ebfb;
 }
 
 html.dark .text-slate-700 {
-  color: #bccae1;
+  color: #d5e0f3;
 }
 
 html.dark .text-slate-600 {
-  color: #adbed8;
+  color: #c6d3e8;
 }
 
 html.dark .text-slate-500 {
-  color: #9caecb;
+  color: #b5c4dc;
 }
 
 html.dark .text-slate-400 {
-  color: #8e9fbf;
+  color: #a3b3ce;
 }
 
 h1,

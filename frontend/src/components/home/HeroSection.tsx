@@ -108,7 +108,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
   const { isDark, theme } = useTheme();
   const [index, setIndex] = useState(0);
   const [mobile, setMobile] = useState(false);
-  const [allowVideo, setAllowVideo] = useState(false);
+  const [networkFast, setNetworkFast] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
@@ -130,9 +130,10 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
       const isMobile = mobileMedia.matches;
       const connection = navigator as Navigator & { connection?: { effectiveType?: string } };
       const effectiveType = connection.connection?.effectiveType ?? "";
+      const fastNetwork = effectiveType === "" || effectiveType === "4g";
       setMobile(isMobile);
       setReducedMotion(reduced);
-      setAllowVideo(!isMobile && !reduced && (effectiveType === "" || effectiveType === "4g"));
+      setNetworkFast(fastNetwork);
     };
 
     updateCapability();
@@ -150,6 +151,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
   const followLabel = githubProfile.handle === "GitHub" ? "关注 GitHub" : `关注 GitHub @${githubProfile.handle}`;
   const followers = useGithubFollowers(githubProfile.handle);
   const heroVideoSource = isDark ? DARK_HERO_VIDEO_SRC : hero.fallback_video;
+  const allowVideo = !mobile && (isDark || (!reducedMotion && networkFast));
 
   return (
     <section className={`relative left-1/2 min-h-[100vh] w-screen -translate-x-1/2 overflow-hidden text-white ${isDark ? "bg-[#060D1E]" : "bg-[#1C2E57]"}`}>
