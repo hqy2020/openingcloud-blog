@@ -1,30 +1,92 @@
 {% extends "admin/index.html" %}
 
+{% block extrahead %}
+{{ block.super }}
+<style>
+  .oc-dashboard-card {
+    margin-bottom: 20px;
+    padding: 16px;
+    border: 1px solid var(--hairline-color);
+    border-radius: 12px;
+    background: var(--darkened-bg);
+    color: var(--body-fg);
+  }
+
+  .oc-dashboard-card h2 {
+    margin: 0 0 12px;
+    color: var(--body-loud-color);
+    font-size: 1.1rem;
+  }
+
+  .oc-dashboard-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+  }
+
+  .oc-dashboard-metric {
+    padding: 10px 12px;
+    border: 1px solid var(--hairline-color);
+    border-radius: 10px;
+    background: var(--body-bg);
+  }
+
+  .oc-dashboard-metric strong {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--body-quiet-color);
+    font-size: 0.86rem;
+    letter-spacing: 0.02em;
+  }
+
+  .oc-dashboard-metric .value {
+    color: var(--body-loud-color);
+    font-weight: 700;
+    font-size: 1.25rem;
+    line-height: 1.2;
+  }
+
+  .oc-dashboard-link-wrap {
+    margin-top: 12px;
+  }
+
+  .oc-dashboard-link {
+    color: var(--link-fg);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .oc-dashboard-link:hover {
+    text-decoration: underline;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div style="margin-bottom: 20px; padding: 16px; background: #f6f7fb; border-radius: 8px;">
-  <h2 style="margin-top: 0;">运营概览</h2>
-  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px;">
-    <div><strong>文章总数</strong><div>{{ dashboard_stats.posts_total }}</div></div>
-    <div><strong>已发布</strong><div>{{ dashboard_stats.posts_published }}</div></div>
-    <div><strong>时间线节点</strong><div>{{ dashboard_stats.timeline_total }}</div></div>
-    <div><strong>旅行地点</strong><div>{{ dashboard_stats.travel_total }}</div></div>
-    <div><strong>社交好友</strong><div>{{ dashboard_stats.social_total }}</div></div>
-    <div><strong>照片墙</strong><div>{{ dashboard_stats.photo_total }}</div></div>
-    <div><strong>高光阶段</strong><div>{{ dashboard_stats.highlight_stages_total }}</div></div>
-    <div><strong>高光条目</strong><div>{{ dashboard_stats.highlight_items_total }}</div></div>
-    <div><strong>总阅读量</strong><div>{{ dashboard_stats.total_views }}</div></div>
+<div class="oc-dashboard-card">
+  <h2>运营概览</h2>
+  <div class="oc-dashboard-metrics">
+    <div class="oc-dashboard-metric"><strong>文章总数</strong><div class="value">{{ dashboard_stats.posts_total }}</div></div>
+    <div class="oc-dashboard-metric"><strong>已发布</strong><div class="value">{{ dashboard_stats.posts_published }}</div></div>
+    <div class="oc-dashboard-metric"><strong>时间线节点</strong><div class="value">{{ dashboard_stats.timeline_total }}</div></div>
+    <div class="oc-dashboard-metric"><strong>旅行地点</strong><div class="value">{{ dashboard_stats.travel_total }}</div></div>
+    <div class="oc-dashboard-metric"><strong>社交好友</strong><div class="value">{{ dashboard_stats.social_total }}</div></div>
+    <div class="oc-dashboard-metric"><strong>照片墙</strong><div class="value">{{ dashboard_stats.photo_total }}</div></div>
+    <div class="oc-dashboard-metric"><strong>高光阶段</strong><div class="value">{{ dashboard_stats.highlight_stages_total }}</div></div>
+    <div class="oc-dashboard-metric"><strong>高光条目</strong><div class="value">{{ dashboard_stats.highlight_items_total }}</div></div>
+    <div class="oc-dashboard-metric"><strong>总阅读量</strong><div class="value">{{ dashboard_stats.total_views }}</div></div>
   </div>
 </div>
 
-<div style="margin-bottom: 20px; padding: 16px; background: #eef2ff; border-radius: 8px;">
-  <h2 style="margin-top: 0;">站点访问</h2>
-  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px;">
-    <div><strong>总访问量</strong><div>{{ dashboard_stats.site_visits_total }}</div></div>
-    <div><strong>独立访客</strong><div>{{ dashboard_stats.unique_visitors }}</div></div>
-    <div><strong>今日访问</strong><div>{{ dashboard_stats.today_visits }}</div></div>
+<div class="oc-dashboard-card">
+  <h2>站点访问</h2>
+  <div class="oc-dashboard-metrics">
+    <div class="oc-dashboard-metric"><strong>总访问量</strong><div class="value">{{ dashboard_stats.site_visits_total }}</div></div>
+    <div class="oc-dashboard-metric"><strong>独立访客</strong><div class="value">{{ dashboard_stats.unique_visitors }}</div></div>
+    <div class="oc-dashboard-metric"><strong>今日访问</strong><div class="value">{{ dashboard_stats.today_visits }}</div></div>
   </div>
-  <div style="margin-top: 12px;">
-    <a href="{% url 'admin:blog_sitevisit_analytics' %}" style="color: #4f46e5; font-weight: 500;">查看详细分析 &rarr;</a>
+  <div class="oc-dashboard-link-wrap">
+    <a href="{% url 'admin:blog_sitevisit_analytics' %}" class="oc-dashboard-link">查看详细分析 &rarr;</a>
   </div>
 </div>
 

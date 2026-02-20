@@ -9,23 +9,39 @@
 <style>
   .analytics-wrap { max-width: 1100px; margin: 0 auto; }
   .analytics-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
-  .analytics-header h1 { margin: 0; font-size: 1.5rem; }
-  .range-select { padding: 6px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+  .analytics-header h1 { margin: 0; font-size: 1.5rem; color: var(--body-loud-color); }
+  .range-select {
+    padding: 6px 12px;
+    border: 1px solid var(--hairline-color);
+    border-radius: 6px;
+    font-size: 14px;
+    background: var(--body-bg);
+    color: var(--body-fg);
+  }
   .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
-  .kpi-card { background: #f6f7fb; border-radius: 8px; padding: 16px; text-align: center; }
-  .kpi-card .value { font-size: 1.75rem; font-weight: 700; color: #1e293b; }
-  .kpi-card .label { font-size: 0.85rem; color: #64748b; margin-top: 4px; }
+  .kpi-card {
+    background: var(--darkened-bg);
+    border: 1px solid var(--hairline-color);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+  }
+  .kpi-card .value { font-size: 1.75rem; font-weight: 700; color: var(--body-loud-color); }
+  .kpi-card .label { font-size: 0.85rem; color: var(--body-quiet-color); margin-top: 4px; }
   .chart-row { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 24px; }
   @media (min-width: 768px) { .chart-row { grid-template-columns: 2fr 1fr; } }
-  .chart-box { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; }
-  .chart-box h3 { margin: 0 0 12px; font-size: 1rem; color: #334155; }
+  .chart-box { background: var(--body-bg); border: 1px solid var(--hairline-color); border-radius: 8px; padding: 16px; }
+  .chart-box h3 { margin: 0 0 12px; font-size: 1rem; color: var(--body-loud-color); }
   .top-pages table { width: 100%; border-collapse: collapse; }
-  .top-pages th, .top-pages td { text-align: left; padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 0.875rem; }
-  .top-pages th { color: #64748b; font-weight: 600; }
+  .top-pages th, .top-pages td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--hairline-color); font-size: 0.875rem; }
+  .top-pages th { color: var(--body-quiet-color); font-weight: 600; }
+  .top-pages td { color: var(--body-fg); }
   .top-pages td:last-child { text-align: right; font-weight: 600; }
-  .loading-msg { text-align: center; padding: 40px; color: #94a3b8; }
-  .back-link { display: inline-block; margin-bottom: 16px; color: #4f46e5; text-decoration: none; font-size: 0.875rem; }
+  .loading-msg { text-align: center; padding: 40px; color: var(--body-quiet-color); }
+  .loading-msg.error { color: var(--error-fg); }
+  .back-link { display: inline-block; margin-bottom: 16px; color: var(--link-fg); text-decoration: none; font-size: 0.875rem; }
   .back-link:hover { text-decoration: underline; }
+  .top-pages .empty-row td { text-align: center; color: var(--body-quiet-color); padding: 20px; }
 </style>
 {% endblock %}
 
@@ -74,6 +90,21 @@
   let trendChart = null;
   let referrerChart = null;
 
+  function cssVar(name, fallback) {
+    const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return value || fallback;
+  }
+
+  function chartPalette() {
+    return {
+      accent: cssVar('--link-fg', '#4f46e5'),
+      accentSoft: 'rgba(79,70,229,0.12)',
+      quiet: cssVar('--body-quiet-color', '#64748b'),
+      text: cssVar('--body-fg', '#333333'),
+      grid: cssVar('--hairline-color', '#e2e8f0'),
+    };
+  }
+
   function getCookie(name) {
     const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
     return match ? match[2] : null;
@@ -102,6 +133,7 @@
   }
 
   function renderTrend(data) {
+    const palette = chartPalette();
     const ctx = document.getElementById('trendChart').getContext('2d');
     if (trendChart) trendChart.destroy();
     trendChart = new Chart(ctx, {
@@ -111,8 +143,8 @@
         datasets: [{
           label: '访问量',
           data: data.daily_trend.map(function(d) { return d.count; }),
-          borderColor: '#4f46e5',
-          backgroundColor: 'rgba(79,70,229,0.08)',
+          borderColor: palette.accent,
+          backgroundColor: palette.accentSoft,
           fill: true,
           tension: 0.3,
           pointRadius: 2,
@@ -122,20 +154,28 @@
         responsive: true,
         plugins: { legend: { display: false } },
         scales: {
-          x: { ticks: { maxTicksLimit: 10, font: { size: 11 } } },
-          y: { beginAtZero: true, ticks: { precision: 0 } },
+          x: {
+            ticks: { maxTicksLimit: 10, font: { size: 11 }, color: palette.quiet },
+            grid: { color: palette.grid },
+          },
+          y: {
+            beginAtZero: true,
+            ticks: { precision: 0, color: palette.quiet },
+            grid: { color: palette.grid },
+          },
         },
       },
     });
   }
 
   function renderReferrer(data) {
+    const palette = chartPalette();
     const ctx = document.getElementById('referrerChart').getContext('2d');
     if (referrerChart) referrerChart.destroy();
     const items = data.top_referrers.slice(0, 8);
     if (items.length === 0) {
       ctx.font = '14px sans-serif';
-      ctx.fillStyle = '#94a3b8';
+      ctx.fillStyle = palette.quiet;
       ctx.textAlign = 'center';
       ctx.fillText('暂无来源数据', ctx.canvas.width / 2, 110);
       return;
@@ -147,7 +187,7 @@
         datasets: [{
           label: '访问量',
           data: items.map(function(d) { return d.count; }),
-          backgroundColor: '#818cf8',
+          backgroundColor: palette.accent,
           borderRadius: 4,
         }],
       },
@@ -156,8 +196,15 @@
         responsive: true,
         plugins: { legend: { display: false } },
         scales: {
-          x: { beginAtZero: true, ticks: { precision: 0 } },
-          y: { ticks: { font: { size: 11 } } },
+          x: {
+            beginAtZero: true,
+            ticks: { precision: 0, color: palette.quiet },
+            grid: { color: palette.grid },
+          },
+          y: {
+            ticks: { font: { size: 11 }, color: palette.text },
+            grid: { color: palette.grid },
+          },
         },
       },
     });
@@ -166,7 +213,7 @@
   function renderTopPages(data) {
     var tbody = document.getElementById('topPagesBody');
     if (!data.top_pages.length) {
-      tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;color:#94a3b8;padding:20px;">暂无数据</td></tr>';
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="2">暂无数据</td></tr>';
       return;
     }
     tbody.innerHTML = data.top_pages.map(function(item) {
@@ -182,7 +229,7 @@
       renderReferrer(data);
       renderTopPages(data);
     } catch (err) {
-      document.getElementById('kpiSection').innerHTML = '<div class="loading-msg" style="grid-column:1/-1;color:#ef4444;">加载失败: ' + err.message + '</div>';
+      document.getElementById('kpiSection').innerHTML = '<div class="loading-msg error" style="grid-column:1/-1;">加载失败: ' + err.message + '</div>';
     }
   }
 
