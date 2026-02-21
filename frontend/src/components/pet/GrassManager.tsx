@@ -1,4 +1,9 @@
-import type { GrassPatch, GrassStage } from "./petRigConfig";
+export type GrassPatch = {
+  id: string;
+  x: number;
+  y: number;
+  createdAt: number;
+};
 
 export class GrassManager {
   private readonly maxGrass: number;
@@ -26,12 +31,10 @@ export class GrassManager {
 
     this.lastClickTs = now;
     const patch: GrassPatch = {
-      id: `${now}-${Math.random().toString(16).slice(2, 8)}`,
+      id: `${now}-${Math.random().toString(16).slice(2, 6)}`,
       x,
       y,
       createdAt: now,
-      stage: "sprout",
-      claimedBy: null,
     };
 
     this.grassPatches.push(patch);
@@ -42,60 +45,27 @@ export class GrassManager {
     return patch;
   }
 
-  findById(id: string) {
-    return this.grassPatches.find((patch) => patch.id === id) ?? null;
-  }
+  consumeNearest(x: number, y: number) {
+    if (this.grassPatches.length === 0) {
+      return null;
+    }
 
-  findNearestAvailable(x: number, y: number, excludedId: string | null = null) {
-    let nearest: GrassPatch | null = null;
+    let nearestIndex = 0;
     let nearestDistance = Number.POSITIVE_INFINITY;
 
-    for (const patch of this.grassPatches) {
-      if (excludedId && patch.id === excludedId) {
-        continue;
-      }
-      if (patch.stage === "vanishing") {
-        continue;
-      }
-      if (patch.claimedBy) {
-        continue;
-      }
-
+    this.grassPatches.forEach((patch, index) => {
       const distance = Math.hypot(patch.x - x, patch.y - y);
-      if (!nearest || distance < nearestDistance) {
-        nearest = patch;
+      if (distance < nearestDistance) {
         nearestDistance = distance;
+        nearestIndex = index;
       }
-    }
+    });
 
-    return nearest;
+    return this.grassPatches.splice(nearestIndex, 1)[0] ?? null;
   }
 
-  markStage(id: string, stage: GrassStage) {
-    const patch = this.findById(id);
-    if (!patch) {
-      return null;
-    }
-    patch.stage = stage;
-    return patch;
-  }
-
-  claim(id: string, actor: "sheep" = "sheep") {
-    const patch = this.findById(id);
-    if (!patch) {
-      return null;
-    }
-    patch.claimedBy = actor;
-    return patch;
-  }
-
-  release(id: string) {
-    const patch = this.findById(id);
-    if (!patch) {
-      return null;
-    }
-    patch.claimedBy = null;
-    return patch;
+  findById(id: string) {
+    return this.grassPatches.find((patch) => patch.id === id) ?? null;
   }
 
   removeById(id: string) {

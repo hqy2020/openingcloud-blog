@@ -105,9 +105,6 @@ export function AppLayout() {
   const location = useLocation();
   usePageVisitTracker();
   const isHomeRoute = location.pathname === "/";
-  const isCategoryRoute = links.some((item) => item.to === location.pathname);
-  const useFusionTabStyle = isDark && (isHomeRoute || isCategoryRoute);
-  const useFusionHomeStyle = isHomeRoute && isDark;
   const { enabled: audioEnabled, playing: audioPlaying, toggleEnabled: toggleAudio, ready: audioReady } = useSiteAudio({
     theme,
     homeRouteActive: isHomeRoute,
@@ -115,21 +112,15 @@ export function AppLayout() {
   const visual = resolveAccentByPath(location.pathname);
   const logoSrc = isDark ? "/brand/logo-icon-white.png" : "/brand/logo-icon-ink.png";
 
-  const headerStyle: CSSProperties = useFusionHomeStyle
+  const headerStyle: CSSProperties = isDark
     ? {
-        borderColor: "rgba(126, 154, 236, 0.24)",
-        background:
-          "linear-gradient(180deg, rgba(2,6,23,0.82) 0%, rgba(3,10,26,0.66) 64%, rgba(2,6,23,0.04) 100%)",
+        borderColor: rgba(visual.glowRgb, 0.36),
+        background: `linear-gradient(135deg, rgba(8,16,38,0.8), rgba(12,22,48,0.76) 54%, ${rgba(visual.glowRgb, 0.24)})`,
       }
-    : isDark
-      ? {
-          borderColor: rgba(visual.glowRgb, 0.36),
-          background: `linear-gradient(135deg, rgba(8,16,38,0.8), rgba(12,22,48,0.76) 54%, ${rgba(visual.glowRgb, 0.24)})`,
-        }
-      : {
-          borderColor: rgba(visual.glowRgb, 0.24),
-          background: `linear-gradient(135deg, rgba(255,255,255,0.84), rgba(247,250,255,0.78) 56%, ${rgba(visual.glowRgb, 0.16)})`,
-        };
+    : {
+        borderColor: rgba(visual.glowRgb, 0.24),
+        background: `linear-gradient(135deg, rgba(255,255,255,0.84), rgba(247,250,255,0.78) 56%, ${rgba(visual.glowRgb, 0.16)})`,
+      };
 
   const sharedSurfaceStyle: CSSProperties = {
     borderColor: isDark ? rgba(visual.glowRgb, 0.34) : rgba(visual.glowRgb, 0.24),
@@ -139,45 +130,30 @@ export function AppLayout() {
     boxShadow: isDark ? `0 10px 24px rgba(2,6,23,0.34)` : `0 10px 24px ${rgba(visual.glowRgb, 0.12)}`,
   };
 
-  const navSurfaceStyle: CSSProperties = useFusionTabStyle
-    ? {
-        borderColor: "rgba(140, 168, 255, 0.28)",
-        background: `linear-gradient(145deg, rgba(7,14,34,0.82), rgba(8,18,43,0.66) 58%, ${rgba(visual.glowRgb, 0.2)})`,
-        boxShadow: `0 22px 48px rgba(2,6,23,0.5), inset 0 0 0 1px rgba(148,163,184,0.14), 0 0 34px ${rgba(visual.glowRgb, 0.16)}`,
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-      }
-    : sharedSurfaceStyle;
-
-  const activePillStyle: CSSProperties = useFusionTabStyle
-    ? {
-        background: `linear-gradient(135deg, ${rgba(visual.glowRgb, 0.42)}, rgba(30,41,59,0.88))`,
-        boxShadow: `0 10px 28px ${rgba(visual.glowRgb, 0.28)}, inset 0 0 0 1px rgba(191,219,254,0.22)`,
-      }
-    : {
-        background: isDark
-          ? `linear-gradient(135deg, ${rgba(visual.glowRgb, 0.34)}, rgba(51,65,85,0.8))`
-          : `linear-gradient(135deg, rgba(255,255,255,0.95), ${rgba(visual.glowRgb, 0.22)})`,
-        boxShadow: isDark ? `0 6px 18px ${rgba(visual.glowRgb, 0.26)}` : `0 6px 14px ${rgba(visual.glowRgb, 0.2)}`,
-      };
+  const activePillStyle: CSSProperties = {
+    background: isDark
+      ? `linear-gradient(135deg, ${rgba(visual.glowRgb, 0.34)}, rgba(51,65,85,0.8))`
+      : `linear-gradient(135deg, rgba(255,255,255,0.95), ${rgba(visual.glowRgb, 0.22)})`,
+    boxShadow: isDark ? `0 6px 18px ${rgba(visual.glowRgb, 0.26)}` : `0 6px 14px ${rgba(visual.glowRgb, 0.2)}`,
+  };
 
   return (
-    <div className={`relative min-h-screen ${isDark ? "bg-slate-950 text-slate-300" : "bg-[#F6F7FB] text-slate-900"} ${useFusionHomeStyle ? "home-fusion-shell" : ""}`}>
-      <header className={`${useFusionHomeStyle ? "fixed top-0 z-40" : "sticky top-0 z-30"} inset-x-0 border-b backdrop-blur-xl`} style={headerStyle}>
-        <div className={`mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-2 px-4 ${useFusionHomeStyle ? "py-2.5 sm:py-3" : "py-1.5 sm:grid sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-2.5 sm:py-2"}`}>
+    <div className={`min-h-screen ${isDark ? "bg-slate-950 text-slate-300" : "bg-[#F6F7FB] text-slate-900"}`}>
+      <header className="sticky top-0 z-30 border-b backdrop-blur-xl" style={headerStyle}>
+        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-1.5 sm:grid sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-2.5 sm:py-2">
           <NavLink aria-label="返回首页" className="inline-flex items-center justify-center" title="首页" to="/">
             <img alt="启云博客" className="h-8 w-auto select-none sm:h-9" src={logoSrc} />
           </NavLink>
 
           <nav
-            className={`order-3 mt-1 mx-auto flex w-[96%] items-center justify-center rounded-[24px] border p-0.5 text-sm font-medium sm:order-none sm:mt-0 ${useFusionTabStyle ? "sm:w-[72%]" : "sm:w-[80%] sm:justify-stretch"} ${
+            className={`order-3 mt-0.5 mx-auto flex w-[92%] items-center justify-center rounded-[24px] border p-0.5 text-sm font-medium sm:order-none sm:mt-0 sm:w-[80%] sm:justify-stretch ${
               isDark ? "glass-surface-dark" : "glass-surface-light"
             }`}
-            style={navSurfaceStyle}
+            style={sharedSurfaceStyle}
           >
             {links.map((item, index) => (
               <div key={item.to} className="relative flex min-w-0 flex-1 items-stretch">
-                {index > 0 && !useFusionTabStyle ? (
+                {index > 0 ? (
                   <span
                     aria-hidden="true"
                     className={`pointer-events-none absolute left-0 top-1/2 z-[1] h-5 -translate-y-1/2 border-l ${
@@ -187,11 +163,7 @@ export function AppLayout() {
                 ) : null}
                 <NavLink className="flex-1 rounded-[20px] transition" to={item.to}>
                   {({ isActive }) => (
-                    <span
-                      className={`relative block min-w-[4.2rem] rounded-[18px] px-3 py-1 text-center sm:min-w-0 sm:w-full ${
-                        useFusionTabStyle ? "sm:px-4 sm:py-1.5" : "sm:px-3.5 sm:py-1.5"
-                      }`}
-                    >
+                    <span className="relative block min-w-[4.2rem] rounded-[18px] px-3 py-1 text-center sm:min-w-0 sm:w-full sm:px-3.5 sm:py-1.5">
                       {isActive ? (
                         <motion.span
                           layoutId="nav-pill"
@@ -208,13 +180,7 @@ export function AppLayout() {
                               ? "text-slate-300 hover:text-slate-50"
                               : "text-slate-600 hover:text-slate-900"
                         }`}
-                        style={
-                          isActive
-                            ? { color: useFusionTabStyle ? "#e5ecff" : isDark ? "#D1DCF0" : visual.accentHex }
-                            : useFusionTabStyle
-                              ? { color: "rgba(206, 220, 255, 0.86)" }
-                              : undefined
-                        }
+                        style={isActive ? { color: isDark ? "#D1DCF0" : visual.accentHex } : undefined}
                       >
                         {item.label}
                       </span>
@@ -275,20 +241,18 @@ export function AppLayout() {
             </button>
           </div>
         </div>
-        <GlobalSloganTicker accentRgb={visual.glowRgb} isDark={isDark} mode={useFusionHomeStyle ? "floating" : "strip"} />
+        <GlobalSloganTicker accentRgb={visual.glowRgb} isDark={isDark} />
         <div
           className="pointer-events-none absolute inset-x-0 -bottom-4 h-4"
           style={{
-            background: useFusionHomeStyle
-              ? `linear-gradient(180deg, rgba(56,189,248,0.18), rgba(2,6,23,0))`
-              : isDark
+            background: isDark
               ? `linear-gradient(180deg, ${rgba(visual.glowRgb, 0.2)}, rgba(15,23,42,0))`
               : `linear-gradient(180deg, ${rgba(visual.glowRgb, 0.14)}, rgba(248,249,252,0))`,
           }}
         />
       </header>
 
-      <main className={`mx-auto w-full max-w-6xl px-4 pb-8 ${useFusionHomeStyle ? "pt-0" : "pt-6"}`}>
+      <main className="mx-auto w-full max-w-6xl px-4 pt-6 pb-8">
         <Outlet />
       </main>
 

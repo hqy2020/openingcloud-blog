@@ -11,7 +11,6 @@ import { StatsSection } from "../components/home/StatsSection";
 import { TimelineSection } from "../components/home/TimelineSection";
 import { TravelSection } from "../components/home/TravelSection";
 import { useAsync } from "../hooks/useAsync";
-import { useTheme } from "../app/theme";
 import { fallbackHomePayload } from "../data/fallback";
 
 const timelineFallbackForUx: TimelineNode[] = [
@@ -160,7 +159,6 @@ const photoWallFallbackForUx: PhotoWallItem[] = [
 ];
 
 export function HomePage() {
-  const { isDark } = useTheme();
   const { data, loading, error } = useAsync(fetchHome, []);
   const payload = data ?? fallbackHomePayload;
   const timelineNodes = Array.isArray(payload.timeline) && payload.timeline.length > 0 ? payload.timeline : timelineFallbackForUx;
@@ -191,15 +189,11 @@ export function HomePage() {
       {loading ? <p className="text-sm text-slate-500">首页数据加载中...</p> : null}
       {!loading && error ? <p className="text-sm text-amber-700">实时数据暂不可用，已展示静态内容。</p> : null}
 
-      <HeroSection hero={payload.hero} githubUrl={payload.contact?.github ?? fallbackHomePayload.contact.github} siteVisits={payload.stats.site_visits_total} />
+      <div className="space-y-12">
+        <HeroSection hero={payload.hero} githubUrl={payload.contact?.github ?? fallbackHomePayload.contact.github} siteVisits={payload.stats.site_visits_total} />
+      </div>
 
-      <div
-        className={`relative -mt-16 rounded-t-[2.2rem] border px-1 pt-14 sm:-mt-20 sm:pt-16 ${
-          isDark
-            ? "border-slate-700/35 bg-[linear-gradient(180deg,rgba(2,6,23,0.86),rgba(2,6,23,0.48)_18%,rgba(2,6,23,0)_56%)]"
-            : "border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.78)_20%,rgba(248,250,252,0)_56%)]"
-        }`}
-      >
+      <div className="relative mt-12">
         <div className="space-y-12">
           <TimelineSection nodes={timelineNodes} />
           <HighlightsSection stages={highlightStages} />

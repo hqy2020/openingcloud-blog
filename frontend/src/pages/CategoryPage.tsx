@@ -414,7 +414,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
 
   const sectionBorderColor = isDark ? `rgba(${visual.glowRgb},0.42)` : `rgba(${visual.glowRgb},0.18)`;
   const sectionBackground = isDark
-    ? `linear-gradient(180deg, rgba(2,6,23,0.95), rgba(2,6,23,0.86) 20%, rgba(15,23,42,0.94) 100%)`
+    ? `linear-gradient(180deg, rgba(2,6,23,0.92), rgba(15,23,42,0.92) 38%, rgba(15,23,42,0.96) 100%)`
     : `linear-gradient(180deg, rgba(${visual.glowRgb},0.11), rgba(248,249,252,0.88) 34%, rgba(248,249,252,0.98) 100%)`;
   const headerOverlay = isDark ? visual.headerTintDark : visual.headerTintLight;
   const cardBackground = isDark
@@ -422,21 +422,10 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
     : `linear-gradient(165deg, rgba(255,255,255,0.95), rgba(${visual.glowRgb},0.08))`;
   const chipBackground = isDark ? `rgba(${visual.glowRgb},0.22)` : `rgba(${visual.glowRgb},0.14)`;
   const tagTextColor = isDark ? "#9CAEC9" : "#475569";
-  const filterSurfaceStyle = isDark
-    ? {
-        borderColor: `rgba(${visual.glowRgb},0.45)`,
-        background: `linear-gradient(145deg, rgba(5,11,28,0.9), rgba(7,19,43,0.72) 58%, rgba(${visual.glowRgb},0.2))`,
-        boxShadow: `0 16px 36px rgba(2,6,23,0.44), inset 0 0 0 1px rgba(148,163,184,0.12)`,
-      }
-    : {
-        borderColor: `rgba(${visual.glowRgb},0.24)`,
-        background: "linear-gradient(145deg, rgba(255,255,255,0.92), rgba(248,250,252,0.84))",
-        boxShadow: `0 12px 28px rgba(${visual.glowRgb},0.12)`,
-      };
 
   return (
     <section
-      className="relative space-y-8 overflow-hidden rounded-[28px] border p-4 sm:p-6"
+      className="space-y-8 rounded-[28px] border p-4 sm:p-6"
       style={{
         borderColor: sectionBorderColor,
         background: sectionBackground,
@@ -449,20 +438,12 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
         <meta content={categoryDescriptions[category]} property="og:description" />
         <link href={`https://blog.oc.slgneon.cn/${category}`} rel="canonical" />
       </Helmet>
-      {isDark ? (
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-48"
-          style={{
-            background: "linear-gradient(180deg, rgba(2,6,23,0.84), rgba(2,6,23,0.3) 58%, rgba(2,6,23,0))",
-          }}
-        />
-      ) : null}
 
       <FadeIn>
         <header
           className={`relative overflow-hidden rounded-3xl border p-7 backdrop-blur sm:p-9 ${
             isDark
-              ? "bg-slate-950/76 shadow-[0_18px_48px_rgba(2,6,23,0.56)]"
+              ? "bg-slate-900/80 shadow-[0_18px_48px_rgba(2,6,23,0.5)]"
               : "bg-white/85 shadow-[0_18px_48px_rgba(15,23,42,0.12)]"
           }`}
           style={{ borderColor: isDark ? `rgba(${visual.glowRgb},0.44)` : `rgba(${visual.glowRgb},0.3)` }}
@@ -499,7 +480,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
         </header>
       </FadeIn>
 
-      <section className="space-y-3 rounded-2xl border p-3 sm:p-4" style={filterSurfaceStyle}>
+      <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex max-w-full items-center gap-2 overflow-x-auto pb-1">
             {["全部", ...tags].map((tagLabel) => {
@@ -511,7 +492,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
                   type="button"
                   onClick={() => handleSelectTag(value)}
                   className={`relative whitespace-nowrap rounded-full border px-3 py-1.5 text-sm transition ${
-                    isDark ? "bg-slate-950/62 hover:bg-slate-900/72" : "bg-white/90"
+                    isDark ? "bg-slate-900/88 hover:bg-slate-800/88" : "bg-white"
                   }`}
                   style={{
                     borderColor: active
@@ -519,12 +500,6 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
                       : isDark
                         ? "rgba(148,163,184,0.45)"
                         : "rgba(148,163,184,0.3)",
-                    background: active
-                      ? isDark
-                        ? `linear-gradient(135deg, rgba(${visual.glowRgb},0.34), rgba(15,23,42,0.9))`
-                        : `linear-gradient(135deg, rgba(255,255,255,0.96), rgba(${visual.glowRgb},0.22))`
-                      : undefined,
-                    boxShadow: active ? (isDark ? `0 8px 20px rgba(${visual.glowRgb},0.22)` : `0 8px 16px rgba(${visual.glowRgb},0.16)`) : undefined,
                     color: active ? visual.accentHex : tagTextColor,
                   }}
                 >
@@ -551,19 +526,13 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
             <span className={isDark ? "text-slate-400" : "text-slate-500"}>排序</span>
             <button
               type="button"
-              className={`rounded-full border px-3 py-1 ${isDark ? "bg-slate-950/62 hover:bg-slate-900/72" : "bg-white/90"}`}
+              className={`rounded-full border px-3 py-1 ${isDark ? "bg-slate-900/84 hover:bg-slate-800/84" : ""}`}
               style={{
                 borderColor: sortBy === "latest"
                   ? `rgba(${visual.glowRgb},${isDark ? "0.62" : "0.45"})`
                   : isDark
                     ? "rgba(148,163,184,0.45)"
                     : "rgba(148,163,184,0.3)",
-                background:
-                  sortBy === "latest"
-                    ? isDark
-                      ? `linear-gradient(135deg, rgba(${visual.glowRgb},0.3), rgba(15,23,42,0.86))`
-                      : `linear-gradient(135deg, rgba(255,255,255,0.96), rgba(${visual.glowRgb},0.2))`
-                    : undefined,
                 color: sortBy === "latest" ? visual.accentHex : isDark ? "#9CAEC9" : "#64748b",
               }}
               onClick={() => setSortBy("latest")}
@@ -572,19 +541,13 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
             </button>
             <button
               type="button"
-              className={`rounded-full border px-3 py-1 ${isDark ? "bg-slate-950/62 hover:bg-slate-900/72" : "bg-white/90"}`}
+              className={`rounded-full border px-3 py-1 ${isDark ? "bg-slate-900/84 hover:bg-slate-800/84" : ""}`}
               style={{
                 borderColor: sortBy === "views"
                   ? `rgba(${visual.glowRgb},${isDark ? "0.62" : "0.45"})`
                   : isDark
                     ? "rgba(148,163,184,0.45)"
                     : "rgba(148,163,184,0.3)",
-                background:
-                  sortBy === "views"
-                    ? isDark
-                      ? `linear-gradient(135deg, rgba(${visual.glowRgb},0.3), rgba(15,23,42,0.86))`
-                      : `linear-gradient(135deg, rgba(255,255,255,0.96), rgba(${visual.glowRgb},0.2))`
-                    : undefined,
                 color: sortBy === "views" ? visual.accentHex : isDark ? "#9CAEC9" : "#64748b",
               }}
               onClick={() => setSortBy("views")}

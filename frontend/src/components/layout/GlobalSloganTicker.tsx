@@ -112,10 +112,9 @@ function rgba(rgb: string, alpha: number) {
 type GlobalSloganTickerProps = {
   isDark: boolean;
   accentRgb: string;
-  mode?: "strip" | "floating";
 };
 
-export function GlobalSloganTicker({ isDark, accentRgb, mode = "strip" }: GlobalSloganTickerProps) {
+export function GlobalSloganTicker({ isDark, accentRgb }: GlobalSloganTickerProps) {
   const { data } = useAsync(fetchHome, []);
   const payload = data ?? fallbackHomePayload;
 
@@ -174,38 +173,6 @@ export function GlobalSloganTicker({ isDark, accentRgb, mode = "strip" }: Global
   const labelStyle: CSSProperties = {
     color: isDark ? "rgba(191,219,254,0.92)" : rgba(accentRgb, 0.96),
   };
-
-  if (mode === "floating") {
-    const capsuleStyle: CSSProperties = {
-      borderColor: "rgba(94, 234, 212, 0.28)",
-      background: "linear-gradient(135deg, rgba(6,22,36,0.78), rgba(3,26,42,0.62) 58%, rgba(14,116,144,0.36))",
-      boxShadow: "0 18px 34px rgba(2,6,23,0.42), inset 0 0 0 1px rgba(45,212,191,0.14)",
-      color: "rgba(94, 234, 212, 0.96)",
-    };
-
-    return (
-      <div className="w-full pt-2 pb-1">
-        <div className="mx-auto flex w-full max-w-6xl justify-center px-4">
-          <div className="flex w-full max-w-[44rem] items-center gap-3 overflow-hidden rounded-full border px-4 py-2.5" style={capsuleStyle}>
-            <span className="hidden text-sm leading-none sm:inline">•</span>
-            <div className="min-w-0 flex-1 overflow-hidden">
-              <div aria-live="polite" className="social-ticker-track">
-                {[0, 1].map((copy) => (
-                  <div key={copy} className="social-ticker-segment">
-                    {marqueeMessages.map((message, index) => (
-                      <span key={`${copy}-${index}`} className="global-slogan-item">
-                        {message}
-                      </span>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full global-slogan-strip" style={stripStyle}>

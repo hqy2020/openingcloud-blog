@@ -196,7 +196,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
   };
 
   return (
-    <section className={`home-hero-surface relative left-1/2 min-h-[100vh] w-screen -translate-x-1/2 overflow-hidden text-white ${isDark ? "bg-[#040816]" : "bg-[#1C2E57]"}`}>
+    <section className={`relative left-1/2 min-h-[100vh] w-screen -translate-x-1/2 overflow-hidden text-white ${isDark ? "bg-[#060D1E]" : "bg-[#1C2E57]"}`}>
       <div className="absolute inset-0">
         <img
           alt="云海背景"
@@ -221,9 +221,6 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
           />
         ) : null}
       </div>
-      <div className="pointer-events-none absolute inset-0 home-hero-stripes" />
-      <div className="pointer-events-none absolute inset-0 home-hero-grain" />
-      <div className={`pointer-events-none absolute inset-x-0 top-0 h-48 ${isDark ? "bg-gradient-to-b from-[#020617]/95 via-[#020617]/62 to-transparent" : "bg-gradient-to-b from-[#1E2E57]/72 via-[#1E2E57]/36 to-transparent"}`} />
 
       <HeroAtmosphereCanvas mobile={mobile} reducedMotion={reducedMotion} themeMode={theme} />
 
@@ -241,25 +238,11 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
         animate={reducedMotion ? undefined : { opacity: [0.12, 0.24, 0.12], y: [-10, 16, -10] }}
         transition={reducedMotion ? undefined : { duration: 9.5, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
       />
-      <motion.div
-        className={`pointer-events-none absolute -left-28 top-6 h-[20rem] w-[20rem] rounded-full blur-3xl ${
-          isDark ? "bg-[#8B5CF6]/10" : "bg-[#C4B5FD]/16"
-        }`}
-        animate={reducedMotion ? undefined : { opacity: [0.14, 0.26, 0.14], y: [8, -16, 8] }}
-        transition={reducedMotion ? undefined : { duration: 10.4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-      />
       <div
         className={`pointer-events-none absolute inset-0 ${
           isDark
-            ? "bg-[radial-gradient(circle_at_50%_-4%,rgba(125,211,252,0.14),transparent_38%),radial-gradient(circle_at_16%_18%,rgba(56,189,248,0.1),transparent_48%),radial-gradient(circle_at_84%_14%,rgba(139,92,246,0.12),transparent_42%),linear-gradient(180deg,rgba(2,6,23,0.42),rgba(2,6,23,0.68)_68%,rgba(2,6,23,0.84))]"
+            ? "bg-[radial-gradient(circle_at_50%_-4%,rgba(125,211,252,0.16),transparent_36%),radial-gradient(circle_at_16%_18%,rgba(56,189,248,0.11),transparent_46%),radial-gradient(circle_at_84%_14%,rgba(129,140,248,0.1),transparent_40%),linear-gradient(180deg,rgba(2,6,23,0.46),rgba(2,6,23,0.72)_68%,rgba(2,6,23,0.88))]"
             : "bg-[radial-gradient(circle_at_50%_0%,rgba(255,236,190,0.38),transparent_32%),radial-gradient(circle_at_16%_18%,rgba(92,124,223,0.28),transparent_44%),radial-gradient(circle_at_84%_14%,rgba(170,190,255,0.26),transparent_38%),linear-gradient(180deg,rgba(16,32,74,0.1),rgba(10,24,60,0.42)_72%,rgba(8,16,44,0.58))]"
-        }`}
-      />
-      <div
-        className={`pointer-events-none absolute inset-x-0 bottom-0 h-40 ${
-          isDark
-            ? "bg-gradient-to-b from-transparent via-[#020617]/68 to-[#020617]"
-            : "bg-gradient-to-b from-transparent via-[#0E224F]/44 to-[#10244D]"
         }`}
       />
 
