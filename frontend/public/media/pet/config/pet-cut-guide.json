@@ -1,0 +1,213 @@
+{
+  "version": "v1.0",
+  "updatedAt": "2026-02-21",
+  "source": {
+    "sheep": {
+      "path": "/media/pet/sheep-cutout.png",
+      "width": 205,
+      "height": 220,
+      "coordinateSystem": "top-left"
+    },
+    "grass": {
+      "path": "/media/pet/grass-cutout.png",
+      "width": 179,
+      "height": 179,
+      "coordinateSystem": "top-left"
+    }
+  },
+  "exportRules": {
+    "background": "transparent",
+    "colorSpace": "sRGB",
+    "naming": "replace same filename",
+    "singleFileMaxKB": 120,
+    "petPackMaxMB": 1.2,
+    "allowScale2x": true
+  },
+  "rig": {
+    "logicalWidth": 205,
+    "logicalHeight": 220,
+    "renderScale": 0.255,
+    "facingFlip": "scaleX(-1)"
+  },
+  "parts": [
+    {
+      "id": "sheep_shadow",
+      "file": "/media/pet/parts/sheep_shadow.png",
+      "rect": { "x": 42, "y": 182, "w": 118, "h": 30 },
+      "pivot": { "x": 59, "y": 15 },
+      "default": { "x": 42, "y": 182 },
+      "zIndex": 1,
+      "notes": "ground contact shadow"
+    },
+    {
+      "id": "sheep_leg_bl",
+      "file": "/media/pet/parts/sheep_leg_bl.png",
+      "rect": { "x": 118, "y": 124, "w": 32, "h": 74 },
+      "pivot": { "x": 16, "y": 8 },
+      "default": { "x": 118, "y": 124 },
+      "zIndex": 12,
+      "notes": "back-left leg"
+    },
+    {
+      "id": "sheep_leg_br",
+      "file": "/media/pet/parts/sheep_leg_br.png",
+      "rect": { "x": 150, "y": 122, "w": 32, "h": 76 },
+      "pivot": { "x": 16, "y": 8 },
+      "default": { "x": 150, "y": 122 },
+      "zIndex": 13,
+      "notes": "back-right leg"
+    },
+    {
+      "id": "sheep_tail",
+      "file": "/media/pet/parts/sheep_tail.png",
+      "rect": { "x": 150, "y": 72, "w": 28, "h": 30 },
+      "pivot": { "x": 6, "y": 14 },
+      "default": { "x": 150, "y": 72 },
+      "zIndex": 15,
+      "notes": "tail swing"
+    },
+    {
+      "id": "sheep_body",
+      "file": "/media/pet/parts/sheep_body.png",
+      "rect": { "x": 44, "y": 86, "w": 120, "h": 100 },
+      "pivot": { "x": 56, "y": 52 },
+      "default": { "x": 44, "y": 86 },
+      "zIndex": 20,
+      "notes": "main body"
+    },
+    {
+      "id": "sheep_leg_fl",
+      "file": "/media/pet/parts/sheep_leg_fl.png",
+      "rect": { "x": 36, "y": 124, "w": 34, "h": 74 },
+      "pivot": { "x": 16, "y": 8 },
+      "default": { "x": 36, "y": 124 },
+      "zIndex": 28,
+      "notes": "front-left leg"
+    },
+    {
+      "id": "sheep_leg_fr",
+      "file": "/media/pet/parts/sheep_leg_fr.png",
+      "rect": { "x": 78, "y": 120, "w": 34, "h": 78 },
+      "pivot": { "x": 16, "y": 8 },
+      "default": { "x": 78, "y": 120 },
+      "zIndex": 29,
+      "notes": "front-right leg"
+    },
+    {
+      "id": "sheep_head",
+      "file": "/media/pet/parts/sheep_head.png",
+      "rect": { "x": 14, "y": 36, "w": 72, "h": 72 },
+      "pivot": { "x": 36, "y": 42 },
+      "default": { "x": 14, "y": 36 },
+      "zIndex": 30,
+      "notes": "head rotation"
+    },
+    {
+      "id": "sheep_ear_l",
+      "file": "/media/pet/parts/sheep_ear_l.png",
+      "rect": { "x": 6, "y": 18, "w": 24, "h": 26 },
+      "pivot": { "x": 4, "y": 10 },
+      "default": { "x": 6, "y": 18 },
+      "zIndex": 32,
+      "notes": "left ear"
+    },
+    {
+      "id": "sheep_ear_r",
+      "file": "/media/pet/parts/sheep_ear_r.png",
+      "rect": { "x": 58, "y": 18, "w": 24, "h": 26 },
+      "pivot": { "x": 20, "y": 10 },
+      "default": { "x": 58, "y": 18 },
+      "zIndex": 33,
+      "notes": "right ear"
+    },
+    {
+      "id": "sheep_eye_open",
+      "file": "/media/pet/parts/sheep_eye_open.png",
+      "rect": { "x": 45, "y": 60, "w": 18, "h": 12 },
+      "pivot": { "x": 8, "y": 5 },
+      "default": { "x": 45, "y": 60 },
+      "zIndex": 34,
+      "notes": "open eye"
+    },
+    {
+      "id": "sheep_eye_closed",
+      "file": "/media/pet/parts/sheep_eye_closed.png",
+      "rect": { "x": 45, "y": 60, "w": 18, "h": 12 },
+      "pivot": { "x": 8, "y": 5 },
+      "default": { "x": 45, "y": 60 },
+      "zIndex": 34,
+      "notes": "closed eye"
+    },
+    {
+      "id": "sheep_mouth_open",
+      "file": "/media/pet/parts/sheep_mouth_open.png",
+      "rect": { "x": 40, "y": 82, "w": 20, "h": 14 },
+      "pivot": { "x": 9, "y": 5 },
+      "default": { "x": 40, "y": 82 },
+      "zIndex": 35,
+      "notes": "open mouth"
+    },
+    {
+      "id": "sheep_mouth_closed",
+      "file": "/media/pet/parts/sheep_mouth_closed.png",
+      "rect": { "x": 40, "y": 82, "w": 20, "h": 14 },
+      "pivot": { "x": 9, "y": 5 },
+      "default": { "x": 40, "y": 82 },
+      "zIndex": 35,
+      "notes": "closed mouth"
+    }
+  ],
+  "grassFrames": [
+    {
+      "stage": "sprout",
+      "file": "/media/pet/grass/grass_sprout_1.png",
+      "sourceRect": { "x": 0, "y": 0, "w": 179, "h": 179 },
+      "targetSize": { "w": 52, "h": 52 }
+    },
+    {
+      "stage": "sprout",
+      "file": "/media/pet/grass/grass_sprout_2.png",
+      "sourceRect": { "x": 0, "y": 0, "w": 179, "h": 179 },
+      "targetSize": { "w": 74, "h": 74 }
+    },
+    {
+      "stage": "grow",
+      "file": "/media/pet/grass/grass_grow_1.png",
+      "sourceRect": { "x": 0, "y": 0, "w": 179, "h": 179 },
+      "targetSize": { "w": 96, "h": 96 }
+    },
+    {
+      "stage": "grow",
+      "file": "/media/pet/grass/grass_grow_2.png",
+      "sourceRect": { "x": 0, "y": 0, "w": 179, "h": 179 },
+      "targetSize": { "w": 124, "h": 124 }
+    },
+    {
+      "stage": "full",
+      "file": "/media/pet/grass/grass_full.png",
+      "sourceRect": { "x": 0, "y": 0, "w": 179, "h": 179 },
+      "targetSize": { "w": 179, "h": 179 }
+    },
+    {
+      "stage": "eat",
+      "file": "/media/pet/grass/grass_eat_1.png",
+      "sourceRect": { "x": 0, "y": 0, "w": 179, "h": 179 },
+      "targetSize": { "w": 74, "h": 74 }
+    },
+    {
+      "stage": "eat",
+      "file": "/media/pet/grass/grass_eat_2.png",
+      "sourceRect": { "x": 0, "y": 0, "w": 179, "h": 179 },
+      "targetSize": { "w": 52, "h": 52 }
+    }
+  ],
+  "states": {
+    "idle": ["sheep_body", "sheep_head", "sheep_ear_l", "sheep_ear_r", "sheep_eye_open", "sheep_mouth_closed"],
+    "walking_to_grass": ["all legs", "tail", "body bob"],
+    "eating": ["head nod", "mouth_open/closed swap", "grass stage=being_eaten"],
+    "happy": ["body hop", "tail wag", "heart effect"],
+    "sleeping": ["eye_closed", "head tilt", "zzz effect"],
+    "dragging": ["leg struggle", "ear swing"],
+    "returning_home": ["walk cycle"]
+  }
+}
