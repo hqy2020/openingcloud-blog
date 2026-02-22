@@ -337,6 +337,14 @@ export const fallbackHomePayload: HomePayload = {
     ],
     links: [{ source: "stage-tongji", target: "friend-1" }],
   },
+  time_series: {
+    x_axis: ["0", "5", "10", "15", "20", "25"],
+    series: [
+      { name: "Study", color: "#B3D4FF", data: [10, 60, 40, 30, 20, 20] },
+      { name: "Game", color: "#80E5FF", data: [0, 0, 30, 20, 20, 10] },
+      { name: "Social", color: "#A3F0C7", data: [90, 40, 30, 50, 60, 70] },
+    ],
+  },
   photo_wall: [
     {
       title: "云海日出",

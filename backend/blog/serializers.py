@@ -6,7 +6,17 @@ from urllib.parse import urlparse
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 
-from .models import BarrageComment, GithubProject, HighlightItem, HighlightStage, PhotoWallImage, Post, SocialFriend, TimelineNode, TravelPlace
+from .models import (
+    BarrageComment,
+    GithubProject,
+    HighlightItem,
+    HighlightStage,
+    PhotoWallImage,
+    Post,
+    SocialFriend,
+    TimelineNode,
+    TravelPlace,
+)
 
 
 class LoginSerializer(serializers.Serializer):
@@ -550,12 +560,24 @@ class HomeContactSerializer(serializers.Serializer):
     github = serializers.CharField()
 
 
+class HomeTimeSeriesItemSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    color = serializers.CharField(allow_blank=True, required=False)
+    data = serializers.ListField(child=serializers.FloatField(min_value=0))
+
+
+class HomeTimeSeriesSerializer(serializers.Serializer):
+    x_axis = serializers.ListField(child=serializers.CharField())
+    series = HomeTimeSeriesItemSerializer(many=True)
+
+
 class HomeAggregateSerializer(serializers.Serializer):
     hero = HomeHeroSerializer()
     timeline = TimelineNodePublicSerializer(many=True)
     highlights = HighlightStagePublicSerializer(many=True)
     travel = TravelProvinceSerializer(many=True)
     social_graph = SocialGraphPublicSerializer()
+    time_series = HomeTimeSeriesSerializer(required=False)
     photo_wall = PhotoWallPublicSerializer(many=True)
     pinned_posts = serializers.ListField(child=serializers.DictField())
     projects = serializers.ListField(child=serializers.DictField())

@@ -151,7 +151,7 @@ export function HomePage() {
 
       {/* #3 Featured Projects + #4 Time */}
       <FeaturedProjectsSection />
-      <TimeAreaSection timeline={timelineNodes} />
+      <TimeAreaSection timeline={timelineNodes} timeSeries={payload.time_series} />
 
       {/* #5 Timeline + Highlights */}
       <SectionCard id="timeline">

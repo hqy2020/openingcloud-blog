@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.text import slugify
 
@@ -144,6 +145,55 @@ class HomeStatsSnapshot(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.snapshot_date}: {self.views_total}"
+
+
+class TimeSeriesConfig(TimeStampedModel):
+    key = models.SlugField(max_length=50, unique=True, default="default")
+    x_axis = models.JSONField(default=list, blank=True)
+    series = models.JSONField(default=list, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["key"]
+        verbose_name = "时间分配图配置"
+        verbose_name_plural = "时间分配图配置"
+
+    def __str__(self) -> str:
+        return self.key
+
+    def clean(self):
+        axis = self.x_axis
+        rows = self.series
+
+        if not isinstance(axis, list):
+            raise ValidationError({"x_axis": "x_axis 必须是数组"})
+        if not axis:
+            return
+        if not isinstance(rows, list):
+            raise ValidationError({"series": "series 必须是数组"})
+
+        axis_length = len(axis)
+        for idx, item in enumerate(rows):
+            if not isinstance(item, dict):
+                raise ValidationError({"series": f"series[{idx}] 必须是对象"})
+
+            name = str(item.get("name") or "").strip()
+            if not name:
+                raise ValidationError({"series": f"series[{idx}].name 不能为空"})
+
+            data = item.get("data")
+            if not isinstance(data, list):
+                raise ValidationError({"series": f"series[{idx}].data 必须是数组"})
+            if len(data) != axis_length:
+                raise ValidationError({"series": f"series[{idx}].data 长度必须等于 x_axis 长度"})
+
+            for point_idx, value in enumerate(data):
+                try:
+                    numeric = float(value)
+                except (TypeError, ValueError) as exc:
+                    raise ValidationError({"series": f"series[{idx}].data[{point_idx}] 必须是数字"}) from exc
+                if numeric < 0:
+                    raise ValidationError({"series": f"series[{idx}].data[{point_idx}] 不能小于 0"})
 
 
 class TimelineNode(TimeStampedModel):

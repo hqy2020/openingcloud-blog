@@ -32,6 +32,7 @@ from .models import (
     SocialFriend,
     SyncLog,
     TimelineNode,
+    TimeSeriesConfig,
     TravelPlace,
 )
 
@@ -344,6 +345,7 @@ class ApiTests(TestCase):
         self.assertIn("highlights", payload)
         self.assertIn("travel", payload)
         self.assertIn("social_graph", payload)
+        self.assertIn("time_series", payload)
         self.assertIn("photo_wall", payload)
         self.assertIn("stats", payload)
         self.assertIn("contact", payload)
@@ -352,6 +354,28 @@ class ApiTests(TestCase):
         self.assertIn("site_days", payload["stats"])
         self.assertGreaterEqual(payload["stats"]["total_words"], 1)
         self.assertGreaterEqual(payload["stats"]["site_days"], 1)
+
+    def test_home_time_series_normalized_to_100(self):
+        TimeSeriesConfig.objects.create(
+            key="default",
+            x_axis=["0", "5", "10"],
+            series=[
+                {"name": "Study", "color": "#B3D4FF", "data": [10, 60, 40]},
+                {"name": "Game", "color": "#80E5FF", "data": [0, 0, 30]},
+                {"name": "Social", "color": "#A3F0C7", "data": [90, 40, 30]},
+            ],
+            is_active=True,
+        )
+
+        resp = self.client.get(reverse("home"))
+        self.assertEqual(resp.status_code, 200)
+        time_series = resp.data["data"]["time_series"]
+        self.assertEqual(time_series["x_axis"], ["0", "5", "10"])
+        self.assertEqual(len(time_series["series"]), 3)
+
+        for index in range(len(time_series["x_axis"])):
+            column_sum = sum(float(item["data"][index]) for item in time_series["series"])
+            self.assertAlmostEqual(column_sum, 100.0, places=2)
 
     def test_timeline_api(self):
         resp = self.client.get(reverse("timeline"))

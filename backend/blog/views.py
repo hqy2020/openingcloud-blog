@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from datetime import date, timedelta
 from pathlib import Path
 from uuid import uuid4
@@ -35,6 +36,7 @@ from .models import (
     SocialFriend,
     SyncLog,
     TimelineNode,
+    TimeSeriesConfig,
     TravelPlace,
 )
 from .permissions import IsStaffOrSyncToken, IsStaffUser
@@ -1244,6 +1246,97 @@ def _home_stats_payload() -> dict:
     }
 
 
+def _normalize_time_series_payload(raw_payload: dict) -> dict:
+    raw_axis = raw_payload.get("x_axis")
+    axis = [str(value).strip() for value in raw_axis] if isinstance(raw_axis, list) else []
+    axis = [value for value in axis if value]
+    if not axis:
+        return {"x_axis": [], "series": []}
+
+    raw_series = raw_payload.get("series")
+    if not isinstance(raw_series, list):
+        return {"x_axis": [], "series": []}
+
+    series: list[dict] = []
+    axis_length = len(axis)
+    for item in raw_series:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name") or "").strip()
+        if not name:
+            continue
+
+        color = str(item.get("color") or "").strip()
+        raw_data = item.get("data")
+        values: list[float] = []
+        if isinstance(raw_data, list):
+            for index in range(axis_length):
+                current = raw_data[index] if index < len(raw_data) else 0
+                try:
+                    numeric = float(current)
+                except (TypeError, ValueError):
+                    numeric = 0
+                values.append(max(0.0, numeric))
+        else:
+            values = [0.0] * axis_length
+
+        series.append(
+            {
+                "name": name,
+                "color": color,
+                "data": values,
+            }
+        )
+
+    if not series:
+        return {"x_axis": [], "series": []}
+
+    for column_index in range(axis_length):
+        column_values = [item["data"][column_index] for item in series]
+        total = sum(column_values)
+
+        if total <= 0:
+            for item in series:
+                item["data"][column_index] = 0.0
+            series[0]["data"][column_index] = 100.0
+            continue
+
+        scaled_basis_points = [(value * 10000) / total for value in column_values]
+        basis_points = [int(math.floor(value)) for value in scaled_basis_points]
+        remaining = max(0, 10000 - sum(basis_points))
+        fractional_order = sorted(
+            range(len(basis_points)),
+            key=lambda index: (
+                scaled_basis_points[index] - basis_points[index],
+                scaled_basis_points[index],
+            ),
+            reverse=True,
+        )
+        if not fractional_order:
+            fractional_order = [0]
+
+        for offset in range(remaining):
+            target_index = fractional_order[offset % len(fractional_order)]
+            basis_points[target_index] += 1
+
+        for series_index, item in enumerate(series):
+            item["data"][column_index] = basis_points[series_index] / 100.0
+
+    return {"x_axis": axis, "series": series}
+
+
+def _home_time_series_payload() -> dict:
+    config = TimeSeriesConfig.objects.filter(is_active=True).order_by("-updated_at", "-id").first()
+    if not config:
+        return {"x_axis": [], "series": []}
+    return _normalize_time_series_payload(
+        {
+            "x_axis": config.x_axis,
+            "series": config.series,
+        }
+    )
+
+
 def _home_payload(*, show_real_name: bool = False) -> dict:
     timeline = TimelineNode.objects.all().order_by("sort_order", "start_date")
     highlights = HighlightStage.objects.prefetch_related("items").order_by("sort_order", "start_date", "id")
@@ -1279,6 +1372,7 @@ def _home_payload(*, show_real_name: bool = False) -> dict:
         "highlights": HighlightStagePublicSerializer(highlights, many=True).data,
         "travel": TravelProvinceSerializer(travel, many=True).data,
         "social_graph": SocialGraphPublicSerializer(social_graph).data,
+        "time_series": _home_time_series_payload(),
         "photo_wall": photo_wall,
         "pinned_posts": PinnedPostSerializer(pinned_qs, many=True).data,
         "projects": GithubProjectPublicSerializer(projects, many=True).data,

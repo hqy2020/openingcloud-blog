@@ -30,6 +30,7 @@ from .models import (
     SiteVisit,
     SocialFriend,
     SyncLog,
+    TimeSeriesConfig,
     TimelineNode,
     TravelPlace,
 )
@@ -181,6 +182,13 @@ class TimelineNodeAdmin(SortableAdminMixin, admin.ModelAdmin):
     list_display = ["title", "type", "impact", "start_date", "sort_order", "updated_at"]
     list_filter = ["type", "impact"]
     search_fields = ["title", "description", "phase"]
+
+
+@admin.register(TimeSeriesConfig)
+class TimeSeriesConfigAdmin(admin.ModelAdmin):
+    list_display = ["key", "is_active", "updated_at"]
+    list_filter = ["is_active"]
+    search_fields = ["key"]
 
 
 @admin.register(TravelPlace)

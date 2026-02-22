@@ -127,6 +127,17 @@ export type GithubProject = {
   sort_order: number;
 };
 
+export type HomeTimeSeriesItem = {
+  name: string;
+  color?: string;
+  data: number[];
+};
+
+export type HomeTimeSeries = {
+  x_axis: string[];
+  series: HomeTimeSeriesItem[];
+};
+
 export type HomePayload = {
   hero: {
     title: string;
@@ -139,6 +150,7 @@ export type HomePayload = {
   highlights: HighlightStage[];
   travel: TravelProvince[];
   social_graph: SocialGraphPayload;
+  time_series?: HomeTimeSeries;
   social_ticker?: SocialTicker;
   birthday_reminders?: BirthdayReminder[];
   photo_wall: PhotoWallItem[];
