@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import type { HomePayload } from "../../api/home";
 import { ScrollReveal } from "../motion/ScrollReveal";
 import { StaggerContainer, StaggerItem } from "../motion/StaggerContainer";
 import { CardSpotlight } from "../ui/CardSpotlight";
+import { NumberTicker } from "../ui/NumberTicker";
 
 type StatsSectionProps = {
   stats: HomePayload["stats"];
@@ -26,97 +26,31 @@ const statItems: StatItem[] = [
   { key: "site_days", label: "建站天数", note: (s) => `完成 ${s.total_updates} 次更新` },
 ];
 
-function AnimatedNumber({ value, active }: { value: number; active: boolean }) {
-  const [display, setDisplay] = useState(0);
-  const previousValueRef = useRef(0);
-
-  useEffect(() => {
-    if (!active) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDisplay(0);
-      previousValueRef.current = 0;
-      return;
-    }
-
-    let raf = 0;
-    const start = performance.now();
-    const duration = 700;
-    const from = previousValueRef.current;
-    const delta = value - from;
-
-    const tick = (now: number) => {
-      const progress = Math.min(1, (now - start) / duration);
-      setDisplay(Math.round(from + delta * progress));
-      if (progress < 1) {
-        raf = window.requestAnimationFrame(tick);
-      } else {
-        previousValueRef.current = value;
-      }
-    };
-
-    raf = window.requestAnimationFrame(tick);
-    return () => window.cancelAnimationFrame(raf);
-  }, [active, value]);
-
-  if (!active) {
-    return <>0</>;
-  }
-
-  return <>{new Intl.NumberFormat("zh-CN").format(display)}</>;
-}
-
 export function StatsSection({ stats }: StatsSectionProps) {
-  const hostRef = useRef<HTMLDivElement | null>(null);
   const reduceMotion = Boolean(useReducedMotion());
-  const [countingStarted, setCountingStarted] = useState(false);
-
-  useEffect(() => {
-    const host = hostRef.current;
-    if (!host || countingStarted || reduceMotion) {
-      if (reduceMotion && !countingStarted) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setCountingStarted(true);
-      }
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          setCountingStarted(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.25 },
-    );
-    observer.observe(host);
-    return () => observer.disconnect();
-  }, [countingStarted, reduceMotion]);
 
   return (
-    <div ref={hostRef}>
-      <ScrollReveal className="space-y-6">
-        <h2 className="text-2xl font-semibold text-slate-800">数据面板</h2>
+    <ScrollReveal className="space-y-6">
+      <h2 className="text-2xl font-semibold text-slate-800">数据面板</h2>
 
-        <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" stagger={0.06}>
-          {statItems.map((item) => {
-            const note = item.note(stats);
-            return (
-              <StaggerItem key={item.key} className="h-full">
-                <CardSpotlight className="flex h-[188px] w-full flex-col rounded-2xl bg-white/60 p-5 backdrop-blur">
-                  <p className="text-sm text-slate-400">{item.label}</p>
-                  <p className="mt-2 text-3xl font-semibold leading-none text-slate-800">
-                    <AnimatedNumber active={countingStarted} value={stats[item.key]} />
-                  </p>
-                  <div className="mt-auto min-h-5 pt-4">
-                    <p className="text-xs font-medium text-slate-400">{note}</p>
-                  </div>
-                </CardSpotlight>
-              </StaggerItem>
-            );
-          })}
-        </StaggerContainer>
-      </ScrollReveal>
-    </div>
+      <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" stagger={0.06}>
+        {statItems.map((item) => {
+          const note = item.note(stats);
+          return (
+            <StaggerItem key={item.key} className="h-full">
+              <CardSpotlight className="flex h-[188px] w-full flex-col rounded-2xl bg-white/60 p-5 backdrop-blur">
+                <p className="text-sm text-slate-400">{item.label}</p>
+                <p className="mt-2 text-3xl font-semibold leading-none text-slate-800">
+                  <NumberTicker disabled={reduceMotion} locale="zh-CN" value={stats[item.key]} />
+                </p>
+                <div className="mt-auto min-h-5 pt-4">
+                  <p className="text-xs font-medium text-slate-400">{note}</p>
+                </div>
+              </CardSpotlight>
+            </StaggerItem>
+          );
+        })}
+      </StaggerContainer>
+    </ScrollReveal>
   );
 }
