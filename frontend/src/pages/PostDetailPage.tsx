@@ -17,6 +17,8 @@ type HeadingItem = {
   level: 2 | 3;
 };
 
+type MobileTabKey = "article" | "toc" | "info";
+
 const HEADING_SCROLL_OFFSET = 112;
 
 const categoryLabelMap: Record<"tech" | "learning" | "life", string> = {
@@ -179,11 +181,17 @@ export function PostDetailPage() {
 
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(data?.likes_count ?? 0);
+  const [mobileTabState, setMobileTabState] = useState<{ slug: string; tab: MobileTabKey }>({
+    slug,
+    tab: "article",
+  });
+  const mobileTab = mobileTabState.slug === slug ? mobileTabState.tab : "article";
   const likeLoadingRef = useRef(false);
   const [likeLoading, setLikeLoading] = useState(false);
 
   useEffect(() => {
     if (data) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLikesCount(data.likes_count);
     }
   }, [data]);
@@ -301,6 +309,11 @@ export function PostDetailPage() {
     ? data.tags.map((tag) => String(tag).trim()).filter((tag) => tag.length > 0)
     : [];
   const detailCover = String(data.cover || "").trim() || null;
+  const mobileTabs: Array<{ key: MobileTabKey; label: string }> = [
+    { key: "article", label: "文章" },
+    { key: "toc", label: "目录" },
+    { key: "info", label: "信息" },
+  ];
 
   const markdownComponents = {
     h2: ({ children, ...props }: HTMLAttributes<HTMLHeadingElement>) => {
@@ -519,11 +532,39 @@ export function PostDetailPage() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/18 via-transparent to-transparent" />
       </div>
 
+      <div className={`xl:hidden sticky top-[60px] z-20 rounded-2xl border p-1 backdrop-blur ${
+        isDark ? "border-slate-700 bg-slate-900/90" : "border-slate-200 bg-white/90"
+      }`}>
+        <div className="grid grid-cols-3 gap-1">
+          {mobileTabs.map((tab) => {
+            const active = mobileTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setMobileTabState({ slug, tab: tab.key })}
+                className={`rounded-xl px-3 py-2 text-sm font-medium transition ${
+                  active
+                    ? isDark
+                      ? "bg-indigo-500/20 text-indigo-200 ring-1 ring-indigo-400/40"
+                      : "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200"
+                    : isDark
+                      ? "text-slate-300 hover:bg-slate-800"
+                      : "text-slate-600 hover:bg-slate-100"
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_260px]">
         <article
           className={`rounded-2xl border p-6 shadow-sm ${
             isDark ? "border-slate-700 bg-slate-900/84 text-slate-200" : "border-slate-200 bg-white text-slate-900"
-          }`}
+          } ${mobileTab === "article" ? "block" : "hidden"} xl:block`}
         >
           <h1 className={`text-3xl font-bold tracking-tight ${isDark ? "text-slate-200" : "text-slate-900"}`}>{data.title}</h1>
 
@@ -618,7 +659,7 @@ export function PostDetailPage() {
         <aside
           className={`h-fit rounded-2xl border p-4 shadow-sm xl:sticky xl:top-8 ${
             isDark ? "border-slate-700 bg-slate-900/84" : "border-slate-200 bg-white"
-          }`}
+          } ${mobileTab === "toc" ? "block" : "hidden"} xl:block`}
         >
           <h2 className={`text-sm font-semibold uppercase tracking-wide ${isDark ? "text-slate-400" : "text-slate-500"}`}>目录</h2>
           <ul className="mt-3 space-y-2 text-sm">
@@ -653,6 +694,49 @@ export function PostDetailPage() {
               </li>
             ))}
           </ul>
+        </aside>
+
+        <aside
+          className={`rounded-2xl border p-4 shadow-sm xl:hidden ${
+            isDark ? "border-slate-700 bg-slate-900/84 text-slate-200" : "border-slate-200 bg-white text-slate-800"
+          } ${mobileTab === "info" ? "block" : "hidden"}`}
+        >
+          <h2 className={`text-sm font-semibold uppercase tracking-wide ${isDark ? "text-slate-400" : "text-slate-500"}`}>信息</h2>
+          <div className={`mt-3 space-y-2 text-sm ${isDark ? "text-slate-300" : "text-slate-700"}`}>
+            <p>
+              <span className={isDark ? "text-slate-500" : "text-slate-500"}>分类：</span>
+              {categoryLabelMap[data.category]}
+            </p>
+            <p>
+              <span className={isDark ? "text-slate-500" : "text-slate-500"}>阅读时长：</span>
+              {readMinutes} min
+            </p>
+            <p>
+              <span className={isDark ? "text-slate-500" : "text-slate-500"}>阅读量：</span>
+              {data.views_count}
+            </p>
+            <p>
+              <span className={isDark ? "text-slate-500" : "text-slate-500"}>更新时间：</span>
+              {new Date(data.updated_at).toLocaleDateString("zh-CN")}
+            </p>
+          </div>
+          {postTags.length > 0 ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {postTags.map((tag) => (
+                <Link
+                  key={`mobile-info-tag-${tag}`}
+                  to={`${categoryPathMap[data.category]}?tag=${encodeURIComponent(tag)}`}
+                  className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+                    isDark
+                      ? "border-slate-600 bg-slate-800 text-slate-200 hover:border-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-200"
+                      : "border-slate-200 bg-slate-50 text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+                  }`}
+                >
+                  #{tag}
+                </Link>
+              ))}
+            </div>
+          ) : null}
         </aside>
       </div>
     </section>

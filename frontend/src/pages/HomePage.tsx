@@ -1,108 +1,28 @@
 import { Helmet } from "react-helmet-async";
-import type { HighlightStage, PhotoWallItem, PinnedPost, SocialGraphLink, SocialGraphNode, TimelineNode, GithubProject } from "../api/home";
+import type { HighlightStage, PhotoWallItem, PinnedPost, SocialGraphLink, SocialGraphNode, TimelineNode } from "../api/home";
 import { fetchHome } from "../api/home";
-import { HeroSection } from "../components/home/HeroSection";
+import { ContactSection } from "../components/home/ContactSection";
 import { HighlightsSection } from "../components/home/HighlightsSection";
-import { OpenSourceProjectsSection } from "../components/home/OpenSourceProjectsSection";
 import { PhotoWallSection } from "../components/home/PhotoWallSection";
 import { PinnedPostsSidebar } from "../components/home/PinnedPostsSidebar";
 import { SocialGraphSection } from "../components/home/SocialGraphSection";
 import { StatsSection } from "../components/home/StatsSection";
 import { TimelineSection } from "../components/home/TimelineSection";
 import { TravelSection } from "../components/home/TravelSection";
+import { DualRadarSection } from "../components/revamp/home/DualRadarSection";
+import { FeaturedProjectsSection } from "../components/revamp/home/FeaturedProjectsSection";
+import { HomeHero } from "../components/revamp/home/HomeHero";
+import { SocialMarquee } from "../components/revamp/home/SocialMarquee";
+import { TimeAreaSection } from "../components/revamp/home/TimeAreaSection";
+import { SectionCard } from "../components/revamp/shared/SectionCard";
+import { Dock, DockIcon } from "../components/ui/MagicUIDock";
+import { useMotionValue } from "motion/react";
 import { useAsync } from "../hooks/useAsync";
 import { fallbackHomePayload } from "../data/fallback";
+import { currentLocation } from "../data/revamp/location";
 
-const timelineFallbackForUx: TimelineNode[] = [
-  {
-    title: "出生",
-    description: "时间线起点，家庭与成长的开始。",
-    start_date: "2000-09-01",
-    end_date: null,
-    type: "family",
-    impact: "medium",
-    phase: "起点",
-    tags: ["family"],
-    cover: "",
-    links: [],
-    sort_order: 1,
-  },
-  {
-    title: "同济大学",
-    description: "系统训练工程思维，奠定技术基础。",
-    start_date: "2019-09-01",
-    end_date: "2023-07-01",
-    type: "learning",
-    impact: "high",
-    phase: "本科",
-    tags: ["learning"],
-    cover: "",
-    links: [],
-    sort_order: 2,
-  },
-  {
-    title: "云层之下",
-    description: "阶段性沉淀与反思，调整方向后继续前进。",
-    start_date: "2025-04-01",
-    end_date: "2025-10-01",
-    type: "reflection",
-    impact: "low",
-    phase: "沉淀",
-    tags: ["reflection"],
-    cover: "",
-    links: [],
-    sort_order: 3,
-  },
-  {
-    title: "开始系统整理博客",
-    description: "将技术、效率与生活经验结构化沉淀并持续输出。",
-    start_date: "2026-02-01",
-    end_date: null,
-    type: "career",
-    impact: "high",
-    phase: "实践",
-    tags: ["career"],
-    cover: "",
-    links: [],
-    sort_order: 4,
-  },
-];
-
-const highlightsFallbackForUx: HighlightStage[] = [
-  {
-    title: "小学 · 初中 · 高中",
-    description: "从学生干部到运动项目成绩突破，逐步建立长期投入与复盘习惯。",
-    start_date: "2006-09-01",
-    end_date: "2019-07-01",
-    sort_order: 1,
-    items: [
-      { title: "长期担任班级/学校职务", description: "", achieved_at: null, sort_order: 1 },
-      { title: "800m/1000m 项目持续突破", description: "", achieved_at: null, sort_order: 2 },
-    ],
-  },
-  {
-    title: "同济大学 · 本科",
-    description: "在组织、学业与实践并行中建立工程化做事方法。",
-    start_date: "2019-09-01",
-    end_date: "2023-07-01",
-    sort_order: 2,
-    items: [
-      { title: "学生组织核心岗位实践", description: "", achieved_at: null, sort_order: 1 },
-      { title: "志愿服务与毕业成果并行推进", description: "", achieved_at: null, sort_order: 2 },
-    ],
-  },
-  {
-    title: "浙江大学 · 硕士",
-    description: "研究与工程双线推进，持续打磨高质量输出能力。",
-    start_date: "2024-09-01",
-    end_date: null,
-    sort_order: 3,
-    items: [
-      { title: "论文与专利持续产出", description: "", achieved_at: null, sort_order: 1 },
-      { title: "研究课题进入稳定迭代节奏", description: "", achieved_at: null, sort_order: 2 },
-    ],
-  },
-];
+const timelineFallbackForUx: TimelineNode[] = fallbackHomePayload.timeline;
+const highlightsFallbackForUx: HighlightStage[] = fallbackHomePayload.highlights;
 
 const socialGraphFallbackForUx: {
   nodes: SocialGraphNode[];
@@ -158,6 +78,64 @@ const photoWallFallbackForUx: PhotoWallItem[] = [
   },
 ];
 
+function GithubDockIcon() {
+  return (
+    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 2C6.48 2 2 6.59 2 12.25c0 4.53 2.87 8.38 6.84 9.74.5.1.68-.22.68-.49 0-.24-.01-.88-.01-1.73-2.78.62-3.37-1.38-3.37-1.38-.46-1.2-1.11-1.52-1.11-1.52-.91-.63.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.35 1.12 2.92.86.09-.67.35-1.12.63-1.37-2.22-.26-4.55-1.14-4.55-5.08 0-1.12.39-2.04 1.03-2.76-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05A9.3 9.3 0 0 1 12 6.45c.85 0 1.7.12 2.5.36 1.9-1.33 2.74-1.05 2.74-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.64 1.03 2.76 0 3.95-2.33 4.82-4.56 5.08.36.32.67.95.67 1.91 0 1.38-.01 2.5-.01 2.84 0 .27.18.6.69.49A10.26 10.26 0 0 0 22 12.25C22 6.59 17.52 2 12 2z" />
+    </svg>
+  );
+}
+
+function MailDockIcon() {
+  return (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+    </svg>
+  );
+}
+
+function AdminDockIcon() {
+  return (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24">
+      <rect height="14" rx="3" stroke="currentColor" strokeWidth="1.8" width="14" x="5" y="5" />
+      <path d="m9.2 10.2 2.1 1.8-2.1 1.8m4.1 0h2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+function ArrowUpDockIcon() {
+  return (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5 12 3m0 0 7.5 7.5M12 3v18" />
+    </svg>
+  );
+}
+
+function ProjectsDockIcon() {
+  return (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 6.75h15M4.5 12h15M4.5 17.25h15" />
+    </svg>
+  );
+}
+
+function TimeDockIcon() {
+  return (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l3.5 2.2" />
+      <circle cx="12" cy="12" r="8.25" />
+    </svg>
+  );
+}
+
+function MapDockIcon() {
+  return (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 21V9m8 12V9m-12.5.8L8 6l8 3.8L20.5 6v12.2L16 22l-8-3.8-4.5 3.8V9.8Z" />
+    </svg>
+  );
+}
+
 export function HomePage() {
   const { data, loading, error } = useAsync(fetchHome, []);
   const payload = data ?? fallbackHomePayload;
@@ -173,10 +151,11 @@ export function HomePage() {
   const photoWallItems =
     Array.isArray(payload.photo_wall) && payload.photo_wall.length > 0 ? payload.photo_wall : photoWallFallbackForUx;
   const pinnedPosts: PinnedPost[] = Array.isArray(payload.pinned_posts) ? payload.pinned_posts : [];
-  const projects: GithubProject[] = Array.isArray(payload.projects) ? payload.projects : [];
+
+  const mouseX = useMotionValue(Infinity);
 
   return (
-    <section>
+    <section className="space-y-20">
       <Helmet>
         <title>启云博客</title>
         <meta content="在云层之上，记录技术、效率与生活。" name="description" />
@@ -189,25 +168,127 @@ export function HomePage() {
       {loading ? <p className="text-sm text-slate-500">首页数据加载中...</p> : null}
       {!loading && error ? <p className="text-sm text-amber-700">实时数据暂不可用，已展示静态内容。</p> : null}
 
-      <div className="space-y-12">
-        <HeroSection hero={payload.hero} githubUrl={payload.contact?.github ?? fallbackHomePayload.contact.github} siteVisits={payload.stats.site_visits_total} />
-      </div>
+      {/* #1 Hero */}
+      <HomeHero
+        hero={payload.hero}
+      />
 
-      <div className="relative mt-12">
-        <div className="space-y-12">
+      {/* #2 Achievement Marquee */}
+      <SocialMarquee stages={highlightStages} />
+
+      {/* #3 Featured Projects + #4 Time */}
+      <FeaturedProjectsSection />
+      <TimeAreaSection timeline={timelineNodes} />
+
+      {/* #5 Timeline + Highlights */}
+      <SectionCard id="timeline">
+        <div className="grid gap-8 lg:grid-cols-2">
           <TimelineSection nodes={timelineNodes} />
           <HighlightsSection stages={highlightStages} />
-          <TravelSection travel={payload.travel} />
-          <SocialGraphSection links={socialLinks} nodes={socialNodes} />
-          <PhotoWallSection photos={photoWallItems} />
-          <OpenSourceProjectsSection projects={projects} />
-          <StatsSection stats={payload.stats} />
         </div>
+      </SectionCard>
 
-        {pinnedPosts.length > 0 && (
-          <PinnedPostsSidebar posts={pinnedPosts} />
-        )}
-      </div>
+      {/* #6 Travel Map + Radar */}
+      <SectionCard id="map">
+        <div className="grid gap-8 lg:grid-cols-2">
+          <TravelSection travel={payload.travel} currentLocation={currentLocation} />
+          <DualRadarSection />
+        </div>
+      </SectionCard>
+
+      {/* #7 Social Graph */}
+      <SectionCard id="social">
+        <div className="grid gap-8">
+          <SocialGraphSection links={socialLinks} nodes={socialNodes} />
+        </div>
+      </SectionCard>
+
+      {/* #8 Photo Wall */}
+      <SectionCard id="gallery" fullWidth>
+        <PhotoWallSection photos={photoWallItems} />
+      </SectionCard>
+
+      {/* #9 Stats */}
+      <SectionCard id="stats" fullWidth>
+        <StatsSection stats={payload.stats} />
+      </SectionCard>
+
+      {/* #10 Contact */}
+      <SectionCard id="contact" fullWidth>
+        <ContactSection contact={payload.contact ?? fallbackHomePayload.contact} variant="section" />
+      </SectionCard>
+
+      {pinnedPosts.length > 0 && (
+        <PinnedPostsSidebar posts={pinnedPosts} />
+      )}
+
+      {/* Magic UI Dock — floating social bar at bottom */}
+      <Dock magnification={60} distance={140}>
+        <DockIcon
+          label="GitHub"
+          href="https://github.com/hqy2020"
+          external
+          mouseX={mouseX}
+          magnification={60}
+          distance={140}
+        >
+          <GithubDockIcon />
+        </DockIcon>
+        <DockIcon
+          label="邮箱"
+          href="mailto:hqy200091@163.com"
+          mouseX={mouseX}
+          magnification={60}
+          distance={140}
+        >
+          <MailDockIcon />
+        </DockIcon>
+        <DockIcon
+          label="后台"
+          href="/admin/"
+          mouseX={mouseX}
+          magnification={60}
+          distance={140}
+        >
+          <AdminDockIcon />
+        </DockIcon>
+        <DockIcon
+          label="项目"
+          href="#projects"
+          mouseX={mouseX}
+          magnification={60}
+          distance={140}
+        >
+          <ProjectsDockIcon />
+        </DockIcon>
+        <DockIcon
+          label="Time"
+          href="#time"
+          mouseX={mouseX}
+          magnification={60}
+          distance={140}
+        >
+          <TimeDockIcon />
+        </DockIcon>
+        <DockIcon
+          label="地图"
+          href="#map"
+          mouseX={mouseX}
+          magnification={60}
+          distance={140}
+        >
+          <MapDockIcon />
+        </DockIcon>
+        <DockIcon
+          label="回到顶部"
+          mouseX={mouseX}
+          magnification={60}
+          distance={140}
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        >
+          <ArrowUpDockIcon />
+        </DockIcon>
+      </Dock>
     </section>
   );
 }

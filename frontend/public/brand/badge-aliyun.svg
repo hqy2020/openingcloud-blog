@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Aliyun badge">
+  <defs>
+    <linearGradient id="ali-g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f97316" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="28" fill="url(#ali-g)" />
+  <circle cx="60" cy="60" r="38" fill="rgba(255,255,255,0.18)" />
+  <text x="60" y="68" text-anchor="middle" font-size="24" font-family="Inter, sans-serif" fill="#ffffff" font-weight="700">ALI</text>
+</svg>

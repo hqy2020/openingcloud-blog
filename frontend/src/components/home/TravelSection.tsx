@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, ComponentType } from "react";
 import type { TravelProvince } from "../../api/home";
+import type { CurrentLocation } from "../../data/revamp/location";
 import { ScrollReveal } from "../motion/ScrollReveal";
 import { StaggerContainer, StaggerItem } from "../motion/StaggerContainer";
 import { CardSpotlight } from "../ui/CardSpotlight";
 
 type TravelSectionProps = {
   travel: TravelProvince[];
+  currentLocation?: CurrentLocation | null;
 };
 
 type EChartsLikeProps = {
@@ -82,6 +84,8 @@ function formatCityTooltip(params: unknown) {
       name?: string;
       province?: string;
       visitedAt?: string | null;
+      status?: string;
+      isCurrent?: boolean;
     };
   };
 
@@ -91,12 +95,17 @@ function formatCityTooltip(params: unknown) {
 
   const city = payload.data?.name ?? "未知城市";
   const province = payload.data?.province ?? "";
+  if (payload.data?.isCurrent) {
+    const cityLine = province ? `${province} · ${city}` : city;
+    const status = payload.data?.status ?? "当前所在";
+    return `${cityLine}<br/>${status}`;
+  }
   const visitedAt = formatVisitedAtLabel(payload.data?.visitedAt);
   const cityLine = province ? `${province} · ${city}` : city;
   return `${cityLine}<br/>${visitedAt}`;
 }
 
-export function TravelSection({ travel }: TravelSectionProps) {
+export function TravelSection({ travel, currentLocation }: TravelSectionProps) {
   const [Chart, setChart] = useState<ComponentType<EChartsLikeProps> | null>(null);
   const [echartsRuntime, setEchartsRuntime] = useState<EChartsRuntime | null>(null);
   const [mapReady, setMapReady] = useState(false);
@@ -284,6 +293,16 @@ export function TravelSection({ travel }: TravelSectionProps) {
         visitedAt: city.visited_at,
       }));
 
+    const currentPoint = currentLocation
+      ? {
+          name: currentLocation.city,
+          value: [currentLocation.longitude, currentLocation.latitude, 1],
+          province: currentLocation.province,
+          status: currentLocation.status,
+          isCurrent: true,
+        }
+      : null;
+
     return {
       animation: true,
       animationDuration: 650,
@@ -312,6 +331,42 @@ export function TravelSection({ travel }: TravelSectionProps) {
           },
           data: cityData,
         },
+        ...(currentPoint
+          ? [
+              {
+                name: "当前",
+                type: "effectScatter",
+                coordinateSystem: "geo",
+                rippleEffect: { scale: 7, brushType: "stroke", period: 3.2 },
+                symbolSize: 14,
+                zlevel: 5,
+                z: 18,
+                itemStyle: {
+                  color: "#f97316",
+                  borderColor: "#fff7ed",
+                  borderWidth: 2,
+                  shadowBlur: 18,
+                  shadowColor: "rgba(249, 115, 22, 0.42)",
+                },
+                data: [currentPoint],
+              },
+              {
+                name: "雷达圈",
+                type: "effectScatter",
+                coordinateSystem: "geo",
+                rippleEffect: { scale: 11, brushType: "stroke", period: 2.8 },
+                symbolSize: 22,
+                zlevel: 4,
+                z: 16,
+                itemStyle: {
+                  color: "rgba(249,115,22,0.18)",
+                },
+                silent: true,
+                tooltip: { show: false },
+                data: [currentPoint],
+              },
+            ]
+          : []),
       ],
       geo: {
         map: "china",
@@ -327,15 +382,16 @@ export function TravelSection({ travel }: TravelSectionProps) {
         },
       },
     };
-  }, [revealedCities]);
+  }, [currentLocation, revealedCities]);
 
   return (
     <ScrollReveal className="space-y-6">
       <div className="flex items-end justify-between">
         <h2 className="text-2xl font-semibold text-slate-900">旅行足迹</h2>
-        <span className="text-sm text-slate-500">
-          已点亮 {displayProvinceCount} 个省份 / 34
-        </span>
+        <div className="text-right">
+          <p className="text-sm text-slate-500">已点亮 {displayProvinceCount} 个省份 / 34</p>
+          {currentLocation ? <p className="text-xs text-slate-500">当前所在：{currentLocation.city}</p> : null}
+        </div>
       </div>
 
       <div ref={hostRef} className="rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-[0_12px_32px_rgba(15,23,42,0.08)] backdrop-blur">
@@ -355,7 +411,17 @@ export function TravelSection({ travel }: TravelSectionProps) {
                   <StaggerItem key={province.province}>
                     <CardSpotlight className="rounded-xl bg-slate-50/85 p-4">
                       <h3 className="font-medium text-slate-900">{province.province}</h3>
-                      <p className="mt-1 text-sm text-slate-600">{province.cities.map((city) => city.city).join("、")}</p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {province.cities
+                          .map((city) => {
+                            const isCurrent =
+                              currentLocation &&
+                              city.city === currentLocation.city &&
+                              province.province === currentLocation.province;
+                            return isCurrent ? `${city.city}(当前)` : city.city;
+                          })
+                          .join("、")}
+                      </p>
                     </CardSpotlight>
                   </StaggerItem>
                 ))}
