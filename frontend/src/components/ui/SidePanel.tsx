@@ -52,6 +52,21 @@ export const SidePanel = forwardRef<HTMLDivElement, SidePanelProps>(
 
     return (
       <MotionConfig transition={{ type: "tween", ease: easeCurve, duration: reducedMotion ? 0 : 0.35 }}>
+        <AnimatePresence initial={false}>
+          {panelOpen ? (
+            <motion.button
+              type="button"
+              aria-label="关闭侧边栏"
+              className="fixed inset-0 z-40 hidden bg-slate-900/8 backdrop-blur-[1px] lg:block"
+              initial={reducedMotion ? { opacity: 1 } : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={reducedMotion ? { opacity: 1 } : { opacity: 0 }}
+              transition={{ duration: reducedMotion ? 0 : 0.22, ease: easeCurve }}
+              onClick={handlePanelOpen}
+            />
+          ) : null}
+        </AnimatePresence>
+
         <motion.aside
           ref={ref}
           className={cn(
@@ -68,19 +83,19 @@ export const SidePanel = forwardRef<HTMLDivElement, SidePanelProps>(
               "flex h-full w-full flex-col overflow-hidden",
               panelOpen
                 ? cn(
-                    "border border-slate-700/70 bg-slate-900/95 text-slate-100 shadow-[0_24px_50px_-30px_rgba(2,6,23,0.95)] backdrop-blur-xl",
-                    side === "right" ? "rounded-l-[40px] border-r-0" : "rounded-r-[40px] border-l-0",
+                    "bg-white/88 text-slate-800 ring-1 ring-slate-200/70 shadow-[0_18px_45px_-30px_rgba(15,23,42,0.38)] backdrop-blur-xl",
+                    side === "right" ? "rounded-l-[34px]" : "rounded-r-[34px]",
                   )
                 : cn(
-                    "border border-slate-700/70 bg-slate-900/92 text-slate-100 shadow-[0_24px_50px_-30px_rgba(2,6,23,0.95)]",
-                    side === "right" ? "rounded-l-[24px] border-r-0" : "rounded-r-[24px] border-l-0",
+                    "bg-white/78 text-slate-700 ring-1 ring-slate-200/65 shadow-[0_12px_28px_-24px_rgba(15,23,42,0.35)] backdrop-blur-xl",
+                    side === "right" ? "rounded-l-[18px]" : "rounded-r-[18px]",
                   ),
             )}
           >
             <div
               className={cn(
                 "flex shrink-0",
-                panelOpen ? "items-center justify-between border-b border-slate-700/70 px-4 pb-3 pt-20" : "h-full items-start justify-center px-1.5 pt-[32vh]",
+                panelOpen ? "items-center justify-between border-b border-slate-200/70 px-4 pb-3 pt-20" : "h-full items-start justify-center px-1.5 pt-[32vh]",
               )}
             >
               {renderButton ? renderButton(handlePanelOpen, panelOpen) : null}
