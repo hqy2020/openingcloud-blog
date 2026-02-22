@@ -68,16 +68,19 @@ export const SidePanel = forwardRef<HTMLDivElement, SidePanelProps>(
               "flex h-full w-full flex-col overflow-hidden",
               panelOpen
                 ? cn(
-                    "border-slate-200/70 bg-white/90 shadow-xl backdrop-blur-xl",
-                    side === "right" ? "border-l rounded-l-[28px]" : "border-r rounded-r-[28px]",
+                    "border border-slate-700/70 bg-slate-900/95 text-slate-100 shadow-[0_24px_50px_-30px_rgba(2,6,23,0.95)] backdrop-blur-xl",
+                    side === "right" ? "rounded-l-[40px] border-r-0" : "rounded-r-[40px] border-l-0",
                   )
-                : "border-transparent bg-transparent shadow-none",
+                : cn(
+                    "border border-slate-700/70 bg-slate-900/92 text-slate-100 shadow-[0_24px_50px_-30px_rgba(2,6,23,0.95)]",
+                    side === "right" ? "rounded-l-[24px] border-r-0" : "rounded-r-[24px] border-l-0",
+                  ),
             )}
           >
             <div
               className={cn(
                 "flex shrink-0",
-                panelOpen ? "items-center justify-between border-b border-slate-200/70 px-4 pb-3 pt-20" : "h-full items-start justify-center px-1.5 pt-[32vh]",
+                panelOpen ? "items-center justify-between border-b border-slate-700/70 px-4 pb-3 pt-20" : "h-full items-start justify-center px-1.5 pt-[32vh]",
               )}
             >
               {renderButton ? renderButton(handlePanelOpen, panelOpen) : null}
