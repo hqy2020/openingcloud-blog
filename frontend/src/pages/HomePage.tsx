@@ -1,7 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import type { HighlightStage, PhotoWallItem, PinnedPost, SocialGraphLink, SocialGraphNode, TimelineNode } from "../api/home";
 import { fetchHome } from "../api/home";
-import { ContactSection } from "../components/home/ContactSection";
 import { HighlightsSection } from "../components/home/HighlightsSection";
 import { PhotoWallSection } from "../components/home/PhotoWallSection";
 import { PinnedPostsSidebar } from "../components/home/PinnedPostsSidebar";
@@ -16,7 +15,6 @@ import { HomeHero } from "../components/revamp/home/HomeHero";
 import { SocialMarquee } from "../components/revamp/home/SocialMarquee";
 import { TimeAreaSection } from "../components/revamp/home/TimeAreaSection";
 import { SectionCard } from "../components/revamp/shared/SectionCard";
-import { Dock, DockIcon } from "../components/ui/MagicUIDock";
 import { useAsync } from "../hooks/useAsync";
 import { fallbackHomePayload } from "../data/fallback";
 import { currentLocation } from "../data/revamp/location";
@@ -77,40 +75,6 @@ const photoWallFallbackForUx: PhotoWallItem[] = [
     sort_order: 2,
   },
 ];
-
-function GithubDockIcon() {
-  return (
-    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-      <path d="M12 2C6.48 2 2 6.59 2 12.25c0 4.53 2.87 8.38 6.84 9.74.5.1.68-.22.68-.49 0-.24-.01-.88-.01-1.73-2.78.62-3.37-1.38-3.37-1.38-.46-1.2-1.11-1.52-1.11-1.52-.91-.63.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.35 1.12 2.92.86.09-.67.35-1.12.63-1.37-2.22-.26-4.55-1.14-4.55-5.08 0-1.12.39-2.04 1.03-2.76-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05A9.3 9.3 0 0 1 12 6.45c.85 0 1.7.12 2.5.36 1.9-1.33 2.74-1.05 2.74-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.64 1.03 2.76 0 3.95-2.33 4.82-4.56 5.08.36.32.67.95.67 1.91 0 1.38-.01 2.5-.01 2.84 0 .27.18.6.69.49A10.26 10.26 0 0 0 22 12.25C22 6.59 17.52 2 12 2z" />
-    </svg>
-  );
-}
-
-function ArticleDockIcon() {
-  return (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 4.5h8.75L19.5 8.5v11H6.75V4.5Zm8.75 0v4h4" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9.25 12h7.5m-7.5 3h5.5" />
-    </svg>
-  );
-}
-
-function AdminDockIcon() {
-  return (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24">
-      <rect height="14" rx="3" stroke="currentColor" strokeWidth="1.8" width="14" x="5" y="5" />
-      <path d="m9.2 10.2 2.1 1.8-2.1 1.8m4.1 0h2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
-    </svg>
-  );
-}
-
-function ArrowUpDockIcon() {
-  return (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5 12 3m0 0 7.5 7.5M12 3v18" />
-    </svg>
-  );
-}
 
 export function HomePage() {
   const { data, loading } = useAsync(fetchHome, []);
@@ -192,43 +156,9 @@ export function HomePage() {
         <StatsSection stats={payload.stats} />
       </SectionCard>
 
-      {/* #11 Contact */}
-      <SectionCard id="contact" fullWidth>
-        <ContactSection contact={payload.contact ?? fallbackHomePayload.contact} variant="section" />
-      </SectionCard>
-
       {pinnedPosts.length > 0 && (
         <PinnedPostsSidebar posts={pinnedPosts} />
       )}
-
-      {/* Magic UI Dock — floating social bar at bottom */}
-      <Dock magnification={80} distance={150} draggable>
-        <DockIcon
-          label="回到开头"
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        >
-          <ArrowUpDockIcon />
-        </DockIcon>
-        <DockIcon
-          label="查看文章"
-          href="/tech"
-        >
-          <ArticleDockIcon />
-        </DockIcon>
-        <DockIcon
-          label="后管系统"
-          href="/admin/"
-        >
-          <AdminDockIcon />
-        </DockIcon>
-        <DockIcon
-          label="GitHub 源代码"
-          href="https://github.com/hqy2020/openingcloud-blog"
-          external
-        >
-          <GithubDockIcon />
-        </DockIcon>
-      </Dock>
     </section>
   );
 }

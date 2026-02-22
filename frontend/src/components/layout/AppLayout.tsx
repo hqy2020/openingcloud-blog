@@ -1,16 +1,15 @@
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import type { HomePayload } from "../../api/home";
 import { usePageVisitTracker } from "../../hooks/usePageVisitTracker";
 import { resolveAccentByPath } from "../../theme/categoryVisuals";
-import { ContactSection } from "../home/ContactSection";
 import { BlogPetMachine } from "../pet/BlogPetMachine";
 import { BarrageCommentsSidebar } from "./BarrageCommentsSidebar";
 import { GlobalSloganTicker } from "./GlobalSloganTicker";
 import { DotBackground } from "../ui/DotBackground";
 import { DistortedGlassSurface } from "../ui/DistortedGlassSurface";
 import { MultiFollowCursor } from "../ui/MultiFollowCursor";
+import { StripeBgGuides } from "../ui/StripeBgGuides";
 
 const headerTabs = [
   { to: "/tech", label: "文章" },
@@ -23,11 +22,6 @@ const headerTabs = [
 
 const navbarShadow =
   "0 0 24px rgba(34, 42, 53, 0.06), 0 1px 1px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(34, 42, 53, 0.04), 0 0 4px rgba(34, 42, 53, 0.08), 0 16px 68px rgba(47, 48, 55, 0.05), 0 1px 0 rgba(255, 255, 255, 0.1) inset";
-
-const footerContact: HomePayload["contact"] = {
-  email: "hqy200091@163.com",
-  github: "https://github.com/hqy2020",
-};
 
 const socialPulseStyle = {
   "--pulse-color": "rgba(226, 232, 240, 0.82)",
@@ -328,10 +322,26 @@ export function AppLayout() {
         <Outlet />
       </main>
 
-      <footer className="mt-12 w-full border-t border-slate-200/90 text-slate-500">
-        <div className="mx-auto w-full max-w-6xl px-4 pb-10 pt-4 text-sm">
-          <ContactSection contact={footerContact} variant="footer" />
-          <p className="mt-4 text-xs">&copy; {new Date().getFullYear()} OpeningClouds</p>
+      <footer className="relative mt-12 w-full overflow-hidden border-t border-slate-200/90 bg-gradient-to-b from-white/94 via-slate-50/80 to-slate-100/70 text-slate-600">
+        <StripeBgGuides
+          animated
+          animationDelay={0.55}
+          animationDuration={36}
+          className="opacity-75"
+          columnCount={6}
+          contained
+          direction="both"
+          glowColor="rgba(79, 106, 229, 0.58)"
+          glowOpacity={0.46}
+          glowSize="20vh"
+          maxActiveColumns={3}
+          minColumnWidth="5rem"
+          randomInterval={7800}
+          responsive
+          solidLines={[1, 6]}
+        />
+        <div className="relative mx-auto w-full max-w-6xl px-4 py-8">
+          <p className="text-sm text-slate-600">联系方式：hqy200091@163.com</p>
         </div>
       </footer>
 
