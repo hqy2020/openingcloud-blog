@@ -349,6 +349,8 @@ class ApiTests(TestCase):
         self.assertIn("photo_wall", payload)
         self.assertIn("stats", payload)
         self.assertIn("contact", payload)
+        self.assertGreaterEqual(len(payload["time_series"]["x_axis"]), 2)
+        self.assertGreaterEqual(len(payload["time_series"]["series"]), 1)
         self.assertGreaterEqual(payload["stats"]["published_posts_total"], 1)
         self.assertIn("total_words", payload["stats"])
         self.assertIn("site_days", payload["stats"])

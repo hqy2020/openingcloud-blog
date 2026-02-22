@@ -31,6 +31,14 @@ type ChartDataset = {
 };
 
 const FALLBACK_COLORS = ["#B3D4FF", "#80E5FF", "#A3F0C7", "#8BB8FF", "#7DD3FC", "#86EFAC"];
+const DEFAULT_TIME_SERIES: HomeTimeSeries = {
+  x_axis: ["0", "5", "10", "15", "20", "25"],
+  series: [
+    { name: "Study", color: "#B3D4FF", data: [0, 60, 40, 30, 30, 30] },
+    { name: "Game", color: "#80E5FF", data: [0, 0, 30, 20, 20, 10] },
+    { name: "Social or Family", color: "#A3F0C7", data: [100, 40, 30, 50, 50, 60] },
+  ],
+};
 
 function unwrapDefault<T>(moduleValue: unknown): T {
   const first = (moduleValue as { default?: unknown })?.default ?? moduleValue;
@@ -63,6 +71,7 @@ function normalizeTo100(values: number[]) {
   if (values.length === 0) {
     return [];
   }
+
   const safe = values.map((value) => (Number.isFinite(value) && value > 0 ? value : 0));
   const total = safe.reduce((sum, value) => sum + value, 0);
   if (total <= 0) {
@@ -170,7 +179,7 @@ function buildChartFromBackend(timeSeries?: HomeTimeSeries): ChartDataset | null
   }
 
   const ages = timeSeries.x_axis.map((item) => String(item).trim()).filter(Boolean);
-  if (ages.length === 0) {
+  if (ages.length < 2) {
     return null;
   }
 
@@ -214,6 +223,23 @@ function buildChartFromBackend(timeSeries?: HomeTimeSeries): ChartDataset | null
   };
 }
 
+function clampIndex(value: number, length: number) {
+  if (length <= 1) {
+    return 0;
+  }
+  return Math.max(0, Math.min(length - 1, value));
+}
+
+function pickLabelIndex(seriesIndex: number, length: number) {
+  if (seriesIndex === 0) {
+    return clampIndex(Math.round(length * 0.3), length);
+  }
+  if (seriesIndex === 1) {
+    return clampIndex(Math.round(length * 0.5), length);
+  }
+  return clampIndex(Math.round(length * 0.2), length);
+}
+
 export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNode[]; timeSeries?: HomeTimeSeries }) {
   const reduceMotion = Boolean(useReducedMotion());
   const [Chart, setChart] = useState<ComponentType<EChartsLikeProps> | null>(null);
@@ -252,7 +278,15 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
   }, []);
 
   const chartData = useMemo(() => {
-    return buildChartFromBackend(timeSeries) ?? buildChartFromTimeline(timeline);
+    const fromBackend = buildChartFromBackend(timeSeries);
+    if (fromBackend) {
+      return fromBackend;
+    }
+    const fromDefault = buildChartFromBackend(DEFAULT_TIME_SERIES);
+    if (fromDefault) {
+      return fromDefault;
+    }
+    return buildChartFromTimeline(timeline);
   }, [timeSeries, timeline]);
 
   const latestDistribution = useMemo(() => {
@@ -263,44 +297,59 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
 
   const option = useMemo(() => {
     const ages = chartData.ages;
-    const sparseInterval = ages.length > 24 ? Math.ceil(ages.length / 8) : 1;
+    const tickStep = ages.length <= 8 ? 1 : Math.max(1, Math.floor((ages.length - 1) / 5));
+    const topColor = chartData.series[chartData.series.length - 1]?.color ?? "#A3F0C7";
 
     return {
+      backgroundColor: topColor,
       animation: !reduceMotion,
-      animationDuration: 520,
-      animationDurationUpdate: 420,
+      animationDuration: 700,
+      animationDurationUpdate: 560,
       tooltip: {
         trigger: "axis",
-        valueFormatter: (value: number) => `${value.toFixed(2)}%`,
+        valueFormatter: (value: number) => `${value.toFixed(1)}%`,
       },
-      legend: {
-        top: 8,
-        right: 12,
-        itemHeight: 8,
-        itemWidth: 14,
-        textStyle: { color: "#334155", fontSize: 12 },
-      },
+      legend: { show: false },
       grid: {
         left: 12,
         right: 12,
-        top: 44,
-        bottom: 10,
+        top: 10,
+        bottom: 6,
         containLabel: true,
       },
+      graphic: [
+        {
+          type: "text",
+          left: "50%",
+          bottom: "5%",
+          z: 50,
+          style: {
+            text: "Age",
+            fill: "#34425a",
+            font: "600 22px ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif",
+            textAlign: "center",
+          },
+        },
+      ],
       xAxis: {
         type: "category",
         boundaryGap: false,
         data: ages,
-        name: "Age",
-        nameLocation: "middle",
-        nameGap: 6,
         axisLabel: {
           inside: true,
-          color: "#334155",
-          formatter: (_: string, index: number) => (index % sparseInterval === 0 ? ages[index] : ""),
+          color: "#34425a",
+          fontSize: 16,
+          fontWeight: 500,
+          formatter: (_: string, index: number) => (index % tickStep === 0 || index === ages.length - 1 ? ages[index] : ""),
         },
-        axisTick: { inside: true, lineStyle: { color: "#334155" } },
-        axisLine: { lineStyle: { color: "#334155" } },
+        axisTick: {
+          inside: true,
+          length: 12,
+          lineStyle: { color: "#34425a", width: 2 },
+        },
+        axisLine: {
+          lineStyle: { color: "#34425a", width: 2 },
+        },
       },
       yAxis: {
         type: "value",
@@ -310,39 +359,62 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
         axisLabel: {
           formatter: "{value}%",
           inside: true,
-          color: "#334155",
+          color: "#34425a",
+          fontSize: 15,
+          fontWeight: 500,
+        },
+        axisTick: {
+          inside: true,
+          length: 12,
+          lineStyle: { color: "#34425a", width: 2 },
         },
         splitLine: { show: false },
-        axisTick: { inside: true, lineStyle: { color: "#334155" } },
-        axisLine: { lineStyle: { color: "#334155" } },
+        axisLine: {
+          lineStyle: { color: "#34425a", width: 2 },
+        },
       },
-      series: chartData.series.map((item) => ({
-        name: item.label,
-        type: "line",
-        stack: "Total",
-        smooth: true,
-        smoothMonotone: "x",
-        showSymbol: false,
-        lineStyle: {
-          width: 0.8,
-          color: item.color,
-        },
-        areaStyle: {
-          opacity: 0.8,
-          color: item.color,
-        },
-        emphasis: {
-          focus: "series",
+      series: chartData.series.map((item, seriesIndex) => {
+        const labelIndex = pickLabelIndex(seriesIndex, item.data.length);
+        return {
+          name: item.label,
+          type: "line",
+          stack: "Total",
+          smooth: 0.65,
+          smoothMonotone: "x",
+          showSymbol: false,
+          symbol: "none",
           lineStyle: {
-            width: 2.2,
+            width: 0,
             color: item.color,
           },
           areaStyle: {
-            opacity: 0.92,
+            opacity: 0.93,
+            color: item.color,
           },
-        },
-        data: item.data,
-      })),
+          label: {
+            show: true,
+            position: "inside",
+            color: "#334155",
+            fontSize: 18,
+            fontWeight: 500,
+            formatter: (params: { dataIndex: number }) => (params.dataIndex === labelIndex ? item.label : ""),
+          },
+          labelLayout: {
+            hideOverlap: false,
+          },
+          emphasis: {
+            focus: "series",
+            lineStyle: {
+              width: 2,
+              color: "#334155",
+            },
+            areaStyle: {
+              opacity: 1,
+            },
+          },
+          data: item.data,
+        };
+      }),
     };
   }, [chartData, reduceMotion]);
 
@@ -350,31 +422,31 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
     <section id="time" className="space-y-4">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Time</p>
-        <h2 className="mt-1 text-2xl font-semibold text-slate-800">人生阶段占比堆叠面积图</h2>
-        <p className="mt-1 text-sm text-slate-600">支持后台录入数据；接口会自动归一化为 100%，曲线默认平滑显示。</p>
+        <h2 className="mt-1 text-2xl font-semibold text-slate-800">This is how I spend my time.</h2>
+        <p className="mt-1 text-sm text-slate-600">Backend data is editable. Every age point is normalized to 100%, and curves stay smooth.</p>
       </div>
 
-      <div className="rounded-2xl border border-slate-200/80 bg-white/82 p-3 shadow-[0_12px_26px_rgba(15,23,42,0.1)] backdrop-blur">
+      <div className="overflow-hidden rounded-[1.8rem] border border-white/70 bg-[#a7e5cc] shadow-[0_14px_28px_rgba(15,23,42,0.12)]">
         {Chart && !chartUnavailable ? (
           <Chart
             echarts={echartsRuntime ?? undefined}
             lazyUpdate
             notMerge
             option={option}
-            style={{ height: 420, width: "100%" }}
+            style={{ height: 500, width: "100%" }}
           />
         ) : (
-          <div className="space-y-3 px-2 py-3">
-            <p className="text-xs text-amber-700">图表组件不可用，已降级为当前阶段占比条。</p>
+          <div className="space-y-3 px-4 py-5">
+            <p className="text-xs text-amber-700">Chart runtime unavailable. Showing latest normalized percentages.</p>
             {chartData.series.map((item) => {
               const value = latestDistribution[item.key] ?? 0;
               return (
                 <div key={item.key}>
-                  <div className="mb-1 flex items-center justify-between text-sm text-slate-600">
+                  <div className="mb-1 flex items-center justify-between text-sm text-slate-700">
                     <span>{item.label}</span>
-                    <span>{value.toFixed(2)}%</span>
+                    <span>{value.toFixed(1)}%</span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-2 overflow-hidden rounded-full bg-white/60">
                     <div className="h-full rounded-full" style={{ width: `${value}%`, background: item.color }} />
                   </div>
                 </div>

@@ -1325,16 +1325,31 @@ def _normalize_time_series_payload(raw_payload: dict) -> dict:
     return {"x_axis": axis, "series": series}
 
 
+DEFAULT_HOME_TIME_SERIES = {
+    "x_axis": ["0", "5", "10", "15", "20", "25"],
+    "series": [
+        {"name": "Study", "color": "#B3D4FF", "data": [0, 60, 40, 30, 30, 30]},
+        {"name": "Game", "color": "#80E5FF", "data": [0, 0, 30, 20, 20, 10]},
+        {"name": "Social or Family", "color": "#A3F0C7", "data": [100, 40, 30, 50, 50, 60]},
+    ],
+}
+
+
 def _home_time_series_payload() -> dict:
+    default_payload = _normalize_time_series_payload(DEFAULT_HOME_TIME_SERIES)
     config = TimeSeriesConfig.objects.filter(is_active=True).order_by("-updated_at", "-id").first()
     if not config:
-        return {"x_axis": [], "series": []}
-    return _normalize_time_series_payload(
+        return default_payload
+
+    normalized = _normalize_time_series_payload(
         {
             "x_axis": config.x_axis,
             "series": config.series,
         }
     )
+    if not normalized.get("x_axis") or not normalized.get("series"):
+        return default_payload
+    return normalized
 
 
 def _home_payload(*, show_real_name: bool = False) -> dict:
