@@ -35,21 +35,51 @@ const DEFAULT_TIME_SERIES: HomeTimeSeries = {
   x_axis: Array.from({ length: 27 }, (_, age) => String(age)),
   series: [
     {
-      name: "Study",
+      name: "学习",
       color: "#B3D4FF",
-      data: [0, 8, 20, 35, 48, 58, 60, 58, 50, 43, 40, 39, 38, 36, 34, 32, 31, 30, 30, 30, 30, 27, 22, 20, 20, 20, 30],
+      data: [0, 0, 8, 20, 35, 50, 58, 60, 55, 45, 40, 38, 36, 34, 32, 30, 30, 30, 30, 30, 28, 24, 20, 20, 20, 20, 30],
     },
     {
-      name: "Game",
+      name: "游戏",
       color: "#80E5FF",
-      data: [0, 0, 0, 0, 0, 0, 0, 4, 10, 18, 24, 28, 30, 28, 24, 22, 21, 20, 20, 20, 20, 23, 28, 30, 30, 30, 10],
+      data: [0, 0, 0, 0, 0, 0, 0, 0, 5, 15, 22, 28, 30, 28, 24, 20, 18, 16, 15, 15, 15, 15, 15, 15, 15, 15, 10],
     },
     {
-      name: "Social or Family",
+      name: "写代码",
+      color: "#8FD9D0",
+      data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 10, 14, 18, 22, 24, 24, 24, 24, 24, 23, 22, 20, 18, 16, 14, 10],
+    },
+    {
+      name: "运动",
+      color: "#7BC9FF",
+      data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 8, 10, 12, 12, 10, 10, 9, 8, 8, 6, 6, 5, 5, 5, 5, 5, 3],
+    },
+    {
+      name: "音乐",
+      color: "#A7C4FF",
+      data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 4, 5, 6, 7, 9, 10, 10, 10, 10, 8],
+    },
+    {
+      name: "社交&家庭",
       color: "#A3F0C7",
-      data: [100, 92, 80, 65, 52, 42, 40, 38, 40, 39, 36, 33, 32, 36, 42, 46, 48, 50, 50, 50, 50, 50, 50, 50, 50, 50, 60],
+      data: [100, 100, 92, 80, 65, 50, 42, 40, 40, 35, 25, 14, 8, 8, 12, 16, 17, 18, 18, 19, 21, 25, 30, 32, 34, 36, 39],
     },
   ],
+};
+
+const LABEL_AGE_HINT: Record<string, number> = {
+  "社交&家庭": 7,
+  "学习": 6,
+  "游戏": 11,
+  "运动": 13,
+  "写代码": 19,
+  "音乐": 23,
+  "Social & Family": 7,
+  Study: 6,
+  Game: 11,
+  Sports: 13,
+  Coding: 19,
+  Music: 23,
 };
 
 function unwrapDefault<T>(moduleValue: unknown): T {
@@ -242,14 +272,68 @@ function clampIndex(value: number, length: number) {
   return Math.max(0, Math.min(length - 1, value));
 }
 
-function pickLabelIndex(seriesIndex: number, length: number) {
+function findClosestAgeIndex(ages: string[], targetAge: number) {
+  let bestIndex = 0;
+  let bestDiff = Number.POSITIVE_INFINITY;
+  ages.forEach((age, index) => {
+    const numeric = Number(age);
+    if (!Number.isFinite(numeric)) {
+      return;
+    }
+    const diff = Math.abs(numeric - targetAge);
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      bestIndex = index;
+    }
+  });
+  return bestIndex;
+}
+
+function pickLabelIndex(label: string, ages: string[], seriesIndex: number) {
+  const preferredAge = LABEL_AGE_HINT[label];
+  if (typeof preferredAge === "number") {
+    return findClosestAgeIndex(ages, preferredAge);
+  }
+
+  const length = ages.length;
   if (seriesIndex === 0) {
-    return clampIndex(Math.round(length * 0.3), length);
+    return clampIndex(Math.round(length * 0.28), length);
   }
   if (seriesIndex === 1) {
-    return clampIndex(Math.round(length * 0.5), length);
+    return clampIndex(Math.round(length * 0.48), length);
   }
-  return clampIndex(Math.round(length * 0.2), length);
+  if (seriesIndex === 2) {
+    return clampIndex(Math.round(length * 0.72), length);
+  }
+  if (seriesIndex === 3) {
+    return clampIndex(Math.round(length * 0.56), length);
+  }
+  if (seriesIndex === 4) {
+    return clampIndex(Math.round(length * 0.86), length);
+  }
+  return clampIndex(Math.round(length * 0.22), length);
+}
+
+function getLabelFontSize(label: string) {
+  if (label === "社交&家庭" || label === "Social & Family") {
+    return 46;
+  }
+  if (label === "学习" || label === "Study") {
+    return 44;
+  }
+  if (label === "游戏" || label === "Game") {
+    return 44;
+  }
+  if (label === "写代码" || label === "Coding") {
+    return 42;
+  }
+  if (label === "音乐" || label === "Music") {
+    return 40;
+  }
+  if (label === "运动" || label === "Sports") {
+    return 26;
+  }
+  return 32;
 }
 
 export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNode[]; timeSeries?: HomeTimeSeries }) {
@@ -331,12 +415,12 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
         {
           type: "text",
           left: "50%",
-          bottom: "5%",
+          bottom: "4.6%",
           z: 50,
           style: {
             text: "Age",
             fill: "#34425a",
-            font: "600 22px ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif",
+            font: "500 56px ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif",
             textAlign: "center",
           },
         },
@@ -348,13 +432,13 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
         axisLabel: {
           inside: true,
           color: "#34425a",
-          fontSize: 16,
+          fontSize: 20,
           fontWeight: 500,
           formatter: (_: string, index: number) => (index % tickStep === 0 || index === ages.length - 1 ? ages[index] : ""),
         },
         axisTick: {
           inside: true,
-          length: 12,
+          length: 16,
           lineStyle: { color: "#34425a", width: 2 },
         },
         axisLine: {
@@ -370,12 +454,12 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
           formatter: "{value}%",
           inside: true,
           color: "#34425a",
-          fontSize: 15,
+          fontSize: 18,
           fontWeight: 500,
         },
         axisTick: {
           inside: true,
-          length: 12,
+          length: 16,
           lineStyle: { color: "#34425a", width: 2 },
         },
         splitLine: { show: false },
@@ -384,7 +468,9 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
         },
       },
       series: chartData.series.map((item, seriesIndex) => {
-        const labelIndex = pickLabelIndex(seriesIndex, item.data.length);
+        const labelIndex = pickLabelIndex(item.label, ages, seriesIndex);
+        const labelFontSize = getLabelFontSize(item.label);
+        const labelPosition = item.label === "运动" || item.label === "Sports" ? "insideTop" : "inside";
         return {
           name: item.label,
           type: "line",
@@ -403,11 +489,12 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
           },
           label: {
             show: true,
-            position: "inside",
+            position: labelPosition,
             color: "#334155",
-            fontSize: 18,
+            fontSize: labelFontSize,
             fontWeight: 500,
-            formatter: (params: { dataIndex: number }) => (params.dataIndex === labelIndex ? item.label : ""),
+            formatter: (params: { dataIndex: number }) =>
+              params.dataIndex === labelIndex && (item.data[labelIndex] ?? 0) >= 6 ? item.label : "",
           },
           labelLayout: {
             hideOverlap: false,
@@ -431,9 +518,10 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
   return (
     <section id="time" className="space-y-4">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Time</p>
-        <h2 className="mt-1 text-2xl font-semibold text-slate-800">This is how I spend my time.</h2>
-        <p className="mt-1 text-sm text-slate-600">Backend data is editable. Every age point is normalized to 100%, and curves stay smooth.</p>
+        <h2 className="text-5xl font-semibold leading-none text-slate-800 md:text-6xl lg:text-[86px]">Time</h2>
+        <p className="mt-3 text-lg leading-tight text-slate-700 md:text-2xl lg:text-[44px]">
+          This is how I spend my time. My biggest hobby is learning, as I am curious about almost everything.
+        </p>
       </div>
 
       <div className="overflow-hidden rounded-[1.8rem] border border-white/70 bg-[#e8edf2] shadow-[0_14px_28px_rgba(15,23,42,0.12)]">
