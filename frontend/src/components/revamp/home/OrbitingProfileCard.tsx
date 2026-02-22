@@ -74,7 +74,7 @@ const orbitingBadges: OrbitingBadge[] = [
     height: 176,
     angle: 302,
     wrapperClassName:
-      "inline-flex items-center justify-center rounded-full border border-slate-200/85 bg-white/96 p-1.5 shadow-[0_20px_36px_rgba(15,23,42,0.26)]",
+      "inline-flex items-center justify-center rounded-full border border-slate-300/85 bg-white p-1.5",
     imageClassName: "h-full w-full rounded-full object-cover",
   },
 ];
@@ -92,7 +92,7 @@ const defaultNameWords = ["codecloud", "openClouds", "胡启云"];
 function OrbitingBadgeNode({ badge, reducedMotion }: { badge: OrbitingBadge; reducedMotion: boolean }) {
   const wrapperClassName =
     badge.wrapperClassName ??
-    "inline-flex items-center justify-center rounded-full border border-slate-200/85 bg-white/96 p-1.5 shadow-[0_14px_30px_rgba(15,23,42,0.2)]";
+    "inline-flex items-center justify-center rounded-full border border-slate-300/80 bg-white p-1.5";
   const imageClassName = badge.imageClassName ?? "h-full w-full rounded-full object-contain";
 
   const orbitStyle: CSSProperties = reducedMotion
@@ -145,7 +145,6 @@ export function OrbitingProfileCard({
     <div
       className={cn("relative mx-auto h-[380px] w-[380px] sm:h-[450px] sm:w-[450px] lg:h-[400px] lg:w-[400px] xl:h-[450px] xl:w-[450px]", className)}
     >
-      <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(79,106,229,0.14),rgba(79,106,229,0.03)_54%,rgba(79,106,229,0)_74%)]" />
       <div className="absolute left-1/2 top-1/2 h-[82%] w-[98%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border border-dashed border-slate-300/75" />
       <div className="absolute left-1/2 top-1/2 h-[72%] w-[90%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border border-dashed border-slate-300/65" />
 
