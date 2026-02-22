@@ -224,6 +224,9 @@ def sync_post_payload(
                     if not existing.cover and data["cover"]:
                         existing.cover = data["cover"]
                         changed_fields.add("cover")
+                    if existing.category != data["category"]:
+                        existing.category = data["category"]
+                        changed_fields.add("category")
 
                     existing.draft = False
                     existing.obsidian_path = data["obsidian_path"]
@@ -237,8 +240,6 @@ def sync_post_payload(
                 else:
                     if existing:
                         for key, value in defaults.items():
-                            if key == "category":
-                                continue
                             setattr(existing, key, value)
                         existing.slug = data["slug"]
                         existing.save()
