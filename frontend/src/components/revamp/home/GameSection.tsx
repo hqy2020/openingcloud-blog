@@ -1,10 +1,20 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const GAME_PREVIEW_URL = "https://lo6kp.csb.app/";
+const GAME_EMBED_URL =
+  "https://codesandbox.io/embed/lo6kp?view=preview&hidenavigation=1&module=%2Fsrc%2FApp.tsx&runonclick=1";
 const GAME_SOURCE_URL = "https://codesandbox.io/p/sandbox/lo6kp?file=%2Fsrc%2FApp.tsx";
 
 export function GameSection() {
-  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [status, setStatus] = useState<"loading" | "ready" | "error" | "timeout">("loading");
+
+  useEffect(() => {
+    if (status !== "loading") {
+      return;
+    }
+    const timer = window.setTimeout(() => setStatus("timeout"), 12000);
+    return () => window.clearTimeout(timer);
+  }, [status]);
 
   return (
     <section className="space-y-4">
@@ -31,39 +41,48 @@ export function GameSection() {
           <div className="flex min-h-[360px] flex-col items-center justify-center gap-3 px-5 text-center text-slate-100 sm:min-h-[480px]">
             <p className="text-sm text-slate-200">游戏加载失败，请在新窗口打开体验。</p>
             <a
-              href={GAME_PREVIEW_URL}
+              href={GAME_EMBED_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex rounded-full border border-white/40 bg-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/20"
             >
-              新窗口打开游戏
+              新窗口打开预览
             </a>
           </div>
         ) : (
           <div className="relative">
             <iframe
               title="Racing game from CodeSandbox"
-              src={GAME_PREVIEW_URL}
-              className={`h-[60vh] min-h-[360px] w-full border-0 transition-opacity duration-300 sm:min-h-[520px] ${
-                status === "ready" ? "opacity-100" : "opacity-0"
-              }`}
+              src={GAME_EMBED_URL}
+              className="h-[60vh] min-h-[360px] w-full border-0 sm:min-h-[520px]"
               loading="lazy"
-              allow="autoplay; fullscreen; gamepad"
+              allow="accelerometer; autoplay; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; xr-spatial-tracking; gamepad; fullscreen"
+              sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
               onLoad={() => setStatus("ready")}
               onError={() => setStatus("error")}
             />
-            {status === "loading" ? (
-              <div className="absolute inset-0 flex items-center justify-center bg-slate-950/90">
-                <p className="text-sm text-slate-200">游戏加载中，首次可能需要 10-30 秒...</p>
+            {status === "loading" || status === "timeout" ? (
+              <div className="pointer-events-none absolute left-3 top-3 rounded-full border border-white/30 bg-slate-950/70 px-3 py-1.5 text-xs text-slate-100">
+                {status === "loading" ? "游戏加载中，首次可能需要 10-30 秒..." : "若场景未显示，请点下方按钮新窗口打开"}
               </div>
             ) : null}
           </div>
         )}
       </div>
 
-      <p className="text-xs text-slate-500">
-        操作提示：`W / A / S / D` 控制方向，`Space` 刹车，`Shift` 加速，`R` 重置。
-      </p>
+      <div className="flex flex-wrap items-center gap-3">
+        <a
+          href={GAME_PREVIEW_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex rounded-full border border-slate-300/80 bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-white"
+        >
+          新窗口直接玩
+        </a>
+        <p className="text-xs text-slate-500">
+          操作提示：`W / A / S / D` 控制方向，`Space` 刹车，`Shift` 加速，`R` 重置。
+        </p>
+      </div>
     </section>
   );
 }

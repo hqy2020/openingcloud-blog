@@ -2,8 +2,8 @@ import { useReducedMotion } from "motion/react";
 import type { CSSProperties } from "react";
 import { cn } from "../../../lib/utils";
 import { CardBody, CardContainer, CardItem } from "../../ui/ThreeDCard";
+import { MorphingText } from "../../ui/MorphingText";
 import { TextAnimate } from "../../ui/TextAnimate";
-import { WordRotate } from "../../ui/WordRotate";
 
 type OrbitingProfileCardProps = {
   className?: string;
@@ -158,10 +158,9 @@ export function OrbitingProfileCard({
             My name is:
           </CardItem>
           <CardItem as="div" translateZ={44} className="mt-3 min-h-[3rem] sm:min-h-[4.2rem]">
-            <WordRotate
-              words={activeNameWords}
-              duration={2400}
-              className="text-4xl font-black leading-none text-[#f79237] sm:text-6xl"
+            <MorphingText
+              texts={activeNameWords}
+              className="mx-0 h-[3rem] max-w-none text-left text-4xl font-black leading-none text-[#f79237] sm:h-[4.2rem] sm:text-6xl"
             />
           </CardItem>
           <div className="mt-4 h-px w-full bg-[linear-gradient(90deg,rgba(15,23,42,0.16),rgba(15,23,42,0.32),rgba(15,23,42,0.16))]" />

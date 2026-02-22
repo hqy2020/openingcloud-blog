@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { featuredProjects, featuredTechStack } from "../../../data/revamp/featuredProjects";
 import { CardSpotlight } from "../../ui/CardSpotlight";
+import { InteractiveHoverButton } from "../../ui/InteractiveHoverButton";
 import { CardBody, CardContainer, CardItem } from "../../ui/ThreeDCard";
 
 type PointerLine = {
@@ -77,7 +78,6 @@ export function FeaturedProjectsSection() {
       const count = techCountMap.get(tech) ?? 0;
       return {
         name: tech,
-        count,
         percent: Math.round((count / maxCount) * 100),
       };
     });
@@ -205,15 +205,24 @@ export function FeaturedProjectsSection() {
                       <CardItem translateZ={14} className="mt-3 w-full">
                         <p className="text-sm leading-6 text-slate-600">{project.summary}</p>
                       </CardItem>
+                      <CardItem translateZ={16} className="mt-3 w-full">
+                        <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Repository</p>
+                        <p className="mt-1 font-mono text-xs text-slate-600">{project.repo_path}</p>
+                        <p className="mt-1 text-xs leading-5 text-slate-500">{project.detail}</p>
+                      </CardItem>
                       <CardItem translateZ={20} className="mt-4 w-full">
-                        <a
+                        <InteractiveHoverButton
+                          className="w-full justify-center sm:w-auto"
                           href={project.href}
-                          target="_blank"
+                          hoverText="前往 GitHub"
                           rel="noopener noreferrer"
-                          className="inline-flex rounded-full border border-slate-300/80 bg-white/85 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                          target="_blank"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                          }}
                         >
-                          打开项目
-                        </a>
+                          查看仓库
+                        </InteractiveHoverButton>
                       </CardItem>
                     </CardSpotlight>
                   </CardBody>
@@ -332,10 +341,7 @@ export function FeaturedProjectsSection() {
                       : "border-slate-200/90 bg-white/88 shadow-[0_8px_20px_rgba(15,23,42,0.08)]"
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className={`text-sm font-semibold ${active ? "text-indigo-700" : "text-slate-700"}`}>{tech.name}</p>
-                    <span className={`text-xs font-medium ${active ? "text-indigo-500" : "text-slate-400"}`}>{tech.count} 项目</span>
-                  </div>
+                  <p className={`text-sm font-semibold ${active ? "text-indigo-700" : "text-slate-700"}`}>{tech.name}</p>
                   <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-200/75">
                     <motion.div
                       className={`h-full rounded-full ${active ? "bg-gradient-to-r from-indigo-500 to-sky-400" : "bg-slate-400/75"}`}

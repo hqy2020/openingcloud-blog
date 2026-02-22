@@ -1,6 +1,5 @@
-import { motion } from "motion/react";
-import type { CSSProperties } from "react";
-import { useState } from "react";
+import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import type { HomePayload } from "../../api/home";
 import { usePageVisitTracker } from "../../hooks/usePageVisitTracker";
@@ -16,14 +15,46 @@ const headerTabs = [
   { to: "/tech", label: "文章" },
   { to: "/#achievements", label: "高光时刻", nativeAnchor: true },
   { to: "/#projects", label: "代码", nativeAnchor: true },
+  { to: "/#game", label: "游戏", nativeAnchor: true },
   { to: "/#timeline", label: "人生旅程", nativeAnchor: true },
   { to: "/life", label: "愿望清单" },
 ];
+
+const navbarShadow =
+  "0 0 24px rgba(34, 42, 53, 0.06), 0 1px 1px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(34, 42, 53, 0.04), 0 0 4px rgba(34, 42, 53, 0.08), 0 16px 68px rgba(47, 48, 55, 0.05), 0 1px 0 rgba(255, 255, 255, 0.1) inset";
 
 const footerContact: HomePayload["contact"] = {
   email: "hqy200091@163.com",
   github: "https://github.com/hqy2020",
 };
+
+const socialPulseStyle = {
+  "--pulse-color": "rgba(226, 232, 240, 0.82)",
+  "--pulse-duration": "1.5s",
+} as CSSProperties;
+
+type PulsatingSocialLinkProps = {
+  href: string;
+  label: string;
+  children: ReactNode;
+};
+
+function PulsatingSocialLink({ href, label, children }: PulsatingSocialLinkProps) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={label}
+      title={label}
+      className="navbar-pulsating-link inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-600 transition hover:text-slate-800"
+      style={socialPulseStyle}
+    >
+      <span aria-hidden="true" className="pointer-events-none navbar-pulsating-link__pulse" />
+      <span className="relative z-10">{children}</span>
+    </a>
+  );
+}
 
 function AdminEntryIcon() {
   return (
@@ -82,174 +113,209 @@ export function AppLayout() {
   const visual = resolveAccentByPath(location.pathname);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [hoveredNavIndex, setHoveredNavIndex] = useState<number | null>(null);
+  const [compactNavbar, setCompactNavbar] = useState(false);
+  const { scrollY } = useScroll();
 
-  const headerStyle: CSSProperties = {
-    background: "rgba(255,255,255,0.9)",
-  };
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    const nextCompact = latest > 80;
+    setCompactNavbar((current) => (current === nextCompact ? current : nextCompact));
+  });
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname, location.hash]);
+
+  const activeDesktopIndex = headerTabs.findIndex((item) => !item.nativeAnchor && item.to === location.pathname);
 
   return (
     <DotBackground className="min-h-screen text-slate-800">
-      <header className="sticky top-0 z-30 border-b border-slate-200/80 backdrop-blur-xl" style={headerStyle}>
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-2.5">
-          <div className="flex min-w-0 items-center gap-4">
+      <header className="sticky inset-x-0 top-0 z-40">
+        <div className="mx-auto w-full max-w-7xl px-3 pt-3 sm:px-4">
+          <motion.div
+            animate={{
+              width: compactNavbar ? "74%" : "100%",
+              y: compactNavbar ? 16 : 0,
+              backdropFilter: compactNavbar ? "blur(10px)" : "none",
+              boxShadow: compactNavbar ? navbarShadow : "none",
+              backgroundColor: compactNavbar ? "rgba(255,255,255,0.84)" : "rgba(255,255,255,0)",
+              borderColor: compactNavbar ? "rgba(226,232,240,0.8)" : "rgba(226,232,240,0)",
+            }}
+            transition={{
+              type: "spring",
+              stiffness: 220,
+              damping: 36,
+            }}
+            className="relative z-[60] mx-auto hidden w-full max-w-7xl items-center justify-between rounded-full border border-slate-200/70 px-4 py-2 lg:flex"
+          >
             <NavLink
               aria-label="返回首页"
-              className="inline-flex shrink-0 items-center text-3xl font-semibold tracking-tight text-slate-700 sm:text-[2.45rem]"
+              className="relative z-20 inline-flex items-center px-2 py-1 text-2xl font-semibold tracking-tight text-slate-800"
               title="首页"
               to="/"
             >
               OpeningClouds
             </NavLink>
 
-            <span className="hidden h-7 w-px bg-slate-300/90 md:block" />
+            <nav
+              onMouseLeave={() => setHoveredNavIndex(null)}
+              className="absolute inset-0 hidden items-center justify-center gap-1 text-sm font-medium lg:flex"
+            >
+              {headerTabs.map((item, index) => {
+                const showHighlight = hoveredNavIndex === index || (hoveredNavIndex === null && activeDesktopIndex === index);
+                const content = (
+                  <>
+                    {showHighlight ? (
+                      <motion.span
+                        layoutId="desktop-navbar-hover"
+                        className="absolute inset-0 rounded-full bg-slate-200/70"
+                        transition={{ type: "spring", stiffness: 280, damping: 28 }}
+                      />
+                    ) : null}
+                    <span className="relative z-10">{item.label}</span>
+                  </>
+                );
 
-            <nav className="hidden items-center md:flex">
-              {headerTabs.map((item, index) => (
-                <div key={item.label} className="flex items-center">
-                  {item.nativeAnchor ? (
+                if (item.nativeAnchor) {
+                  return (
                     <a
+                      key={item.label}
                       href={item.to}
-                      className="px-4 py-1 text-xl font-medium text-slate-600 transition hover:text-slate-900"
+                      className="relative rounded-full px-3 py-1.5 text-slate-600 transition hover:text-slate-900"
+                      onFocus={() => setHoveredNavIndex(index)}
+                      onMouseEnter={() => setHoveredNavIndex(index)}
                     >
-                      {item.label}
+                      {content}
                     </a>
-                  ) : (
-                    <Link
-                      to={item.to}
-                      className="px-4 py-1 text-xl font-medium text-slate-600 transition hover:text-slate-900"
-                    >
-                      {item.label}
-                    </Link>
-                  )}
-                  {index < headerTabs.length - 1 ? (
-                    <span className="mx-1 h-5 w-px bg-slate-300/80" />
-                  ) : null}
-                </div>
-              ))}
-            </nav>
-          </div>
+                  );
+                }
 
-          <div className="flex items-center gap-1.5">
-            <span className="hidden h-6 w-px bg-slate-300/80 sm:block" />
-            <a
-              href="https://github.com/hqy2020"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="GitHub"
-              title="GitHub"
-              className="hidden h-8 w-8 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100 hover:text-slate-800 sm:inline-flex"
-            >
-              <GithubIcon />
-            </a>
-
-            <a
-              href="https://xhslink.com/m/7jfSehmMT7r"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="小红书"
-              title="小红书"
-              className="hidden h-8 w-8 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100 hover:text-slate-800 sm:inline-flex"
-            >
-              <XiaohongshuIcon />
-            </a>
-
-            <a
-              href="https://www.zhihu.com/people/hu-qi-yun-1"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="知乎"
-              title="知乎"
-              className="hidden h-8 w-8 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100 hover:text-slate-800 sm:inline-flex"
-            >
-              <ZhihuIcon />
-            </a>
-
-            <a
-              href="/admin/"
-              aria-label="后台管理"
-              title="后台管理"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100 hover:text-slate-800"
-            >
-              <AdminEntryIcon />
-            </a>
-
-            {/* Mobile hamburger */}
-            <button
-              type="button"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100 md:hidden"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="菜单"
-            >
-              {mobileMenuOpen ? <CloseIcon /> : <HamburgerIcon />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile menu dropdown */}
-        {mobileMenuOpen ? (
-          <motion.nav
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="border-t border-slate-200/50 bg-white/95 backdrop-blur-xl md:hidden"
-          >
-            <div className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-3">
-              {headerTabs.map((item) =>
-                item.nativeAnchor ? (
-                  <a
-                    key={item.label}
-                    href={item.to}
-                    className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {item.label}
-                  </a>
-                ) : (
+                return (
                   <Link
                     key={item.label}
                     to={item.to}
-                    className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
-                    onClick={() => setMobileMenuOpen(false)}
+                    className="relative rounded-full px-3 py-1.5 text-slate-600 transition hover:text-slate-900"
+                    onFocus={() => setHoveredNavIndex(index)}
+                    onMouseEnter={() => setHoveredNavIndex(index)}
                   >
-                    {item.label}
+                    {content}
                   </Link>
-                ),
-              )}
-              <div className="flex items-center gap-2 border-t border-slate-100 pt-2 sm:hidden">
-                <a
-                  href="https://github.com/hqy2020"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100"
-                >
-                  <GithubIcon />
-                </a>
-                <a
-                  href="https://xhslink.com/m/7jfSehmMT7r"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100"
-                >
-                  <XiaohongshuIcon />
-                </a>
-                <a
-                  href="https://www.zhihu.com/people/hu-qi-yun-1"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100"
-                >
-                  <ZhihuIcon />
-                </a>
-                <a
-                  href="/admin/"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100"
-                >
-                  <AdminEntryIcon />
-                </a>
-              </div>
+                );
+              })}
+            </nav>
+
+            <div className="relative z-20 flex items-center gap-1">
+              <PulsatingSocialLink href="https://github.com/hqy2020" label="GitHub">
+                <GithubIcon />
+              </PulsatingSocialLink>
+              <PulsatingSocialLink href="https://xhslink.com/m/7jfSehmMT7r" label="小红书">
+                <XiaohongshuIcon />
+              </PulsatingSocialLink>
+              <PulsatingSocialLink href="https://www.zhihu.com/people/hu-qi-yun-1" label="知乎">
+                <ZhihuIcon />
+              </PulsatingSocialLink>
+              <span className="mx-1 h-5 w-px bg-slate-200" />
+              <a
+                href="/admin/"
+                aria-label="后台管理"
+                title="后台管理"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100 hover:text-slate-800"
+              >
+                <AdminEntryIcon />
+              </a>
             </div>
-          </motion.nav>
-        ) : null}
+          </motion.div>
+
+          <motion.div
+            animate={{
+              width: compactNavbar ? "90%" : "100%",
+              y: compactNavbar ? 10 : 0,
+              backdropFilter: compactNavbar ? "blur(10px)" : "none",
+              boxShadow: compactNavbar ? navbarShadow : "none",
+              backgroundColor: compactNavbar ? "rgba(255,255,255,0.84)" : "rgba(255,255,255,0)",
+              borderColor: compactNavbar ? "rgba(226,232,240,0.8)" : "rgba(226,232,240,0)",
+            }}
+            transition={{
+              type: "spring",
+              stiffness: 220,
+              damping: 36,
+            }}
+            className="relative z-50 mx-auto flex w-full max-w-[calc(100vw-1rem)] flex-col rounded-[2rem] border border-slate-200/70 px-3 py-2 lg:hidden"
+          >
+            <div className="flex w-full items-center justify-between">
+              <NavLink
+                aria-label="返回首页"
+                className="inline-flex items-center px-1.5 py-0.5 text-lg font-semibold tracking-tight text-slate-800"
+                title="首页"
+                to="/"
+              >
+                OpeningClouds
+              </NavLink>
+
+              <button
+                type="button"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100"
+                onClick={() => setMobileMenuOpen((current) => !current)}
+                aria-expanded={mobileMenuOpen}
+                aria-label={mobileMenuOpen ? "关闭菜单" : "打开菜单"}
+              >
+                {mobileMenuOpen ? <CloseIcon /> : <HamburgerIcon />}
+              </button>
+            </div>
+
+            <AnimatePresence>
+              {mobileMenuOpen ? (
+                <motion.nav
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  className="mt-3 flex flex-col gap-1 rounded-2xl border border-slate-200/70 bg-white/95 px-3 py-3 shadow-lg"
+                >
+                  {headerTabs.map((item) =>
+                    item.nativeAnchor ? (
+                      <a
+                        key={item.label}
+                        href={item.to}
+                        className="rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {item.label}
+                      </a>
+                    ) : (
+                      <Link
+                        key={item.label}
+                        to={item.to}
+                        className="rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {item.label}
+                      </Link>
+                    ),
+                  )}
+
+                  <div className="mt-1 flex items-center gap-1 border-t border-slate-100 pt-2">
+                    <PulsatingSocialLink href="https://github.com/hqy2020" label="GitHub">
+                      <GithubIcon />
+                    </PulsatingSocialLink>
+                    <PulsatingSocialLink href="https://xhslink.com/m/7jfSehmMT7r" label="小红书">
+                      <XiaohongshuIcon />
+                    </PulsatingSocialLink>
+                    <PulsatingSocialLink href="https://www.zhihu.com/people/hu-qi-yun-1" label="知乎">
+                      <ZhihuIcon />
+                    </PulsatingSocialLink>
+                    <a
+                      href="/admin/"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100"
+                    >
+                      <AdminEntryIcon />
+                    </a>
+                  </div>
+                </motion.nav>
+              ) : null}
+            </AnimatePresence>
+          </motion.div>
+        </div>
 
         {isHomeRoute ? <GlobalSloganTicker accentRgb={visual.glowRgb} isDark={false} /> : null}
       </header>

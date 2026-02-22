@@ -6,6 +6,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { fetchPosts } from "../api/posts";
 import type { PostSummary } from "../api/posts";
 import { FadeIn } from "../components/motion/FadeIn";
+import { ArticleMarquee3D } from "../components/revamp/list/ArticleMarquee3D";
 import { DirectionAwareTabs } from "../components/revamp/list/DirectionAwareTabs";
 import { BackgroundBeams } from "../components/ui/BackgroundBeams";
 import { BlurRevealImage } from "../components/ui/BlurRevealImage";
@@ -14,7 +15,6 @@ import { GenerativeCover } from "../components/ui/GenerativeCover";
 import { TextGenerateEffect } from "../components/ui/TextGenerateEffect";
 import { ToolbarExpandable } from "../components/ui/ToolbarExpandable";
 import { CardContainer, CardBody, CardItem } from "../components/ui/ThreeDCard";
-import { TracingBeam } from "../components/ui/TracingBeam";
 import { getFallbackPosts } from "../data/fallback";
 import { categoryVisuals } from "../theme/categoryVisuals";
 
@@ -299,7 +299,6 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
   const sectionBackground = `linear-gradient(180deg, rgba(${visual.glowRgb},0.11), rgba(248,249,252,0.88) 34%, rgba(248,249,252,0.98) 100%)`;
   const headerOverlay = visual.headerTintLight;
   const cardBackground = `linear-gradient(165deg, rgba(255,255,255,0.95), rgba(${visual.glowRgb},0.08))`;
-  const chipBackground = `rgba(${visual.glowRgb},0.14)`;
 
   const leadStory = visiblePosts[0];
   const secondaryStories = visiblePosts.slice(1, 5);
@@ -579,71 +578,17 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
               </motion.div>
             ) : null}
 
-            {/* Feed stories with TracingBeam */}
+            {/* Feed stories with 3D marquee */}
             {feedStories.length > 0 ? (
-              <TracingBeam>
-                <motion.div className="space-y-4 pl-6 md:pl-12" variants={storyListVariants} initial="hidden" animate="visible">
-                  {feedStories.map((post) => {
-                    const appendDelay = appendDelayBySlug.get(post.slug);
-                    const coverSrc = resolvePostCover(post);
-                    return (
-                      <motion.article
-                        key={post.slug}
-                        variants={storyItemVariants}
-                        transition={
-                          appendDelay == null
-                            ? { duration: 0.4, ease: "easeOut" }
-                            : { duration: 0.4, ease: "easeOut", delay: appendDelay }
-                        }
-                      >
-                        <CardSpotlight
-                          className="group rounded-2xl border border-slate-200/60 bg-white/90 p-4 shadow-sm backdrop-blur transition duration-200 hover:-translate-y-1 hover:shadow-md"
-                          style={{ background: cardBackground }}
-                          glowColor={visual.glowRgb}
-                        >
-                          <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_220px] sm:items-start">
-                            <div>
-                              <h3 className="text-xl font-semibold text-slate-800">
-                                <Link className="line-clamp-2 transition hover:opacity-80" style={{ color: visual.accentHex }} to={`/posts/${post.slug}`}>
-                                  {post.title}
-                                </Link>
-                              </h3>
-                              <p className="mt-2 text-sm leading-6 text-slate-600">{post.excerpt || "暂无摘要"}</p>
-                              <div className="mt-3 flex flex-wrap gap-1">
-                                {post.tags.map((tag) => (
-                                  <span
-                                    key={`${post.slug}-${tag}`}
-                                    className="rounded-full px-2 py-1 text-xs"
-                                    style={{ background: chipBackground, color: visual.accentHex }}
-                                  >
-                                    {tag}
-                                  </span>
-                                ))}
-                              </div>
-                              <p className="mt-3 text-xs text-slate-500">
-                                {new Date(post.updated_at).toLocaleDateString("zh-CN")} · 👁 {formatViews(post.views_count)} · {estimateReadMinutes(post)} min
-                              </p>
-                            </div>
-                            <div className="relative overflow-hidden rounded-xl border border-slate-200/70">
-                              {coverSrc ? (
-                                <BlurRevealImage
-                                  alt={`${post.title} 封面图`}
-                                  className="h-full w-full object-cover"
-                                  loading="lazy"
-                                  src={coverSrc}
-                                  wrapperClassName="aspect-[4/3]"
-                                />
-                              ) : (
-                                <GenerativeCover category={category} className="aspect-[4/3]" seed={post.slug} />
-                              )}
-                            </div>
-                          </div>
-                        </CardSpotlight>
-                      </motion.article>
-                    );
-                  })}
+              <motion.div variants={storyListVariants} initial="hidden" animate="visible">
+                <motion.div variants={storyItemVariants}>
+                  <ArticleMarquee3D
+                    accentHex={visual.accentHex}
+                    glowRgb={visual.glowRgb}
+                    posts={feedStories}
+                  />
                 </motion.div>
-              </TracingBeam>
+              </motion.div>
             ) : null}
           </motion.section>
         ) : null}
