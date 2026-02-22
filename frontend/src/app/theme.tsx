@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo } from "react";
 import type { PropsWithChildren } from "react";
 
 export type ThemeMode = "light" | "dark";
@@ -11,47 +11,32 @@ type ThemeContextValue = {
 };
 
 const THEME_STORAGE_KEY = "openingcloud-theme";
+const FORCED_THEME: ThemeMode = "light";
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-function getInitialTheme(): ThemeMode {
-  if (typeof window === "undefined") {
-    return "light";
-  }
-
-  try {
-    const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-    if (storedTheme === "light" || storedTheme === "dark") {
-      return storedTheme;
-    }
-  } catch {
-    // Ignore storage read failures and fall back to system preference.
-  }
-
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
-
 export function ThemeProvider({ children }: PropsWithChildren) {
-  const [theme, setThemeState] = useState<ThemeMode>(getInitialTheme);
-  const isDark = theme === "dark";
+  const theme = FORCED_THEME;
+  const isDark = false;
 
   const setTheme = useCallback((next: ThemeMode) => {
-    setThemeState(next);
+    // Keep the public API stable while forcing light-only mode.
+    void next;
   }, []);
 
   const toggleTheme = useCallback(() => {
-    setThemeState((current) => (current === "dark" ? "light" : "dark"));
+    // Intentionally no-op in light-only mode.
   }, []);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    document.documentElement.classList.toggle("dark", isDark);
+    document.documentElement.classList.remove("dark");
     try {
       window.localStorage.setItem(THEME_STORAGE_KEY, theme);
     } catch {
       // Ignore storage write failures.
     }
-  }, [isDark, theme]);
+  }, [theme]);
 
   const value = useMemo<ThemeContextValue>(
     () => ({
@@ -66,6 +51,7 @@ export function ThemeProvider({ children }: PropsWithChildren) {
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useTheme() {
   const context = useContext(ThemeContext);
   if (!context) {

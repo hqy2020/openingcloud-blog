@@ -27,78 +27,14 @@ body {
   color: var(--ink-900);
 }
 
-html.dark body {
-  background:
-    radial-gradient(circle at 12% -20%, rgba(30, 64, 175, 0.35), transparent 48%),
-    radial-gradient(circle at 86% 6%, rgba(30, 58, 138, 0.28), transparent 44%),
-    linear-gradient(180deg, #020617 0%, #0f172a 40%, #111827 100%);
-  color: #c7d4e8;
-}
-
 .glass-surface-light {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(244, 248, 255, 0.74));
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
 
-.glass-surface-dark {
-  background: linear-gradient(135deg, rgba(10, 18, 40, 0.8), rgba(16, 29, 54, 0.74));
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-}
-
 .glass-border-accent {
   border-color: var(--glass-border-accent, rgba(148, 163, 184, 0.35));
-}
-
-html.dark .bg-white,
-html.dark .bg-white\/85,
-html.dark .bg-white\/90,
-html.dark .bg-white\/95,
-html.dark .bg-slate-50,
-html.dark .bg-slate-50\/70,
-html.dark .bg-slate-50\/80,
-html.dark .bg-slate-50\/85,
-html.dark .bg-slate-50\/90,
-html.dark .bg-slate-100,
-html.dark .bg-slate-100\/70,
-html.dark .bg-slate-100\/80,
-html.dark .bg-slate-100\/85,
-html.dark .bg-slate-100\/90,
-html.dark .bg-slate-200,
-html.dark .bg-slate-200\/80 {
-  background-color: rgba(15, 23, 42, 0.86);
-}
-
-html.dark .border-slate-100,
-html.dark .border-slate-200,
-html.dark .border-slate-200\/70,
-html.dark .border-slate-200\/80 {
-  border-color: rgba(100, 116, 139, 0.52);
-}
-
-html.dark .text-slate-900 {
-  color: #d7e2f5;
-}
-
-html.dark .text-slate-800 {
-  color: #c8d4ea;
-}
-
-html.dark .text-slate-700 {
-  color: #b8c6de;
-}
-
-html.dark .text-slate-600 {
-  color: #a8b8d1;
-}
-
-html.dark .text-slate-500 {
-  color: #97a9c5;
-}
-
-html.dark .text-slate-400 {
-  color: #879ab8;
 }
 
 h1,
@@ -251,6 +187,16 @@ pre {
   }
 }
 
+@keyframes revamp-orbit {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .blur-reveal-media {
   filter: blur(10px) saturate(0.94);
   opacity: 0.92;
@@ -274,6 +220,20 @@ pre {
     opacity: 0.92;
     transform: scale(1.025);
   }
+}
+
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 @media (prefers-reduced-motion: reduce) {

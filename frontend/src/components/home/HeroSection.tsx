@@ -59,6 +59,7 @@ function AnimatedFollowerCount({ value }: { value: number }) {
 
   useEffect(() => {
     if (reduceMotion) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDisplay(value);
       previousRef.current = value;
       return;

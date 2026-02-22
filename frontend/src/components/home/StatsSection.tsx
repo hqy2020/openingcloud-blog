@@ -32,6 +32,7 @@ function AnimatedNumber({ value, active }: { value: number; active: boolean }) {
 
   useEffect(() => {
     if (!active) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDisplay(0);
       previousValueRef.current = 0;
       return;
@@ -73,6 +74,7 @@ export function StatsSection({ stats }: StatsSectionProps) {
     const host = hostRef.current;
     if (!host || countingStarted || reduceMotion) {
       if (reduceMotion && !countingStarted) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setCountingStarted(true);
       }
       return;
@@ -94,20 +96,20 @@ export function StatsSection({ stats }: StatsSectionProps) {
   return (
     <div ref={hostRef}>
       <ScrollReveal className="space-y-6">
-        <h2 className="text-2xl font-semibold text-slate-900">数据面板</h2>
+        <h2 className="text-2xl font-semibold text-slate-800">数据面板</h2>
 
         <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" stagger={0.06}>
           {statItems.map((item) => {
             const note = item.note(stats);
             return (
               <StaggerItem key={item.key} className="h-full">
-                <CardSpotlight className="flex h-[188px] w-full flex-col rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-[0_12px_32px_rgba(15,23,42,0.08)] backdrop-blur">
-                  <p className="text-sm text-slate-500">{item.label}</p>
-                  <p className="mt-2 text-3xl font-semibold leading-none text-slate-900">
+                <CardSpotlight className="flex h-[188px] w-full flex-col rounded-2xl bg-white/60 p-5 backdrop-blur">
+                  <p className="text-sm text-slate-400">{item.label}</p>
+                  <p className="mt-2 text-3xl font-semibold leading-none text-slate-800">
                     <AnimatedNumber active={countingStarted} value={stats[item.key]} />
                   </p>
                   <div className="mt-auto min-h-5 pt-4">
-                    <p className="text-xs font-medium text-slate-500">{note}</p>
+                    <p className="text-xs font-medium text-slate-400">{note}</p>
                   </div>
                 </CardSpotlight>
               </StaggerItem>

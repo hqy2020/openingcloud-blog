@@ -118,16 +118,39 @@ export function GlobalSloganTicker({ isDark, accentRgb }: GlobalSloganTickerProp
   const { data } = useAsync(fetchHome, []);
   const payload = data ?? fallbackHomePayload;
 
+  const honorMessages = useMemo(() => {
+    const stages = Array.isArray(payload.highlights) ? payload.highlights : [];
+    const messages = stages.flatMap((stage) =>
+      (stage.items ?? [])
+        .map((item) => String(item?.title || "").trim())
+        .filter((item) => item.length > 0)
+        .map((item) => `${stage.title} · ${item}`),
+    );
+    return messages;
+  }, [payload.highlights]);
+
   const tickerMode = useMemo(() => {
+    if (honorMessages.length > 0) {
+      return "honors";
+    }
     const normalizedMode = payload.social_ticker?.mode;
     if (normalizedMode === "birthday" || normalizedMode === "holiday") {
       return normalizedMode;
     }
     return (payload.birthday_reminders?.length ?? 0) > 0 ? "birthday" : "holiday";
-  }, [payload.birthday_reminders?.length, payload.social_ticker?.mode]);
-  const tickerTitle = tickerMode === "birthday" ? "生日提醒（未来 7 天）" : "今日日期与节假日";
+  }, [honorMessages.length, payload.birthday_reminders?.length, payload.social_ticker?.mode]);
+  const tickerTitle =
+    tickerMode === "honors"
+      ? "荣誉滚动"
+      : tickerMode === "birthday"
+        ? "生日提醒（未来 7 天）"
+        : "今日日期与节假日";
 
   const tickerMessages = useMemo(() => {
+    if (honorMessages.length > 0) {
+      return honorMessages.slice(0, 8);
+    }
+
     const fromSocialTicker =
       payload.social_ticker?.items
         ?.map((item) => String(item?.message || "").trim())
@@ -145,7 +168,7 @@ export function GlobalSloganTicker({ isDark, accentRgb }: GlobalSloganTickerProp
     }
 
     return [fallbackTickerMessage()];
-  }, [payload.birthday_reminders, payload.social_ticker?.items]);
+  }, [honorMessages, payload.birthday_reminders, payload.social_ticker?.items]);
 
   const marqueeMessages = useMemo(() => {
     if (tickerMessages.length === 0) {

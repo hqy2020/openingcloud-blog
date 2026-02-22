@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { HomePayload } from "../../api/home";
 import { FadeIn } from "../motion/FadeIn";
+import { SlidingEmphasisText } from "../revamp/shared/SlidingEmphasisText";
 import { CardSpotlight } from "../ui/CardSpotlight";
 
 type ContactSectionProps = {
@@ -151,9 +152,13 @@ export function ContactSection({ contact, variant = "section" }: ContactSectionP
 
   return (
     <FadeIn>
-      <CardSpotlight className="relative rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-[0_12px_32px_rgba(15,23,42,0.08)] backdrop-blur">
-        <h2 className="text-2xl font-semibold text-slate-900">联系方式</h2>
-        <p className="mt-2 text-slate-600">欢迎来信交流技术、效率与生活实践。</p>
+      <CardSpotlight className="relative rounded-2xl bg-white/60 p-6 backdrop-blur">
+        <h2 className="text-2xl font-semibold text-slate-800">联系方式</h2>
+        <SlidingEmphasisText
+          className="mt-2 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg"
+          leadText="我正在与不同领域的人协作，这也是我创建这个网站的原因。"
+          emphasisText="欢迎随时联系我。"
+        />
 
         {feedback ? (
           <div className="absolute right-6 top-6 rounded-full bg-white/95 px-3 py-1.5 text-xs shadow-sm ring-1 ring-slate-200">

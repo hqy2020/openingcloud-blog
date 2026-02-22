@@ -11,8 +11,11 @@
     "lighthouse:mobile": "bash ./scripts/lighthouse-mobile.sh"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.5.0",
     "axios": "^1.13.5",
     "china-map-data": "^1.0.4",
+    "clsx": "^2.1.1",
     "echarts": "^6.0.0",
     "echarts-for-react": "^3.0.6",
     "motion": "^12.34.0",
@@ -22,7 +25,9 @@
     "react-helmet-async": "^2.0.5",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.13.0",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "tailwind-merge": "^3.5.0",
+    "three": "^0.183.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

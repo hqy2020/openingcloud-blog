@@ -1,16 +1,19 @@
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { Helmet } from "react-helmet-async";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { fetchPosts } from "../api/posts";
 import type { PostSummary } from "../api/posts";
-import { useTheme } from "../app/theme";
 import { FadeIn } from "../components/motion/FadeIn";
+import { DirectionAwareTabs } from "../components/revamp/list/DirectionAwareTabs";
 import { BackgroundBeams } from "../components/ui/BackgroundBeams";
 import { BlurRevealImage } from "../components/ui/BlurRevealImage";
 import { CardSpotlight } from "../components/ui/CardSpotlight";
 import { GenerativeCover } from "../components/ui/GenerativeCover";
 import { TextGenerateEffect } from "../components/ui/TextGenerateEffect";
+import { ToolbarExpandable } from "../components/ui/ToolbarExpandable";
+import { CardContainer, CardBody, CardItem } from "../components/ui/ThreeDCard";
+import { TracingBeam } from "../components/ui/TracingBeam";
 import { getFallbackPosts } from "../data/fallback";
 import { categoryVisuals } from "../theme/categoryVisuals";
 
@@ -33,6 +36,12 @@ const categoryDescriptions: Record<CategoryPageProps["category"], string> = {
   life: "旅行、日常观察与生活记录。",
 };
 
+const categoryTabs = [
+  { id: "tech", label: "技术", path: "/tech" },
+  { id: "learning", label: "效率", path: "/learning" },
+  { id: "life", label: "生活", path: "/life" },
+];
+
 const visuals: Record<
   CategoryPageProps["category"],
   {
@@ -43,7 +52,6 @@ const visuals: Record<
     accentHex: string;
     glowRgb: string;
     headerTintLight: string;
-    headerTintDark: string;
   }
 > = {
   tech: {
@@ -88,7 +96,7 @@ function estimateReadMinutes(post: PostSummary) {
 }
 
 export function CategoryPage({ category, title }: CategoryPageProps) {
-  const { isDark } = useTheme();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedTag, setSelectedTag] = useState<string>(() => String(searchParams.get("tag") || "").trim());
   const [sortBy, setSortBy] = useState<"latest" | "views">("latest");
@@ -111,6 +119,18 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
   const armedTouchGestureRef = useRef(0);
   const armedAtRef = useRef(0);
   const rearmBlockedRef = useRef(false);
+
+  const handleTabSelect = useCallback(
+    (nextCategory: string) => {
+      const tab = categoryTabs.find((item) => item.id === nextCategory);
+      if (!tab || tab.id === category) {
+        return;
+      }
+      const qs = searchParams.toString();
+      navigate(qs ? `${tab.path}?${qs}` : tab.path);
+    },
+    [category, navigate, searchParams],
+  );
 
   const handleSelectTag = useCallback(
     (nextTag: string) => {
@@ -412,16 +432,78 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
     return sorted;
   }, [effectivePosts, fallbackPosts.length, sortBy]);
 
-  const sectionBorderColor = isDark ? `rgba(${visual.glowRgb},0.42)` : `rgba(${visual.glowRgb},0.18)`;
-  const sectionBackground = isDark
-    ? `linear-gradient(180deg, rgba(2,6,23,0.92), rgba(15,23,42,0.92) 38%, rgba(15,23,42,0.96) 100%)`
-    : `linear-gradient(180deg, rgba(${visual.glowRgb},0.11), rgba(248,249,252,0.88) 34%, rgba(248,249,252,0.98) 100%)`;
-  const headerOverlay = isDark ? visual.headerTintDark : visual.headerTintLight;
-  const cardBackground = isDark
-    ? `linear-gradient(165deg, rgba(15,23,42,0.95), rgba(${visual.glowRgb},0.19))`
-    : `linear-gradient(165deg, rgba(255,255,255,0.95), rgba(${visual.glowRgb},0.08))`;
-  const chipBackground = isDark ? `rgba(${visual.glowRgb},0.22)` : `rgba(${visual.glowRgb},0.14)`;
-  const tagTextColor = isDark ? "#9CAEC9" : "#475569";
+  const sectionBorderColor = `rgba(${visual.glowRgb},0.18)`;
+  const sectionBackground = `linear-gradient(180deg, rgba(${visual.glowRgb},0.11), rgba(248,249,252,0.88) 34%, rgba(248,249,252,0.98) 100%)`;
+  const headerOverlay = visual.headerTintLight;
+  const cardBackground = `linear-gradient(165deg, rgba(255,255,255,0.95), rgba(${visual.glowRgb},0.08))`;
+  const chipBackground = `rgba(${visual.glowRgb},0.14)`;
+
+  const leadStory = visiblePosts[0];
+  const secondaryStories = visiblePosts.slice(1, 5);
+  const feedStories = visiblePosts.slice(5);
+
+  // Cult UI ToolbarExpandable steps
+  const toolbarSteps = useMemo(
+    () => [
+      {
+        id: "tags",
+        label: "标签",
+        icon: <span>🏷️</span>,
+        content: (
+          <div className="flex flex-wrap gap-2">
+            {["全部", ...tags].map((tagLabel) => {
+              const value = tagLabel === "全部" ? "" : tagLabel;
+              const active = value === selectedTag;
+              return (
+                <button
+                  key={tagLabel}
+                  type="button"
+                  onClick={() => handleSelectTag(value)}
+                  className={`relative whitespace-nowrap rounded-full border px-3 py-1.5 text-sm transition ${active ? "border-[#4f6ae5]/40 bg-[#4f6ae5]/10 text-[#4f6ae5]" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"}`}
+                >
+                  {tagLabel}
+                  {tagLabel !== "全部"
+                    ? `(${effectivePosts.filter((post) => post.tags.includes(tagLabel)).length})`
+                    : `(${totalCount || effectivePosts.length})`}
+                  {active ? (
+                    <motion.span
+                      layoutId={`tag-active-${category}`}
+                      className="absolute bottom-0 left-[18%] h-[2px] w-[64%] rounded-full bg-[#4f6ae5]"
+                      transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                    />
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+        ),
+      },
+      {
+        id: "sort",
+        label: "排序",
+        icon: <span>📊</span>,
+        content: (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className={`rounded-full border px-3 py-1.5 text-sm transition ${sortBy === "latest" ? "border-[#4f6ae5]/40 bg-[#4f6ae5]/10 text-[#4f6ae5]" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}
+              onClick={() => setSortBy("latest")}
+            >
+              最新优先
+            </button>
+            <button
+              type="button"
+              className={`rounded-full border px-3 py-1.5 text-sm transition ${sortBy === "views" ? "border-[#4f6ae5]/40 bg-[#4f6ae5]/10 text-[#4f6ae5]" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}
+              onClick={() => setSortBy("views")}
+            >
+              阅读最多
+            </button>
+          </div>
+        ),
+      },
+    ],
+    [tags, selectedTag, handleSelectTag, effectivePosts, totalCount, category, sortBy],
+  );
 
   return (
     <section
@@ -441,38 +523,33 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
 
       <FadeIn>
         <header
-          className={`relative overflow-hidden rounded-3xl border p-7 backdrop-blur sm:p-9 ${
-            isDark
-              ? "bg-slate-900/80 shadow-[0_18px_48px_rgba(2,6,23,0.5)]"
-              : "bg-white/85 shadow-[0_18px_48px_rgba(15,23,42,0.12)]"
-          }`}
-          style={{ borderColor: isDark ? `rgba(${visual.glowRgb},0.44)` : `rgba(${visual.glowRgb},0.3)` }}
+          className="relative overflow-hidden rounded-3xl border border-slate-200/60 bg-white/85 p-7 shadow-sm backdrop-blur sm:p-9"
         >
           <BackgroundBeams colors={visual.beams} />
           <div className="pointer-events-none absolute inset-0" style={{ background: headerOverlay }} />
           <div
             className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full blur-3xl"
-            style={{ background: isDark ? `rgba(${visual.glowRgb},0.42)` : `rgba(${visual.glowRgb},0.28)` }}
+            style={{ background: `rgba(${visual.glowRgb},0.28)` }}
           />
 
           <div className="relative">
-            <p className={`text-sm tracking-[0.22em] ${isDark ? "text-slate-400" : "text-slate-500"}`}>{visual.badge}</p>
-            <h1 className={`mt-2 flex items-center gap-3 text-3xl font-semibold tracking-tight ${isDark ? "text-slate-200" : "text-slate-900"}`}>
+            <p className="text-sm tracking-[0.22em] text-slate-500">{visual.badge}</p>
+            <h1 className="mt-2 flex items-center gap-3 text-3xl font-semibold tracking-tight text-slate-800">
               <span
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border text-xl shadow-[0_8px_18px_rgba(15,23,42,0.08)]"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border text-xl shadow-sm"
                 style={{
-                  borderColor: isDark ? `rgba(${visual.glowRgb},0.52)` : `rgba(${visual.glowRgb},0.32)`,
-                  background: isDark ? `rgba(${visual.glowRgb},0.28)` : `rgba(${visual.glowRgb},0.15)`,
+                  borderColor: `rgba(${visual.glowRgb},0.32)`,
+                  background: `rgba(${visual.glowRgb},0.15)`,
                 }}
               >
                 {visual.icon}
               </span>
               <span style={{ color: visual.accentHex }}>{title}</span>
             </h1>
-            <p className={`mt-3 ${isDark ? "text-slate-300" : "text-slate-600"}`}>
+            <p className="mt-3 text-slate-600">
               <TextGenerateEffect text={visual.accentText} />
             </p>
-            <p className={`mt-1 text-sm ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+            <p className="mt-1 text-sm text-slate-500">
               {totalCount || effectivePosts.length} 篇文章 · 约 {estimatedWords.toLocaleString()} 字
               {totalCount > 0 && effectivePosts.length < totalCount ? ` · 已加载 ${effectivePosts.length} 篇` : ""}
             </p>
@@ -480,181 +557,207 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
         </header>
       </FadeIn>
 
-      <section className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex max-w-full items-center gap-2 overflow-x-auto pb-1">
-            {["全部", ...tags].map((tagLabel) => {
-              const value = tagLabel === "全部" ? "" : tagLabel;
-              const active = value === selectedTag;
-              return (
-                <button
-                  key={tagLabel}
-                  type="button"
-                  onClick={() => handleSelectTag(value)}
-                  className={`relative whitespace-nowrap rounded-full border px-3 py-1.5 text-sm transition ${
-                    isDark ? "bg-slate-900/88 hover:bg-slate-800/88" : "bg-white"
-                  }`}
-                  style={{
-                    borderColor: active
-                      ? `rgba(${visual.glowRgb},${isDark ? "0.64" : "0.45"})`
-                      : isDark
-                        ? "rgba(148,163,184,0.45)"
-                        : "rgba(148,163,184,0.3)",
-                    color: active ? visual.accentHex : tagTextColor,
-                  }}
-                >
-                  <span className="relative">
-                    {tagLabel}
-                    {tagLabel !== "全部"
-                      ? `(${effectivePosts.filter((post) => post.tags.includes(tagLabel)).length})`
-                      : `(${totalCount || effectivePosts.length})`}
-                  </span>
-                  {active ? (
-                    <motion.span
-                      layoutId={`tag-active-${category}`}
-                      className="absolute bottom-0 left-[18%] h-[2px] w-[64%] rounded-full"
-                      style={{ background: visual.accentHex }}
-                      transition={{ type: "spring", stiffness: 420, damping: 34 }}
-                    />
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="flex items-center gap-2 text-sm">
-            <span className={isDark ? "text-slate-400" : "text-slate-500"}>排序</span>
-            <button
-              type="button"
-              className={`rounded-full border px-3 py-1 ${isDark ? "bg-slate-900/84 hover:bg-slate-800/84" : ""}`}
-              style={{
-                borderColor: sortBy === "latest"
-                  ? `rgba(${visual.glowRgb},${isDark ? "0.62" : "0.45"})`
-                  : isDark
-                    ? "rgba(148,163,184,0.45)"
-                    : "rgba(148,163,184,0.3)",
-                color: sortBy === "latest" ? visual.accentHex : isDark ? "#9CAEC9" : "#64748b",
-              }}
-              onClick={() => setSortBy("latest")}
-            >
-              最新优先
-            </button>
-            <button
-              type="button"
-              className={`rounded-full border px-3 py-1 ${isDark ? "bg-slate-900/84 hover:bg-slate-800/84" : ""}`}
-              style={{
-                borderColor: sortBy === "views"
-                  ? `rgba(${visual.glowRgb},${isDark ? "0.62" : "0.45"})`
-                  : isDark
-                    ? "rgba(148,163,184,0.45)"
-                    : "rgba(148,163,184,0.3)",
-                color: sortBy === "views" ? visual.accentHex : isDark ? "#9CAEC9" : "#64748b",
-              }}
-              onClick={() => setSortBy("views")}
-            >
-              阅读最多
-            </button>
-          </div>
-        </div>
+      <section className="flex justify-center sm:justify-start">
+        <DirectionAwareTabs
+          items={categoryTabs.map((item) => ({ id: item.id, label: item.label }))}
+          activeId={category}
+          onSelect={handleTabSelect}
+        />
       </section>
 
-      {loadingInitial && <p className={isDark ? "text-slate-400" : "text-slate-500"}>加载中...</p>}
-      {error ? <p className={`text-sm ${isDark ? "text-amber-300" : "text-amber-700"}`}>实时数据暂不可用，已展示静态内容。</p> : null}
+      {/* Cult UI ToolbarExpandable for tags/sort */}
+      <ToolbarExpandable steps={toolbarSteps} />
 
-      <div className="columns-2 gap-3 sm:gap-4">
-        {visiblePosts.map((post) => {
-          const isRecentlyAppended = recentlyAppendedSlugs.includes(post.slug);
-          const coverSrc = resolvePostCover(post);
-          return (
-            <motion.div
-              key={post.slug}
-              className="mb-3 break-inside-avoid sm:mb-4"
-              initial={isRecentlyAppended ? { opacity: 0, y: 20, scale: 0.97 } : false}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={
-                isRecentlyAppended
-                  ? { type: "spring", stiffness: 150, damping: 24, mass: 1 }
-                  : { duration: 0.24, ease: "easeOut" }
-              }
+      {loadingInitial && <p className="text-slate-500">加载中...</p>}
+      {error ? <p className="text-sm text-amber-700">实时数据暂不可用，已展示静态内容。</p> : null}
+
+      <AnimatePresence mode="wait">
+        {leadStory ? (
+          <motion.section
+            key={`${category}-${selectedTag}-${sortBy}`}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-6"
+          >
+            {/* Lead story */}
+            <motion.article
+              key={leadStory.slug}
+              initial={recentlyAppendedSlugs.includes(leadStory.slug) ? { opacity: 0, y: 22 } : false}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 150, damping: 24, mass: 1 }}
             >
               <CardSpotlight
-                className={`group rounded-2xl border p-4 backdrop-blur transition duration-200 hover:-translate-y-1 ${
-                  isDark
-                    ? "bg-slate-900/84 shadow-[0_12px_32px_rgba(2,6,23,0.45)] hover:shadow-[0_20px_38px_rgba(2,6,23,0.55)]"
-                    : "bg-white/90 shadow-[0_12px_32px_rgba(15,23,42,0.08)] hover:shadow-[0_20px_38px_rgba(15,23,42,0.12)]"
-                }`}
-                style={{
-                  borderColor: isDark ? `rgba(${visual.glowRgb},0.5)` : `rgba(${visual.glowRgb},0.28)`,
-                  background: cardBackground,
-                }}
+                className="group rounded-3xl border border-slate-200/60 bg-white/92 p-5 shadow-sm backdrop-blur transition duration-200 hover:-translate-y-1 hover:shadow-md"
+                style={{ background: cardBackground }}
                 glowColor={visual.glowRgb}
               >
-                <div
-                  className="pointer-events-none absolute left-0 right-0 top-0 h-1.5"
-                  style={{
-                    background: `linear-gradient(90deg, rgba(${visual.glowRgb},0.18), rgba(${visual.glowRgb},0.84), rgba(${visual.glowRgb},0.18))`,
-                  }}
-                />
-
-                <div className={`relative overflow-hidden rounded-xl border ${isDark ? "border-slate-600/70" : "border-slate-200/70"}`}>
-                  {coverSrc ? (
-                    <BlurRevealImage
-                      alt={`${post.title} 封面图`}
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                      src={coverSrc}
-                      wrapperClassName="aspect-[4/3]"
-                    />
-                  ) : (
-                    <GenerativeCover
-                      category={category}
-                      className="aspect-[3/1]"
-                      seed={post.slug}
-                    />
-                  )}
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/25 via-transparent to-transparent" />
+                <div className="relative overflow-hidden rounded-2xl border border-slate-200/70">
+                  {(() => {
+                    const leadCover = resolvePostCover(leadStory);
+                    if (leadCover) {
+                      return (
+                        <BlurRevealImage
+                          alt={`${leadStory.title} 封面图`}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                          src={leadCover}
+                          wrapperClassName="aspect-[16/7]"
+                        />
+                      );
+                    }
+                    return <GenerativeCover category={category} className="aspect-[16/7]" seed={leadStory.slug} />;
+                  })()}
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/30 via-transparent to-transparent" />
                 </div>
-
-                <h2 className={`mt-4 text-xl font-semibold ${isDark ? "text-slate-200" : "text-slate-900"}`}>
-                  <Link className="line-clamp-2 transition hover:opacity-80" style={{ color: visual.accentHex }} to={`/posts/${post.slug}`}>
-                    {post.title}
+                <h2 className="mt-5 text-3xl font-semibold tracking-tight text-slate-800">
+                  <Link className="line-clamp-2 transition hover:opacity-80" style={{ color: visual.accentHex }} to={`/posts/${leadStory.slug}`}>
+                    {leadStory.title}
                   </Link>
                 </h2>
-
-                <p className={`mt-2 text-sm ${isDark ? "text-slate-400" : "text-slate-600"}`}>{post.excerpt || "暂无摘要"}</p>
-
-                <div className="mt-3 flex flex-wrap gap-1">
-                  {post.tags.map((tag) => (
-                    <span
-                      key={`${post.slug}-${tag}`}
-                      className="rounded-full px-2 py-1 text-xs"
-                      style={{ background: chipBackground, color: visual.accentHex }}
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-
-                <p className={`mt-3 text-xs ${isDark ? "text-slate-500" : "text-slate-500"}`}>
-                  {new Date(post.updated_at).toLocaleDateString("zh-CN")} · 👁 {formatViews(post.views_count)} · {estimateReadMinutes(post)} min
+                <p className="mt-2 max-w-4xl text-base leading-7 text-slate-600">
+                  {leadStory.excerpt || "暂无摘要"}
+                </p>
+                <p className="mt-3 text-sm text-slate-500">
+                  {new Date(leadStory.updated_at).toLocaleDateString("zh-CN")} · 👁 {formatViews(leadStory.views_count)} · {estimateReadMinutes(leadStory)} min
                 </p>
               </CardSpotlight>
-            </motion.div>
-          );
-        })}
-      </div>
+            </motion.article>
+
+            {/* Secondary stories with ThreeDCard */}
+            {secondaryStories.length > 0 ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                {secondaryStories.map((post) => {
+                  const isRecentlyAppended = recentlyAppendedSlugs.includes(post.slug);
+                  const coverSrc = resolvePostCover(post);
+                  return (
+                    <motion.article
+                      key={post.slug}
+                      initial={isRecentlyAppended ? { opacity: 0, y: 16 } : false}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ type: "spring", stiffness: 160, damping: 24, mass: 1 }}
+                    >
+                      <CardContainer containerClassName="w-full">
+                        <CardBody className="w-full rounded-2xl border border-slate-200/60 bg-white/90 p-4 shadow-sm backdrop-blur">
+                          <CardItem translateZ={50} className="w-full">
+                            <div className="relative overflow-hidden rounded-xl border border-slate-200/70">
+                              {coverSrc ? (
+                                <BlurRevealImage
+                                  alt={`${post.title} 封面图`}
+                                  className="h-full w-full object-cover"
+                                  loading="lazy"
+                                  src={coverSrc}
+                                  wrapperClassName="aspect-[4/3]"
+                                />
+                              ) : (
+                                <GenerativeCover category={category} className="aspect-[4/3]" seed={post.slug} />
+                              )}
+                              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/25 via-transparent to-transparent" />
+                            </div>
+                          </CardItem>
+
+                          <CardItem translateZ={30} className="mt-4 w-full">
+                            <h3 className="text-xl font-semibold text-slate-800">
+                              <Link className="line-clamp-2 transition hover:opacity-80" style={{ color: visual.accentHex }} to={`/posts/${post.slug}`}>
+                                {post.title}
+                              </Link>
+                            </h3>
+                          </CardItem>
+
+                          <CardItem translateZ={20} className="mt-2 w-full">
+                            <p className="text-sm text-slate-600">{post.excerpt || "暂无摘要"}</p>
+                          </CardItem>
+
+                          <CardItem translateZ={10} className="mt-3 w-full">
+                            <p className="text-xs text-slate-500">
+                              {new Date(post.updated_at).toLocaleDateString("zh-CN")} · 👁 {formatViews(post.views_count)} · {estimateReadMinutes(post)} min
+                            </p>
+                          </CardItem>
+                        </CardBody>
+                      </CardContainer>
+                    </motion.article>
+                  );
+                })}
+              </div>
+            ) : null}
+
+            {/* Feed stories with TracingBeam */}
+            {feedStories.length > 0 ? (
+              <TracingBeam>
+                <div className="space-y-4 pl-6 md:pl-12">
+                  {feedStories.map((post) => {
+                    const isRecentlyAppended = recentlyAppendedSlugs.includes(post.slug);
+                    const coverSrc = resolvePostCover(post);
+                    return (
+                      <motion.article
+                        key={post.slug}
+                        initial={isRecentlyAppended ? { opacity: 0, y: 16 } : false}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ type: "spring", stiffness: 160, damping: 24, mass: 1 }}
+                      >
+                        <CardSpotlight
+                          className="group rounded-2xl border border-slate-200/60 bg-white/90 p-4 shadow-sm backdrop-blur transition duration-200 hover:-translate-y-1 hover:shadow-md"
+                          style={{ background: cardBackground }}
+                          glowColor={visual.glowRgb}
+                        >
+                          <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_220px] sm:items-start">
+                            <div>
+                              <h3 className="text-xl font-semibold text-slate-800">
+                                <Link className="line-clamp-2 transition hover:opacity-80" style={{ color: visual.accentHex }} to={`/posts/${post.slug}`}>
+                                  {post.title}
+                                </Link>
+                              </h3>
+                              <p className="mt-2 text-sm leading-6 text-slate-600">{post.excerpt || "暂无摘要"}</p>
+                              <div className="mt-3 flex flex-wrap gap-1">
+                                {post.tags.map((tag) => (
+                                  <span
+                                    key={`${post.slug}-${tag}`}
+                                    className="rounded-full px-2 py-1 text-xs"
+                                    style={{ background: chipBackground, color: visual.accentHex }}
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                              <p className="mt-3 text-xs text-slate-500">
+                                {new Date(post.updated_at).toLocaleDateString("zh-CN")} · 👁 {formatViews(post.views_count)} · {estimateReadMinutes(post)} min
+                              </p>
+                            </div>
+                            <div className="relative overflow-hidden rounded-xl border border-slate-200/70">
+                              {coverSrc ? (
+                                <BlurRevealImage
+                                  alt={`${post.title} 封面图`}
+                                  className="h-full w-full object-cover"
+                                  loading="lazy"
+                                  src={coverSrc}
+                                  wrapperClassName="aspect-[4/3]"
+                                />
+                              ) : (
+                                <GenerativeCover category={category} className="aspect-[4/3]" seed={post.slug} />
+                              )}
+                            </div>
+                          </div>
+                        </CardSpotlight>
+                      </motion.article>
+                    );
+                  })}
+                </div>
+              </TracingBeam>
+            ) : null}
+          </motion.section>
+        ) : null}
+      </AnimatePresence>
 
       {!loadingInitial && !fallbackPosts.length && hasMore ? (
         <div ref={loadMoreRef} className="flex flex-col items-center gap-2 pt-1">
           {loadingMore ? (
-            <div className={`flex items-center gap-2 text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-              <span
-                className={`h-3.5 w-3.5 animate-spin rounded-full border-2 ${isDark ? "border-slate-600 border-t-slate-300" : "border-slate-300 border-t-slate-600"}`}
-              />
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600" />
               正在加载更多...
             </div>
           ) : awaitingGesture ? (
-            <div className={`flex items-center gap-2 text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+            <div className="flex items-center gap-2 text-xs text-slate-500">
               <motion.span
                 className="inline-block text-sm"
                 animate={{ y: [0, 4, 0] }}
@@ -665,19 +768,19 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
               再下拉一下，松手后加载下一页
             </div>
           ) : (
-            <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>滑到底部后，再拖一下即可加载</p>
+            <p className="text-xs text-slate-500">滑到底部后，再拖一下即可加载</p>
           )}
-          <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+          <p className="text-xs text-slate-500">
             已加载 {effectivePosts.length}/{totalCount} 篇
           </p>
         </div>
       ) : null}
 
       {!loadingInitial && !fallbackPosts.length && !hasMore && effectivePosts.length > 0 ? (
-        <p className={`text-center text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>已加载全部 {effectivePosts.length} 篇</p>
+        <p className="text-center text-xs text-slate-500">已加载全部 {effectivePosts.length} 篇</p>
       ) : null}
 
-      {!loadingInitial && effectivePosts.length === 0 ? <p className={isDark ? "text-slate-400" : "text-slate-500"}>暂无文章</p> : null}
+      {!loadingInitial && effectivePosts.length === 0 ? <p className="text-slate-500">暂无文章</p> : null}
     </section>
   );
 }

@@ -44,6 +44,7 @@ export function useGithubFollowers(handle: string): number | null {
 
     // Cache hit — skip network
     if (readCache(handle) !== null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCount(readCache(handle));
       return;
     }
