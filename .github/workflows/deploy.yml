@@ -101,6 +101,7 @@ jobs:
   deploy-ecs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: [publish-backend-image]
     steps:
       - name: Checkout
@@ -119,6 +120,8 @@ jobs:
           ECS_SSH_KEY: ${{ secrets.ECS_SSH_KEY }}
           BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/openingclouds-backend:${{ github.sha }}
         run: |
+          set -euo pipefail
+
           if [ -z "$ECS_HOST" ] || [ -z "$ECS_USER" ] || [ -z "$ECS_SSH_KEY" ]; then
             echo "Deployment skipped (missing ECS secrets)."
             exit 0
@@ -127,17 +130,61 @@ jobs:
           mkdir -p ~/.ssh
           echo "$ECS_SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H "$ECS_HOST" >> ~/.ssh/known_hosts
+          touch ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          ssh-keygen -R "$ECS_HOST" >/dev/null 2>&1 || true
 
-          rsync -az --delete \
+          SSH_OPTS=(
+            -o BatchMode=yes
+            -o ConnectTimeout=10
+            -o ConnectionAttempts=1
+            -o ServerAliveInterval=15
+            -o ServerAliveCountMax=3
+            -o TCPKeepAlive=yes
+            -o StrictHostKeyChecking=yes
+          )
+
+          retry() {
+            local attempts="$1"
+            shift
+            local n=1
+            local exit_code=0
+
+            while [ "$n" -le "$attempts" ]; do
+              echo "Attempt $n/$attempts: $*"
+              if "$@"; then
+                return 0
+              fi
+              exit_code=$?
+              if [ "$n" -lt "$attempts" ]; then
+                local delay=$((n * 5))
+                echo "Command failed with exit code $exit_code, retrying in ${delay}s..."
+                sleep "$delay"
+              fi
+              n=$((n + 1))
+            done
+
+            echo "Command failed after $attempts attempts."
+            return "$exit_code"
+          }
+
+          retry 3 ssh-keyscan -T 10 -H "$ECS_HOST" >> ~/.ssh/known_hosts
+
+          retry 3 timeout --signal=TERM --kill-after=10s 180 \
+          rsync -az --delete --timeout=30 --contimeout=10 \
+            -e "ssh ${SSH_OPTS[*]}" \
             --exclude ".git" \
             --exclude "backend/.venv" \
             ./ "${ECS_USER}@${ECS_HOST}:/opt/openingclouds-blog/"
 
-          ssh "${ECS_USER}@${ECS_HOST}" << DEPLOY
-            set -e
-            cd /opt/openingclouds-blog
-            export BACKEND_IMAGE='${BACKEND_IMAGE}'
-            docker compose pull backend || true
-            docker compose up -d --remove-orphans
+          run_remote_deploy() {
+            timeout --signal=TERM --kill-after=15s 420 \
+            ssh "${SSH_OPTS[@]}" "${ECS_USER}@${ECS_HOST}" "BACKEND_IMAGE='${BACKEND_IMAGE}' bash -se" << 'DEPLOY'
+              set -euo pipefail
+              cd /opt/openingclouds-blog
+              docker compose pull backend || true
+              docker compose up -d --remove-orphans
           DEPLOY
+          }
+
+          retry 3 run_remote_deploy
