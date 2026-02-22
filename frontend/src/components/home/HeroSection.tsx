@@ -1,8 +1,10 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { fetchHomeLikeStatus, toggleHomeLike } from "../../api/home";
 import { useTheme } from "../../app/theme";
 import { useGithubFollowers } from "../../hooks/useGithubFollowers";
+import { getConfettiOriginFromElement } from "../../lib/confetti";
+import { Confetti, type ConfettiRef } from "../ui/Confetti";
 import { HeroAtmosphereCanvas } from "./hero/HeroAtmosphereCanvas";
 
 type HeroSectionProps = {
@@ -116,6 +118,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
   const [homeLikes, setHomeLikes] = useState<number | null>(null);
   const [homeLikeLoading, setHomeLikeLoading] = useState(false);
   const homeLikeLoadingRef = useRef(false);
+  const homeLikeConfettiRef = useRef<ConfettiRef>(null);
 
   useEffect(() => {
     if (hero.slogans.length <= 1) {
@@ -178,16 +181,29 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
   const titleShadow = isDark ? "drop-shadow-[0_8px_22px_rgba(2,6,23,0.82)]" : "drop-shadow-[0_8px_18px_rgba(8,24,54,0.42)]";
   const homeLikeLabel = homeLiked ? "取消首页点赞" : "点赞首页";
 
-  const handleToggleHomeLike = async () => {
+  const handleToggleHomeLike = async (event: MouseEvent<HTMLButtonElement>) => {
     if (homeLikeLoadingRef.current) {
       return;
     }
+    const origin = getConfettiOriginFromElement(event.currentTarget);
     homeLikeLoadingRef.current = true;
     setHomeLikeLoading(true);
     try {
       const result = await toggleHomeLike();
       setHomeLiked(result.liked);
       setHomeLikes(result.likes);
+      if (result.liked) {
+        void homeLikeConfettiRef.current?.fire({
+          particleCount: 96,
+          spread: 86,
+          startVelocity: 44,
+          scalar: 0.98,
+          decay: 0.92,
+          disableForReducedMotion: true,
+          origin,
+          colors: ["#ffffff", "#bfdbfe", "#93c5fd", "#fda4af"],
+        });
+      }
     } catch {
       // Ignore transient network failures and keep current UI state.
     } finally {
@@ -198,6 +214,12 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
 
   return (
     <section className={`relative left-1/2 min-h-[100vh] w-screen -translate-x-1/2 overflow-hidden text-white ${isDark ? "bg-[#060D1E]" : "bg-[#1C2E57]"}`}>
+      <Confetti
+        ref={homeLikeConfettiRef}
+        manualStart
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 z-[60] h-full w-full"
+      />
       <div className="absolute inset-0">
         <img
           alt="云海背景"

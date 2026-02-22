@@ -1,6 +1,6 @@
 import { motion, useScroll, useSpring } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { AnchorHTMLAttributes, HTMLAttributes, ImgHTMLAttributes, ReactNode } from "react";
+import type { AnchorHTMLAttributes, HTMLAttributes, ImgHTMLAttributes, MouseEvent, ReactNode } from "react";
 import { Helmet } from "react-helmet-async";
 import ReactMarkdown from "react-markdown";
 import { Link, useParams } from "react-router-dom";
@@ -8,8 +8,10 @@ import remarkGfm from "remark-gfm";
 import { fetchPostBySlug, fetchPostLikeStatus, incrementPostViews, togglePostLike } from "../api/posts";
 import { useTheme } from "../app/theme";
 import { BlurRevealImage } from "../components/ui/BlurRevealImage";
+import { Confetti, type ConfettiRef } from "../components/ui/Confetti";
 import { GenerativeCover } from "../components/ui/GenerativeCover";
 import { useAsync } from "../hooks/useAsync";
+import { getConfettiOriginFromElement } from "../lib/confetti";
 
 type HeadingItem = {
   id: string;
@@ -188,6 +190,7 @@ export function PostDetailPage() {
   const mobileTab = mobileTabState.slug === slug ? mobileTabState.tab : "article";
   const likeLoadingRef = useRef(false);
   const [likeLoading, setLikeLoading] = useState(false);
+  const likeConfettiRef = useRef<ConfettiRef>(null);
 
   useEffect(() => {
     if (data) {
@@ -209,14 +212,27 @@ export function PostDetailPage() {
     return () => { cancelled = true; };
   }, [slug]);
 
-  const handleToggleLike = useCallback(async () => {
+  const handleToggleLike = useCallback(async (event: MouseEvent<HTMLButtonElement>) => {
     if (likeLoadingRef.current || !slug) return;
+    const origin = getConfettiOriginFromElement(event.currentTarget);
     likeLoadingRef.current = true;
     setLikeLoading(true);
     try {
       const result = await togglePostLike(slug);
       setLiked(result.liked);
       setLikesCount(result.likes);
+      if (result.liked) {
+        void likeConfettiRef.current?.fire({
+          particleCount: 88,
+          spread: 84,
+          startVelocity: 42,
+          scalar: 0.95,
+          decay: 0.93,
+          disableForReducedMotion: true,
+          origin,
+          colors: ["#fb7185", "#fda4af", "#f9a8d4", "#fecdd3"],
+        });
+      }
     } catch { /* ignore network errors */ }
     likeLoadingRef.current = false;
     setLikeLoading(false);
@@ -499,6 +515,12 @@ export function PostDetailPage() {
 
   return (
     <section className="space-y-6">
+      <Confetti
+        ref={likeConfettiRef}
+        manualStart
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 z-[60] h-full w-full"
+      />
       <Helmet>
         <title>{`${data.title} | Keyon Blog ｜ 云际漫游者`}</title>
         <meta content={data.excerpt || "Keyon Blog ｜ 云际漫游者文章详情"} name="description" />
