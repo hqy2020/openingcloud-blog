@@ -1,6 +1,8 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GrassManager, type GrassPatch } from "./GrassManager";
+import { PetSprite } from "./PetSprite";
+import type { PetAnim } from "./petSpriteAtlas";
 
 type PetState = "at_home_idle" | "walking_to_grass" | "eating" | "returning_home";
 type PetFacing = "left" | "right";
@@ -19,10 +21,9 @@ const ACCELERATION_PX = 0.24;
 const ARRIVAL_THRESHOLD_PX = 4;
 const HOME_ARRIVAL_THRESHOLD_PX = 8;
 // Keep the sheep's mouth anchored to the same world point regardless of facing direction.
-const PET_MOUTH_OFFSET_X_LEFT = 8;
-const PET_MOUTH_OFFSET_X_RIGHT = 44;
-const PET_MOUTH_OFFSET_Y = 24;
-const PET_SHEEP_SRC = "/media/pet/sheep-cutout.png";
+const PET_MOUTH_OFFSET_X_LEFT = 14;
+const PET_MOUTH_OFFSET_X_RIGHT = 50;
+const PET_MOUTH_OFFSET_Y = 30;
 const PET_GRASS_SRC = "/media/pet/grass-cutout.png";
 const PET_CLOUD_HOME_SRC = "/media/pet/clouds-home-clean.png";
 const PET_CHAT_LINES = [
@@ -310,7 +311,10 @@ export function BlogPetMachine() {
 
     if (isNearPosition(positionRef.current, homeAnchorRef.current)) {
       if (petState !== "at_home_idle") {
-        setPetState("at_home_idle");
+        const rafId = window.requestAnimationFrame(() => {
+          setPetState("at_home_idle");
+        });
+        return () => window.cancelAnimationFrame(rafId);
       }
       return;
     }
@@ -350,9 +354,13 @@ export function BlogPetMachine() {
   }, [enabled, showHomeBubble]);
 
   useEffect(() => {
-    if (showHomeBubble) {
-      setChatIndex(0);
+    if (!showHomeBubble) {
+      return;
     }
+    const rafId = window.requestAnimationFrame(() => {
+      setChatIndex(0);
+    });
+    return () => window.cancelAnimationFrame(rafId);
   }, [showHomeBubble]);
 
   if (!enabled) {
@@ -363,6 +371,12 @@ export function BlogPetMachine() {
   const cloudRenderY = homeAnchor.y - CLOUD_HOME_ANCHOR_Y;
   const petRenderX = position.x - (petFacing === "right" ? PET_MOUTH_OFFSET_X_RIGHT : PET_MOUTH_OFFSET_X_LEFT);
   const petRenderY = position.y - PET_MOUTH_OFFSET_Y;
+  const petAnimationState: PetAnim =
+    petState === "walking_to_grass" || petState === "returning_home"
+      ? "run"
+      : petState === "eating"
+        ? "eat"
+        : "idle";
 
   return (
     <>
@@ -411,10 +425,7 @@ export function BlogPetMachine() {
         />
       </div>
 
-      <div
-        className="pointer-events-none fixed left-0 top-0 z-40"
-        style={{ transform: `translate(${petRenderX}px, ${petRenderY}px)` }}
-      >
+      <div className="pointer-events-none fixed left-0 top-0 z-50" style={{ transform: `translate(${petRenderX}px, ${petRenderY}px)` }}>
         <AnimatePresence mode="wait">
           {showHomeBubble ? (
             <motion.div
@@ -432,27 +443,13 @@ export function BlogPetMachine() {
             </motion.div>
           ) : null}
         </AnimatePresence>
-
-        <motion.div
-          aria-label={`pet-${petState}`}
-          className="text-3xl leading-none [filter:drop-shadow(0_4px_8px_rgba(15,23,42,0.3))]"
-          animate={
-            petState === "walking_to_grass" || petState === "returning_home"
-              ? { x: [0, 1.6, 0, -1.6, 0], y: [0, -1.2, 0] }
-              : petState === "eating"
-                ? { rotate: [0, -8, 0, -8, 0] }
-                : { y: [0, -2, 0] }
-          }
-          transition={{ duration: petState === "eating" ? 0.5 : 0.8, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <span
-            className="inline-block will-change-transform"
-            style={{ transform: `scaleX(${petFacing === "right" ? -1 : 1})` }}
-          >
-            <img src={PET_SHEEP_SRC} alt="" className="h-14 w-auto select-none" draggable={false} />
-          </span>
-        </motion.div>
       </div>
+      <PetSprite
+        position={{ x: petRenderX, y: petRenderY }}
+        state={petAnimationState}
+        facing={petFacing}
+        ariaLabel={`pet-${petState}`}
+      />
     </>
   );
 }
