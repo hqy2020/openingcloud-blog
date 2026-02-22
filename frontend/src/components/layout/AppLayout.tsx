@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import type { HomePayload } from "../../api/home";
 import { usePageVisitTracker } from "../../hooks/usePageVisitTracker";
@@ -9,6 +9,7 @@ import { BlogPetMachine } from "../pet/BlogPetMachine";
 import { BarrageCommentsSidebar } from "./BarrageCommentsSidebar";
 import { GlobalSloganTicker } from "./GlobalSloganTicker";
 import { DotBackground } from "../ui/DotBackground";
+import { DistortedGlassSurface } from "../ui/DistortedGlassSurface";
 import { MultiFollowCursor } from "../ui/MultiFollowCursor";
 
 const headerTabs = [
@@ -112,19 +113,17 @@ export function AppLayout() {
   const isHomeRoute = location.pathname === "/";
   const visual = resolveAccentByPath(location.pathname);
 
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileMenuOwnerKey, setMobileMenuOwnerKey] = useState<string | null>(null);
   const [hoveredNavIndex, setHoveredNavIndex] = useState<number | null>(null);
   const [compactNavbar, setCompactNavbar] = useState(false);
+  const locationKey = location.key || `${location.pathname}${location.search}${location.hash}`;
+  const mobileMenuOpen = mobileMenuOwnerKey === locationKey;
   const { scrollY } = useScroll();
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     const nextCompact = latest > 80;
     setCompactNavbar((current) => (current === nextCompact ? current : nextCompact));
   });
-
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [location.pathname, location.hash]);
 
   const activeDesktopIndex = headerTabs.findIndex((item) => !item.nativeAnchor && item.to === location.pathname);
 
@@ -136,9 +135,7 @@ export function AppLayout() {
             animate={{
               width: compactNavbar ? "74%" : "100%",
               y: compactNavbar ? 16 : 0,
-              backdropFilter: compactNavbar ? "blur(10px)" : "none",
               boxShadow: compactNavbar ? navbarShadow : "none",
-              backgroundColor: compactNavbar ? "rgba(255,255,255,0.84)" : "rgba(255,255,255,0)",
               borderColor: compactNavbar ? "rgba(226,232,240,0.8)" : "rgba(226,232,240,0)",
             }}
             transition={{
@@ -146,8 +143,10 @@ export function AppLayout() {
               stiffness: 220,
               damping: 36,
             }}
-            className="relative z-[60] mx-auto hidden w-full max-w-7xl items-center justify-between rounded-full border border-slate-200/70 px-4 py-2 lg:flex"
+            className="relative z-[60] mx-auto hidden w-full max-w-7xl items-center justify-between overflow-hidden rounded-full border border-slate-200/70 px-4 py-2 isolate lg:flex"
           >
+            <DistortedGlassSurface intensity={compactNavbar ? "regular" : "soft"} className="absolute inset-0 rounded-full" />
+
             <NavLink
               aria-label="返回首页"
               className="relative z-20 inline-flex items-center px-2 py-1 text-2xl font-semibold tracking-tight text-slate-800"
@@ -159,7 +158,7 @@ export function AppLayout() {
 
             <nav
               onMouseLeave={() => setHoveredNavIndex(null)}
-              className="absolute inset-0 hidden items-center justify-center gap-1 text-sm font-medium lg:flex"
+              className="absolute inset-0 z-10 hidden items-center justify-center gap-1 text-sm font-medium lg:flex"
             >
               {headerTabs.map((item, index) => {
                 const showHighlight = hoveredNavIndex === index || (hoveredNavIndex === null && activeDesktopIndex === index);
@@ -230,9 +229,7 @@ export function AppLayout() {
             animate={{
               width: compactNavbar ? "90%" : "100%",
               y: compactNavbar ? 10 : 0,
-              backdropFilter: compactNavbar ? "blur(10px)" : "none",
               boxShadow: compactNavbar ? navbarShadow : "none",
-              backgroundColor: compactNavbar ? "rgba(255,255,255,0.84)" : "rgba(255,255,255,0)",
               borderColor: compactNavbar ? "rgba(226,232,240,0.8)" : "rgba(226,232,240,0)",
             }}
             transition={{
@@ -240,9 +237,11 @@ export function AppLayout() {
               stiffness: 220,
               damping: 36,
             }}
-            className="relative z-50 mx-auto flex w-full max-w-[calc(100vw-1rem)] flex-col rounded-[2rem] border border-slate-200/70 px-3 py-2 lg:hidden"
+            className="relative z-50 mx-auto flex w-full max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-[2rem] border border-slate-200/70 px-3 py-2 isolate lg:hidden"
           >
-            <div className="flex w-full items-center justify-between">
+            <DistortedGlassSurface intensity={compactNavbar ? "regular" : "soft"} className="absolute inset-0 rounded-[2rem]" />
+
+            <div className="relative z-10 flex w-full items-center justify-between">
               <NavLink
                 aria-label="返回首页"
                 className="inline-flex items-center px-1.5 py-0.5 text-lg font-semibold tracking-tight text-slate-800"
@@ -255,7 +254,7 @@ export function AppLayout() {
               <button
                 type="button"
                 className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100"
-                onClick={() => setMobileMenuOpen((current) => !current)}
+                onClick={() => setMobileMenuOwnerKey((current) => (current === locationKey ? null : locationKey))}
                 aria-expanded={mobileMenuOpen}
                 aria-label={mobileMenuOpen ? "关闭菜单" : "打开菜单"}
               >
@@ -270,46 +269,51 @@ export function AppLayout() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.2, ease: "easeOut" }}
-                  className="mt-3 flex flex-col gap-1 rounded-2xl border border-slate-200/70 bg-white/95 px-3 py-3 shadow-lg"
+                  className="relative mt-3 flex flex-col gap-1 overflow-hidden rounded-2xl border border-slate-200/70 px-3 py-3 shadow-lg"
                 >
-                  {headerTabs.map((item) =>
-                    item.nativeAnchor ? (
-                      <a
-                        key={item.label}
-                        href={item.to}
-                        className="rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        {item.label}
-                      </a>
-                    ) : (
-                      <Link
-                        key={item.label}
-                        to={item.to}
-                        className="rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        {item.label}
-                      </Link>
-                    ),
-                  )}
+                  <DistortedGlassSurface intensity="soft" className="absolute inset-0 rounded-2xl" />
 
-                  <div className="mt-1 flex items-center gap-1 border-t border-slate-100 pt-2">
-                    <PulsatingSocialLink href="https://github.com/hqy2020" label="GitHub">
-                      <GithubIcon />
-                    </PulsatingSocialLink>
-                    <PulsatingSocialLink href="https://xhslink.com/m/7jfSehmMT7r" label="小红书">
-                      <XiaohongshuIcon />
-                    </PulsatingSocialLink>
-                    <PulsatingSocialLink href="https://www.zhihu.com/people/hu-qi-yun-1" label="知乎">
-                      <ZhihuIcon />
-                    </PulsatingSocialLink>
-                    <a
-                      href="/admin/"
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100"
-                    >
-                      <AdminEntryIcon />
-                    </a>
+                  <div className="relative z-10 flex flex-col gap-1">
+                    {headerTabs.map((item) =>
+                      item.nativeAnchor ? (
+                        <a
+                          key={item.label}
+                          href={item.to}
+                          className="rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+                          onClick={() => setMobileMenuOwnerKey(null)}
+                        >
+                          {item.label}
+                        </a>
+                      ) : (
+                        <Link
+                          key={item.label}
+                          to={item.to}
+                          className="rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+                          onClick={() => setMobileMenuOwnerKey(null)}
+                        >
+                          {item.label}
+                        </Link>
+                      ),
+                    )}
+
+                    <div className="mt-1 flex items-center gap-1 border-t border-slate-100 pt-2">
+                      <PulsatingSocialLink href="https://github.com/hqy2020" label="GitHub">
+                        <GithubIcon />
+                      </PulsatingSocialLink>
+                      <PulsatingSocialLink href="https://xhslink.com/m/7jfSehmMT7r" label="小红书">
+                        <XiaohongshuIcon />
+                      </PulsatingSocialLink>
+                      <PulsatingSocialLink href="https://www.zhihu.com/people/hu-qi-yun-1" label="知乎">
+                        <ZhihuIcon />
+                      </PulsatingSocialLink>
+                      <a
+                        href="/admin/"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100"
+                        onClick={() => setMobileMenuOwnerKey(null)}
+                      >
+                        <AdminEntryIcon />
+                      </a>
+                    </div>
                   </div>
                 </motion.nav>
               ) : null}

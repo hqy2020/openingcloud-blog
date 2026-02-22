@@ -1,4 +1,5 @@
 import { motion, useReducedMotion } from "motion/react";
+import { cn } from "../../../lib/utils";
 
 type SlidingEmphasisTextProps = {
   leadText: string;
@@ -6,12 +7,14 @@ type SlidingEmphasisTextProps = {
   className?: string;
 };
 
-const EMPHASIS_STYLE = {
-  backgroundImage: "linear-gradient(90deg, #F4B56A, #F4B56A)",
+const HIGHLIGHT_STYLE = {
   backgroundPosition: "left center",
   backgroundRepeat: "no-repeat",
-  color: "#111827",
+  display: "inline",
 } as const;
+
+const HIGHLIGHT_CLASSNAME =
+  "relative ml-1 inline-block rounded-lg bg-gradient-to-r from-indigo-300 to-purple-300 px-1 pb-1 dark:from-indigo-500 dark:to-purple-500";
 
 export function SlidingEmphasisText({ leadText, emphasisText, className }: SlidingEmphasisTextProps) {
   const prefersReducedMotion = Boolean(useReducedMotion());
@@ -21,8 +24,8 @@ export function SlidingEmphasisText({ leadText, emphasisText, className }: Slidi
       <p className={className}>
         <span>{leadText}</span>
         <span
-          className="ml-1 inline box-decoration-clone rounded-[12px] px-[0.32em] py-[0.12em] font-extrabold"
-          style={{ ...EMPHASIS_STYLE, backgroundSize: "100% 100%" }}
+          className={cn(HIGHLIGHT_CLASSNAME, "font-extrabold")}
+          style={{ ...HIGHLIGHT_STYLE, backgroundSize: "100% 100%" }}
         >
           {emphasisText}
         </span>
@@ -40,12 +43,12 @@ export function SlidingEmphasisText({ leadText, emphasisText, className }: Slidi
     >
       <span>{leadText}</span>
       <motion.span
-        className="ml-1 inline box-decoration-clone rounded-[12px] px-[0.32em] py-[0.12em]"
-        style={{ ...EMPHASIS_STYLE, backgroundSize: "0% 100%" }}
-        initial={{ opacity: 0, x: 18, fontWeight: 500, backgroundSize: "0% 100%" }}
-        whileInView={{ opacity: 1, x: 0, fontWeight: 800, backgroundSize: "100% 100%" }}
+        className={cn(HIGHLIGHT_CLASSNAME, "font-extrabold")}
+        style={{ ...HIGHLIGHT_STYLE, backgroundSize: "0% 100%" }}
+        initial={{ opacity: 0, x: 18, backgroundSize: "0% 100%" }}
+        whileInView={{ opacity: 1, x: 0, backgroundSize: "100% 100%" }}
         viewport={{ once: true, amount: 0.5 }}
-        transition={{ duration: 0.52, ease: "easeOut", delay: 0.08 }}
+        transition={{ duration: 2, ease: "linear", delay: 0.5 }}
       >
         {emphasisText}
       </motion.span>
