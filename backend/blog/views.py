@@ -1326,11 +1326,23 @@ def _normalize_time_series_payload(raw_payload: dict) -> dict:
 
 
 DEFAULT_HOME_TIME_SERIES = {
-    "x_axis": ["0", "5", "10", "15", "20", "25"],
+    "x_axis": [str(age) for age in range(0, 27)],
     "series": [
-        {"name": "Study", "color": "#B3D4FF", "data": [0, 60, 40, 30, 30, 30]},
-        {"name": "Game", "color": "#80E5FF", "data": [0, 0, 30, 20, 20, 10]},
-        {"name": "Social or Family", "color": "#A3F0C7", "data": [100, 40, 30, 50, 50, 60]},
+        {
+            "name": "Study",
+            "color": "#B3D4FF",
+            "data": [0, 8, 20, 35, 48, 58, 60, 58, 50, 43, 40, 39, 38, 36, 34, 32, 31, 30, 30, 30, 30, 27, 22, 20, 20, 20, 30],
+        },
+        {
+            "name": "Game",
+            "color": "#80E5FF",
+            "data": [0, 0, 0, 0, 0, 0, 0, 4, 10, 18, 24, 28, 30, 28, 24, 22, 21, 20, 20, 20, 20, 23, 28, 30, 30, 30, 10],
+        },
+        {
+            "name": "Social or Family",
+            "color": "#A3F0C7",
+            "data": [100, 92, 80, 65, 52, 42, 40, 38, 40, 39, 36, 33, 32, 36, 42, 46, 48, 50, 50, 50, 50, 50, 50, 50, 50, 50, 60],
+        },
     ],
 }
 

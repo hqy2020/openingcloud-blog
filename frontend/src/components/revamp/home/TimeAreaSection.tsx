@@ -32,11 +32,23 @@ type ChartDataset = {
 
 const FALLBACK_COLORS = ["#B3D4FF", "#80E5FF", "#A3F0C7", "#8BB8FF", "#7DD3FC", "#86EFAC"];
 const DEFAULT_TIME_SERIES: HomeTimeSeries = {
-  x_axis: ["0", "5", "10", "15", "20", "25"],
+  x_axis: Array.from({ length: 27 }, (_, age) => String(age)),
   series: [
-    { name: "Study", color: "#B3D4FF", data: [0, 60, 40, 30, 30, 30] },
-    { name: "Game", color: "#80E5FF", data: [0, 0, 30, 20, 20, 10] },
-    { name: "Social or Family", color: "#A3F0C7", data: [100, 40, 30, 50, 50, 60] },
+    {
+      name: "Study",
+      color: "#B3D4FF",
+      data: [0, 8, 20, 35, 48, 58, 60, 58, 50, 43, 40, 39, 38, 36, 34, 32, 31, 30, 30, 30, 30, 27, 22, 20, 20, 20, 30],
+    },
+    {
+      name: "Game",
+      color: "#80E5FF",
+      data: [0, 0, 0, 0, 0, 0, 0, 4, 10, 18, 24, 28, 30, 28, 24, 22, 21, 20, 20, 20, 20, 23, 28, 30, 30, 30, 10],
+    },
+    {
+      name: "Social or Family",
+      color: "#A3F0C7",
+      data: [100, 92, 80, 65, 52, 42, 40, 38, 40, 39, 36, 33, 32, 36, 42, 46, 48, 50, 50, 50, 50, 50, 50, 50, 50, 50, 60],
+    },
   ],
 };
 
@@ -298,10 +310,8 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
   const option = useMemo(() => {
     const ages = chartData.ages;
     const tickStep = ages.length <= 8 ? 1 : Math.max(1, Math.floor((ages.length - 1) / 5));
-    const topColor = chartData.series[chartData.series.length - 1]?.color ?? "#A3F0C7";
 
     return {
-      backgroundColor: topColor,
       animation: !reduceMotion,
       animationDuration: 700,
       animationDurationUpdate: 560,
@@ -379,7 +389,7 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
           name: item.label,
           type: "line",
           stack: "Total",
-          smooth: 0.65,
+          smooth: 0.5,
           smoothMonotone: "x",
           showSymbol: false,
           symbol: "none",
@@ -388,7 +398,7 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
             color: item.color,
           },
           areaStyle: {
-            opacity: 0.93,
+            opacity: 1,
             color: item.color,
           },
           label: {
@@ -426,7 +436,7 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
         <p className="mt-1 text-sm text-slate-600">Backend data is editable. Every age point is normalized to 100%, and curves stay smooth.</p>
       </div>
 
-      <div className="overflow-hidden rounded-[1.8rem] border border-white/70 bg-[#a7e5cc] shadow-[0_14px_28px_rgba(15,23,42,0.12)]">
+      <div className="overflow-hidden rounded-[1.8rem] border border-white/70 bg-[#e8edf2] shadow-[0_14px_28px_rgba(15,23,42,0.12)]">
         {Chart && !chartUnavailable ? (
           <Chart
             echarts={echartsRuntime ?? undefined}
