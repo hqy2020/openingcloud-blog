@@ -500,10 +500,10 @@ export function PostDetailPage() {
   return (
     <section className="space-y-6">
       <Helmet>
-        <title>{`${data.title} | 启云博客`}</title>
-        <meta content={data.excerpt || "启云博客文章详情"} name="description" />
+        <title>{`${data.title} | Keyon Blog ｜ 云际漫游者`}</title>
+        <meta content={data.excerpt || "Keyon Blog ｜ 云际漫游者文章详情"} name="description" />
         <meta content={data.title} property="og:title" />
-        <meta content={data.excerpt || "启云博客文章详情"} property="og:description" />
+        <meta content={data.excerpt || "Keyon Blog ｜ 云际漫游者文章详情"} property="og:description" />
         <meta content={detailCover || "/og-cloudscape-card.png"} property="og:image" />
         <link href={`https://blog.oc.slgneon.cn/posts/${data.slug}`} rel="canonical" />
       </Helmet>

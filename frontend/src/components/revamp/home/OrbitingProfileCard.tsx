@@ -87,7 +87,7 @@ const defaultRoles = [
   "Long-term Writer",
 ];
 
-const defaultNameWords = ["codecloud", "openClouds", "胡启云"];
+const defaultNameWords = ["Keyon", "云际漫游者"];
 
 function OrbitingBadgeNode({ badge, reducedMotion }: { badge: OrbitingBadge; reducedMotion: boolean }) {
   const wrapperClassName =
@@ -134,7 +134,7 @@ function OrbitingBadgeNode({ badge, reducedMotion }: { badge: OrbitingBadge; red
 
 export function OrbitingProfileCard({
   className,
-  name = "openingClouds",
+  name = "Keyon",
   nameWords = defaultNameWords,
   roles = defaultRoles,
 }: OrbitingProfileCardProps) {

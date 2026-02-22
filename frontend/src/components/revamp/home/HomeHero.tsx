@@ -36,7 +36,7 @@ export function HomeHero({ hero }: HomeHeroProps) {
             <OrbitingProfileCard
               className="h-[420px] w-[420px] sm:h-[620px] sm:w-[620px] lg:h-[680px] lg:w-[680px]"
               name={coverHeroConfig.spaced_name}
-              nameWords={["codecloud", "openClouds", "胡启云"]}
+              nameWords={["Keyon", "云际漫游者"]}
               roles={profileRoles}
             />
           </motion.div>

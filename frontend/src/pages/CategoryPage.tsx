@@ -1,3 +1,4 @@
+import { stagger } from "motion";
 import { AnimatePresence, motion } from "motion/react";
 import { Helmet } from "react-helmet-async";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -23,12 +24,7 @@ type CategoryPageProps = {
 };
 
 const CATEGORY_PAGE_SIZE = 10;
-const AUTOLOAD_WHEEL_DELTA_THRESHOLD = 40;
-const AUTOLOAD_TOUCH_DELTA_THRESHOLD = 56;
-const AUTOLOAD_ARM_DELAY_MS = 360;
-const AUTOLOAD_WHEEL_GESTURE_GAP_MS = 220;
-const APPEND_REVEAL_INTERVAL_MS = 220;
-const APPEND_REVEAL_BATCH_SIZE = 3;
+const APPEND_STAGGER_SECONDS = 0.12;
 
 const categoryDescriptions: Record<CategoryPageProps["category"], string> = {
   tech: "技术实践、系统设计与工程复盘。",
@@ -107,18 +103,9 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [awaitingGesture, setAwaitingGesture] = useState(false);
   const [recentlyAppendedSlugs, setRecentlyAppendedSlugs] = useState<string[]>([]);
-  const [appendQueue, setAppendQueue] = useState<PostSummary[]>([]);
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
-  const touchStartYRef = useRef<number | null>(null);
-  const lastWheelTsRef = useRef(0);
-  const wheelGestureRef = useRef(0);
-  const touchGestureRef = useRef(0);
-  const armedWheelGestureRef = useRef(0);
-  const armedTouchGestureRef = useRef(0);
-  const armedAtRef = useRef(0);
-  const rearmBlockedRef = useRef(false);
+  const appendInFlightRef = useRef(false);
+  const postsRef = useRef<PostSummary[]>([]);
 
   const handleTabSelect = useCallback(
     (nextCategory: string) => {
@@ -154,13 +141,17 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
 
   const loadPage = useCallback(
     async (targetPage: number, mode: "replace" | "append") => {
-      let keepLoadingMore = false;
+      if (mode === "append" && appendInFlightRef.current) {
+        return;
+      }
+
       if (mode === "replace") {
+        appendInFlightRef.current = false;
         setLoadingInitial(true);
         setLoadingMore(false);
-        setAppendQueue([]);
         setRecentlyAppendedSlugs([]);
       } else {
+        appendInFlightRef.current = true;
         setLoadingMore(true);
       }
       setError(null);
@@ -180,21 +171,30 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
         if (mode === "replace") {
           setPosts(payload.results);
         } else {
-          const deduped = payload.results.filter(
+          const dedupedWithinPayload = payload.results.filter(
             (item, index, arr) => arr.findIndex((it) => it.slug === item.slug) === index,
           );
-          if (deduped.length > 0) {
-            keepLoadingMore = true;
-            setAppendQueue(deduped);
-          } else {
-            setAppendQueue([]);
+          const existingSlugs = new Set(postsRef.current.map((item) => item.slug));
+          const appended = dedupedWithinPayload.filter((item) => !existingSlugs.has(item.slug));
+          if (appended.length > 0) {
+            setPosts((prev) => {
+              const merged = [...prev];
+              const mergedSlugs = new Set(prev.map((item) => item.slug));
+              appended.forEach((item) => {
+                if (!mergedSlugs.has(item.slug)) {
+                  merged.push(item);
+                  mergedSlugs.add(item.slug);
+                }
+              });
+              return merged;
+            });
           }
+          setRecentlyAppendedSlugs(appended.map((item) => item.slug));
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
         setError(message);
         if (mode === "replace") {
-          setAppendQueue([]);
           setRecentlyAppendedSlugs([]);
           setPosts([]);
           setTotalCount(0);
@@ -204,7 +204,8 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
       } finally {
         if (mode === "replace") {
           setLoadingInitial(false);
-        } else if (!keepLoadingMore) {
+        } else {
+          appendInFlightRef.current = false;
           setLoadingMore(false);
         }
       }
@@ -221,6 +222,10 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
     setSelectedTag((prev) => (prev === queryTag ? prev : queryTag));
   }, [searchParams]);
 
+  useEffect(() => {
+    postsRef.current = posts;
+  }, [posts]);
+
   const fallbackPosts = useMemo(
     () => (error && posts.length === 0 ? getFallbackPosts(category) : []),
     [category, error, posts.length],
@@ -228,157 +233,15 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
   const effectivePosts = fallbackPosts.length > 0 ? fallbackPosts : posts;
 
   const autoLoadNextPage = useCallback(() => {
-    if (loadingInitial || loadingMore || !hasMore || fallbackPosts.length > 0) {
+    if (appendInFlightRef.current || loadingInitial || loadingMore || !hasMore || fallbackPosts.length > 0) {
       return;
     }
     void loadPage(page + 1, "append");
   }, [fallbackPosts.length, hasMore, loadPage, loadingInitial, loadingMore, page]);
 
-  useEffect(() => {
-    const target = loadMoreRef.current;
-    if (!target || loadingInitial || loadingMore || !hasMore || fallbackPosts.length > 0) {
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const inView = entries.some((entry) => entry.isIntersecting);
-        if (!inView) {
-          rearmBlockedRef.current = false;
-          setAwaitingGesture(false);
-          return;
-        }
-
-        if (rearmBlockedRef.current) {
-          setAwaitingGesture(false);
-          return;
-        }
-
-        armedAtRef.current = Date.now();
-        armedWheelGestureRef.current = wheelGestureRef.current;
-        armedTouchGestureRef.current = touchGestureRef.current;
-        setAwaitingGesture(true);
-      },
-      { rootMargin: "0px", threshold: 0.98 },
-    );
-
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [fallbackPosts.length, hasMore, loadingInitial, loadingMore]);
-
-  useEffect(() => {
-    if (!awaitingGesture || loadingInitial || loadingMore || !hasMore || fallbackPosts.length > 0) {
-      return;
-    }
-
-    let fired = false;
-    const trigger = () => {
-      if (fired) {
-        return;
-      }
-      fired = true;
-      rearmBlockedRef.current = true;
-      setAwaitingGesture(false);
-      autoLoadNextPage();
-    };
-
-    const onWheel = (event: WheelEvent) => {
-      const now = Date.now();
-      if (now - lastWheelTsRef.current > AUTOLOAD_WHEEL_GESTURE_GAP_MS) {
-        wheelGestureRef.current += 1;
-      }
-      lastWheelTsRef.current = now;
-      if (
-        event.deltaY > AUTOLOAD_WHEEL_DELTA_THRESHOLD &&
-        now - armedAtRef.current > AUTOLOAD_ARM_DELAY_MS &&
-        wheelGestureRef.current > armedWheelGestureRef.current
-      ) {
-        trigger();
-      }
-    };
-
-    const onTouchStart = (event: TouchEvent) => {
-      touchGestureRef.current += 1;
-      touchStartYRef.current = event.touches[0]?.clientY ?? null;
-    };
-
-    const onTouchMove = (event: TouchEvent) => {
-      const startY = touchStartYRef.current;
-      const currentY = event.touches[0]?.clientY;
-      if (startY == null || currentY == null) {
-        return;
-      }
-      if (
-        startY - currentY > AUTOLOAD_TOUCH_DELTA_THRESHOLD &&
-        Date.now() - armedAtRef.current > AUTOLOAD_ARM_DELAY_MS &&
-        touchGestureRef.current > armedTouchGestureRef.current
-      ) {
-        trigger();
-      }
-    };
-
-    window.addEventListener("wheel", onWheel, { passive: true });
-    window.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchmove", onTouchMove, { passive: true });
-
-    return () => {
-      window.removeEventListener("wheel", onWheel);
-      window.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchmove", onTouchMove);
-    };
-  }, [autoLoadNextPage, awaitingGesture, fallbackPosts.length, hasMore, loadingInitial, loadingMore]);
-
-  useEffect(() => {
-    if (loadingInitial || loadingMore || !hasMore || fallbackPosts.length > 0) {
-      setAwaitingGesture(false);
-      rearmBlockedRef.current = false;
-    }
-  }, [fallbackPosts.length, hasMore, loadingInitial, loadingMore]);
-
-  useEffect(() => {
-    if (appendQueue.length === 0) {
-      return;
-    }
-    let cursor = 0;
-    const revealBatch = () => {
-      const batch = appendQueue.slice(cursor, cursor + APPEND_REVEAL_BATCH_SIZE);
-      if (batch.length === 0) {
-        return false;
-      }
-      setPosts((prev) => {
-        const existing = new Set(prev.map((item) => item.slug));
-        const merged = [...prev];
-        batch.forEach((item) => {
-          if (!existing.has(item.slug)) {
-            merged.push(item);
-            existing.add(item.slug);
-          }
-        });
-        return merged;
-      });
-      setRecentlyAppendedSlugs((prev) => {
-        const merged = new Set(prev);
-        batch.forEach((item) => merged.add(item.slug));
-        return Array.from(merged);
-      });
-      cursor += APPEND_REVEAL_BATCH_SIZE;
-      return true;
-    };
-
-    revealBatch();
-    const timer = window.setInterval(() => {
-      const hasRemaining = revealBatch();
-      if (hasRemaining) {
-        return;
-      }
-      window.clearInterval(timer);
-      setAppendQueue([]);
-      window.setTimeout(() => {
-        setLoadingMore(false);
-      }, 90);
-    }, APPEND_REVEAL_INTERVAL_MS);
-    return () => window.clearInterval(timer);
-  }, [appendQueue]);
+  const handleLoadMoreInView = useCallback(() => {
+    autoLoadNextPage();
+  }, [autoLoadNextPage]);
 
   useEffect(() => {
     if (recentlyAppendedSlugs.length === 0) {
@@ -386,7 +249,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
     }
     const timer = window.setTimeout(() => {
       setRecentlyAppendedSlugs([]);
-    }, 1000);
+    }, 1400);
     return () => window.clearTimeout(timer);
   }, [recentlyAppendedSlugs]);
 
@@ -441,6 +304,33 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
   const leadStory = visiblePosts[0];
   const secondaryStories = visiblePosts.slice(1, 5);
   const feedStories = visiblePosts.slice(5);
+  const storyListVariants = useMemo(
+    () => ({
+      hidden: {},
+      visible: {
+        transition: {
+          delayChildren: stagger(APPEND_STAGGER_SECONDS),
+        },
+      },
+    }),
+    [],
+  );
+  const storyItemVariants = useMemo(
+    () => ({
+      hidden: { opacity: 0, y: 20 },
+      visible: { opacity: 1, y: 0 },
+    }),
+    [],
+  );
+  const appendDelayBySlug = useMemo(() => {
+    if (recentlyAppendedSlugs.length === 0) {
+      return new Map<string, number>();
+    }
+    const resolveDelay = stagger(APPEND_STAGGER_SECONDS);
+    const total = recentlyAppendedSlugs.length;
+    return new Map(recentlyAppendedSlugs.map((slug, index) => [slug, resolveDelay(index, total)]));
+  }, [recentlyAppendedSlugs]);
+  const leadAppendDelay = leadStory ? appendDelayBySlug.get(leadStory.slug) : undefined;
 
   // Cult UI ToolbarExpandable steps
   const toolbarSteps = useMemo(
@@ -514,9 +404,9 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
       }}
     >
       <Helmet>
-        <title>{`${title} | 启云博客`}</title>
+        <title>{`${title} | Keyon Blog ｜ 云际漫游者`}</title>
         <meta content={categoryDescriptions[category]} name="description" />
-        <meta content={`${title} | 启云博客`} property="og:title" />
+        <meta content={`${title} | Keyon Blog ｜ 云际漫游者`} property="og:title" />
         <meta content={categoryDescriptions[category]} property="og:description" />
         <link href={`https://blog.oc.slgneon.cn/${category}`} rel="canonical" />
       </Helmet>
@@ -569,7 +459,6 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
       <ToolbarExpandable steps={toolbarSteps} />
 
       {loadingInitial && <p className="text-slate-500">加载中...</p>}
-      {error ? <p className="text-sm text-amber-700">实时数据暂不可用，已展示静态内容。</p> : null}
 
       <AnimatePresence mode="wait">
         {leadStory ? (
@@ -584,9 +473,14 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
             {/* Lead story */}
             <motion.article
               key={leadStory.slug}
-              initial={recentlyAppendedSlugs.includes(leadStory.slug) ? { opacity: 0, y: 22 } : false}
+              variants={storyItemVariants}
+              initial={leadAppendDelay == null ? false : "hidden"}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ type: "spring", stiffness: 150, damping: 24, mass: 1 }}
+              transition={
+                leadAppendDelay == null
+                  ? { type: "spring", stiffness: 150, damping: 24, mass: 1 }
+                  : { duration: 0.4, ease: "easeOut", delay: leadAppendDelay }
+              }
             >
               <CardSpotlight
                 className="group rounded-3xl border border-slate-200/60 bg-white/92 p-5 shadow-sm backdrop-blur transition duration-200 hover:-translate-y-1 hover:shadow-md"
@@ -627,16 +521,19 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
 
             {/* Secondary stories with ThreeDCard */}
             {secondaryStories.length > 0 ? (
-              <div className="grid gap-4 md:grid-cols-2">
+              <motion.div className="grid gap-4 md:grid-cols-2" variants={storyListVariants} initial="hidden" animate="visible">
                 {secondaryStories.map((post) => {
-                  const isRecentlyAppended = recentlyAppendedSlugs.includes(post.slug);
+                  const appendDelay = appendDelayBySlug.get(post.slug);
                   const coverSrc = resolvePostCover(post);
                   return (
                     <motion.article
                       key={post.slug}
-                      initial={isRecentlyAppended ? { opacity: 0, y: 16 } : false}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ type: "spring", stiffness: 160, damping: 24, mass: 1 }}
+                      variants={storyItemVariants}
+                      transition={
+                        appendDelay == null
+                          ? { duration: 0.4, ease: "easeOut" }
+                          : { duration: 0.4, ease: "easeOut", delay: appendDelay }
+                      }
                     >
                       <CardContainer containerClassName="w-full">
                         <CardBody className="w-full rounded-2xl border border-slate-200/60 bg-white/90 p-4 shadow-sm backdrop-blur">
@@ -679,22 +576,25 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
                     </motion.article>
                   );
                 })}
-              </div>
+              </motion.div>
             ) : null}
 
             {/* Feed stories with TracingBeam */}
             {feedStories.length > 0 ? (
               <TracingBeam>
-                <div className="space-y-4 pl-6 md:pl-12">
+                <motion.div className="space-y-4 pl-6 md:pl-12" variants={storyListVariants} initial="hidden" animate="visible">
                   {feedStories.map((post) => {
-                    const isRecentlyAppended = recentlyAppendedSlugs.includes(post.slug);
+                    const appendDelay = appendDelayBySlug.get(post.slug);
                     const coverSrc = resolvePostCover(post);
                     return (
                       <motion.article
                         key={post.slug}
-                        initial={isRecentlyAppended ? { opacity: 0, y: 16 } : false}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ type: "spring", stiffness: 160, damping: 24, mass: 1 }}
+                        variants={storyItemVariants}
+                        transition={
+                          appendDelay == null
+                            ? { duration: 0.4, ease: "easeOut" }
+                            : { duration: 0.4, ease: "easeOut", delay: appendDelay }
+                        }
                       >
                         <CardSpotlight
                           className="group rounded-2xl border border-slate-200/60 bg-white/90 p-4 shadow-sm backdrop-blur transition duration-200 hover:-translate-y-1 hover:shadow-md"
@@ -742,7 +642,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
                       </motion.article>
                     );
                   })}
-                </div>
+                </motion.div>
               </TracingBeam>
             ) : null}
           </motion.section>
@@ -750,26 +650,18 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
       </AnimatePresence>
 
       {!loadingInitial && !fallbackPosts.length && hasMore ? (
-        <div ref={loadMoreRef} className="flex flex-col items-center gap-2 pt-1">
-          {loadingMore ? (
-            <div className="flex items-center gap-2 text-xs text-slate-500">
-              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600" />
-              正在加载更多...
-            </div>
-          ) : awaitingGesture ? (
-            <div className="flex items-center gap-2 text-xs text-slate-500">
-              <motion.span
-                className="inline-block text-sm"
-                animate={{ y: [0, 4, 0] }}
-                transition={{ duration: 0.9, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-              >
-                ↓
-              </motion.span>
-              再下拉一下，松手后加载下一页
-            </div>
-          ) : (
-            <p className="text-xs text-slate-500">滑到底部后，再拖一下即可加载</p>
-          )}
+        <div className="flex flex-col items-center gap-2 pt-1">
+          <motion.div
+            className="relative flex h-10 w-10 items-center justify-center"
+            onViewportEnter={handleLoadMoreInView}
+            viewport={{ margin: "0px 0px 80px 0px" }}
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+          >
+            <span className="absolute inset-0 rounded-full border-[3px] border-slate-200" />
+            <span className="absolute inset-0 rounded-full border-[3px] border-transparent border-t-[#4f6ae5]" />
+          </motion.div>
+          <p className="text-xs text-slate-500">{loadingMore ? "正在加载更多..." : "继续下滑，自动加载更多"}</p>
           <p className="text-xs text-slate-500">
             已加载 {effectivePosts.length}/{totalCount} 篇
           </p>

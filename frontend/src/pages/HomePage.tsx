@@ -11,6 +11,7 @@ import { TimelineSection } from "../components/home/TimelineSection";
 import { TravelSection } from "../components/home/TravelSection";
 import { DualRadarSection } from "../components/revamp/home/DualRadarSection";
 import { FeaturedProjectsSection } from "../components/revamp/home/FeaturedProjectsSection";
+import { GameSection } from "../components/revamp/home/GameSection";
 import { HomeHero } from "../components/revamp/home/HomeHero";
 import { SocialMarquee } from "../components/revamp/home/SocialMarquee";
 import { TimeAreaSection } from "../components/revamp/home/TimeAreaSection";
@@ -112,7 +113,7 @@ function ArrowUpDockIcon() {
 }
 
 export function HomePage() {
-  const { data, loading, error } = useAsync(fetchHome, []);
+  const { data, loading } = useAsync(fetchHome, []);
   const payload = data ?? fallbackHomePayload;
   const timelineNodes = Array.isArray(payload.timeline) && payload.timeline.length > 0 ? payload.timeline : timelineFallbackForUx;
   const highlightStages =
@@ -130,17 +131,15 @@ export function HomePage() {
   return (
     <section className="space-y-20">
       <Helmet>
-        <title>启云博客</title>
+        <title>Keyon Blog ｜ 云际漫游者</title>
         <meta content="在云层之上，记录技术、效率与生活。" name="description" />
-        <meta content="启云博客" property="og:title" />
+        <meta content="Keyon Blog ｜ 云际漫游者" property="og:title" />
         <meta content="在云层之上，记录技术、效率与生活。" property="og:description" />
         <meta content="/og-cloudscape-card.png" property="og:image" />
         <link href="https://blog.oc.slgneon.cn/" rel="canonical" />
       </Helmet>
 
       {loading ? <p className="text-sm text-slate-500">首页数据加载中...</p> : null}
-      {!loading && error ? <p className="text-sm text-amber-700">实时数据暂不可用，已展示静态内容。</p> : null}
-
       {/* #1 Hero */}
       <HomeHero
         hero={payload.hero}
@@ -149,11 +148,18 @@ export function HomePage() {
       {/* #2 Achievement Marquee */}
       <SocialMarquee stages={highlightStages} />
 
-      {/* #3 Featured Projects + #4 Time */}
+      {/* #3 Featured Projects */}
       <FeaturedProjectsSection />
+
+      {/* #4 Game */}
+      <SectionCard id="game" fullWidth>
+        <GameSection />
+      </SectionCard>
+
+      {/* #5 Time */}
       <TimeAreaSection timeline={timelineNodes} timeSeries={payload.time_series} />
 
-      {/* #5 Timeline + Highlights */}
+      {/* #6 Timeline + Highlights */}
       <SectionCard id="timeline">
         <div className="grid gap-8 lg:grid-cols-2">
           <TimelineSection nodes={timelineNodes} />
@@ -161,7 +167,7 @@ export function HomePage() {
         </div>
       </SectionCard>
 
-      {/* #6 Travel Map + Radar */}
+      {/* #7 Travel Map + Radar */}
       <SectionCard id="map">
         <div className="grid gap-8 lg:grid-cols-2">
           <TravelSection travel={payload.travel} currentLocation={currentLocation} />
@@ -169,24 +175,24 @@ export function HomePage() {
         </div>
       </SectionCard>
 
-      {/* #7 Social Graph */}
+      {/* #8 Social Graph */}
       <SectionCard id="social">
         <div className="grid gap-8">
           <SocialGraphSection links={socialLinks} nodes={socialNodes} />
         </div>
       </SectionCard>
 
-      {/* #8 Photo Wall */}
+      {/* #9 Photo Wall */}
       <SectionCard id="gallery" fullWidth>
         <PhotoWallSection photos={photoWallItems} />
       </SectionCard>
 
-      {/* #9 Stats */}
+      {/* #10 Stats */}
       <SectionCard id="stats" fullWidth>
         <StatsSection stats={payload.stats} />
       </SectionCard>
 
-      {/* #10 Contact */}
+      {/* #11 Contact */}
       <SectionCard id="contact" fullWidth>
         <ContactSection contact={payload.contact ?? fallbackHomePayload.contact} variant="section" />
       </SectionCard>

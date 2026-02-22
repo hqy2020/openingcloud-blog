@@ -6,7 +6,7 @@ export function NotFoundPage() {
   return (
     <section className="space-y-4 rounded-xl border border-slate-200 bg-white p-8 text-center">
       <Helmet>
-        <title>页面未找到 | 启云博客</title>
+        <title>页面未找到 | Keyon Blog ｜ 云际漫游者</title>
       </Helmet>
       <div className="mx-auto max-w-xl overflow-hidden rounded-2xl border border-slate-200">
         <BlurRevealImage
