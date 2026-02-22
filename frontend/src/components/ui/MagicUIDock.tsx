@@ -1,5 +1,5 @@
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
-import { useRef, type ReactNode } from "react";
+import { Children, cloneElement, isValidElement, useRef, type ReactNode } from "react";
 import { cn } from "../../lib/utils";
 
 type DockProps = {
@@ -13,9 +13,9 @@ type DockIconProps = {
   children: ReactNode;
   className?: string;
   label?: string;
-  mouseX: ReturnType<typeof useMotionValue<number>>;
-  magnification: number;
-  distance: number;
+  mouseX?: ReturnType<typeof useMotionValue<number>>;
+  magnification?: number;
+  distance?: number;
   onClick?: () => void;
   href?: string;
   external?: boolean;
@@ -33,24 +33,17 @@ function Dock({ children, className, magnification = 60, distance = 140 }: DockP
       onMouseMove={(e) => mouseX.set(e.pageX)}
       onMouseLeave={() => mouseX.set(Infinity)}
     >
-      {Array.isArray(children)
-        ? children.map((child, i) => {
-            if (child && typeof child === "object" && "props" in child) {
-              return (
-                <DockIcon
-                  key={i}
-                  mouseX={mouseX}
-                  magnification={magnification}
-                  distance={distance}
-                  {...child.props}
-                >
-                  {child.props.children}
-                </DockIcon>
-              );
-            }
-            return child;
-          })
-        : children}
+      {Children.map(children, (child, i) => {
+        if (!isValidElement<DockIconProps>(child)) {
+          return child;
+        }
+        return cloneElement(child, {
+          key: child.key ?? i,
+          mouseX,
+          magnification,
+          distance,
+        });
+      })}
     </motion.div>
   );
 }
@@ -60,15 +53,17 @@ function DockIcon({
   className,
   label,
   mouseX,
-  magnification,
-  distance,
+  magnification = 60,
+  distance = 140,
   onClick,
   href,
   external,
 }: DockIconProps) {
+  const fallbackMouseX = useMotionValue(Infinity);
+  const resolvedMouseX = mouseX ?? fallbackMouseX;
   const ref = useRef<HTMLDivElement>(null);
 
-  const distanceCalc = useTransform(mouseX, (val: number) => {
+  const distanceCalc = useTransform(resolvedMouseX, (val: number) => {
     const bounds = ref.current?.getBoundingClientRect() ?? { x: 0, width: 0 };
     return val - bounds.x - bounds.width / 2;
   });

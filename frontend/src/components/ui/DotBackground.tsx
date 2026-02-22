@@ -1,4 +1,5 @@
 import { cn } from "../../lib/utils";
+import { CanvasFractalGrid } from "./CanvasFractalGrid";
 
 export function DotBackground({
   children,
@@ -8,28 +9,24 @@ export function DotBackground({
   className?: string;
 }) {
   return (
-    <div
-      className={cn(
-        "relative w-full bg-transparent",
-        className,
-      )}
-    >
-      <div
-        className="absolute inset-0"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle, rgba(0,0,0,0.05) 1px, transparent 1px)",
-          backgroundSize: "24px 24px",
-        }}
-      />
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse at 50% 50%, transparent 50%, rgba(248,249,252,0.6) 85%, rgba(248,249,252,0.8) 100%)",
-        }}
-      />
-      {children ? <div className="relative">{children}</div> : null}
+    <div className={cn("relative isolate w-full bg-transparent", className)}>
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <CanvasFractalGrid
+          dotSize={3.6}
+          dotSpacing={19}
+          dotOpacity={0.18}
+          waveIntensity={26}
+          waveRadius={220}
+          dotColor="rgba(79, 106, 229, 1)"
+          glowColor="rgba(79, 106, 229, 1)"
+          enableNoise={true}
+          noiseOpacity={0.04}
+          enableMouseGlow={true}
+          initialPerformance="medium"
+          enableGradient={false}
+        />
+      </div>
+      {children ? <div className="relative z-10">{children}</div> : null}
     </div>
   );
 }

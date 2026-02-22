@@ -16,7 +16,6 @@ import { SocialMarquee } from "../components/revamp/home/SocialMarquee";
 import { TimeAreaSection } from "../components/revamp/home/TimeAreaSection";
 import { SectionCard } from "../components/revamp/shared/SectionCard";
 import { Dock, DockIcon } from "../components/ui/MagicUIDock";
-import { useMotionValue } from "motion/react";
 import { useAsync } from "../hooks/useAsync";
 import { fallbackHomePayload } from "../data/fallback";
 import { currentLocation } from "../data/revamp/location";
@@ -86,10 +85,11 @@ function GithubDockIcon() {
   );
 }
 
-function MailDockIcon() {
+function ArticleDockIcon() {
   return (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 4.5h8.75L19.5 8.5v11H6.75V4.5Zm8.75 0v4h4" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9.25 12h7.5m-7.5 3h5.5" />
     </svg>
   );
 }
@@ -111,31 +111,6 @@ function ArrowUpDockIcon() {
   );
 }
 
-function ProjectsDockIcon() {
-  return (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 6.75h15M4.5 12h15M4.5 17.25h15" />
-    </svg>
-  );
-}
-
-function TimeDockIcon() {
-  return (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l3.5 2.2" />
-      <circle cx="12" cy="12" r="8.25" />
-    </svg>
-  );
-}
-
-function MapDockIcon() {
-  return (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M8 21V9m8 12V9m-12.5.8L8 6l8 3.8L20.5 6v12.2L16 22l-8-3.8-4.5 3.8V9.8Z" />
-    </svg>
-  );
-}
-
 export function HomePage() {
   const { data, loading, error } = useAsync(fetchHome, []);
   const payload = data ?? fallbackHomePayload;
@@ -151,8 +126,6 @@ export function HomePage() {
   const photoWallItems =
     Array.isArray(payload.photo_wall) && payload.photo_wall.length > 0 ? payload.photo_wall : photoWallFallbackForUx;
   const pinnedPosts: PinnedPost[] = Array.isArray(payload.pinned_posts) ? payload.pinned_posts : [];
-
-  const mouseX = useMotionValue(Infinity);
 
   return (
     <section className="space-y-20">
@@ -225,68 +198,29 @@ export function HomePage() {
       {/* Magic UI Dock — floating social bar at bottom */}
       <Dock magnification={60} distance={140}>
         <DockIcon
-          label="GitHub"
-          href="https://github.com/hqy2020"
-          external
-          mouseX={mouseX}
-          magnification={60}
-          distance={140}
+          label="回到开头"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
         >
-          <GithubDockIcon />
+          <ArrowUpDockIcon />
         </DockIcon>
         <DockIcon
-          label="邮箱"
-          href="mailto:hqy200091@163.com"
-          mouseX={mouseX}
-          magnification={60}
-          distance={140}
+          label="查看文章"
+          href="/tech"
         >
-          <MailDockIcon />
+          <ArticleDockIcon />
         </DockIcon>
         <DockIcon
-          label="后台"
+          label="后管系统"
           href="/admin/"
-          mouseX={mouseX}
-          magnification={60}
-          distance={140}
         >
           <AdminDockIcon />
         </DockIcon>
         <DockIcon
-          label="项目"
-          href="#projects"
-          mouseX={mouseX}
-          magnification={60}
-          distance={140}
+          label="GitHub 源代码"
+          href="https://github.com/hqy2020/openingcloud-blog"
+          external
         >
-          <ProjectsDockIcon />
-        </DockIcon>
-        <DockIcon
-          label="Time"
-          href="#time"
-          mouseX={mouseX}
-          magnification={60}
-          distance={140}
-        >
-          <TimeDockIcon />
-        </DockIcon>
-        <DockIcon
-          label="地图"
-          href="#map"
-          mouseX={mouseX}
-          magnification={60}
-          distance={140}
-        >
-          <MapDockIcon />
-        </DockIcon>
-        <DockIcon
-          label="回到顶部"
-          mouseX={mouseX}
-          magnification={60}
-          distance={140}
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        >
-          <ArrowUpDockIcon />
+          <GithubDockIcon />
         </DockIcon>
       </Dock>
     </section>
