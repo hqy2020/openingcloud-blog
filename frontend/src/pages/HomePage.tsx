@@ -196,7 +196,7 @@ export function HomePage() {
       )}
 
       {/* Magic UI Dock — floating social bar at bottom */}
-      <Dock magnification={60} distance={140}>
+      <Dock magnification={80} distance={150} draggable>
         <DockIcon
           label="回到开头"
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}

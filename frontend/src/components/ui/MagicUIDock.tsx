@@ -1,5 +1,12 @@
-import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
-import { Children, cloneElement, isValidElement, useRef, type ReactNode } from "react";
+import {
+  AnimatePresence,
+  motion,
+  type MotionValue,
+  useMotionValue,
+  useSpring,
+  useTransform,
+} from "motion/react";
+import { Children, cloneElement, isValidElement, useRef, useState, type ReactNode } from "react";
 import { cn } from "../../lib/utils";
 
 type DockProps = {
@@ -7,29 +14,50 @@ type DockProps = {
   className?: string;
   magnification?: number;
   distance?: number;
+  baseSize?: number;
+  iconBaseSize?: number;
+  iconMagnification?: number;
+  draggable?: boolean;
 };
 
 type DockIconProps = {
   children: ReactNode;
   className?: string;
   label?: string;
-  mouseX?: ReturnType<typeof useMotionValue<number>>;
+  mouseX?: MotionValue<number>;
   magnification?: number;
   distance?: number;
+  baseSize?: number;
+  iconBaseSize?: number;
+  iconMagnification?: number;
   onClick?: () => void;
   href?: string;
   external?: boolean;
 };
 
-function Dock({ children, className, magnification = 60, distance = 140 }: DockProps) {
+function Dock({
+  children,
+  className,
+  magnification = 80,
+  distance = 150,
+  baseSize = 40,
+  iconBaseSize = 20,
+  iconMagnification = 40,
+  draggable = true,
+}: DockProps) {
   const mouseX = useMotionValue(Infinity);
 
   return (
     <motion.div
+      drag={draggable}
+      dragMomentum={false}
+      dragElastic={0.12}
+      whileDrag={draggable ? { scale: 1.01, cursor: "grabbing" } : undefined}
       className={cn(
-        "fixed bottom-6 left-1/2 z-50 hidden -translate-x-1/2 items-end gap-3 rounded-2xl border border-slate-200/60 bg-white/80 px-4 py-3 shadow-sm backdrop-blur-xl md:flex",
+        "fixed bottom-6 left-1/2 z-50 hidden -translate-x-1/2 items-end gap-4 rounded-2xl border border-slate-200/70 bg-slate-50/90 px-4 pb-3 pt-2 shadow-[0_14px_34px_rgba(15,23,42,0.14)] backdrop-blur-xl md:flex",
         className,
       )}
+      style={{ cursor: draggable ? "grab" : "default" }}
       onMouseMove={(e) => mouseX.set(e.pageX)}
       onMouseLeave={() => mouseX.set(Infinity)}
     >
@@ -40,8 +68,11 @@ function Dock({ children, className, magnification = 60, distance = 140 }: DockP
         return cloneElement(child, {
           key: child.key ?? i,
           mouseX,
-          magnification,
-          distance,
+          magnification: child.props.magnification ?? magnification,
+          distance: child.props.distance ?? distance,
+          baseSize: child.props.baseSize ?? baseSize,
+          iconBaseSize: child.props.iconBaseSize ?? iconBaseSize,
+          iconMagnification: child.props.iconMagnification ?? iconMagnification,
         });
       })}
     </motion.div>
@@ -53,8 +84,11 @@ function DockIcon({
   className,
   label,
   mouseX,
-  magnification = 60,
-  distance = 140,
+  magnification = 80,
+  distance = 150,
+  baseSize = 40,
+  iconBaseSize = 20,
+  iconMagnification = 40,
   onClick,
   href,
   external,
@@ -62,48 +96,79 @@ function DockIcon({
   const fallbackMouseX = useMotionValue(Infinity);
   const resolvedMouseX = mouseX ?? fallbackMouseX;
   const ref = useRef<HTMLDivElement>(null);
+  const [hovered, setHovered] = useState(false);
 
   const distanceCalc = useTransform(resolvedMouseX, (val: number) => {
     const bounds = ref.current?.getBoundingClientRect() ?? { x: 0, width: 0 };
     return val - bounds.x - bounds.width / 2;
   });
 
-  const widthSync = useTransform(distanceCalc, [-distance, 0, distance], [40, magnification, 40]);
-  const width = useSpring(widthSync, { mass: 0.1, stiffness: 150, damping: 12 });
+  const widthSync = useTransform(distanceCalc, [-distance, 0, distance], [baseSize, magnification, baseSize]);
+  const heightSync = useTransform(distanceCalc, [-distance, 0, distance], [baseSize, magnification, baseSize]);
+  const widthIconSync = useTransform(distanceCalc, [-distance, 0, distance], [iconBaseSize, iconMagnification, iconBaseSize]);
+  const heightIconSync = useTransform(distanceCalc, [-distance, 0, distance], [iconBaseSize, iconMagnification, iconBaseSize]);
 
-  const content = (
+  const width = useSpring(widthSync, { mass: 0.1, stiffness: 150, damping: 12 });
+  const height = useSpring(heightSync, { mass: 0.1, stiffness: 150, damping: 12 });
+  const widthIcon = useSpring(widthIconSync, { mass: 0.1, stiffness: 150, damping: 12 });
+  const heightIcon = useSpring(heightIconSync, { mass: 0.1, stiffness: 150, damping: 12 });
+
+  const item = (
     <motion.div
       ref={ref}
-      style={{ width, height: width }}
+      style={{ width, height }}
       className={cn(
-        "group relative flex aspect-square items-center justify-center rounded-full bg-slate-100/80 text-slate-700 transition-colors hover:bg-slate-200/90",
+        "relative flex aspect-square items-center justify-center rounded-full bg-slate-200/85 text-slate-700",
         className,
       )}
-      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
-      {children}
-      {label ? (
-        <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-          {label}
-        </span>
-      ) : null}
+      <AnimatePresence>
+        {hovered && label ? (
+          <motion.div
+            initial={{ opacity: 0, y: 10, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: 2, x: "-50%" }}
+            className="pointer-events-none absolute -top-9 left-1/2 w-max rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs whitespace-pre text-slate-700"
+          >
+            {label}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+      <motion.div style={{ width: widthIcon, height: heightIcon }} className="flex items-center justify-center">
+        {children}
+      </motion.div>
     </motion.div>
   );
 
   if (href) {
     return (
       <a
+        aria-label={label}
+        title={label}
         href={href}
+        onClick={onClick}
         target={external ? "_blank" : undefined}
         rel={external ? "noopener noreferrer" : undefined}
         className="flex items-end"
       >
-        {content}
+        {item}
       </a>
     );
   }
 
-  return content;
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      className="flex items-end rounded-full border-0 bg-transparent p-0"
+    >
+      {item}
+    </button>
+  );
 }
 
 export { Dock, DockIcon };
