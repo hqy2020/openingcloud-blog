@@ -1,455 +1,153 @@
-import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { GrassManager, type GrassPatch } from "./GrassManager";
-import { PetSprite } from "./PetSprite";
-import type { PetAnim } from "./petSpriteAtlas";
+import { Environment, Grid, OrbitControls, Stage, useGLTF } from "@react-three/drei";
+import { Canvas, useFrame, type ThreeElements } from "@react-three/fiber";
+import { Bloom, EffectComposer, ToneMapping } from "@react-three/postprocessing";
+import { useReducedMotion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
+import * as THREE from "three";
+import type { GLTF } from "three-stdlib";
 
-type PetState = "at_home_idle" | "walking_to_grass" | "eating" | "returning_home";
-type PetFacing = "left" | "right";
+const MODEL_SRC = "/media/pet/s2wt_kamdo_industrial_divinities-transformed.glb";
 
-type PetPosition = {
-  x: number;
-  y: number;
+type KamdoGLTF = GLTF & {
+  nodes: {
+    body001: THREE.Mesh;
+    head001: THREE.Mesh;
+    stripe001: THREE.Mesh;
+  };
+  materials: {
+    Body: THREE.Material;
+    Head: THREE.Material;
+  };
 };
 
-const EAT_DURATION_MS = 1200;
-const CHAT_CYCLE_MS = 6000;
-const RETURN_HOME_DELAY_MS = 10_000;
-const START_SPEED_PX = 0.8;
-const MAX_SPEED_PX = 6.2;
-const ACCELERATION_PX = 0.24;
-const ARRIVAL_THRESHOLD_PX = 4;
-const HOME_ARRIVAL_THRESHOLD_PX = 8;
-// Keep the sheep's mouth anchored to the same world point regardless of facing direction.
-const PET_MOUTH_OFFSET_X_LEFT = 14;
-const PET_MOUTH_OFFSET_X_RIGHT = 50;
-const PET_MOUTH_OFFSET_Y = 30;
-const PET_GRASS_SRC = "/media/pet/grass-cutout.png";
-const PET_CLOUD_HOME_SRC = "/media/pet/clouds-home-clean.png";
-const PET_CHAT_LINES = [
-  "咩咩，我在云上等你喂草呀～",
-  "今天也要一起把博客养肥一点吗？",
-  "轻点一下地面，我就开吃啦！",
-  "我先在云上巡逻，等你的草信号。",
-  "咩～别让我饿太久，我会想你。",
-];
-const CLOUD_HOME_WIDTH = 168;
-const CLOUD_HOME_HEIGHT = 168;
-const CLOUD_HOME_RIGHT = 14;
-const CLOUD_HOME_BOTTOM = 10;
-const CLOUD_HOME_ANCHOR_X = 74;
-const CLOUD_HOME_ANCHOR_Y = 72;
-const INTERACTIVE_SELECTOR = [
-  "a",
-  "button",
-  "input",
-  "textarea",
-  "select",
-  "summary",
-  "[role='button']",
-  "[role='link']",
-  "[contenteditable='true']",
-].join(",");
-
-function createHomeAnchor(viewportWidth: number, viewportHeight: number): PetPosition {
-  const cloudLeft = viewportWidth - CLOUD_HOME_WIDTH - CLOUD_HOME_RIGHT;
-  const cloudTop = viewportHeight - CLOUD_HOME_HEIGHT - CLOUD_HOME_BOTTOM;
-  return {
-    x: Math.max(PET_MOUTH_OFFSET_X_RIGHT + 12, cloudLeft + CLOUD_HOME_ANCHOR_X),
-    y: Math.max(PET_MOUTH_OFFSET_Y + 16, cloudTop + CLOUD_HOME_ANCHOR_Y),
-  };
+function canUseWebGL() {
+  if (typeof document === "undefined") {
+    return false;
+  }
+  try {
+    const canvas = document.createElement("canvas");
+    return Boolean(canvas.getContext("webgl2") ?? canvas.getContext("webgl"));
+  } catch {
+    return false;
+  }
 }
 
-function isNearPosition(from: PetPosition, to: PetPosition, threshold = HOME_ARRIVAL_THRESHOLD_PX) {
-  return Math.hypot(from.x - to.x, from.y - to.y) <= threshold;
+function Kamdo(props: ThreeElements["group"]) {
+  const headRef = useRef<THREE.Group>(null);
+  const stripeRef = useRef<THREE.MeshBasicMaterial>(null);
+  const lightRef = useRef<THREE.PointLight>(null);
+  const { nodes, materials } = useGLTF(MODEL_SRC) as unknown as KamdoGLTF;
+
+  useFrame((state, delta) => {
+    const head = headRef.current;
+    const stripe = stripeRef.current;
+    const light = lightRef.current;
+    if (!head || !stripe || !light) {
+      return;
+    }
+
+    const t = (1 + Math.sin(state.clock.elapsedTime * 2)) / 2;
+    stripe.color.setRGB(2 + t * 20, 2, 20 + t * 50);
+    const targetY = state.pointer.x * (state.camera.position.z > 1 ? 1 : -1);
+    head.rotation.y = THREE.MathUtils.damp(head.rotation.y, targetY, 7.5, delta);
+    light.intensity = 1 + t * 4;
+  });
+
+  return (
+    <group {...props}>
+      <mesh castShadow receiveShadow geometry={nodes.body001.geometry} material={materials.Body} />
+      <group ref={headRef}>
+        <mesh castShadow receiveShadow geometry={nodes.head001.geometry} material={materials.Head} />
+        <mesh castShadow receiveShadow geometry={nodes.stripe001.geometry}>
+          <meshBasicMaterial ref={stripeRef} toneMapped={false} />
+          <pointLight ref={lightRef} color={[10, 2, 5]} distance={2.5} intensity={1} />
+        </mesh>
+      </group>
+    </group>
+  );
 }
 
-function findNearestPatch(position: PetPosition, patches: GrassPatch[], excludedId: string | null) {
-  return patches.reduce<GrassPatch | null>((nearest, patch) => {
-    if (excludedId && patch.id === excludedId) {
-      return nearest;
-    }
-    if (!nearest) {
-      return patch;
-    }
-    const nearestDistance = Math.hypot(nearest.x - position.x, nearest.y - position.y);
-    const currentDistance = Math.hypot(patch.x - position.x, patch.y - position.y);
-    return currentDistance < nearestDistance ? patch : nearest;
-  }, null);
+useGLTF.preload(MODEL_SRC);
+
+function FallbackCard() {
+  return (
+    <div className="flex h-full w-full items-center justify-center bg-slate-900 text-center text-[11px] text-slate-200">
+      <div className="space-y-1.5 px-4">
+        <p className="font-medium tracking-wide">3D PET</p>
+        <p className="text-slate-400">WebGL 不可用，已降级。</p>
+      </div>
+    </div>
+  );
 }
 
 export function BlogPetMachine() {
-  const initialHomeAnchor =
-    typeof window === "undefined"
-      ? createHomeAnchor(0, 0)
-      : createHomeAnchor(window.innerWidth, window.innerHeight);
-  const [enabled, setEnabled] = useState(() => {
-    if (typeof window === "undefined") {
-      return true;
-    }
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const lowMemory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
-    return !(media.matches || (typeof lowMemory === "number" && lowMemory <= 2));
-  });
-  const [petState, setPetState] = useState<PetState>("at_home_idle");
-  const [petFacing, setPetFacing] = useState<PetFacing>("left");
-  const [homeAnchor, setHomeAnchor] = useState<PetPosition>(initialHomeAnchor);
-  const homeAnchorRef = useRef<PetPosition>(initialHomeAnchor);
-  const [position, setPosition] = useState<PetPosition>(initialHomeAnchor);
-  const positionRef = useRef<PetPosition>(initialHomeAnchor);
-  const speedRef = useRef(0);
-  const [targetPatchId, setTargetPatchId] = useState<string | null>(null);
-  const [eatingPatchId, setEatingPatchId] = useState<string | null>(null);
-  const [grassPatches, setGrassPatches] = useState<GrassPatch[]>([]);
-  const [chatIndex, setChatIndex] = useState(0);
-  const grass = useMemo(() => new GrassManager(10, 200), []);
+  const reduceMotion = Boolean(useReducedMotion());
+  const [canRenderCanvas, setCanRenderCanvas] = useState(false);
 
   useEffect(() => {
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (typeof window === "undefined") {
+      return;
+    }
 
-    const onChange = () => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => {
       const lowMemory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
-      const shouldDisable = media.matches || (typeof lowMemory === "number" && lowMemory <= 2);
-      setEnabled(!shouldDisable);
+      const isLowMemory = typeof lowMemory === "number" && lowMemory <= 2;
+      setCanRenderCanvas(!media.matches && !isLowMemory && canUseWebGL());
     };
 
-    media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
   }, []);
 
-  useEffect(() => {
-    positionRef.current = position;
-  }, [position]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-    const placeHome = () => {
-      const previousHome = homeAnchorRef.current;
-      const nextHome = createHomeAnchor(window.innerWidth, window.innerHeight);
-      homeAnchorRef.current = nextHome;
-      setHomeAnchor(nextHome);
-      if (petState === "at_home_idle" && isNearPosition(positionRef.current, previousHome, HOME_ARRIVAL_THRESHOLD_PX + 6)) {
-        setPosition(nextHome);
-      }
-    };
-    placeHome();
-    window.addEventListener("resize", placeHome);
-    return () => window.removeEventListener("resize", placeHome);
-  }, [petState]);
-
-  useEffect(() => {
-    if (!enabled) {
-      const rafId = window.requestAnimationFrame(() => {
-        setGrassPatches([]);
-        setTargetPatchId(null);
-        setEatingPatchId(null);
-        setPetState("at_home_idle");
-        setPetFacing("left");
-        setPosition(homeAnchorRef.current);
-        speedRef.current = 0;
-      });
-      return () => window.cancelAnimationFrame(rafId);
-    }
-
-    const onClick = (event: MouseEvent) => {
-      const targetNode = event.target as Element | null;
-      if (targetNode?.closest(INTERACTIVE_SELECTOR)) {
-        return;
-      }
-
-      const planted = grass.plant(event.clientX, event.clientY);
-      if (!planted) {
-        return;
-      }
-
-      setGrassPatches([ ...grass.patches ]);
-      if ((petState === "at_home_idle" || petState === "returning_home") && !eatingPatchId) {
-        setPetFacing(planted.x >= positionRef.current.x ? "right" : "left");
-        setTargetPatchId(planted.id);
-        speedRef.current = 0;
-        setPetState("walking_to_grass");
-      }
-    };
-
-    window.addEventListener("click", onClick);
-    return () => window.removeEventListener("click", onClick);
-  }, [eatingPatchId, enabled, grass, petState]);
-
-  useEffect(() => {
-    if (!enabled || petState !== "at_home_idle" || grassPatches.length === 0 || eatingPatchId) {
-      return;
-    }
-    const nextPatch = findNearestPatch(positionRef.current, grassPatches, null);
-    if (!nextPatch) {
-      return;
-    }
-    const rafId = window.requestAnimationFrame(() => {
-      setPetFacing(nextPatch.x >= positionRef.current.x ? "right" : "left");
-      setTargetPatchId(nextPatch.id);
-      speedRef.current = 0;
-      setPetState("walking_to_grass");
-    });
-    return () => window.cancelAnimationFrame(rafId);
-  }, [eatingPatchId, enabled, grassPatches, petState]);
-
-  useEffect(() => {
-    if (!enabled || (petState !== "walking_to_grass" && petState !== "returning_home")) {
-      return;
-    }
-
-    const timer = window.setInterval(() => {
-      if (petState === "walking_to_grass") {
-        const activeTarget = findNearestPatch(positionRef.current, grass.patches, eatingPatchId);
-        if (!activeTarget) {
-          setTargetPatchId(null);
-          speedRef.current = 0;
-          setPetState("at_home_idle");
-          setPetFacing("left");
-          return;
-        }
-        if (targetPatchId !== activeTarget.id) {
-          setTargetPatchId(activeTarget.id);
-        }
-
-        setPosition((current) => {
-          const dx = activeTarget.x - current.x;
-          const dy = activeTarget.y - current.y;
-          const distance = Math.hypot(dx, dy);
-
-          if (Math.abs(dx) > 0.5) {
-            setPetFacing(dx > 0 ? "right" : "left");
-          }
-
-          speedRef.current = Math.min(MAX_SPEED_PX, Math.max(START_SPEED_PX, speedRef.current + ACCELERATION_PX));
-          const step = Math.min(distance, speedRef.current);
-
-          if (distance <= ARRIVAL_THRESHOLD_PX || step >= distance) {
-            speedRef.current = 0;
-            setPetState("eating");
-            setEatingPatchId(activeTarget.id);
-            return { x: activeTarget.x, y: activeTarget.y };
-          }
-
-          return {
-            x: current.x + (dx / distance) * step,
-            y: current.y + (dy / distance) * step,
-          };
-        });
-        return;
-      }
-
-      const homeTarget = homeAnchorRef.current;
-      if (petState === "returning_home") {
-        setTargetPatchId(null);
-      }
-
-      setPosition((current) => {
-        const dx = homeTarget.x - current.x;
-        const dy = homeTarget.y - current.y;
-        const distance = Math.hypot(dx, dy);
-
-        if (Math.abs(dx) > 0.5) {
-          setPetFacing(dx > 0 ? "right" : "left");
-        }
-
-        speedRef.current = Math.min(MAX_SPEED_PX, Math.max(START_SPEED_PX, speedRef.current + ACCELERATION_PX));
-        const step = Math.min(distance, speedRef.current);
-
-        if (distance <= ARRIVAL_THRESHOLD_PX || step >= distance) {
-          speedRef.current = 0;
-          setPetState("at_home_idle");
-          setEatingPatchId(null);
-          setPetFacing("left");
-          return { x: homeTarget.x, y: homeTarget.y };
-        }
-
-        return {
-          x: current.x + (dx / distance) * step,
-          y: current.y + (dy / distance) * step,
-        };
-      });
-    }, 16);
-
-    return () => window.clearInterval(timer);
-  }, [eatingPatchId, enabled, grass.patches, petState, targetPatchId]);
-
-  useEffect(() => {
-    if (!enabled || petState !== "eating" || !eatingPatchId) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      grass.removeById(eatingPatchId);
-      const remainingPatches = [ ...grass.patches ];
-      setGrassPatches(remainingPatches);
-      setEatingPatchId(null);
-      speedRef.current = 0;
-
-      if (remainingPatches.length > 0) {
-        const nextPatch = findNearestPatch(positionRef.current, remainingPatches, null);
-        if (nextPatch) {
-          setPetFacing(nextPatch.x >= positionRef.current.x ? "right" : "left");
-          setTargetPatchId(nextPatch.id);
-          setPetState("walking_to_grass");
-          return;
-        }
-      }
-
-      setTargetPatchId(null);
-      setPetState("at_home_idle");
-    }, EAT_DURATION_MS);
-
-    return () => window.clearTimeout(timer);
-  }, [eatingPatchId, enabled, grass, petState]);
-
-  useEffect(() => {
-    if (!enabled || grassPatches.length > 0 || petState === "walking_to_grass" || petState === "eating" || petState === "returning_home") {
-      return;
-    }
-
-    if (isNearPosition(positionRef.current, homeAnchorRef.current)) {
-      if (petState !== "at_home_idle") {
-        const rafId = window.requestAnimationFrame(() => {
-          setPetState("at_home_idle");
-        });
-        return () => window.cancelAnimationFrame(rafId);
-      }
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      if (grass.patches.length > 0) {
-        return;
-      }
-      const current = positionRef.current;
-      const home = homeAnchorRef.current;
-      if (isNearPosition(current, home)) {
-        setPosition(home);
-        setPetState("at_home_idle");
-        setPetFacing("left");
-        return;
-      }
-      setPetFacing(home.x >= current.x ? "right" : "left");
-      setTargetPatchId(null);
-      setEatingPatchId(null);
-      speedRef.current = 0;
-      setPetState("returning_home");
-    }, RETURN_HOME_DELAY_MS);
-
-    return () => window.clearTimeout(timer);
-  }, [enabled, grass.patches, grassPatches.length, petState]);
-
-  const showHomeBubble = petState === "at_home_idle" && grassPatches.length === 0 && isNearPosition(position, homeAnchor, HOME_ARRIVAL_THRESHOLD_PX + 2);
-
-  useEffect(() => {
-    if (!enabled || !showHomeBubble) {
-      return;
-    }
-    const timer = window.setInterval(() => {
-      setChatIndex((prev) => (prev + 1) % PET_CHAT_LINES.length);
-    }, CHAT_CYCLE_MS);
-    return () => window.clearInterval(timer);
-  }, [enabled, showHomeBubble]);
-
-  useEffect(() => {
-    if (!showHomeBubble) {
-      return;
-    }
-    const rafId = window.requestAnimationFrame(() => {
-      setChatIndex(0);
-    });
-    return () => window.cancelAnimationFrame(rafId);
-  }, [showHomeBubble]);
-
-  if (!enabled) {
+  if (reduceMotion) {
     return null;
   }
 
-  const cloudRenderX = homeAnchor.x - CLOUD_HOME_ANCHOR_X;
-  const cloudRenderY = homeAnchor.y - CLOUD_HOME_ANCHOR_Y;
-  const petRenderX = position.x - (petFacing === "right" ? PET_MOUTH_OFFSET_X_RIGHT : PET_MOUTH_OFFSET_X_LEFT);
-  const petRenderY = position.y - PET_MOUTH_OFFSET_Y;
-  const petAnimationState: PetAnim =
-    petState === "walking_to_grass" || petState === "returning_home"
-      ? "run"
-      : petState === "eating"
-        ? "eat"
-        : "idle";
-
   return (
-    <>
-      <div className="pointer-events-none fixed inset-0 z-40">
-        <AnimatePresence>
-          {grassPatches.map((patch) => {
-            const eating = patch.id === eatingPatchId;
-            return (
-              <motion.div
-                key={patch.id}
-                className="absolute h-8 w-14"
-                style={{ left: patch.x - 28, top: patch.y - 22, transformOrigin: "center bottom" }}
-                initial={{ scale: 0, y: 16, opacity: 0 }}
-                animate={
-                  eating
-                    ? { scale: [1, 0.5], y: [0, -8], opacity: [1, 0] }
-                    : { scale: 1, y: 0, opacity: 1, rotate: [-3, 3, -3] }
-                }
-                exit={{ scale: 0.35, y: -10, opacity: 0 }}
-                transition={
-                  eating
-                    ? { duration: 0.5, ease: "easeIn" }
-                    : { scale: { duration: 0.26, ease: "easeOut" }, y: { duration: 0.26, ease: "easeOut" }, opacity: { duration: 0.26, ease: "easeOut" }, rotate: { duration: 1.8, repeat: Infinity, ease: "easeInOut" } }
-                }
-              >
-                <img
-                  src={PET_GRASS_SRC}
-                  alt=""
-                  className="h-full w-full select-none object-fill [transform:scaleY(0.72)]"
-                  draggable={false}
-                />
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
-      </div>
-
-      <div className="pointer-events-none fixed left-0 top-0 z-40" style={{ transform: `translate(${cloudRenderX}px, ${cloudRenderY}px)` }}>
-        <motion.img
-          src={PET_CLOUD_HOME_SRC}
-          alt=""
-          className="h-[168px] w-[168px] select-none object-contain opacity-95"
-          draggable={false}
-          animate={{ y: [0, -2, 0] }}
-          transition={{ duration: 4.8, repeat: Infinity, ease: "easeInOut" }}
-        />
-      </div>
-
-      <div className="pointer-events-none fixed left-0 top-0 z-50" style={{ transform: `translate(${petRenderX}px, ${petRenderY}px)` }}>
-        <AnimatePresence mode="wait">
-          {showHomeBubble ? (
-            <motion.div
-              key={`pet-bubble-${chatIndex}`}
-              className="pointer-events-none absolute bottom-[56px] right-[6px] w-[220px]"
-              initial={{ opacity: 0, y: 8, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 6, scale: 0.98 }}
-              transition={{ duration: 0.24, ease: "easeOut" }}
-            >
-              <div className="relative rounded-2xl border border-slate-200/85 bg-white/95 px-3 py-2 text-xs text-slate-700 shadow-[0_8px_18px_rgba(15,23,42,0.08)]">
-                {PET_CHAT_LINES[chatIndex]}
-                <span className="absolute -bottom-1.5 right-8 h-3 w-3 rotate-45 border-b border-r border-slate-200/85 bg-white/95" />
-              </div>
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
-      </div>
-      <PetSprite
-        position={{ x: petRenderX, y: petRenderY }}
-        state={petAnimationState}
-        facing={petFacing}
-        ariaLabel={`pet-${petState}`}
-      />
-    </>
+    <div className="pointer-events-none fixed bottom-3 right-3 z-40 h-[220px] w-[min(88vw,420px)] overflow-hidden rounded-3xl border border-slate-200/50 bg-slate-950/90 shadow-[0_16px_40px_rgba(15,23,42,0.35)]">
+      {canRenderCanvas ? (
+        <Canvas flat shadows camera={{ position: [-15, 0, 10], fov: 25 }}>
+          <fog attach="fog" args={["black", 15, 22.5]} />
+          <Stage
+            adjustCamera={false}
+            environment="city"
+            intensity={0.5}
+            shadows={{ type: "accumulative", bias: -0.001, intensity: Math.PI }}
+          >
+            <Kamdo rotation={[0, Math.PI, 0]} />
+          </Stage>
+          <Grid
+            cellSize={0.6}
+            cellThickness={0.6}
+            fadeDistance={30}
+            infiniteGrid
+            position={[0, -1.85, 0]}
+            renderOrder={-1}
+            sectionColor="#7f7fff"
+            sectionSize={3.3}
+            sectionThickness={1.5}
+          />
+          <OrbitControls
+            autoRotate
+            autoRotateSpeed={0.05}
+            enablePan={false}
+            enableZoom={false}
+            makeDefault
+            maxPolarAngle={Math.PI / 2}
+            minPolarAngle={Math.PI / 2}
+          />
+          <EffectComposer enableNormalPass={false}>
+            <Bloom luminanceThreshold={2} mipmapBlur />
+            <ToneMapping />
+          </EffectComposer>
+          <Environment background blur={0.8} preset="sunset" />
+        </Canvas>
+      ) : (
+        <FallbackCard />
+      )}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-white/10 to-transparent" />
+    </div>
   );
 }

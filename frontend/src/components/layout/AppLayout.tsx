@@ -1,77 +1,29 @@
 import { motion } from "motion/react";
 import type { CSSProperties } from "react";
 import { useState } from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import type { HomePayload } from "../../api/home";
-import { useTheme } from "../../app/theme";
 import { usePageVisitTracker } from "../../hooks/usePageVisitTracker";
-import { useSiteAudio } from "../../hooks/useSiteAudio";
 import { resolveAccentByPath } from "../../theme/categoryVisuals";
 import { ContactSection } from "../home/ContactSection";
 import { BlogPetMachine } from "../pet/BlogPetMachine";
 import { BarrageCommentsSidebar } from "./BarrageCommentsSidebar";
 import { GlobalSloganTicker } from "./GlobalSloganTicker";
 import { DotBackground } from "../ui/DotBackground";
+import { MultiFollowCursor } from "../ui/MultiFollowCursor";
 
-const navLinks = [
-  { to: "/tech", label: "技术" },
-  { to: "/learning", label: "效率" },
-  { to: "/life", label: "生活" },
-];
-
-const homeAnchors = [
-  { href: "#hero", label: "首页" },
-  { href: "#achievements", label: "成就" },
-  { href: "#projects", label: "项目" },
-  { href: "#time", label: "Time" },
-  { href: "#map", label: "地图" },
-  { href: "#radar", label: "雷达" },
-  { href: "#timeline", label: "经历" },
-  { href: "#stats", label: "数据" },
-  { href: "#contact", label: "联系" },
+const headerTabs = [
+  { to: "/tech", label: "文章" },
+  { to: "/#achievements", label: "高光时刻", nativeAnchor: true },
+  { to: "/#projects", label: "代码", nativeAnchor: true },
+  { to: "/#timeline", label: "人生旅程", nativeAnchor: true },
+  { to: "/life", label: "愿望清单" },
 ];
 
 const footerContact: HomePayload["contact"] = {
   email: "hqy200091@163.com",
   github: "https://github.com/hqy2020",
 };
-
-function AudioToggleIcon({ enabled, playing }: { enabled: boolean; playing: boolean }) {
-  if (!enabled) {
-    return (
-      <svg aria-hidden="true" className="h-[1.1rem] w-[1.1rem]" fill="none" viewBox="0 0 24 24">
-        <path
-          d="M14.8 6.1a8.5 8.5 0 0 1 0 11.8M17.8 3.2a12.7 12.7 0 0 1 0 17.6M10.3 8.4l-2.7 2.3H5.2v2.6h2.4l2.7 2.3V8.4Z"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="1.8"
-        />
-        <path d="m4.5 4.5 15 15" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
-      </svg>
-    );
-  }
-
-  return (
-    <svg aria-hidden="true" className="h-[1.1rem] w-[1.1rem]" fill="none" viewBox="0 0 24 24">
-      <path
-        d="M10.3 8.4l-2.7 2.3H5.2v2.6h2.4l2.7 2.3V8.4Zm4.5-2.3a8.5 8.5 0 0 1 0 11.8"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.8"
-      />
-      {playing ? (
-        <path
-          d="M17.8 3.2a12.7 12.7 0 0 1 0 17.6"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeWidth="1.8"
-        />
-      ) : null}
-    </svg>
-  );
-}
 
 function AdminEntryIcon() {
   return (
@@ -90,10 +42,18 @@ function GithubIcon() {
   );
 }
 
-function MailIcon() {
+function XiaohongshuIcon() {
   return (
-    <svg aria-hidden="true" className="h-[1.1rem] w-[1.1rem]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+    <svg aria-hidden="true" className="h-[1.1rem] w-[1.1rem]" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M22.405 9.879c.002.016.01.02.07.019h.725a.797.797 0 0 0 .78-.972.794.794 0 0 0-.884-.618.795.795 0 0 0-.692.794c0 .101-.002.666.001.777zm-11.509 4.808c-.203.001-1.353.004-1.685.003a2.528 2.528 0 0 1-.766-.126.025.025 0 0 0-.03.014L7.7 16.127a.025.025 0 0 0 .01.032c.111.06.336.124.495.124.66.01 1.32.002 1.981 0 .01 0 .02-.006.023-.015l.712-1.545a.025.025 0 0 0-.024-.036zM.477 9.91c-.071 0-.076.002-.076.01a.834.834 0 0 0-.01.08c-.027.397-.038.495-.234 3.06-.012.24-.034.389-.135.607-.026.057-.033.042.003.112.046.092.681 1.523.787 1.74.008.015.011.02.017.02.008 0 .033-.026.047-.044.147-.187.268-.391.371-.606.306-.635.44-1.325.486-1.706.014-.11.021-.22.03-.33l.204-2.616.022-.293c.003-.029 0-.033-.03-.034zm7.203 3.757a1.427 1.427 0 0 1-.135-.607c-.004-.084-.031-.39-.235-3.06a.443.443 0 0 0-.01-.082c-.004-.011-.052-.008-.076-.008h-1.48c-.03.001-.034.005-.03.034l.021.293c.076.982.153 1.964.233 2.946.05.4.186 1.085.487 1.706.103.215.223.419.37.606.015.018.037.051.048.049.02-.003.742-1.642.804-1.765.036-.07.03-.055.003-.112zm3.861-.913h-.872a.126.126 0 0 1-.116-.178l1.178-2.625a.025.025 0 0 0-.023-.035l-1.318-.003a.148.148 0 0 1-.135-.21l.876-1.954a.025.025 0 0 0-.023-.035h-1.56c-.01 0-.02.006-.024.015l-.926 2.068c-.085.169-.314.634-.399.938a.534.534 0 0 0-.02.191.46.46 0 0 0 .23.378.981.981 0 0 0 .46.119h.59c.041 0-.688 1.482-.834 1.972a.53.53 0 0 0-.023.172.465.465 0 0 0 .23.398c.15.092.342.12.475.12l1.66-.001c.01 0 .02-.006.023-.015l.575-1.28a.025.025 0 0 0-.024-.035zm-6.93-4.937H3.1a.032.032 0 0 0-.034.033c0 1.048-.01 2.795-.01 6.829 0 .288-.269.262-.28.262h-.74c-.04.001-.044.004-.04.047.001.037.465 1.064.555 1.263.01.02.03.033.051.033.157.003.767.009.938-.014.153-.02.3-.06.438-.132.3-.156.49-.419.595-.765.052-.172.075-.353.075-.533.002-2.33 0-4.66-.007-6.991a.032.032 0 0 0-.032-.032zm11.784 6.896c0-.014-.01-.021-.024-.022h-1.465c-.048-.001-.049-.002-.05-.049v-4.66c0-.072-.005-.07.07-.07h.863c.08 0 .075.004.075-.074V8.393c0-.082.006-.076-.08-.076h-3.5c-.064 0-.075-.006-.075.073v1.445c0 .083-.006.077.08.077h.854c.075 0 .07-.004.07.07v4.624c0 .095.008.084-.085.084-.37 0-1.11-.002-1.304 0-.048.001-.06.03-.06.03l-.697 1.519s-.014.025-.008.036c.006.01.013.008.058.008 1.748.003 3.495.002 5.243.002.03-.001.034-.006.035-.033v-1.539zm4.177-3.43c0 .013-.007.023-.02.024-.346.006-.692.004-1.037.004-.014-.002-.022-.01-.022-.024-.005-.434-.007-.869-.01-1.303 0-.072-.006-.071.07-.07l.733-.003c.041 0 .081.002.12.015.093.025.16.107.165.204.006.431.002 1.153.001 1.153zm2.67.244a1.953 1.953 0 0 0-.883-.222h-.18c-.04-.001-.04-.003-.042-.04V10.21c0-.132-.007-.263-.025-.394a1.823 1.823 0 0 0-.153-.53 1.533 1.533 0 0 0-.677-.71 2.167 2.167 0 0 0-1-.258c-.153-.003-.567 0-.72 0-.07 0-.068.004-.068-.065V7.76c0-.031-.01-.041-.046-.039H17.93s-.016 0-.023.007c-.006.006-.008.012-.008.023v.546c-.008.036-.057.015-.082.022h-.95c-.022.002-.028.008-.03.032v1.481c0 .09-.004.082.082.082h.913c.082 0 .072.128.072.128V11.19s.003.117-.06.117h-1.482c-.068 0-.06.082-.06.082v1.445s-.01.068.064.068h1.457c.082 0 .076-.006.076.079v3.225c0 .088-.007.081.082.081h1.43c.09 0 .082.007.082-.08v-3.27c0-.029.006-.035.033-.035l2.323-.003c.098 0 .191.02.28.061a.46.46 0 0 1 .274.407c.008.395.003.79.003 1.185 0 .259-.107.367-.33.367h-1.218c-.023.002-.029.008-.028.033.184.437.374.871.57 1.303a.045.045 0 0 0 .04.026c.17.005.34.002.51.003.15-.002.517.004.666-.01a2.03 2.03 0 0 0 .408-.075c.59-.18.975-.698.976-1.313v-1.981c0-.128-.01-.254-.034-.38 0 .078-.029-.641-.724-.998z" />
+    </svg>
+  );
+}
+
+function ZhihuIcon() {
+  return (
+    <svg aria-hidden="true" className="h-[1.1rem] w-[1.1rem]" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M5.721 0C2.251 0 0 2.25 0 5.719V18.28C0 21.751 2.252 24 5.721 24h12.56C21.751 24 24 21.75 24 18.281V5.72C24 2.249 21.75 0 18.281 0zm1.964 4.078c-.271.73-.5 1.434-.68 2.11h4.587c.545-.006.445 1.168.445 1.171H9.384a58.104 58.104 0 01-.112 3.797h2.712c.388.023.393 1.251.393 1.266H9.183a9.223 9.223 0 01-.408 2.102l.757-.604c.452.456 1.512 1.712 1.906 2.177.473.681.063 2.081.063 2.081l-2.794-3.382c-.653 2.518-1.845 3.607-1.845 3.607-.523.468-1.58.82-2.64.516 2.218-1.73 3.44-3.917 3.667-6.497H4.491c0-.015.197-1.243.806-1.266h2.71c.024-.32.086-3.254.086-3.797H6.598c-.136.406-.158.447-.268.753-.594 1.095-1.603 1.122-1.907 1.155.906-1.821 1.416-3.6 1.591-4.064.425-1.124 1.671-1.125 1.671-1.125zM13.078 6h6.377v11.33h-2.573l-2.184 1.373-.401-1.373h-1.219zm1.313 1.219v8.86h.623l.263.937 1.455-.938h1.456v-8.86z" />
     </svg>
   );
 }
@@ -115,87 +75,62 @@ function CloseIcon() {
 }
 
 export function AppLayout() {
-  const { theme } = useTheme();
   const location = useLocation();
   usePageVisitTracker();
 
   const isHomeRoute = location.pathname === "/";
-  const { enabled: audioEnabled, playing: audioPlaying, toggleEnabled: toggleAudio, ready: audioReady } = useSiteAudio({
-    theme,
-    homeRouteActive: isHomeRoute,
-  });
-
   const visual = resolveAccentByPath(location.pathname);
-  const logoSrc = "/brand/logo-icon-ink.png";
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const headerStyle: CSSProperties = {
-    background: "rgba(255,255,255,0.8)",
+    background: "rgba(255,255,255,0.9)",
   };
-
-  const currentLinks = isHomeRoute ? homeAnchors : navLinks;
 
   return (
     <DotBackground className="min-h-screen text-slate-800">
-      <header className="sticky top-0 z-30 border-b border-slate-200/60 backdrop-blur-xl" style={headerStyle}>
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-2">
-          {/* Left: Logo + site name */}
-          <NavLink aria-label="返回首页" className="inline-flex items-center gap-2.5" title="首页" to="/">
-            <img
-              alt="启云博客"
-              className="h-10 w-10 select-none rounded-full object-contain"
-              src={logoSrc}
-            />
-            <span className="hidden text-base font-semibold tracking-tight text-slate-800 sm:inline">
-              openingClouds
-            </span>
-          </NavLink>
+      <header className="sticky top-0 z-30 border-b border-slate-200/80 backdrop-blur-xl" style={headerStyle}>
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-2.5">
+          <div className="flex min-w-0 items-center gap-4">
+            <NavLink
+              aria-label="返回首页"
+              className="inline-flex shrink-0 items-center text-3xl font-semibold tracking-tight text-slate-700 sm:text-[2.45rem]"
+              title="首页"
+              to="/"
+            >
+              OpeningClouds
+            </NavLink>
 
-          {/* Center: Navigation links (desktop) */}
-          <nav className="hidden items-center gap-1 md:flex">
-            {currentLinks.map((item) => {
-              const isAnchor = "href" in item;
-              if (isAnchor) {
-                return (
-                  <a
-                    key={item.href}
-                    href={item.href}
-                    className="rounded-full px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-800"
-                  >
-                    {item.label}
-                  </a>
-                );
-              }
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className="rounded-full px-3 py-1.5 text-sm font-medium transition"
-                >
-                  {({ isActive }) => (
-                    <span className="relative">
-                      {isActive ? (
-                        <motion.span
-                          layoutId="nav-pill"
-                          className="absolute inset-0 -mx-1 -my-0.5 rounded-full bg-slate-100"
-                          transition={{ type: "spring", stiffness: 420, damping: 32 }}
-                        />
-                      ) : null}
-                      <span
-                        className={`relative ${isActive ? "text-slate-800" : "text-slate-600 hover:text-slate-800"}`}
-                      >
-                        {item.label}
-                      </span>
-                    </span>
+            <span className="hidden h-7 w-px bg-slate-300/90 md:block" />
+
+            <nav className="hidden items-center md:flex">
+              {headerTabs.map((item, index) => (
+                <div key={item.label} className="flex items-center">
+                  {item.nativeAnchor ? (
+                    <a
+                      href={item.to}
+                      className="px-4 py-1 text-xl font-medium text-slate-600 transition hover:text-slate-900"
+                    >
+                      {item.label}
+                    </a>
+                  ) : (
+                    <Link
+                      to={item.to}
+                      className="px-4 py-1 text-xl font-medium text-slate-600 transition hover:text-slate-900"
+                    >
+                      {item.label}
+                    </Link>
                   )}
-                </NavLink>
-              );
-            })}
-          </nav>
+                  {index < headerTabs.length - 1 ? (
+                    <span className="mx-1 h-5 w-px bg-slate-300/80" />
+                  ) : null}
+                </div>
+              ))}
+            </nav>
+          </div>
 
-          {/* Right: Social icons + admin + audio + mobile menu */}
           <div className="flex items-center gap-1.5">
+            <span className="hidden h-6 w-px bg-slate-300/80 sm:block" />
             <a
               href="https://github.com/hqy2020"
               target="_blank"
@@ -208,12 +143,25 @@ export function AppLayout() {
             </a>
 
             <a
-              href="mailto:hqy200091@163.com"
-              aria-label="邮箱"
-              title="邮箱"
+              href="https://xhslink.com/m/7jfSehmMT7r"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="小红书"
+              title="小红书"
               className="hidden h-8 w-8 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100 hover:text-slate-800 sm:inline-flex"
             >
-              <MailIcon />
+              <XiaohongshuIcon />
+            </a>
+
+            <a
+              href="https://www.zhihu.com/people/hu-qi-yun-1"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="知乎"
+              title="知乎"
+              className="hidden h-8 w-8 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100 hover:text-slate-800 sm:inline-flex"
+            >
+              <ZhihuIcon />
             </a>
 
             <a
@@ -224,21 +172,6 @@ export function AppLayout() {
             >
               <AdminEntryIcon />
             </a>
-
-            <button
-              aria-label={audioEnabled ? "关闭背景音乐" : "开启背景音乐"}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-slate-100"
-              disabled={!audioReady}
-              onClick={toggleAudio}
-              style={{
-                color: audioEnabled ? "#0F766E" : "#64748B",
-                opacity: audioReady ? 1 : 0.72,
-              }}
-              title={audioEnabled ? "背景音乐已开启" : "背景音乐已关闭"}
-              type="button"
-            >
-              <AudioToggleIcon enabled={audioEnabled} playing={audioPlaying} />
-            </button>
 
             {/* Mobile hamburger */}
             <button
@@ -261,31 +194,27 @@ export function AppLayout() {
             className="border-t border-slate-200/50 bg-white/95 backdrop-blur-xl md:hidden"
           >
             <div className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-3">
-              {currentLinks.map((item) => {
-                const isAnchor = "href" in item;
-                if (isAnchor) {
-                  return (
-                    <a
-                      key={item.href}
-                      href={item.href}
-                      className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      {item.label}
-                    </a>
-                  );
-                }
-                return (
-                  <NavLink
-                    key={item.to}
+              {headerTabs.map((item) =>
+                item.nativeAnchor ? (
+                  <a
+                    key={item.label}
+                    href={item.to}
+                    className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {item.label}
+                  </a>
+                ) : (
+                  <Link
+                    key={item.label}
                     to={item.to}
                     className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {item.label}
-                  </NavLink>
-                );
-              })}
+                  </Link>
+                ),
+              )}
               <div className="flex items-center gap-2 border-t border-slate-100 pt-2 sm:hidden">
                 <a
                   href="https://github.com/hqy2020"
@@ -296,10 +225,26 @@ export function AppLayout() {
                   <GithubIcon />
                 </a>
                 <a
-                  href="mailto:hqy200091@163.com"
+                  href="https://xhslink.com/m/7jfSehmMT7r"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100"
                 >
-                  <MailIcon />
+                  <XiaohongshuIcon />
+                </a>
+                <a
+                  href="https://www.zhihu.com/people/hu-qi-yun-1"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100"
+                >
+                  <ZhihuIcon />
+                </a>
+                <a
+                  href="/admin/"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100"
+                >
+                  <AdminEntryIcon />
                 </a>
               </div>
             </div>
@@ -316,12 +261,13 @@ export function AppLayout() {
       <footer className="mt-12 w-full border-t border-slate-200/90 text-slate-500">
         <div className="mx-auto w-full max-w-6xl px-4 pb-10 pt-4 text-sm">
           <ContactSection contact={footerContact} variant="footer" />
-          <p className="mt-4 text-xs">&copy; {new Date().getFullYear()} openingClouds</p>
+          <p className="mt-4 text-xs">&copy; {new Date().getFullYear()} OpeningClouds</p>
         </div>
       </footer>
 
       <BarrageCommentsSidebar />
       <BlogPetMachine />
+      <MultiFollowCursor />
     </DotBackground>
   );
 }

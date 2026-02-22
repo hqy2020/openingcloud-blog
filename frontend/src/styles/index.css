@@ -256,3 +256,10 @@ html {
     transition: none;
   }
 }
+
+@media (hover: hover) and (pointer: fine) {
+  .cursor-multifollow-enabled,
+  .cursor-multifollow-enabled * {
+    cursor: none !important;
+  }
+}
