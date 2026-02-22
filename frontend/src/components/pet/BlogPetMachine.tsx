@@ -1,4 +1,4 @@
-import { Environment, Grid, OrbitControls, Stage, useGLTF } from "@react-three/drei";
+import { Environment, OrbitControls, Stage, useGLTF } from "@react-three/drei";
 import { Canvas, useFrame, type ThreeElements } from "@react-three/fiber";
 import { Bloom, EffectComposer, ToneMapping } from "@react-three/postprocessing";
 import { useReducedMotion } from "motion/react";
@@ -144,17 +144,6 @@ export function BlogPetMachine() {
         >
           <Kamdo pointerRef={pointerRef} rotation={[0, Math.PI, 0]} />
         </Stage>
-        <Grid
-          cellSize={0.6}
-          cellThickness={0.6}
-          fadeDistance={30}
-          infiniteGrid
-          position={[0, -1.85, 0]}
-          renderOrder={-1}
-          sectionColor="#7f7fff"
-          sectionSize={3.3}
-          sectionThickness={1.5}
-        />
         <OrbitControls
           autoRotate
           autoRotateSpeed={0.05}
