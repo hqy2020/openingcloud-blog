@@ -2,7 +2,7 @@ import { Environment, Grid, OrbitControls, Stage, useGLTF } from "@react-three/d
 import { Canvas, useFrame, type ThreeElements } from "@react-three/fiber";
 import { Bloom, EffectComposer, ToneMapping } from "@react-three/postprocessing";
 import { useReducedMotion } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MutableRefObject } from "react";
 import * as THREE from "three";
 import type { GLTF } from "three-stdlib";
 
@@ -20,6 +20,15 @@ type KamdoGLTF = GLTF & {
   };
 };
 
+type PointerState = {
+  x: number;
+  y: number;
+};
+
+type KamdoProps = ThreeElements["group"] & {
+  pointerRef: MutableRefObject<PointerState>;
+};
+
 function canUseWebGL() {
   if (typeof document === "undefined") {
     return false;
@@ -32,7 +41,7 @@ function canUseWebGL() {
   }
 }
 
-function Kamdo(props: ThreeElements["group"]) {
+function Kamdo({ pointerRef, ...props }: KamdoProps) {
   const headRef = useRef<THREE.Group>(null);
   const stripeRef = useRef<THREE.MeshBasicMaterial>(null);
   const lightRef = useRef<THREE.PointLight>(null);
@@ -48,7 +57,10 @@ function Kamdo(props: ThreeElements["group"]) {
 
     const t = (1 + Math.sin(state.clock.elapsedTime * 2)) / 2;
     stripe.color.setRGB(2 + t * 20, 2, 20 + t * 50);
-    const targetY = state.pointer.x * (state.camera.position.z > 1 ? 1 : -1);
+    const worldPointer = pointerRef.current;
+    const targetY = worldPointer.x * (state.camera.position.z > 1 ? 1 : -1);
+    const targetX = THREE.MathUtils.clamp(-worldPointer.y * 0.35, -0.35, 0.35);
+    head.rotation.x = THREE.MathUtils.damp(head.rotation.x, targetX, 7.5, delta);
     head.rotation.y = THREE.MathUtils.damp(head.rotation.y, targetY, 7.5, delta);
     light.intensity = 1 + t * 4;
   });
@@ -69,20 +81,10 @@ function Kamdo(props: ThreeElements["group"]) {
 
 useGLTF.preload(MODEL_SRC);
 
-function FallbackCard() {
-  return (
-    <div className="flex h-full w-full items-center justify-center bg-slate-900 text-center text-[11px] text-slate-200">
-      <div className="space-y-1.5 px-4">
-        <p className="font-medium tracking-wide">3D PET</p>
-        <p className="text-slate-400">WebGL 不可用，已降级。</p>
-      </div>
-    </div>
-  );
-}
-
 export function BlogPetMachine() {
   const reduceMotion = Boolean(useReducedMotion());
   const [canRenderCanvas, setCanRenderCanvas] = useState(false);
+  const pointerRef = useRef<PointerState>({ x: 0, y: 0 });
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -101,53 +103,73 @@ export function BlogPetMachine() {
     return () => media.removeEventListener("change", sync);
   }, []);
 
-  if (reduceMotion) {
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const onPointerMove = (event: PointerEvent) => {
+      const width = Math.max(window.innerWidth, 1);
+      const height = Math.max(window.innerHeight, 1);
+      pointerRef.current.x = THREE.MathUtils.clamp((event.clientX / width) * 2 - 1, -1, 1);
+      pointerRef.current.y = THREE.MathUtils.clamp((event.clientY / height) * 2 - 1, -1, 1);
+    };
+
+    const resetPointer = () => {
+      pointerRef.current.x = 0;
+      pointerRef.current.y = 0;
+    };
+
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("blur", resetPointer);
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("blur", resetPointer);
+    };
+  }, []);
+
+  if (reduceMotion || !canRenderCanvas) {
     return null;
   }
 
   return (
-    <div className="pointer-events-none fixed bottom-3 right-3 z-40 h-[220px] w-[min(88vw,420px)] overflow-hidden rounded-3xl border border-slate-200/50 bg-slate-950/90 shadow-[0_16px_40px_rgba(15,23,42,0.35)]">
-      {canRenderCanvas ? (
-        <Canvas flat shadows camera={{ position: [-15, 0, 10], fov: 25 }}>
-          <fog attach="fog" args={["black", 15, 22.5]} />
-          <Stage
-            adjustCamera={false}
-            environment="city"
-            intensity={0.5}
-            shadows={{ type: "accumulative", bias: -0.001, intensity: Math.PI }}
-          >
-            <Kamdo rotation={[0, Math.PI, 0]} />
-          </Stage>
-          <Grid
-            cellSize={0.6}
-            cellThickness={0.6}
-            fadeDistance={30}
-            infiniteGrid
-            position={[0, -1.85, 0]}
-            renderOrder={-1}
-            sectionColor="#7f7fff"
-            sectionSize={3.3}
-            sectionThickness={1.5}
-          />
-          <OrbitControls
-            autoRotate
-            autoRotateSpeed={0.05}
-            enablePan={false}
-            enableZoom={false}
-            makeDefault
-            maxPolarAngle={Math.PI / 2}
-            minPolarAngle={Math.PI / 2}
-          />
-          <EffectComposer enableNormalPass={false}>
-            <Bloom luminanceThreshold={2} mipmapBlur />
-            <ToneMapping />
-          </EffectComposer>
-          <Environment background blur={0.8} preset="sunset" />
-        </Canvas>
-      ) : (
-        <FallbackCard />
-      )}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-white/10 to-transparent" />
+    <div className="pointer-events-none fixed bottom-0 right-0 z-40 h-[220px] w-[min(88vw,420px)]">
+      <Canvas flat shadows camera={{ position: [-15, 0, 10], fov: 25 }} gl={{ alpha: true }} style={{ background: "transparent" }}>
+        <fog attach="fog" args={["black", 15, 22.5]} />
+        <Stage
+          adjustCamera={false}
+          environment="city"
+          intensity={0.5}
+          shadows={{ type: "accumulative", bias: -0.001, intensity: Math.PI }}
+        >
+          <Kamdo pointerRef={pointerRef} rotation={[0, Math.PI, 0]} />
+        </Stage>
+        <Grid
+          cellSize={0.6}
+          cellThickness={0.6}
+          fadeDistance={30}
+          infiniteGrid
+          position={[0, -1.85, 0]}
+          renderOrder={-1}
+          sectionColor="#7f7fff"
+          sectionSize={3.3}
+          sectionThickness={1.5}
+        />
+        <OrbitControls
+          autoRotate
+          autoRotateSpeed={0.05}
+          enablePan={false}
+          enableZoom={false}
+          makeDefault
+          maxPolarAngle={Math.PI / 2}
+          minPolarAngle={Math.PI / 2}
+        />
+        <EffectComposer enableNormalPass={false}>
+          <Bloom luminanceThreshold={2} mipmapBlur />
+          <ToneMapping />
+        </EffectComposer>
+        <Environment blur={0.8} preset="sunset" />
+      </Canvas>
     </div>
   );
 }
