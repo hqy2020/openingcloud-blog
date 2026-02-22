@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { featuredProjects, featuredTechStack } from "../../../data/revamp/featuredProjects";
 import { CardSpotlight } from "../../ui/CardSpotlight";
 import { CardBody, CardContainer, CardItem } from "../../ui/ThreeDCard";
@@ -7,43 +7,54 @@ import { CardBody, CardContainer, CardItem } from "../../ui/ThreeDCard";
 type PointerLine = {
   id: string;
   d: string;
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
 };
 
 function resolveLines(
   section: HTMLDivElement,
   card: HTMLElement,
   techList: string[],
-  chipElements: Map<string, HTMLButtonElement>,
+  techCardElements: Map<string, HTMLDivElement>,
 ): PointerLine[] {
   const sectionRect = section.getBoundingClientRect();
   const cardRect = card.getBoundingClientRect();
   const startX = cardRect.left + cardRect.width / 2 - sectionRect.left;
-  const startY = cardRect.bottom - sectionRect.top - 8;
+  const startY = cardRect.bottom - sectionRect.top - 6;
 
   return techList
     .map((tech) => {
-      const chip = chipElements.get(tech);
-      if (!chip) {
+      const techCard = techCardElements.get(tech);
+      if (!techCard) {
         return null;
       }
-      const chipRect = chip.getBoundingClientRect();
-      const endX = chipRect.left + chipRect.width / 2 - sectionRect.left;
-      const endY = chipRect.top - sectionRect.top + 2;
-      const middleOffset = Math.max(40, Math.abs(endX - startX) * 0.2 + 34);
+      const techRect = techCard.getBoundingClientRect();
+      const endX = techRect.left + techRect.width / 2 - sectionRect.left;
+      const endY = techRect.top - sectionRect.top + 8;
+      const middleOffset = Math.max(52, Math.abs(endX - startX) * 0.18 + 44);
       return {
         id: `${tech}-${Math.round(startX)}-${Math.round(endX)}`,
         d: `M ${startX} ${startY} C ${startX} ${startY + middleOffset}, ${endX} ${endY - middleOffset}, ${endX} ${endY}`,
+        startX,
+        startY,
+        endX,
+        endY,
       } satisfies PointerLine;
     })
     .filter((line): line is PointerLine => Boolean(line));
 }
 
 export function FeaturedProjectsSection() {
+  const gradientScopeId = useId().replace(/:/g, "");
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const cardRefMap = useRef<Map<string, HTMLElement>>(new Map());
-  const chipRefMap = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const techCardRefMap = useRef<Map<string, HTMLDivElement>>(new Map());
   const [hoveredProjectId, setHoveredProjectId] = useState<string>("");
   const [pointerLines, setPointerLines] = useState<PointerLine[]>([]);
+  const [isDesktopInteractive, setIsDesktopInteractive] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   const hoveredProject = useMemo(
     () => featuredProjects.find((project) => project.id === hoveredProjectId) ?? null,
@@ -51,8 +62,50 @@ export function FeaturedProjectsSection() {
   );
   const activeTechStack = hoveredProject?.tech_stack ?? [];
 
+  const techUsage = useMemo(() => {
+    const techCountMap = new Map<string, number>();
+    for (const tech of featuredTechStack) {
+      techCountMap.set(tech, 0);
+    }
+    for (const project of featuredProjects) {
+      for (const tech of project.tech_stack) {
+        techCountMap.set(tech, (techCountMap.get(tech) ?? 0) + 1);
+      }
+    }
+    const maxCount = Math.max(...Array.from(techCountMap.values()), 1);
+    return featuredTechStack.map((tech) => {
+      const count = techCountMap.get(tech) ?? 0;
+      return {
+        name: tech,
+        count,
+        percent: Math.round((count / maxCount) * 100),
+      };
+    });
+  }, []);
+
+  useEffect(() => {
+    const hoverMedia = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const desktopMedia = window.matchMedia("(min-width: 768px)");
+    const reduceMotionMedia = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updateCapabilities = () => {
+      setIsDesktopInteractive(hoverMedia.matches && desktopMedia.matches);
+      setPrefersReducedMotion(reduceMotionMedia.matches);
+    };
+
+    updateCapabilities();
+    hoverMedia.addEventListener("change", updateCapabilities);
+    desktopMedia.addEventListener("change", updateCapabilities);
+    reduceMotionMedia.addEventListener("change", updateCapabilities);
+
+    return () => {
+      hoverMedia.removeEventListener("change", updateCapabilities);
+      desktopMedia.removeEventListener("change", updateCapabilities);
+      reduceMotionMedia.removeEventListener("change", updateCapabilities);
+    };
+  }, []);
+
   const refreshPointerLines = useCallback(() => {
-    if (!hoveredProject) {
+    if (!hoveredProject || !isDesktopInteractive) {
       setPointerLines([]);
       return;
     }
@@ -62,8 +115,8 @@ export function FeaturedProjectsSection() {
       setPointerLines([]);
       return;
     }
-    setPointerLines(resolveLines(section, card, hoveredProject.tech_stack, chipRefMap.current));
-  }, [hoveredProject]);
+    setPointerLines(resolveLines(section, card, hoveredProject.tech_stack, techCardRefMap.current));
+  }, [hoveredProject, isDesktopInteractive]);
 
   useEffect(() => {
     const rafId = window.requestAnimationFrame(refreshPointerLines);
@@ -71,7 +124,7 @@ export function FeaturedProjectsSection() {
   }, [refreshPointerLines]);
 
   useEffect(() => {
-    if (!hoveredProject) {
+    if (!hoveredProject || !isDesktopInteractive) {
       return;
     }
     const onResizeOrScroll = () => refreshPointerLines();
@@ -81,7 +134,9 @@ export function FeaturedProjectsSection() {
       window.removeEventListener("resize", onResizeOrScroll);
       window.removeEventListener("scroll", onResizeOrScroll);
     };
-  }, [hoveredProject, refreshPointerLines]);
+  }, [hoveredProject, isDesktopInteractive, refreshPointerLines]);
+
+  const shouldRenderBeam = isDesktopInteractive && pointerLines.length > 0;
 
   return (
     <section id="projects" className="space-y-6">
@@ -104,9 +159,34 @@ export function FeaturedProjectsSection() {
                   }
                   cardRefMap.current.delete(project.id);
                 }}
-                onMouseEnter={() => setHoveredProjectId(project.id)}
-                onMouseLeave={() => setHoveredProjectId((prev) => (prev === project.id ? "" : prev))}
-                className="relative"
+                tabIndex={0}
+                onMouseEnter={() => {
+                  if (!isDesktopInteractive) {
+                    return;
+                  }
+                  setHoveredProjectId(project.id);
+                }}
+                onMouseLeave={() => {
+                  if (!isDesktopInteractive) {
+                    return;
+                  }
+                  setHoveredProjectId((prev) => (prev === project.id ? "" : prev));
+                }}
+                onClick={() => {
+                  if (isDesktopInteractive) {
+                    return;
+                  }
+                  setHoveredProjectId((prev) => (prev === project.id ? "" : project.id));
+                }}
+                onFocusCapture={() => setHoveredProjectId(project.id)}
+                onBlurCapture={(event) => {
+                  const nextFocusTarget = event.relatedTarget;
+                  if (nextFocusTarget instanceof Node && event.currentTarget.contains(nextFocusTarget)) {
+                    return;
+                  }
+                  setHoveredProjectId((prev) => (prev === project.id ? "" : prev));
+                }}
+                className="relative z-20 cursor-pointer rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
               >
                 <CardContainer containerClassName="w-full">
                   <CardBody className="w-full">
@@ -144,7 +224,7 @@ export function FeaturedProjectsSection() {
         </div>
 
         <AnimatePresence>
-          {pointerLines.length > 0 ? (
+          {shouldRenderBeam ? (
             <motion.svg
               key={hoveredProjectId}
               initial={{ opacity: 0 }}
@@ -153,54 +233,118 @@ export function FeaturedProjectsSection() {
               transition={{ duration: 0.24 }}
               className="pointer-events-none absolute inset-0 z-10 hidden md:block"
             >
-              {pointerLines.map((line) => (
-                <motion.path
-                  key={line.id}
-                  d={line.d}
-                  stroke="rgba(79,106,229,0.55)"
-                  strokeWidth={1.8}
-                  fill="none"
-                  strokeLinecap="round"
-                  initial={{ pathLength: 0, opacity: 0 }}
-                  animate={{ pathLength: 1, opacity: 1 }}
-                  exit={{ pathLength: 0, opacity: 0 }}
-                  transition={{ duration: 0.28, ease: "easeOut" }}
-                />
-              ))}
+              <defs>
+                {pointerLines.map((line) => {
+                  const gradientId = `beam-${gradientScopeId}-${line.id}`;
+                  if (prefersReducedMotion) {
+                    return (
+                      <linearGradient
+                        key={gradientId}
+                        id={gradientId}
+                        gradientUnits="userSpaceOnUse"
+                        x1={line.startX}
+                        y1={line.startY}
+                        x2={line.endX}
+                        y2={line.endY}
+                      >
+                        <stop stopColor="#4f6ae5" stopOpacity="0" />
+                        <stop offset="0.45" stopColor="#4f6ae5" />
+                        <stop offset="1" stopColor="#38bdf8" />
+                      </linearGradient>
+                    );
+                  }
+                  return (
+                    <motion.linearGradient
+                      key={gradientId}
+                      id={gradientId}
+                      gradientUnits="userSpaceOnUse"
+                      x1={line.startX}
+                      y1={line.startY}
+                      x2={line.endX}
+                      y2={line.endY}
+                      initial={{ x1: line.startX, x2: line.startX }}
+                      animate={{ x1: [line.startX, line.endX], x2: [line.startX + 40, line.endX + 40] }}
+                      transition={{ duration: 2.6, repeat: Number.POSITIVE_INFINITY, ease: [0.16, 1, 0.3, 1] }}
+                    >
+                      <stop stopColor="#4f6ae5" stopOpacity="0" />
+                      <stop offset="0.35" stopColor="#4f6ae5" />
+                      <stop offset="0.72" stopColor="#38bdf8" />
+                      <stop offset="1" stopColor="#38bdf8" stopOpacity="0" />
+                    </motion.linearGradient>
+                  );
+                })}
+              </defs>
+
+              {pointerLines.map((line) => {
+                const gradientId = `beam-${gradientScopeId}-${line.id}`;
+                const initialMotion = prefersReducedMotion ? { opacity: 0 } : { pathLength: 0, opacity: 0 };
+                const animateMotion = prefersReducedMotion ? { opacity: 1 } : { pathLength: 1, opacity: 1 };
+                const exitMotion = prefersReducedMotion ? { opacity: 0 } : { pathLength: 0, opacity: 0 };
+                return (
+                  <g key={line.id}>
+                    <motion.path
+                      d={line.d}
+                      stroke="rgba(79,106,229,0.24)"
+                      strokeWidth={2.2}
+                      fill="none"
+                      strokeLinecap="round"
+                      initial={initialMotion}
+                      animate={animateMotion}
+                      exit={exitMotion}
+                      transition={{ duration: 0.24, ease: "easeOut" }}
+                    />
+                    <motion.path
+                      d={line.d}
+                      stroke={`url(#${gradientId})`}
+                      strokeWidth={2.2}
+                      fill="none"
+                      strokeLinecap="round"
+                      initial={initialMotion}
+                      animate={animateMotion}
+                      exit={exitMotion}
+                      transition={{ duration: 0.28, ease: "easeOut" }}
+                    />
+                  </g>
+                );
+              })}
             </motion.svg>
           ) : null}
         </AnimatePresence>
 
-        <div className="rounded-2xl border border-slate-200/80 bg-white/72 p-4 shadow-[0_12px_26px_rgba(15,23,42,0.09)] backdrop-blur">
+        <div className="relative z-20 rounded-2xl border border-slate-200/80 bg-white/72 p-4 shadow-[0_12px_26px_rgba(15,23,42,0.09)] backdrop-blur">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Tech Stack</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {featuredTechStack.map((tech) => {
-              const active = activeTechStack.includes(tech);
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {techUsage.map((tech) => {
+              const active = activeTechStack.includes(tech.name);
               return (
-                <button
-                  key={tech}
+                <div
+                  key={tech.name}
                   ref={(node) => {
                     if (node) {
-                      chipRefMap.current.set(tech, node);
+                      techCardRefMap.current.set(tech.name, node);
                       return;
                     }
-                    chipRefMap.current.delete(tech);
+                    techCardRefMap.current.delete(tech.name);
                   }}
-                  type="button"
-                  onMouseEnter={() => {
-                    if (!hoveredProject) {
-                      return;
-                    }
-                    refreshPointerLines();
-                  }}
-                  className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                  className={`rounded-2xl border p-4 transition ${
                     active
-                      ? "border-indigo-300 bg-indigo-100/70 text-indigo-700 shadow-[0_0_0_2px_rgba(79,106,229,0.18)]"
-                      : "border-slate-200 bg-white/85 text-slate-600"
+                      ? "border-indigo-300/90 bg-indigo-50/80 shadow-[0_0_0_1px_rgba(79,106,229,0.26),0_10px_24px_rgba(79,106,229,0.16)]"
+                      : "border-slate-200/90 bg-white/88 shadow-[0_8px_20px_rgba(15,23,42,0.08)]"
                   }`}
                 >
-                  {tech}
-                </button>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className={`text-sm font-semibold ${active ? "text-indigo-700" : "text-slate-700"}`}>{tech.name}</p>
+                    <span className={`text-xs font-medium ${active ? "text-indigo-500" : "text-slate-400"}`}>{tech.count} 项目</span>
+                  </div>
+                  <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-200/75">
+                    <motion.div
+                      className={`h-full rounded-full ${active ? "bg-gradient-to-r from-indigo-500 to-sky-400" : "bg-slate-400/75"}`}
+                      initial={false}
+                      animate={{ width: `${tech.percent}%` }}
+                      transition={{ duration: prefersReducedMotion ? 0 : 0.32, ease: "easeOut" }}
+                    />
+                  </div>
+                </div>
               );
             })}
           </div>
