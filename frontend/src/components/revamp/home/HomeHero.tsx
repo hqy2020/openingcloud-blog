@@ -25,7 +25,7 @@ const profileRoles = [
 export function HomeHero({ hero }: HomeHeroProps) {
   return (
     <section id="hero" className="relative left-1/2 w-screen -translate-x-1/2 scroll-mt-20 px-2 sm:px-5">
-      <div className="relative min-h-[88vh] overflow-hidden rounded-[34px] border border-slate-200/80 bg-white shadow-md">
+      <div className="relative min-h-[88vh] overflow-hidden">
         <div className="relative z-10 mx-auto flex min-h-[88vh] w-full max-w-7xl items-center justify-center px-2 py-14 sm:px-6">
           <motion.div
             initial={{ opacity: 0, y: 16, scale: 0.98 }}
@@ -36,7 +36,7 @@ export function HomeHero({ hero }: HomeHeroProps) {
             <OrbitingProfileCard
               className="h-[420px] w-[420px] sm:h-[620px] sm:w-[620px] lg:h-[680px] lg:w-[680px]"
               name={coverHeroConfig.spaced_name}
-              nameWords={["Keyon", "云际漫游者"]}
+              nameWords={["Keyon", "云际漫游者", "codecloud", "openingClouds"]}
               roles={profileRoles}
             />
           </motion.div>

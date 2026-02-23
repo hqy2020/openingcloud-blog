@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { featuredProjects, featuredTechStack } from "../../../data/revamp/featuredProjects";
 import { CardSpotlight } from "../../ui/CardSpotlight";
-import { InteractiveHoverButton } from "../../ui/InteractiveHoverButton";
+import { SparklesText } from "../../ui/SparklesText";
 import { CardBody, CardContainer, CardItem } from "../../ui/ThreeDCard";
 
 type PointerLine = {
@@ -45,6 +45,23 @@ function resolveLines(
       } satisfies PointerLine;
     })
     .filter((line): line is PointerLine => Boolean(line));
+}
+
+function ArrowRightIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-3.5 w-3.5"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.8"
+      viewBox="0 0 24 24"
+    >
+      <path d="M5 12h14m-6-6 6 6-6 6" />
+    </svg>
+  );
 }
 
 export function FeaturedProjectsSection() {
@@ -141,8 +158,12 @@ export function FeaturedProjectsSection() {
   return (
     <section id="projects" className="space-y-6">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Web Coding</p>
-        <h2 className="mt-1 text-2xl font-semibold text-slate-800">项目卡与技术栈联动</h2>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Code</p>
+        <h2 className="mt-1 text-2xl font-semibold text-slate-800">
+          <SparklesText className="text-inherit" sparklesCount={9}>
+            Code
+          </SparklesText>
+        </h2>
       </div>
 
       <div ref={sectionRef} className="relative space-y-8">
@@ -160,6 +181,8 @@ export function FeaturedProjectsSection() {
                   cardRefMap.current.delete(project.id);
                 }}
                 tabIndex={0}
+                role="link"
+                aria-label={`Open ${project.name} on GitHub`}
                 onMouseEnter={() => {
                   if (!isDesktopInteractive) {
                     return;
@@ -174,9 +197,23 @@ export function FeaturedProjectsSection() {
                 }}
                 onClick={() => {
                   if (isDesktopInteractive) {
+                    window.open(project.href, "_blank", "noopener,noreferrer");
                     return;
                   }
-                  setHoveredProjectId((prev) => (prev === project.id ? "" : project.id));
+                  setHoveredProjectId((prev) => {
+                    if (prev === project.id) {
+                      window.open(project.href, "_blank", "noopener,noreferrer");
+                      return "";
+                    }
+                    return project.id;
+                  });
+                }}
+                onKeyDown={(event) => {
+                  if (event.key !== "Enter" && event.key !== " ") {
+                    return;
+                  }
+                  event.preventDefault();
+                  window.open(project.href, "_blank", "noopener,noreferrer");
                 }}
                 onFocusCapture={() => setHoveredProjectId(project.id)}
                 onBlurCapture={(event) => {
@@ -186,7 +223,7 @@ export function FeaturedProjectsSection() {
                   }
                   setHoveredProjectId((prev) => (prev === project.id ? "" : prev));
                 }}
-                className="relative z-20 cursor-pointer rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
+                className="group relative z-20 cursor-pointer rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
               >
                 <CardContainer containerClassName="w-full">
                   <CardBody className="w-full">
@@ -198,32 +235,51 @@ export function FeaturedProjectsSection() {
                           : "border-slate-200/75 bg-white/80 shadow-[0_10px_22px_rgba(15,23,42,0.1)]"
                       }`}
                     >
-                      <CardItem translateZ={24} className="w-full">
-                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Project</p>
-                        <h3 className="mt-1 text-lg font-semibold text-slate-800">{project.name}</h3>
-                      </CardItem>
-                      <CardItem translateZ={14} className="mt-3 w-full">
-                        <p className="text-sm leading-6 text-slate-600">{project.summary}</p>
-                      </CardItem>
-                      <CardItem translateZ={16} className="mt-3 w-full">
-                        <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Repository</p>
-                        <p className="mt-1 font-mono text-xs text-slate-600">{project.repo_path}</p>
-                        <p className="mt-1 text-xs leading-5 text-slate-500">{project.detail}</p>
-                      </CardItem>
-                      <CardItem translateZ={20} className="mt-4 w-full">
-                        <InteractiveHoverButton
-                          className="w-full justify-center sm:w-auto"
-                          href={project.href}
-                          hoverText="前往 GitHub"
-                          rel="noopener noreferrer"
-                          target="_blank"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                          }}
-                        >
-                          查看仓库
-                        </InteractiveHoverButton>
-                      </CardItem>
+                      <div
+                        className={`pointer-events-none absolute inset-0 z-[1] rounded-2xl transition-opacity duration-300 ${
+                          active ? "bg-slate-900/84 opacity-100" : "bg-slate-900/84 opacity-0 group-hover:opacity-100"
+                        }`}
+                      />
+                      <div
+                        className={`pointer-events-none absolute left-5 top-5 z-[2] h-2.5 w-2.5 rounded-full bg-indigo-500 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                          active ? "scale-[120]" : "scale-100 group-hover:scale-[120]"
+                        }`}
+                      />
+                      <div className="relative z-20 w-full">
+                        <CardItem translateZ={24} className="w-full">
+                          <h3 className={`mt-1 text-lg font-semibold ${active ? "text-white" : "text-slate-800 group-hover:text-white"}`}>
+                            {project.name}
+                          </h3>
+                        </CardItem>
+                        <CardItem translateZ={14} className="mt-3 w-full">
+                          <p className={`text-sm leading-6 ${active ? "text-slate-100/95" : "text-slate-600 group-hover:text-slate-100/95"}`}>
+                            {active ? project.summary_zh : project.summary}
+                          </p>
+                        </CardItem>
+                        <CardItem translateZ={16} className="mt-3 w-full">
+                          <p className={`text-[11px] uppercase tracking-[0.14em] ${active ? "text-indigo-100/95" : "text-slate-500 group-hover:text-indigo-100/95"}`}>
+                            Repository
+                          </p>
+                          <p className={`mt-1 font-mono text-xs ${active ? "text-indigo-50/95" : "text-slate-600 group-hover:text-indigo-50/95"}`}>
+                            {project.repo_path}
+                          </p>
+                          <p className={`mt-1 text-xs leading-5 ${active ? "text-slate-200/95" : "text-slate-500 group-hover:text-slate-200/95"}`}>
+                            {active ? project.detail_zh : project.detail}
+                          </p>
+                        </CardItem>
+                        <CardItem translateZ={20} className="mt-4 w-full">
+                          <div
+                            className={`inline-flex items-center gap-2 text-sm font-semibold transition-all duration-300 ${
+                              active
+                                ? "translate-x-0 text-white"
+                                : "translate-x-0 text-slate-500 group-hover:translate-x-1 group-hover:text-white"
+                            }`}
+                          >
+                            Open on GitHub
+                            <ArrowRightIcon />
+                          </div>
+                        </CardItem>
+                      </div>
                     </CardSpotlight>
                   </CardBody>
                 </CardContainer>

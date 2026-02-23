@@ -5,6 +5,7 @@ import { cn } from "../../lib/utils";
 import { ScrollReveal } from "../motion/ScrollReveal";
 import { StaggerContainer, StaggerItem } from "../motion/StaggerContainer";
 import { CardSpotlight } from "../ui/CardSpotlight";
+import { SparklesText } from "../ui/SparklesText";
 
 type TimelineSectionProps = {
   nodes: TimelineNode[];
@@ -145,7 +146,11 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
     return (
       <ScrollReveal className="space-y-6">
         <div className="flex items-end justify-between">
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-200">人生足迹</h2>
+          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-200">
+            <SparklesText className="text-inherit" sparklesCount={8} colors={{ first: "#0ea5e9", second: "#a855f7" }}>
+              人生足迹
+            </SparklesText>
+          </h2>
           <span className="text-sm text-slate-500 dark:text-slate-400">0 个节点</span>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white/80 px-5 py-6 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/84 dark:text-slate-300">
@@ -158,7 +163,11 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
   return (
     <ScrollReveal className="space-y-6">
       <div className="flex items-end justify-between">
-        <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-200">人生足迹</h2>
+        <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-200">
+          <SparklesText className="text-inherit" sparklesCount={8} colors={{ first: "#0ea5e9", second: "#a855f7" }}>
+            人生足迹
+          </SparklesText>
+        </h2>
         <span className="text-sm text-slate-500 dark:text-slate-400">{nodes.length} 个节点</span>
       </div>
 

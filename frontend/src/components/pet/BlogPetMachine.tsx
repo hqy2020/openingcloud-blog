@@ -58,7 +58,7 @@ function Kamdo({ pointerRef, ...props }: KamdoProps) {
     const t = (1 + Math.sin(state.clock.elapsedTime * 2)) / 2;
     stripe.color.setRGB(2 + t * 20, 2, 20 + t * 50);
     const worldPointer = pointerRef.current;
-    const targetY = worldPointer.x * (state.camera.position.z > 1 ? 1 : -1);
+    const targetY = -worldPointer.x * (state.camera.position.z > 1 ? 1 : -1);
     const targetX = THREE.MathUtils.clamp(-worldPointer.y * 0.35, -0.35, 0.35);
     head.rotation.x = THREE.MathUtils.damp(head.rotation.x, targetX, 7.5, delta);
     head.rotation.y = THREE.MathUtils.damp(head.rotation.y, targetY, 7.5, delta);
@@ -135,7 +135,7 @@ export function BlogPetMachine() {
   return (
     <div className="pointer-events-none fixed bottom-0 right-0 z-40 h-[220px] w-[min(88vw,420px)]">
       <Canvas flat shadows camera={{ position: [-15, 0, 10], fov: 25 }} gl={{ alpha: true }} style={{ background: "transparent" }}>
-        <fog attach="fog" args={["black", 15, 22.5]} />
+        <fog attach="fog" args={["black", 12, 20]} />
         <Stage
           adjustCamera={false}
           environment="city"
@@ -154,10 +154,10 @@ export function BlogPetMachine() {
           minPolarAngle={Math.PI / 2}
         />
         <EffectComposer enableNormalPass={false}>
-          <Bloom luminanceThreshold={2} mipmapBlur />
+          <Bloom luminanceThreshold={4} mipmapBlur />
           <ToneMapping />
         </EffectComposer>
-        <Environment blur={0.8} preset="sunset" />
+        <Environment blur={0.5} preset="sunset" />
       </Canvas>
     </div>
   );

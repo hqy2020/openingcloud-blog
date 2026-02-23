@@ -7,6 +7,7 @@ import { defineConfig } from "vite";
 const require = createRequire(import.meta.url);
 const vitePrerender = require("vite-plugin-prerender");
 const JSDOMRenderer = require("@prerenderer/renderer-jsdom");
+const devProxyTarget = process.env.VITE_DEV_PROXY_TARGET ?? "http://127.0.0.1:8000";
 
 const currentFile = fileURLToPath(import.meta.url);
 const currentDir = path.dirname(currentFile);
@@ -25,7 +26,17 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: process.env.VITE_DEV_PROXY_TARGET ?? "http://127.0.0.1:8000",
+        // Default to Django dev server.
+        // Override with VITE_DEV_PROXY_TARGET when routing through nginx or another upstream.
+        target: devProxyTarget,
+        changeOrigin: true,
+      },
+    },
+  },
+  preview: {
+    proxy: {
+      "/api": {
+        target: devProxyTarget,
         changeOrigin: true,
       },
     },

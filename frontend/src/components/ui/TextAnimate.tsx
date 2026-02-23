@@ -4,7 +4,7 @@ import { cn } from "../../lib/utils";
 type TextAnimateProps = {
   children: string;
   className?: string;
-  animation?: "whipInUp";
+  animation?: "whipInUp" | "whipInRight";
   delay?: number;
   duration?: number;
 };
@@ -45,6 +45,26 @@ export function TextAnimate({
             ease: [0.22, 1, 0.36, 1],
           },
         }
+      : animation === "whipInRight"
+        ? {
+            initial: {
+              opacity: 0,
+              x: -28,
+              scale: 0.96,
+              filter: "blur(8px)",
+            },
+            animate: {
+              opacity: 1,
+              x: 0,
+              scale: 1,
+              filter: "blur(0px)",
+            },
+            transition: {
+              delay,
+              duration,
+              ease: [0.22, 1, 0.36, 1],
+            },
+          }
       : {};
 
   return (

@@ -4,6 +4,7 @@ import { ScrollReveal } from "../motion/ScrollReveal";
 import { StaggerContainer, StaggerItem } from "../motion/StaggerContainer";
 import { CardSpotlight } from "../ui/CardSpotlight";
 import { NumberTicker } from "../ui/NumberTicker";
+import { SparklesText } from "../ui/SparklesText";
 
 type StatsSectionProps = {
   stats: HomePayload["stats"];
@@ -31,7 +32,11 @@ export function StatsSection({ stats }: StatsSectionProps) {
 
   return (
     <ScrollReveal className="space-y-6">
-      <h2 className="text-2xl font-semibold text-slate-800">数据面板</h2>
+      <h2 className="text-2xl font-semibold text-slate-800">
+        <SparklesText className="text-inherit" sparklesCount={8} colors={{ first: "#0ea5e9", second: "#f59e0b" }}>
+          数据面板
+        </SparklesText>
+      </h2>
 
       <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" stagger={0.06}>
         {statItems.map((item) => {

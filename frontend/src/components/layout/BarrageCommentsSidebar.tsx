@@ -1,32 +1,104 @@
-import { useEffect, useState } from "react";
-import type { FormEvent } from "react";
-import { useReducedMotion } from "motion/react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { FormEvent, PointerEvent as ReactPointerEvent } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useLocation } from "react-router-dom";
 import { fetchBarrageComments, submitBarrageComment, type BarrageComment } from "../../api/barrage";
-import { SidePanel } from "../ui/SidePanel";
+
+type FloatingControlPosition = {
+  y: number;
+};
+
+type DragState = {
+  pointerId: number;
+  startY: number;
+  originY: number;
+};
+
+const FLOATING_CONTROL_MIN_TOP = 88;
+const FLOATING_CONTROL_HEIGHT = 40;
+const COLLAPSED_WIDTH = 148;
+const EXPANDED_WIDTH = 420;
+const FLOATING_CONTROL_STORAGE_KEY = "openingcloud_barrage_control_pos_v1";
+const defaultFloatingControlPosition: FloatingControlPosition = { y: 96 };
+
+function formatErrorMessage(err: unknown, fallback: string): string {
+  const rawMessage = err instanceof Error ? err.message : fallback;
+  if (/404/.test(rawMessage)) {
+    return "弹幕服务暂不可用（404），请检查 /api/barrage-comments/ 接口。";
+  }
+  return rawMessage;
+}
 
 function BarrageCard({ item }: { item: BarrageComment }) {
   return (
-    <article className="rounded-xl border border-slate-200/70 bg-white/88 px-3 py-2.5 backdrop-blur-sm">
-      <header className="flex items-center justify-between gap-2">
-        <span className="truncate text-xs font-semibold text-slate-600">{item.nickname}</span>
-        <time className="text-[10px] text-slate-400">{item.created_at.slice(0, 10)}</time>
-      </header>
-      <p className="mt-1.5 break-words text-sm leading-5 text-slate-700">{item.content}</p>
+    <article className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+      <p className="break-words text-sm leading-5 text-slate-700">{item.content}</p>
+      <time className="mt-2 block text-[10px] text-slate-400">{item.created_at.slice(0, 16).replace("T", " ")}</time>
     </article>
   );
 }
 
 export function BarrageCommentsSidebar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [controlPosition, setControlPosition] = useState<FloatingControlPosition>(defaultFloatingControlPosition);
   const [comments, setComments] = useState<BarrageComment[]>([]);
-  const [nickname, setNickname] = useState("");
   const [content, setContent] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const prefersReducedMotion = useReducedMotion() ?? false;
   const location = useLocation();
+  const dragStateRef = useRef<DragState | null>(null);
+  const movedRef = useRef(false);
+  const prefersReducedMotion = useReducedMotion() ?? false;
+
+  const clampControlPosition = useCallback((y: number): FloatingControlPosition => {
+    if (typeof window === "undefined") {
+      return defaultFloatingControlPosition;
+    }
+
+    const maxY = Math.max(FLOATING_CONTROL_MIN_TOP, window.innerHeight - FLOATING_CONTROL_HEIGHT - 12);
+    return {
+      y: Math.min(Math.max(FLOATING_CONTROL_MIN_TOP, y), maxY),
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const raw = window.localStorage.getItem(FLOATING_CONTROL_STORAGE_KEY);
+      if (!raw) {
+        return;
+      }
+      const parsed = JSON.parse(raw) as Partial<FloatingControlPosition>;
+      if (typeof parsed.y === "number") {
+        setControlPosition(clampControlPosition(parsed.y));
+      }
+    } catch {
+      // ignore invalid cached position
+    }
+  }, [clampControlPosition]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      window.localStorage.setItem(FLOATING_CONTROL_STORAGE_KEY, JSON.stringify(controlPosition));
+    } catch {
+      // ignore write errors
+    }
+  }, [controlPosition]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleResize = () => {
+      setControlPosition((current) => clampControlPosition(current.y));
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [clampControlPosition]);
 
   useEffect(() => {
     let active = true;
@@ -38,8 +110,7 @@ export function BarrageCommentsSidebar() {
         setComments(rows);
       } catch (err) {
         if (!active) return;
-        const message = err instanceof Error ? err.message : "弹幕加载失败";
-        setError(message);
+        setError(formatErrorMessage(err, "弹幕加载失败"));
       }
     };
 
@@ -54,16 +125,9 @@ export function BarrageCommentsSidebar() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, [isOpen]);
+  const upsertComment = useCallback((nextComment: BarrageComment) => {
+    setComments((current) => [nextComment, ...current.filter((item) => item.id !== nextComment.id)].slice(0, 80));
+  }, []);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -78,120 +142,170 @@ export function BarrageCommentsSidebar() {
 
     setSubmitting(true);
     try {
-      await submitBarrageComment({
-        nickname: nickname.trim(),
+      const submitResult = await submitBarrageComment({
         content: trimmedContent,
         page_path: location.pathname,
       });
+      const now = new Date().toISOString();
+      upsertComment(
+        submitResult.comment ?? {
+          id: submitResult.id,
+          nickname: "匿名云友",
+          content: trimmedContent,
+          created_at: now,
+          reviewed_at: now,
+        },
+      );
       setContent("");
-      setNotice("已提交，后台审核通过后会在这里滚动展示。");
+      setNotice("已发布，正在滚动展示。");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "提交失败，请稍后重试";
-      setError(message);
+      setError(formatErrorMessage(err, "提交失败，请稍后重试"));
     } finally {
       setSubmitting(false);
     }
   }
 
+  function onControlPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    if (isOpen) {
+      return;
+    }
+    if (event.pointerType === "mouse" && event.button !== 0) {
+      return;
+    }
+
+    dragStateRef.current = {
+      pointerId: event.pointerId,
+      startY: event.clientY,
+      originY: controlPosition.y,
+    };
+    movedRef.current = false;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function onControlPointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    const dragState = dragStateRef.current;
+    if (!dragState || dragState.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const deltaY = event.clientY - dragState.startY;
+    if (Math.abs(deltaY) > 4) {
+      movedRef.current = true;
+    }
+
+    setControlPosition(clampControlPosition(dragState.originY + deltaY));
+  }
+
+  function onControlPointerUpOrCancel(event: ReactPointerEvent<HTMLDivElement>) {
+    const dragState = dragStateRef.current;
+    if (!dragState || dragState.pointerId !== event.pointerId) {
+      return;
+    }
+
+    dragStateRef.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  }
+
+  function onTogglePanel() {
+    if (movedRef.current) {
+      movedRef.current = false;
+      return;
+    }
+    setIsOpen((open) => !open);
+  }
+
+  const panelMaxHeight = `calc(100vh - ${Math.max(controlPosition.y + 12, FLOATING_CONTROL_MIN_TOP + 12)}px)`;
+
   return (
-    <SidePanel
-      side="left"
-      panelOpen={isOpen}
-      handlePanelOpen={() => setIsOpen((open) => !open)}
-      reducedMotion={prefersReducedMotion}
-      expandedWidth={320}
-      renderButton={(toggle, panelOpen) =>
-        panelOpen ? (
-          <>
-            <div>
-              <p className="text-sm font-semibold text-slate-700">弹幕评论</p>
-              <p className="mt-0.5 text-[11px] text-slate-500">发布后进入待审核</p>
-            </div>
-            <button
-              onClick={toggle}
-              className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-              aria-label="关闭弹幕评论"
-              type="button"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-                <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22z" />
-              </svg>
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={toggle}
-            className="flex flex-col items-center gap-1.5 rounded-r-[16px] border border-l-0 border-slate-200/70 bg-white/92 px-2 py-4 shadow-sm backdrop-blur-xl transition-colors hover:bg-white"
-            aria-label="展开弹幕评论"
-            type="button"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5 text-sky-500/90">
-              <path d="M3 5.75A2.75 2.75 0 0 1 5.75 3h8.5A2.75 2.75 0 0 1 17 5.75v6.5A2.75 2.75 0 0 1 14.25 15H9.5l-3.96 2.64A.75.75 0 0 1 4.5 17v-2.46A2.75 2.75 0 0 1 3 12.25v-6.5Z" />
-            </svg>
-            <span className="text-[11px] font-semibold tracking-[0.18em] text-slate-600" style={{ writingMode: "vertical-rl" }}>
-              弹幕评论
-            </span>
-          </button>
-        )
-      }
+    <motion.aside
+      className="fixed left-0 z-30 max-w-[calc(100vw-0.75rem)] overflow-hidden rounded-r-[28px] border border-slate-200 bg-white shadow-[0_18px_45px_-30px_rgba(15,23,42,0.38)]"
+      style={{ top: `${controlPosition.y}px`, maxHeight: panelMaxHeight }}
+      animate={{ width: isOpen ? EXPANDED_WIDTH : COLLAPSED_WIDTH }}
+      initial={false}
+      transition={{ duration: prefersReducedMotion ? 0 : 0.28, ease: [0.42, 0, 0.58, 1] }}
     >
-      <div className="border-b border-slate-200/70 px-4 py-3">
-        <form className="space-y-2.5" onSubmit={onSubmit}>
-          <input
-            className="w-full rounded-md border border-slate-200 bg-white/90 px-2.5 py-1.5 text-xs text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-slate-400"
-            maxLength={40}
-            onChange={(event) => setNickname(event.target.value)}
-            placeholder="昵称（可选）"
-            value={nickname}
-          />
-          <textarea
-            className="min-h-[68px] w-full resize-none rounded-md border border-slate-200 bg-white/90 px-2.5 py-1.5 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-slate-400"
-            maxLength={200}
-            onChange={(event) => setContent(event.target.value)}
-            placeholder="说点什么..."
-            value={content}
-          />
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] text-slate-400">{content.trim().length}/200</span>
-            <button
-              className="rounded-md bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={submitting}
-              type="submit"
-            >
-              {submitting ? "提交中..." : "发布评论"}
-            </button>
-          </div>
-          {notice ? <p className="text-[11px] text-emerald-600">{notice}</p> : null}
-          {error ? <p className="text-[11px] text-rose-500">{error}</p> : null}
-        </form>
+      <div
+        className="flex items-center px-2 py-2"
+        onPointerDown={onControlPointerDown}
+        onPointerMove={onControlPointerMove}
+        onPointerUp={onControlPointerUpOrCancel}
+        onPointerCancel={onControlPointerUpOrCancel}
+        onClick={onTogglePanel}
+      >
+        <button
+          type="button"
+          aria-label={isOpen ? "弹幕 Close" : "弹幕 Open"}
+          title={isOpen ? "弹幕 Close" : "弹幕 Open"}
+          className="group inline-flex h-8 w-[118px] shrink-0 items-center justify-between rounded-r-[999px] border border-slate-200 bg-white pl-2.5 pr-1.5 text-slate-800 sm:w-[124px]"
+        >
+          <span className="whitespace-nowrap text-sm font-black leading-none tracking-tight">弹幕</span>
+          <span className="inline-flex h-6 min-w-[46px] shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-[#0f1115] px-2 text-xs font-medium text-white transition group-hover:bg-slate-800">
+            {isOpen ? "Close" : "Open"}
+          </span>
+        </button>
       </div>
 
-      <div className="flex-1 overflow-hidden px-4 py-3">
-        {comments.length === 0 ? (
-          <p className="text-xs text-slate-500">暂无已审核弹幕，欢迎第一个留言。</p>
-        ) : prefersReducedMotion ? (
-          <div className="max-h-full space-y-2.5 overflow-y-auto">
-            {comments.map((item) => (
-              <BarrageCard key={item.id} item={item} />
-            ))}
-          </div>
-        ) : (
-          <div className="barrage-sidebar-viewport h-full">
-            <div className="barrage-sidebar-track barrage-sidebar-animate">
-              <div className="barrage-sidebar-segment">
-                {comments.map((item) => (
-                  <BarrageCard key={item.id} item={item} />
-                ))}
-              </div>
-              <div className="barrage-sidebar-segment" aria-hidden="true">
-                {comments.map((item) => (
-                  <BarrageCard key={`dup-${item.id}`} item={item} />
-                ))}
-              </div>
+      <AnimatePresence initial={false}>
+        {isOpen ? (
+          <motion.div
+            className="flex max-h-[calc(100vh-8rem)] flex-col border-t border-slate-200"
+            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, x: -8 }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
+          >
+            <div className="border-b border-slate-200 px-4 py-3">
+              <p className="text-sm font-semibold text-slate-800">弹幕评论</p>
+              <p className="mt-0.5 text-xs text-slate-500">发布后立即滚动展示</p>
             </div>
-          </div>
-        )}
-      </div>
-    </SidePanel>
+
+            <div className="border-b border-slate-200 px-4 py-3">
+              <form className="space-y-2.5" onSubmit={onSubmit}>
+                <textarea
+                  className="min-h-[96px] w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-slate-400"
+                  maxLength={200}
+                  onChange={(event) => setContent(event.target.value)}
+                  placeholder="说点什么..."
+                  value={content}
+                />
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-slate-400">{content.trim().length}/200</span>
+                  <button
+                    className="rounded-xl bg-[#0f1115] px-4 py-2 text-sm font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={submitting}
+                    type="submit"
+                  >
+                    {submitting ? "提交中..." : "发布评论"}
+                  </button>
+                </div>
+                {notice ? <p className="text-xs text-emerald-600">{notice}</p> : null}
+                {error ? <p className="text-xs text-rose-500">{error}</p> : null}
+              </form>
+            </div>
+
+            <div className="barrage-sidebar-viewport flex-1 px-4 py-3">
+              {comments.length === 0 ? (
+                <p className="text-xs text-slate-500">暂无弹幕，欢迎第一个留言。</p>
+              ) : (
+                <div className="barrage-sidebar-track barrage-sidebar-animate">
+                  <div className="barrage-sidebar-segment">
+                    {comments.map((item) => (
+                      <BarrageCard key={item.id} item={item} />
+                    ))}
+                  </div>
+                  <div aria-hidden="true" className="barrage-sidebar-segment">
+                    {comments.map((item) => (
+                      <BarrageCard key={`ghost-${item.id}`} item={item} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </motion.aside>
   );
 }

@@ -9,7 +9,6 @@ export type BarrageComment = {
 };
 
 export type SubmitBarrageCommentPayload = {
-  nickname?: string;
   content: string;
   page_path?: string;
 };
@@ -27,5 +26,6 @@ export async function submitBarrageComment(payload: SubmitBarrageCommentPayload)
     id: number;
     status: "pending" | "approved" | "rejected";
     submitted: boolean;
+    comment?: BarrageComment;
   };
 }

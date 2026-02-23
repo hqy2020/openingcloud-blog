@@ -424,12 +424,13 @@ class BarrageCommentListCreateView(APIView):
 
         data = serializer.validated_data
         comment = BarrageComment.objects.create(
-            nickname=data.get("nickname") or "匿名云友",
+            nickname="匿名云友",
             content=data["content"],
             page_path=data.get("page_path", ""),
             ip_hash=ip_hash,
             user_agent=str(request.META.get("HTTP_USER_AGENT", ""))[:500],
-            status=BarrageComment.ReviewStatus.PENDING,
+            status=BarrageComment.ReviewStatus.APPROVED,
+            reviewed_at=timezone.now(),
         )
         cache.set(cache_key, True, timeout=int(timedelta(seconds=30).total_seconds()))
 
@@ -438,6 +439,7 @@ class BarrageCommentListCreateView(APIView):
                 "id": comment.id,
                 "status": comment.status,
                 "submitted": True,
+                "comment": BarrageCommentPublicSerializer(comment).data,
             },
             status_code=status.HTTP_201_CREATED,
         )

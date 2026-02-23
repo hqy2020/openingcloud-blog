@@ -3,6 +3,7 @@ import type { HomePayload } from "../../api/home";
 import { FadeIn } from "../motion/FadeIn";
 import { SlidingEmphasisText } from "../revamp/shared/SlidingEmphasisText";
 import { CardSpotlight } from "../ui/CardSpotlight";
+import { SparklesText } from "../ui/SparklesText";
 
 type ContactSectionProps = {
   contact: HomePayload["contact"];
@@ -153,7 +154,11 @@ export function ContactSection({ contact, variant = "section" }: ContactSectionP
   return (
     <FadeIn>
       <CardSpotlight className="relative rounded-2xl bg-white/60 p-6 backdrop-blur">
-        <h2 className="text-2xl font-semibold text-slate-800">联系方式</h2>
+        <h2 className="text-2xl font-semibold text-slate-800">
+          <SparklesText className="text-inherit" sparklesCount={8} colors={{ first: "#22d3ee", second: "#f97316" }}>
+            联系方式
+          </SparklesText>
+        </h2>
         <SlidingEmphasisText
           className="mt-2 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg"
           leadText="我正在与不同领域的人协作，这也是我创建这个网站的原因。"

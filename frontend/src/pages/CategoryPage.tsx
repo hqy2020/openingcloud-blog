@@ -1,30 +1,18 @@
-import { stagger } from "motion";
-import { AnimatePresence, motion } from "motion/react";
 import { Helmet } from "react-helmet-async";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { fetchPosts } from "../api/posts";
+import { fetchPosts, togglePostLike } from "../api/posts";
 import type { PostSummary } from "../api/posts";
-import { FadeIn } from "../components/motion/FadeIn";
-import { ArticleMarquee3D } from "../components/revamp/list/ArticleMarquee3D";
-import { DirectionAwareTabs } from "../components/revamp/list/DirectionAwareTabs";
-import { BackgroundBeams } from "../components/ui/BackgroundBeams";
-import { BlurRevealImage } from "../components/ui/BlurRevealImage";
-import { CardSpotlight } from "../components/ui/CardSpotlight";
-import { GenerativeCover } from "../components/ui/GenerativeCover";
-import { TextGenerateEffect } from "../components/ui/TextGenerateEffect";
-import { ToolbarExpandable } from "../components/ui/ToolbarExpandable";
-import { CardContainer, CardBody, CardItem } from "../components/ui/ThreeDCard";
+import { LikeButton } from "../components/ui/LikeButton";
 import { getFallbackPosts } from "../data/fallback";
-import { categoryVisuals } from "../theme/categoryVisuals";
+import { cn } from "../lib/utils";
 
 type CategoryPageProps = {
   category: "tech" | "learning" | "life";
   title: string;
 };
 
-const CATEGORY_PAGE_SIZE = 10;
-const APPEND_STAGGER_SECONDS = 0.12;
+const CATEGORY_PAGE_SIZE = 60;
 
 const categoryDescriptions: Record<CategoryPageProps["category"], string> = {
   tech: "技术实践、系统设计与工程复盘。",
@@ -36,57 +24,26 @@ const categoryTabs = [
   { id: "tech", label: "技术", path: "/tech" },
   { id: "learning", label: "效率", path: "/learning" },
   { id: "life", label: "生活", path: "/life" },
-];
-
-const visuals: Record<
-  CategoryPageProps["category"],
-  {
-    icon: string;
-    beams: string[];
-    accentText: string;
-    badge: string;
-    accentHex: string;
-    glowRgb: string;
-    headerTintLight: string;
-  }
-> = {
-  tech: {
-    ...categoryVisuals.tech,
-    icon: "💻",
-    beams: ["#6B917B", "#4F6AE5", "#B5D4BF"],
-    accentText: "探索代码世界的边界",
-    badge: "ENGINEERING",
-  },
-  learning: {
-    ...categoryVisuals.learning,
-    icon: "📚",
-    beams: ["#B8945E", "#D6BD8B", "#4F6AE5"],
-    accentText: "把混乱的方法论变成可执行系统",
-    badge: "SYSTEM",
-  },
-  life: {
-    ...categoryVisuals.life,
-    icon: "📷",
-    beams: ["#9684A8", "#C2B6CF", "#4F6AE5"],
-    accentText: "在日常里记录真实、温和、持续的生长",
-    badge: "MOMENTS",
-  },
-};
+] as const;
 
 function resolvePostCover(post: PostSummary): string | null {
   const normalizedCover = String(post.cover || "").trim();
   return normalizedCover || null;
 }
 
-function formatViews(value: number) {
-  if (value >= 1000) {
-    const short = value >= 10000 ? (value / 1000).toFixed(0) : (value / 1000).toFixed(1);
-    return `${short}k`;
+function formatDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
   }
-  return String(value);
+  return date.toLocaleDateString("zh-CN", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
-function estimateReadMinutes(post: PostSummary) {
+function estimateReadMinutes(post: PostSummary): number {
   const words = post.word_count || 0;
   return Math.max(1, Math.round(words / 280));
 }
@@ -95,17 +52,10 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedTag, setSelectedTag] = useState<string>(() => String(searchParams.get("tag") || "").trim());
-  const [sortBy, setSortBy] = useState<"latest" | "views">("latest");
   const [posts, setPosts] = useState<PostSummary[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false);
-  const [loadingInitial, setLoadingInitial] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [recentlyAppendedSlugs, setRecentlyAppendedSlugs] = useState<string[]>([]);
-  const appendInFlightRef = useRef(false);
-  const postsRef = useRef<PostSummary[]>([]);
+  const [likeOverrides, setLikeOverrides] = useState<Record<string, { liked: boolean; likes: number }>>({});
 
   const handleTabSelect = useCallback(
     (nextCategory: string) => {
@@ -121,16 +71,17 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
 
   const handleSelectTag = useCallback(
     (nextTag: string) => {
-      const normalized = nextTag.trim();
-      setSelectedTag((prev) => (prev === normalized ? prev : normalized));
+      const normalizedTag = nextTag.trim();
+      setSelectedTag(normalizedTag);
 
-      const current = String(searchParams.get("tag") || "").trim();
-      if (current === normalized || (!current && !normalized)) {
+      const currentTag = String(searchParams.get("tag") || "").trim();
+      if (currentTag === normalizedTag || (!currentTag && !normalizedTag)) {
         return;
       }
+
       const nextParams = new URLSearchParams(searchParams);
-      if (normalized) {
-        nextParams.set("tag", normalized);
+      if (normalizedTag) {
+        nextParams.set("tag", normalizedTag);
       } else {
         nextParams.delete("tag");
       }
@@ -139,92 +90,58 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
     [searchParams, setSearchParams],
   );
 
-  const loadPage = useCallback(
-    async (targetPage: number, mode: "replace" | "append") => {
-      if (mode === "append" && appendInFlightRef.current) {
-        return;
-      }
-
-      if (mode === "replace") {
-        appendInFlightRef.current = false;
-        setLoadingInitial(true);
-        setLoadingMore(false);
-        setRecentlyAppendedSlugs([]);
-      } else {
-        appendInFlightRef.current = true;
-        setLoadingMore(true);
-      }
-      setError(null);
-
-      try {
-        const payload = await fetchPosts({
-          category,
-          tag: selectedTag || undefined,
-          sort: sortBy,
-          page: targetPage,
-          page_size: CATEGORY_PAGE_SIZE,
-        });
-
-        setTotalCount(payload.count);
-        setHasMore(Boolean(payload.next));
-        setPage(targetPage);
-        if (mode === "replace") {
-          setPosts(payload.results);
-        } else {
-          const dedupedWithinPayload = payload.results.filter(
-            (item, index, arr) => arr.findIndex((it) => it.slug === item.slug) === index,
-          );
-          const existingSlugs = new Set(postsRef.current.map((item) => item.slug));
-          const appended = dedupedWithinPayload.filter((item) => !existingSlugs.has(item.slug));
-          if (appended.length > 0) {
-            setPosts((prev) => {
-              const merged = [...prev];
-              const mergedSlugs = new Set(prev.map((item) => item.slug));
-              appended.forEach((item) => {
-                if (!mergedSlugs.has(item.slug)) {
-                  merged.push(item);
-                  mergedSlugs.add(item.slug);
-                }
-              });
-              return merged;
-            });
-          }
-          setRecentlyAppendedSlugs(appended.map((item) => item.slug));
-        }
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Unknown error";
-        setError(message);
-        if (mode === "replace") {
-          setRecentlyAppendedSlugs([]);
-          setPosts([]);
-          setTotalCount(0);
-          setHasMore(false);
-          setPage(1);
-        }
-      } finally {
-        if (mode === "replace") {
-          setLoadingInitial(false);
-        } else {
-          appendInFlightRef.current = false;
-          setLoadingMore(false);
-        }
-      }
-    },
-    [category, selectedTag, sortBy],
-  );
-
-  useEffect(() => {
-    void loadPage(1, "replace");
-  }, [loadPage]);
-
   useEffect(() => {
     const queryTag = String(searchParams.get("tag") || "").trim();
-    setSelectedTag((prev) => (prev === queryTag ? prev : queryTag));
+    setSelectedTag((current) => (current === queryTag ? current : queryTag));
   }, [searchParams]);
 
+  const loadPosts = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const payload = await fetchPosts({
+        category,
+        sort: "latest",
+        page: 1,
+        page_size: CATEGORY_PAGE_SIZE,
+      });
+      setPosts(payload.results);
+    } catch (fetchError) {
+      const message = fetchError instanceof Error ? fetchError.message : "Unknown error";
+      setError(message);
+      setPosts([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [category]);
+
   useEffect(() => {
-    postsRef.current = posts;
-  }, [posts]);
+    void loadPosts();
+  }, [loadPosts]);
+
+  const handleToggleLike = useCallback((post: PostSummary) => {
+    const current = likeOverrides[post.slug];
+    const wasLiked = current?.liked ?? false;
+    const prevLikes = current?.likes ?? post.likes_count;
+
+    setLikeOverrides((prev) => ({
+      ...prev,
+      [post.slug]: { liked: !wasLiked, likes: prevLikes + (wasLiked ? -1 : 1) },
+    }));
+
+    void togglePostLike(post.slug).then((res) => {
+      setLikeOverrides((prev) => ({
+        ...prev,
+        [post.slug]: { liked: res.liked, likes: res.likes },
+      }));
+    }).catch(() => {
+      setLikeOverrides((prev) => ({
+        ...prev,
+        [post.slug]: { liked: wasLiked, likes: prevLikes },
+      }));
+    });
+  }, [likeOverrides]);
 
   const fallbackPosts = useMemo(
     () => (error && posts.length === 0 ? getFallbackPosts(category) : []),
@@ -232,176 +149,45 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
   );
   const effectivePosts = fallbackPosts.length > 0 ? fallbackPosts : posts;
 
-  const autoLoadNextPage = useCallback(() => {
-    if (appendInFlightRef.current || loadingInitial || loadingMore || !hasMore || fallbackPosts.length > 0) {
-      return;
-    }
-    void loadPage(page + 1, "append");
-  }, [fallbackPosts.length, hasMore, loadPage, loadingInitial, loadingMore, page]);
-
-  const handleLoadMoreInView = useCallback(() => {
-    autoLoadNextPage();
-  }, [autoLoadNextPage]);
-
-  useEffect(() => {
-    if (recentlyAppendedSlugs.length === 0) {
-      return;
-    }
-    const timer = window.setTimeout(() => {
-      setRecentlyAppendedSlugs([]);
-    }, 1400);
-    return () => window.clearTimeout(timer);
-  }, [recentlyAppendedSlugs]);
-
-  const tags = useMemo(() => {
+  const allTags = useMemo(() => {
     const values = new Set<string>();
     effectivePosts.forEach((post) => {
-      post.tags.forEach((tag) => values.add(tag));
+      post.tags.forEach((tag) => {
+        const normalized = String(tag).trim();
+        if (normalized) {
+          values.add(normalized);
+        }
+      });
     });
-    return Array.from(values).sort();
+    return Array.from(values).sort((a, b) => a.localeCompare(b, "zh-CN"));
   }, [effectivePosts]);
 
-  const visual = visuals[category];
-  const estimatedWords = useMemo(
-    () => effectivePosts.reduce((sum, post) => sum + (post.word_count || 0), 0),
-    [effectivePosts],
-  );
-  const visiblePosts = useMemo(() => {
-    if (fallbackPosts.length === 0) {
+  const filteredPosts = useMemo(() => {
+    if (!selectedTag) {
       return effectivePosts;
     }
-    const sorted = [...effectivePosts];
-    if (sortBy === "views") {
-      sorted.sort((a, b) => {
-        const byViews = b.views_count - a.views_count;
-        if (byViews !== 0) {
-          return byViews;
-        }
-        const byUpdatedAsc = new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
-        if (byUpdatedAsc !== 0) {
-          return byUpdatedAsc;
-        }
-        return a.slug.localeCompare(b.slug);
-      });
-      return sorted;
-    }
-    sorted.sort((a, b) => {
-      const byUpdated = new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
-      if (byUpdated !== 0) {
-        return byUpdated;
-      }
-      return a.slug.localeCompare(b.slug);
+    return effectivePosts.filter((post) => post.tags.some((tag) => String(tag).trim() === selectedTag));
+  }, [effectivePosts, selectedTag]);
+
+  const tagCounts = useMemo(() => {
+    const counts: Record<string, number> = {
+      全部: effectivePosts.length,
+    };
+
+    allTags.forEach((tag) => {
+      counts[tag] = effectivePosts.filter((post) => post.tags.some((item) => String(item).trim() === tag)).length;
     });
-    return sorted;
-  }, [effectivePosts, fallbackPosts.length, sortBy]);
 
-  const sectionBorderColor = `rgba(${visual.glowRgb},0.18)`;
-  const sectionBackground = `linear-gradient(180deg, rgba(${visual.glowRgb},0.11), rgba(248,249,252,0.88) 34%, rgba(248,249,252,0.98) 100%)`;
-  const headerOverlay = visual.headerTintLight;
-  const cardBackground = `linear-gradient(165deg, rgba(255,255,255,0.95), rgba(${visual.glowRgb},0.08))`;
+    return counts;
+  }, [allTags, effectivePosts]);
 
-  const leadStory = visiblePosts[0];
-  const secondaryStories = visiblePosts.slice(1, 5);
-  const feedStories = visiblePosts.slice(5);
-  const storyListVariants = useMemo(
-    () => ({
-      hidden: {},
-      visible: {
-        transition: {
-          delayChildren: stagger(APPEND_STAGGER_SECONDS),
-        },
-      },
-    }),
-    [],
-  );
-  const storyItemVariants = useMemo(
-    () => ({
-      hidden: { opacity: 0, y: 20 },
-      visible: { opacity: 1, y: 0 },
-    }),
-    [],
-  );
-  const appendDelayBySlug = useMemo(() => {
-    if (recentlyAppendedSlugs.length === 0) {
-      return new Map<string, number>();
-    }
-    const resolveDelay = stagger(APPEND_STAGGER_SECONDS);
-    const total = recentlyAppendedSlugs.length;
-    return new Map(recentlyAppendedSlugs.map((slug, index) => [slug, resolveDelay(index, total)]));
-  }, [recentlyAppendedSlugs]);
-  const leadAppendDelay = leadStory ? appendDelayBySlug.get(leadStory.slug) : undefined;
-
-  // Cult UI ToolbarExpandable steps
-  const toolbarSteps = useMemo(
-    () => [
-      {
-        id: "tags",
-        label: "标签",
-        icon: <span>🏷️</span>,
-        content: (
-          <div className="flex flex-wrap gap-2">
-            {["全部", ...tags].map((tagLabel) => {
-              const value = tagLabel === "全部" ? "" : tagLabel;
-              const active = value === selectedTag;
-              return (
-                <button
-                  key={tagLabel}
-                  type="button"
-                  onClick={() => handleSelectTag(value)}
-                  className={`relative whitespace-nowrap rounded-full border px-3 py-1.5 text-sm transition ${active ? "border-[#4f6ae5]/40 bg-[#4f6ae5]/10 text-[#4f6ae5]" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"}`}
-                >
-                  {tagLabel}
-                  {tagLabel !== "全部"
-                    ? `(${effectivePosts.filter((post) => post.tags.includes(tagLabel)).length})`
-                    : `(${totalCount || effectivePosts.length})`}
-                  {active ? (
-                    <motion.span
-                      layoutId={`tag-active-${category}`}
-                      className="absolute bottom-0 left-[18%] h-[2px] w-[64%] rounded-full bg-[#4f6ae5]"
-                      transition={{ type: "spring", stiffness: 420, damping: 34 }}
-                    />
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
-        ),
-      },
-      {
-        id: "sort",
-        label: "排序",
-        icon: <span>📊</span>,
-        content: (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className={`rounded-full border px-3 py-1.5 text-sm transition ${sortBy === "latest" ? "border-[#4f6ae5]/40 bg-[#4f6ae5]/10 text-[#4f6ae5]" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}
-              onClick={() => setSortBy("latest")}
-            >
-              最新优先
-            </button>
-            <button
-              type="button"
-              className={`rounded-full border px-3 py-1.5 text-sm transition ${sortBy === "views" ? "border-[#4f6ae5]/40 bg-[#4f6ae5]/10 text-[#4f6ae5]" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}
-              onClick={() => setSortBy("views")}
-            >
-              阅读最多
-            </button>
-          </div>
-        ),
-      },
-    ],
-    [tags, selectedTag, handleSelectTag, effectivePosts, totalCount, category, sortBy],
+  const tagItems = useMemo(
+    () => [{ label: "全部", value: "" }, ...allTags.map((tag) => ({ label: tag, value: tag }))],
+    [allTags],
   );
 
   return (
-    <section
-      className="space-y-8 rounded-[28px] border p-4 sm:p-6"
-      style={{
-        borderColor: sectionBorderColor,
-        background: sectionBackground,
-      }}
-    >
+    <section className="relative overflow-hidden rounded-[28px] border border-slate-200/80 bg-white/92 shadow-sm">
       <Helmet>
         <title>{`${title} | Keyon Blog ｜ 云际漫游者`}</title>
         <meta content={categoryDescriptions[category]} name="description" />
@@ -410,214 +196,164 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
         <link href={`https://blog.oc.slgneon.cn/${category}`} rel="canonical" />
       </Helmet>
 
-      <FadeIn>
-        <header
-          className="relative overflow-hidden rounded-3xl border border-slate-200/60 bg-white/85 p-7 shadow-sm backdrop-blur sm:p-9"
-        >
-          <BackgroundBeams colors={visual.beams} />
-          <div className="pointer-events-none absolute inset-0" style={{ background: headerOverlay }} />
-          <div
-            className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full blur-3xl"
-            style={{ background: `rgba(${visual.glowRgb},0.28)` }}
-          />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-[radial-gradient(circle_at_18%_18%,rgba(79,106,229,0.18),transparent_55%),radial-gradient(circle_at_80%_4%,rgba(107,145,123,0.16),transparent_48%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-56 opacity-70 [background-size:32px_32px] [background-image:linear-gradient(to_right,rgba(148,163,184,0.12)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.12)_1px,transparent_1px)]" />
 
-          <div className="relative">
-            <p className="text-sm tracking-[0.22em] text-slate-500">{visual.badge}</p>
-            <h1 className="mt-2 flex items-center gap-3 text-3xl font-semibold tracking-tight text-slate-800">
-              <span
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border text-xl shadow-sm"
-                style={{
-                  borderColor: `rgba(${visual.glowRgb},0.32)`,
-                  background: `rgba(${visual.glowRgb},0.15)`,
-                }}
+      <header className="relative border-b border-slate-200/80 p-6 md:p-8">
+        <div className="flex flex-wrap items-center gap-2">
+          {categoryTabs.map((tab) => {
+            const active = tab.id === category;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => handleTabSelect(tab.id)}
+                className={cn(
+                  "rounded-full border px-5 py-2.5 text-base font-medium transition",
+                  active
+                    ? "border-[#4f6ae5]/35 bg-[#4f6ae5]/10 text-[#4f6ae5]"
+                    : "border-slate-200 bg-white/75 text-slate-600 hover:border-slate-300 hover:text-slate-800",
+                )}
               >
-                {visual.icon}
-              </span>
-              <span style={{ color: visual.accentHex }}>{title}</span>
-            </h1>
-            <p className="mt-3 text-slate-600">
-              <TextGenerateEffect text={visual.accentText} />
-            </p>
-            <p className="mt-1 text-sm text-slate-500">
-              {totalCount || effectivePosts.length} 篇文章 · 约 {estimatedWords.toLocaleString()} 字
-              {totalCount > 0 && effectivePosts.length < totalCount ? ` · 已加载 ${effectivePosts.length} 篇` : ""}
-            </p>
-          </div>
-        </header>
-      </FadeIn>
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
 
-      <section className="flex justify-center sm:justify-start">
-        <DirectionAwareTabs
-          items={categoryTabs.map((item) => ({ id: item.id, label: item.label }))}
-          activeId={category}
-          onSelect={handleTabSelect}
-        />
-      </section>
-
-      {/* Cult UI ToolbarExpandable for tags/sort */}
-      <ToolbarExpandable steps={toolbarSteps} />
-
-      {loadingInitial && <p className="text-slate-500">加载中...</p>}
-
-      <AnimatePresence mode="wait">
-        {leadStory ? (
-          <motion.section
-            key={`${category}-${selectedTag}-${sortBy}`}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.3 }}
-            className="space-y-6"
-          >
-            {/* Lead story */}
-            <motion.article
-              key={leadStory.slug}
-              variants={storyItemVariants}
-              initial={leadAppendDelay == null ? false : "hidden"}
-              animate={{ opacity: 1, y: 0 }}
-              transition={
-                leadAppendDelay == null
-                  ? { type: "spring", stiffness: 150, damping: 24, mass: 1 }
-                  : { duration: 0.4, ease: "easeOut", delay: leadAppendDelay }
-              }
-            >
-              <CardSpotlight
-                className="group rounded-3xl border border-slate-200/60 bg-white/92 p-5 shadow-sm backdrop-blur transition duration-200 hover:-translate-y-1 hover:shadow-md"
-                style={{ background: cardBackground }}
-                glowColor={visual.glowRgb}
-              >
-                <div className="relative overflow-hidden rounded-2xl border border-slate-200/70">
-                  {(() => {
-                    const leadCover = resolvePostCover(leadStory);
-                    if (leadCover) {
-                      return (
-                        <BlurRevealImage
-                          alt={`${leadStory.title} 封面图`}
-                          className="h-full w-full object-cover"
-                          loading="lazy"
-                          src={leadCover}
-                          wrapperClassName="aspect-[16/7]"
-                        />
-                      );
-                    }
-                    return <GenerativeCover category={category} className="aspect-[16/7]" seed={leadStory.slug} />;
-                  })()}
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/30 via-transparent to-transparent" />
-                </div>
-                <h2 className="mt-5 text-3xl font-semibold tracking-tight text-slate-800">
-                  <Link className="line-clamp-2 transition hover:opacity-80" style={{ color: visual.accentHex }} to={`/posts/${leadStory.slug}`}>
-                    {leadStory.title}
-                  </Link>
-                </h2>
-                <p className="mt-2 max-w-4xl text-base leading-7 text-slate-600">
-                  {leadStory.excerpt || "暂无摘要"}
-                </p>
-                <p className="mt-3 text-sm text-slate-500">
-                  {new Date(leadStory.updated_at).toLocaleDateString("zh-CN")} · 👁 {formatViews(leadStory.views_count)} · {estimateReadMinutes(leadStory)} min
-                </p>
-              </CardSpotlight>
-            </motion.article>
-
-            {/* Secondary stories with ThreeDCard */}
-            {secondaryStories.length > 0 ? (
-              <motion.div className="grid gap-4 md:grid-cols-2" variants={storyListVariants} initial="hidden" animate="visible">
-                {secondaryStories.map((post) => {
-                  const appendDelay = appendDelayBySlug.get(post.slug);
-                  const coverSrc = resolvePostCover(post);
-                  return (
-                    <motion.article
-                      key={post.slug}
-                      variants={storyItemVariants}
-                      transition={
-                        appendDelay == null
-                          ? { duration: 0.4, ease: "easeOut" }
-                          : { duration: 0.4, ease: "easeOut", delay: appendDelay }
-                      }
-                    >
-                      <CardContainer containerClassName="w-full">
-                        <CardBody className="w-full rounded-2xl border border-slate-200/60 bg-white/90 p-4 shadow-sm backdrop-blur">
-                          <CardItem translateZ={50} className="w-full">
-                            <div className="relative overflow-hidden rounded-xl border border-slate-200/70">
-                              {coverSrc ? (
-                                <BlurRevealImage
-                                  alt={`${post.title} 封面图`}
-                                  className="h-full w-full object-cover"
-                                  loading="lazy"
-                                  src={coverSrc}
-                                  wrapperClassName="aspect-[4/3]"
-                                />
-                              ) : (
-                                <GenerativeCover category={category} className="aspect-[4/3]" seed={post.slug} />
-                              )}
-                              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/25 via-transparent to-transparent" />
-                            </div>
-                          </CardItem>
-
-                          <CardItem translateZ={30} className="mt-4 w-full">
-                            <h3 className="text-xl font-semibold text-slate-800">
-                              <Link className="line-clamp-2 transition hover:opacity-80" style={{ color: visual.accentHex }} to={`/posts/${post.slug}`}>
-                                {post.title}
-                              </Link>
-                            </h3>
-                          </CardItem>
-
-                          <CardItem translateZ={20} className="mt-2 w-full">
-                            <p className="text-sm text-slate-600">{post.excerpt || "暂无摘要"}</p>
-                          </CardItem>
-
-                          <CardItem translateZ={10} className="mt-3 w-full">
-                            <p className="text-xs text-slate-500">
-                              {new Date(post.updated_at).toLocaleDateString("zh-CN")} · 👁 {formatViews(post.views_count)} · {estimateReadMinutes(post)} min
-                            </p>
-                          </CardItem>
-                        </CardBody>
-                      </CardContainer>
-                    </motion.article>
-                  );
-                })}
-              </motion.div>
-            ) : null}
-
-            {/* Feed stories with 3D marquee */}
-            {feedStories.length > 0 ? (
-              <motion.div variants={storyListVariants} initial="hidden" animate="visible">
-                <motion.div variants={storyItemVariants}>
-                  <ArticleMarquee3D
-                    accentHex={visual.accentHex}
-                    glowRgb={visual.glowRgb}
-                    posts={feedStories}
-                  />
-                </motion.div>
-              </motion.div>
-            ) : null}
-          </motion.section>
-        ) : null}
-      </AnimatePresence>
-
-      {!loadingInitial && !fallbackPosts.length && hasMore ? (
-        <div className="flex flex-col items-center gap-2 pt-1">
-          <motion.div
-            className="relative flex h-10 w-10 items-center justify-center"
-            onViewportEnter={handleLoadMoreInView}
-            viewport={{ margin: "0px 0px 80px 0px" }}
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-          >
-            <span className="absolute inset-0 rounded-full border-[3px] border-slate-200" />
-            <span className="absolute inset-0 rounded-full border-[3px] border-transparent border-t-[#4f6ae5]" />
-          </motion.div>
-          <p className="text-xs text-slate-500">{loadingMore ? "正在加载更多..." : "继续下滑，自动加载更多"}</p>
-          <p className="text-xs text-slate-500">
-            已加载 {effectivePosts.length}/{totalCount} 篇
+        <h1 className="mt-5 text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">{title}文章</h1>
+        <p className="mt-2 max-w-2xl text-sm text-slate-600 md:text-base">{categoryDescriptions[category]}</p>
+        {!loading ? (
+          <p className="mt-2 text-xs text-slate-500">
+            {filteredPosts.length} / {effectivePosts.length} 篇文章
+            {selectedTag ? ` · 当前标签：${selectedTag}` : ""}
           </p>
+        ) : null}
+
+        <div className="mt-5">
+          <div className="hidden flex-wrap gap-2 md:flex">
+            {tagItems.map((tag) => {
+              const active = selectedTag === tag.value;
+              return (
+                <button
+                  key={tag.label}
+                  type="button"
+                  onClick={() => handleSelectTag(tag.value)}
+                  className={cn(
+                    "rounded-lg border px-4 py-2 text-base transition",
+                    active
+                      ? "border-[#4f6ae5]/35 bg-[#4f6ae5] text-white"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
+                  )}
+                >
+                  {tag.label}
+                  <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-md border border-current/20 px-1 text-xs">
+                    {tagCounts[tag.label] ?? 0}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <label className="block md:hidden">
+            <span className="mb-1 block text-xs font-medium text-slate-500">按标签筛选</span>
+            <select
+              value={selectedTag}
+              onChange={(event) => handleSelectTag(event.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-indigo-100 transition focus:border-indigo-300 focus:ring"
+            >
+              <option value="">全部</option>
+              {allTags.map((tag) => (
+                <option key={tag} value={tag}>
+                  {tag} ({tagCounts[tag] ?? 0})
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </header>
+
+      {loading ? <p className="relative px-6 py-10 text-sm text-slate-500 md:px-8">加载文章中...</p> : null}
+
+      {!loading && filteredPosts.length > 0 ? (
+        <div className="relative grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 border-x border-slate-200/80">
+          {filteredPosts.map((post, index) => {
+            const cover = resolvePostCover(post);
+            return (
+              <Link
+                key={post.slug}
+                to={`/posts/${post.slug}`}
+                className={cn(
+                  "group block border-t border-slate-200/80 p-5 transition hover:bg-slate-50/80 md:p-6",
+                  index % 2 === 0 && "md:border-r",
+                  index % 3 !== 2 && "xl:border-r",
+                )}
+              >
+                {cover ? (
+                  <div className="relative h-48 overflow-hidden rounded-xl border border-slate-200/70 bg-slate-100">
+                    <img
+                      src={cover}
+                      alt={`${post.title} 封面`}
+                      loading="lazy"
+                      className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex h-48 items-end rounded-xl border border-slate-200/70 bg-gradient-to-br from-slate-100 to-slate-50 p-4">
+                    <span className="line-clamp-2 text-sm font-medium text-slate-500">{post.title}</span>
+                  </div>
+                )}
+
+                <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                  <time>{formatDate(post.updated_at)}</time>
+                  <span>·</span>
+                  <span>{estimateReadMinutes(post)} 分钟</span>
+                  <span>·</span>
+                  <span>{post.views_count} 阅读</span>
+                  <span className="ml-auto">
+                    <LikeButton
+                      size="sm"
+                      liked={likeOverrides[post.slug]?.liked ?? false}
+                      likes={likeOverrides[post.slug]?.likes ?? post.likes_count}
+                      onToggle={() => handleToggleLike(post)}
+                    />
+                  </span>
+                </div>
+
+                <h2 className="mt-2 line-clamp-2 text-xl font-semibold tracking-tight text-slate-900 group-hover:underline">
+                  {post.title}
+                </h2>
+                <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{post.excerpt || "暂无摘要"}</p>
+
+                {post.tags.length > 0 ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {post.tags.slice(0, 3).map((tag) => (
+                      <span
+                        key={`${post.slug}-${tag}`}
+                        className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-xs text-slate-500"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </Link>
+            );
+          })}
         </div>
       ) : null}
 
-      {!loadingInitial && !fallbackPosts.length && !hasMore && effectivePosts.length > 0 ? (
-        <p className="text-center text-xs text-slate-500">已加载全部 {effectivePosts.length} 篇</p>
+      {!loading && filteredPosts.length === 0 ? (
+        <p className="relative px-6 py-10 text-sm text-slate-500 md:px-8">
+          {selectedTag ? "当前标签下暂无文章。" : "暂无文章。"}
+        </p>
       ) : null}
 
-      {!loadingInitial && effectivePosts.length === 0 ? <p className="text-slate-500">暂无文章</p> : null}
+      {error ? (
+        <p className="relative border-t border-slate-200/80 px-6 py-3 text-xs text-amber-700 md:px-8">
+          接口请求失败，当前显示本地回退内容。
+        </p>
+      ) : null}
     </section>
   );
 }

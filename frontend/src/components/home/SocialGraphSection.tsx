@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentType } from "react";
 import type { SocialGraphLink, SocialGraphNode } from "../../api/home";
 import { ScrollReveal } from "../motion/ScrollReveal";
+import { SparklesText } from "../ui/SparklesText";
 import { StaggerContainer, StaggerItem } from "../motion/StaggerContainer";
 import { CardSpotlight } from "../ui/CardSpotlight";
 
@@ -374,7 +375,11 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
   return (
     <ScrollReveal className="space-y-6">
       <div className="flex items-end justify-between">
-        <h2 className="text-2xl font-semibold text-slate-900">社交图谱</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">
+          <SparklesText className="text-inherit" sparklesCount={8} colors={{ first: "#38bdf8", second: "#f43f5e" }}>
+            社交图谱
+          </SparklesText>
+        </h2>
         <span className="text-sm text-slate-500">公开匿名节点：{friendNodes.length}</span>
       </div>
 

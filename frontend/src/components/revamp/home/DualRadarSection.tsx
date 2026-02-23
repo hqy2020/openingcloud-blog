@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties, ComponentType } from "react";
 import { radarMetricSets, type RadarMetricSet } from "../../../data/revamp/radarMetrics";
+import { SparklesText } from "../../ui/SparklesText";
 
 type EChartsLikeProps = {
   option: unknown;
@@ -124,7 +125,11 @@ export function DualRadarSection() {
     <section id="radar" className="space-y-4">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Radar</p>
-        <h2 className="mt-1 text-2xl font-semibold text-slate-800">双雷达图</h2>
+        <h2 className="mt-1 text-2xl font-semibold text-slate-800">
+          <SparklesText className="text-inherit" sparklesCount={8} colors={{ first: "#0ea5e9", second: "#fb7185" }}>
+            双雷达图
+          </SparklesText>
+        </h2>
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         {radarMetricSets.map((metricSet, index) => (

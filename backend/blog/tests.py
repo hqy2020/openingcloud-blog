@@ -306,11 +306,10 @@ class ApiTests(TestCase):
         self.assertEqual(rows[0]["id"], approved.id)
         self.assertEqual(rows[0]["content"], "approved")
 
-    def test_barrage_comment_submit_creates_pending(self):
+    def test_barrage_comment_submit_creates_approved(self):
         resp = self.client.post(
             reverse("barrage-comments"),
             {
-                "nickname": "  云友  ",
                 "content": "  留言测试  ",
                 "page_path": "/tech",
             },
@@ -321,10 +320,13 @@ class ApiTests(TestCase):
         self.assertTrue(resp.data["data"]["submitted"])
 
         comment = BarrageComment.objects.get(id=resp.data["data"]["id"])
-        self.assertEqual(comment.nickname, "云友")
+        self.assertEqual(comment.nickname, "匿名云友")
         self.assertEqual(comment.content, "留言测试")
         self.assertEqual(comment.page_path, "/tech")
-        self.assertEqual(comment.status, BarrageComment.ReviewStatus.PENDING)
+        self.assertEqual(comment.status, BarrageComment.ReviewStatus.APPROVED)
+        self.assertIsNotNone(comment.reviewed_at)
+        self.assertEqual(resp.data["data"]["status"], BarrageComment.ReviewStatus.APPROVED)
+        self.assertIn("comment", resp.data["data"])
 
     def test_barrage_comment_submit_throttled(self):
         payload = {"content": "第一条"}

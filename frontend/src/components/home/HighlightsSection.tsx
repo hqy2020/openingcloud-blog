@@ -2,6 +2,7 @@ import type { HighlightStage } from "../../api/home";
 import { ScrollReveal } from "../motion/ScrollReveal";
 import { StaggerContainer, StaggerItem } from "../motion/StaggerContainer";
 import { CardSpotlight } from "../ui/CardSpotlight";
+import { SparklesText } from "../ui/SparklesText";
 
 type HighlightsSectionProps = {
   stages: HighlightStage[];
@@ -132,7 +133,11 @@ export function HighlightsSection({ stages }: HighlightsSectionProps) {
     return (
       <ScrollReveal className="space-y-6">
         <div className="flex items-end justify-between">
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-200">高光时刻</h2>
+          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-200">
+            <SparklesText className="text-inherit" sparklesCount={8} colors={{ first: "#38bdf8", second: "#f97316" }}>
+              高光时刻
+            </SparklesText>
+          </h2>
           <span className="text-sm text-slate-500 dark:text-slate-400">0 个阶段</span>
         </div>
 
@@ -146,7 +151,11 @@ export function HighlightsSection({ stages }: HighlightsSectionProps) {
   return (
     <ScrollReveal className="space-y-6">
       <div className="flex items-end justify-between">
-        <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-200">高光时刻</h2>
+        <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-200">
+          <SparklesText className="text-inherit" sparklesCount={8} colors={{ first: "#38bdf8", second: "#f97316" }}>
+            高光时刻
+          </SparklesText>
+        </h2>
         <span className="text-sm text-slate-500 dark:text-slate-400">{stages.length} 个阶段</span>
       </div>
 

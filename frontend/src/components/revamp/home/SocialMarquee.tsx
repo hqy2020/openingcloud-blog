@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import type { HighlightStage } from "../../../api/home";
 import { achievementCards, type AchievementCard } from "../../../data/revamp/achievements";
 import { Marquee } from "../../ui/Marquee";
+import { SparklesText } from "../../ui/SparklesText";
 
 type SocialMarqueeProps = {
   stages: HighlightStage[];
@@ -53,11 +54,15 @@ export function SocialMarquee({ stages }: SocialMarqueeProps) {
     <section id="achievements" className="space-y-4">
       <div className="px-1">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Highlights</p>
-        <h2 className="mt-1 text-2xl font-semibold text-slate-800">高光成就双向跑马灯</h2>
+        <h2 className="mt-1 text-2xl font-semibold text-slate-800">
+          <SparklesText className="text-inherit" sparklesCount={8} colors={{ first: "#22d3ee", second: "#f97316" }}>
+            HighLight
+          </SparklesText>
+        </h2>
       </div>
 
       <div className="space-y-3">
-        <Marquee pauseOnHover duration={28}>
+        <Marquee pauseOnHover duration={45}>
           {cards.map((card) => (
             <AchievementMarqueeCard key={`row-a-${card.id}`} card={card} />
           ))}

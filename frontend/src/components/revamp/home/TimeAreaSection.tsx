@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties, ComponentType } from "react";
 import type { HomeTimeSeries, TimelineNode } from "../../../api/home";
 import { timeAreaSeriesConfig, type TimeSeriesKey } from "../../../data/revamp/timeSeries";
+import { SparklesText } from "../../ui/SparklesText";
 
 type EChartsLikeProps = {
   option: unknown;
@@ -516,10 +517,11 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
   return (
     <section id="time" className="space-y-4">
       <div>
-        <h2 className="text-5xl font-semibold leading-none text-slate-800 md:text-6xl lg:text-[86px]">Time</h2>
-        <p className="mt-3 text-lg leading-tight text-slate-700 md:text-2xl lg:text-[44px]">
-          This is how I spend my time. My biggest hobby is learning, as I am curious about almost everything.
-        </p>
+        <h2 className="text-2xl font-semibold text-slate-800">
+          <SparklesText className="text-inherit" sparklesCount={8} colors={{ first: "#38bdf8", second: "#f59e0b" }}>
+            Time
+          </SparklesText>
+        </h2>
       </div>
 
       <div className="overflow-hidden rounded-[1.8rem] border border-white/70 bg-[#e8edf2] shadow-[0_14px_28px_rgba(15,23,42,0.12)]">

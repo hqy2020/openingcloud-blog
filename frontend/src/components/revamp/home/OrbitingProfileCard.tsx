@@ -1,9 +1,8 @@
-import { useReducedMotion } from "motion/react";
-import type { CSSProperties } from "react";
+import { motion, useReducedMotion, useTime, useTransform } from "motion/react";
 import { cn } from "../../../lib/utils";
 import { CardBody, CardContainer, CardItem } from "../../ui/ThreeDCard";
-import { MorphingText } from "../../ui/MorphingText";
 import { TextAnimate } from "../../ui/TextAnimate";
+import { WordRotate } from "../../ui/WordRotate";
 
 type OrbitingProfileCardProps = {
   className?: string;
@@ -26,8 +25,9 @@ type OrbitingBadge = {
   imageClassName?: string;
 };
 
-const ORBIT_ELLIPSE_X = 1.14;
-const ORBIT_ELLIPSE_Y = 0.78;
+const ORBIT_RADIUS_SCALE = 1.5;
+const ORBIT_ELLIPSE_X_SCALE = 1.14;
+const ORBIT_ELLIPSE_Y_SCALE = 0.78;
 
 const orbitingBadges: OrbitingBadge[] = [
   {
@@ -67,15 +67,13 @@ const orbitingBadges: OrbitingBadge[] = [
     id: "personal-logo",
     label: "OpeningCloud",
     src: "/brand/logo-personal.png",
-    radius: 344,
+    radius: 360,
     duration: 11.7,
     delay: 0.4,
-    width: 176,
-    height: 176,
+    width: 96,
+    height: 96,
     angle: 302,
-    wrapperClassName:
-      "inline-flex items-center justify-center rounded-full border border-slate-300/85 bg-white p-1.5",
-    imageClassName: "h-full w-full rounded-full object-cover",
+    imageClassName: "h-full w-full object-contain",
   },
 ];
 
@@ -87,48 +85,34 @@ const defaultRoles = [
   "Long-term Writer",
 ];
 
-const defaultNameWords = ["Keyon", "云际漫游者"];
+const defaultNameWords = ["Keyon", "云际漫游者", "codecloud", "openingClouds"];
 
 function OrbitingBadgeNode({ badge, reducedMotion }: { badge: OrbitingBadge; reducedMotion: boolean }) {
   const wrapperClassName =
     badge.wrapperClassName ??
-    "inline-flex items-center justify-center rounded-full border border-slate-300/80 bg-white p-1.5";
-  const imageClassName = badge.imageClassName ?? "h-full w-full rounded-full object-contain";
-
-  const orbitStyle: CSSProperties = reducedMotion
-    ? {}
-    : {
-        animation: `revamp-orbit ${badge.duration}s linear ${badge.delay}s infinite`,
-        animationDirection: "normal",
-      };
-  const counterStyle: CSSProperties = reducedMotion
-    ? {}
-    : {
-        animation: `revamp-orbit ${badge.duration}s linear ${badge.delay}s infinite`,
-        animationDirection: "reverse",
-      };
+    "inline-flex items-center justify-center";
+  const imageClassName = badge.imageClassName ?? "h-full w-full object-contain";
+  const orbitRadiusX = badge.radius * ORBIT_RADIUS_SCALE * ORBIT_ELLIPSE_X_SCALE;
+  const orbitRadiusY = badge.radius * ORBIT_RADIUS_SCALE * ORBIT_ELLIPSE_Y_SCALE;
+  const time = useTime();
+  const angle = useTransform(time, (latest) => {
+    if (reducedMotion) {
+      return badge.angle;
+    }
+    return badge.angle + ((latest / 1000 + badge.delay) / badge.duration) * 360;
+  });
+  const x = useTransform(angle, (value) => orbitRadiusX * Math.cos((value * Math.PI) / 180));
+  const y = useTransform(angle, (value) => orbitRadiusY * Math.sin((value * Math.PI) / 180));
 
   return (
-    <div className="pointer-events-none absolute left-1/2 top-1/2 h-0 w-0">
-      <div style={{ transform: `rotate(${badge.angle}deg)` }}>
-        <div style={orbitStyle}>
-          <div style={{ transform: `scale(${ORBIT_ELLIPSE_X}, ${ORBIT_ELLIPSE_Y})` }}>
-            <div style={{ transform: `translateX(${badge.radius}px)` }}>
-              <div style={counterStyle}>
-                <div style={{ transform: `scale(${1 / ORBIT_ELLIPSE_X}, ${1 / ORBIT_ELLIPSE_Y}) rotate(${-badge.angle}deg)` }}>
-                  <span
-                    className={wrapperClassName}
-                    style={{ width: `${badge.width}px`, height: `${badge.height}px` }}
-                  >
-                    <img alt={badge.label} src={badge.src} className={cn(imageClassName)} />
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <motion.div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 will-change-transform" style={{ x, y }}>
+      <span
+        className={wrapperClassName}
+        style={{ width: `${badge.width}px`, height: `${badge.height}px` }}
+      >
+        <img alt={badge.label} src={badge.src} className={cn(imageClassName)} />
+      </span>
+    </motion.div>
   );
 }
 
@@ -153,28 +137,35 @@ export function OrbitingProfileCard({
       ))}
 
       <CardContainer containerClassName="absolute inset-0 flex items-center justify-center">
-        <CardBody className="w-[248px] rounded-[24px] border border-slate-200/90 bg-white/90 p-6 shadow-[0_24px_58px_rgba(15,23,42,0.18)] backdrop-blur sm:w-[360px] sm:p-8 lg:w-[430px]">
-          <CardItem as="p" translateZ={24} className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600 sm:text-base sm:tracking-[0.08em]">
+        <CardBody className="w-[248px] rounded-[24px] p-6 sm:w-[360px] sm:p-8 lg:w-[430px]">
+          <CardItem as="p" translateZ={24} className="text-base font-bold tracking-[0.08em] text-slate-600 sm:text-[32px] sm:leading-[1.1]">
             My name is:
           </CardItem>
           <CardItem as="div" translateZ={44} className="mt-3 min-h-[3rem] sm:min-h-[4.2rem]">
-            <MorphingText
-              texts={activeNameWords}
-              className="mx-0 h-[3rem] max-w-none text-left text-4xl font-black leading-none text-[#f79237] sm:h-[4.2rem] sm:text-6xl"
+            <WordRotate
+              words={activeNameWords}
+              duration={2600}
+              motionProps={{
+                initial: { opacity: 0, x: -26, filter: "blur(8px)" },
+                animate: { opacity: 1, x: 0, filter: "blur(0px)" },
+                exit: { opacity: 0, x: 26, filter: "blur(8px)" },
+                transition: { duration: 0.42, ease: "easeOut" },
+              }}
+              className="inline-block text-left text-4xl font-black leading-none text-[#f79237] sm:text-6xl"
             />
           </CardItem>
           <div className="mt-4 h-px w-full bg-[linear-gradient(90deg,rgba(15,23,42,0.16),rgba(15,23,42,0.32),rgba(15,23,42,0.16))]" />
-          <CardItem as="p" translateZ={24} className="mt-5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600 sm:text-base sm:tracking-[0.08em]">
-            I am:
+          <CardItem as="p" translateZ={24} className="mt-5 text-base font-bold tracking-[0.08em] text-slate-600 sm:text-[32px] sm:leading-[1.1]">
+            I&apos;m a ...
           </CardItem>
           <CardItem
             as="ul"
             translateZ={38}
-            className="mt-3 w-full space-y-1 text-right text-sm font-medium leading-6 text-slate-700 sm:text-[25px] sm:leading-[1.45]"
+            className="mt-3 w-full space-y-1 text-right text-sm font-medium leading-6 text-slate-700 sm:text-[20px] sm:leading-[1.4]"
           >
             {roles.map((role, index) => (
               <li key={role} className="overflow-hidden">
-                <TextAnimate animation="whipInUp" delay={index * 0.12} className="inline-block">
+                <TextAnimate animation="whipInRight" delay={index * 0.12} className="inline-block">
                   {role}
                 </TextAnimate>
               </li>

@@ -1,17 +1,14 @@
-import { motion, useScroll, useSpring } from "motion/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { AnchorHTMLAttributes, HTMLAttributes, ImgHTMLAttributes, MouseEvent, ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { AnchorHTMLAttributes, HTMLAttributes, ImgHTMLAttributes, ReactNode } from "react";
 import { Helmet } from "react-helmet-async";
 import ReactMarkdown from "react-markdown";
 import { Link, useParams } from "react-router-dom";
 import remarkGfm from "remark-gfm";
-import { fetchPostBySlug, fetchPostLikeStatus, incrementPostViews, togglePostLike } from "../api/posts";
-import { useTheme } from "../app/theme";
-import { BlurRevealImage } from "../components/ui/BlurRevealImage";
-import { Confetti, type ConfettiRef } from "../components/ui/Confetti";
-import { GenerativeCover } from "../components/ui/GenerativeCover";
+import { fetchPostBySlug, fetchPosts, fetchPostLikeStatus, incrementPostViews, togglePostLike } from "../api/posts";
+import type { PostSummary } from "../api/posts";
+import { LikeButton } from "../components/ui/LikeButton";
 import { useAsync } from "../hooks/useAsync";
-import { getConfettiOriginFromElement } from "../lib/confetti";
+import { cn } from "../lib/utils";
 
 type HeadingItem = {
   id: string;
@@ -19,9 +16,7 @@ type HeadingItem = {
   level: 2 | 3;
 };
 
-type MobileTabKey = "article" | "toc" | "info";
-
-const HEADING_SCROLL_OFFSET = 112;
+const HEADING_SCROLL_OFFSET = 96;
 
 const categoryLabelMap: Record<"tech" | "learning" | "life", string> = {
   tech: "技术",
@@ -35,7 +30,7 @@ const categoryPathMap: Record<"tech" | "learning" | "life", string> = {
   life: "/life",
 };
 
-function toHeadingId(text: string) {
+function toHeadingId(text: string): string {
   return text
     .toLowerCase()
     .trim()
@@ -53,7 +48,7 @@ function createHeadingIdResolver() {
   };
 }
 
-function normalizeHeadingText(text: string) {
+function normalizeHeadingText(text: string): string {
   return text
     .replace(/\[\[([^\]]+)\]\]/g, "$1")
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
@@ -120,17 +115,19 @@ function plainText(node: ReactNode): string {
   return "";
 }
 
-function estimateReadingMinutes(markdown: string) {
-  const plain = markdown
-    .replace(/```[\s\S]*?```/g, " ")
-    .replace(/`[^`]*`/g, " ")
-    .replace(/[#[\]()>*_~!-]/g, " ")
-    .replace(/\s+/g, "");
-  const chars = plain.length;
-  return Math.max(1, Math.round(chars / 380));
+function formatDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+  return date.toLocaleDateString("zh-CN", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
-function resolveMarkdownAssetUrl(src: string) {
+function resolveMarkdownAssetUrl(src: string): string {
   const value = src.trim();
   if (!value) {
     return value;
@@ -159,17 +156,21 @@ function resolveMarkdownAssetUrl(src: string) {
   }
 }
 
+function scoreRelatedPost(post: PostSummary, tagSet: Set<string>): number {
+  return post.tags.reduce((total, tag) => {
+    const normalizedTag = String(tag).trim();
+    return normalizedTag && tagSet.has(normalizedTag) ? total + 1 : total;
+  }, 0);
+}
+
 export function PostDetailPage() {
-  const { isDark } = useTheme();
   const { slug = "" } = useParams();
   const { data, loading, error } = useAsync(() => fetchPostBySlug(slug), [slug]);
-  const { scrollYProgress } = useScroll();
   const [activeHeadingId, setActiveHeadingId] = useState("");
-  const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 160,
-    damping: 26,
-    mass: 0.2,
-  });
+  const [relatedPosts, setRelatedPosts] = useState<PostSummary[]>([]);
+  const [loadingRelated, setLoadingRelated] = useState(false);
+  const [postLiked, setPostLiked] = useState(false);
+  const [postLikes, setPostLikes] = useState(0);
 
   useEffect(() => {
     if (!slug) {
@@ -178,65 +179,190 @@ export function PostDetailPage() {
     void incrementPostViews(slug);
   }, [slug]);
 
-  const headings = useMemo(() => extractHeadings(data?.content ?? ""), [data?.content]);
-  const readMinutes = useMemo(() => estimateReadingMinutes(data?.content ?? ""), [data?.content]);
-
-  const [liked, setLiked] = useState(false);
-  const [likesCount, setLikesCount] = useState(data?.likes_count ?? 0);
-  const [mobileTabState, setMobileTabState] = useState<{ slug: string; tab: MobileTabKey }>({
-    slug,
-    tab: "article",
-  });
-  const mobileTab = mobileTabState.slug === slug ? mobileTabState.tab : "article";
-  const likeLoadingRef = useRef(false);
-  const [likeLoading, setLikeLoading] = useState(false);
-  const likeConfettiRef = useRef<ConfettiRef>(null);
-
-  useEffect(() => {
-    if (data) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setLikesCount(data.likes_count);
-    }
-  }, [data]);
-
   useEffect(() => {
     if (!slug) return;
-    let cancelled = false;
-    fetchPostLikeStatus(slug)
-      .then((result) => {
-        if (cancelled) return;
-        setLiked(result.liked);
-        setLikesCount(result.likes);
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
+    void fetchPostLikeStatus(slug).then((s) => {
+      setPostLiked(s.liked);
+      setPostLikes(s.likes);
+    }).catch(() => {});
   }, [slug]);
 
-  const handleToggleLike = useCallback(async (event: MouseEvent<HTMLButtonElement>) => {
-    if (likeLoadingRef.current || !slug) return;
-    const origin = getConfettiOriginFromElement(event.currentTarget);
-    likeLoadingRef.current = true;
-    setLikeLoading(true);
-    try {
-      const result = await togglePostLike(slug);
-      setLiked(result.liked);
-      setLikesCount(result.likes);
-      if (result.liked) {
-        void likeConfettiRef.current?.fire({
-          particleCount: 88,
-          spread: 84,
-          startVelocity: 42,
-          scalar: 0.95,
-          decay: 0.93,
-          disableForReducedMotion: true,
-          origin,
-          colors: ["#fb7185", "#fda4af", "#f9a8d4", "#fecdd3"],
-        });
+  const handleToggleLike = useCallback(() => {
+    const wasLiked = postLiked;
+    setPostLiked(!wasLiked);
+    setPostLikes((n) => n + (wasLiked ? -1 : 1));
+
+    void togglePostLike(slug).then((res) => {
+      setPostLiked(res.liked);
+      setPostLikes(res.likes);
+    }).catch(() => {
+      setPostLiked(wasLiked);
+      setPostLikes((n) => n + (wasLiked ? 1 : -1));
+    });
+  }, [slug, postLiked]);
+
+  const postTags = useMemo(() => {
+    if (!Array.isArray(data?.tags)) {
+      return [] as string[];
+    }
+    return data.tags.map((tag) => String(tag).trim()).filter((tag) => tag.length > 0);
+  }, [data?.tags]);
+
+  const headings = useMemo(() => extractHeadings(data?.content ?? ""), [data?.content]);
+
+  const scrollToHeading = useCallback((id: string, behavior: ScrollBehavior = "smooth") => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+    const target = document.getElementById(id);
+    if (!target) {
+      return false;
+    }
+    const top = target.getBoundingClientRect().top + window.scrollY - HEADING_SCROLL_OFFSET;
+    window.scrollTo({ top: Math.max(top, 0), behavior });
+    return true;
+  }, []);
+
+  useEffect(() => {
+    if (headings.length === 0 || typeof window === "undefined") {
+      setActiveHeadingId("");
+      return;
+    }
+
+    const syncFromHash = () => {
+      const hashValue = window.location.hash.replace(/^#/, "");
+      if (!hashValue) {
+        setActiveHeadingId(headings[0].id);
+        return;
       }
-    } catch { /* ignore network errors */ }
-    likeLoadingRef.current = false;
-    setLikeLoading(false);
-  }, [slug]);
+
+      let decoded = "";
+      try {
+        decoded = decodeURIComponent(hashValue);
+      } catch {
+        decoded = "";
+      }
+
+      if (!decoded) {
+        setActiveHeadingId(headings[0].id);
+        return;
+      }
+
+      if (scrollToHeading(decoded, "auto")) {
+        setActiveHeadingId(decoded);
+      } else {
+        setActiveHeadingId(headings[0].id);
+      }
+    };
+
+    const frameId = window.requestAnimationFrame(syncFromHash);
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [headings, scrollToHeading]);
+
+  useEffect(() => {
+    if (headings.length === 0 || typeof window === "undefined") {
+      return;
+    }
+
+    const updateActiveHeading = () => {
+      const positions = headings.map((heading) => {
+        const element = document.getElementById(heading.id);
+        return {
+          id: heading.id,
+          top: element ? element.getBoundingClientRect().top : Number.POSITIVE_INFINITY,
+        };
+      });
+
+      let next = positions.find((item) => item.top >= 0 && item.top <= 120);
+      if (!next) {
+        const above = positions.filter((item) => item.top < 0).sort((a, b) => b.top - a.top);
+        next = above[0];
+      }
+      if (!next) {
+        const below = positions.filter((item) => item.top > 120).sort((a, b) => a.top - b.top);
+        next = below[0];
+      }
+
+      if (next) {
+        setActiveHeadingId((current) => (current === next.id ? current : next.id));
+      }
+    };
+
+    updateActiveHeading();
+    window.addEventListener("scroll", updateActiveHeading, { passive: true });
+    window.addEventListener("resize", updateActiveHeading);
+
+    return () => {
+      window.removeEventListener("scroll", updateActiveHeading);
+      window.removeEventListener("resize", updateActiveHeading);
+    };
+  }, [headings]);
+
+  const currentCategory = data?.category;
+  const currentSlug = data?.slug;
+  const postTagsKey = postTags.join("|");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!currentCategory || !currentSlug) {
+      setRelatedPosts([]);
+      setLoadingRelated(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const loadRelatedPosts = async () => {
+      setLoadingRelated(true);
+      try {
+        const payload = await fetchPosts({
+          category: currentCategory,
+          sort: "latest",
+          page: 1,
+          page_size: 24,
+        });
+
+        const currentTagSet = new Set(postTags);
+        const ranked = payload.results
+          .filter((item) => item.slug !== currentSlug)
+          .map((item) => ({
+            post: item,
+            score: scoreRelatedPost(item, currentTagSet),
+            updatedAt: new Date(item.updated_at).getTime(),
+          }))
+          .sort((a, b) => {
+            if (a.score !== b.score) {
+              return b.score - a.score;
+            }
+            return b.updatedAt - a.updatedAt;
+          })
+          .slice(0, 3)
+          .map((entry) => entry.post);
+
+        if (!cancelled) {
+          setRelatedPosts(ranked);
+        }
+      } catch {
+        if (!cancelled) {
+          setRelatedPosts([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingRelated(false);
+        }
+      }
+    };
+
+    void loadRelatedPosts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentCategory, currentSlug, postTags, postTagsKey]);
+
   const headingIdLookup = useMemo(() => {
     const source = new Map<string, string[]>();
     for (const item of headings) {
@@ -248,279 +374,217 @@ export function PostDetailPage() {
     return source;
   }, [headings]);
 
-  const scrollToHeading = (id: string, behavior: ScrollBehavior = "smooth") => {
-    const target = document.getElementById(id);
-    if (!target) {
-      return false;
-    }
-    const top = target.getBoundingClientRect().top + window.scrollY - HEADING_SCROLL_OFFSET;
-    window.scrollTo({ top: Math.max(top, 0), behavior });
-    return true;
-  };
+  const markdownComponents = useMemo(() => {
+    const idQueues = new Map<string, string[]>(
+      Array.from(headingIdLookup.entries(), ([key, values]) => [key, [...values]]),
+    );
+    const fallbackResolveHeadingId = createHeadingIdResolver();
 
-  useEffect(() => {
-    if (headings.length === 0) {
-      const rafId = window.requestAnimationFrame(() => {
-        setActiveHeadingId("");
-      });
-      return () => window.cancelAnimationFrame(rafId);
-    }
-
-    const headingIdSet = new Set(headings.map((item) => item.id));
-    const firstHeadingId = headings[0].id;
-
-    const readHashHeadingId = () => {
-      const hashValue = window.location.hash.replace(/^#/, "");
-      if (!hashValue) {
-        return "";
+    const consumeHeadingId = (level: 2 | 3, text: string) => {
+      const normalized = normalizeHeadingText(text);
+      const key = `${level}:${normalized}`;
+      const queue = idQueues.get(key);
+      if (queue?.length) {
+        return queue.shift()!;
       }
-      try {
-        return decodeURIComponent(hashValue);
-      } catch {
-        return "";
-      }
+      return fallbackResolveHeadingId(normalized);
     };
 
-    const syncActiveFromHash = () => {
-      const hashId = readHashHeadingId();
-      if (hashId && headingIdSet.has(hashId) && scrollToHeading(hashId, "auto")) {
-        setActiveHeadingId(hashId);
-        return;
-      }
-      setActiveHeadingId(firstHeadingId);
-    };
-
-    const rafId = window.requestAnimationFrame(syncActiveFromHash);
-    window.addEventListener("hashchange", syncActiveFromHash);
-
-    return () => {
-      window.cancelAnimationFrame(rafId);
-      window.removeEventListener("hashchange", syncActiveFromHash);
-    };
-  }, [headings]);
-
-  const idQueues = new Map(
-    Array.from(headingIdLookup.entries(), ([key, values]) => [key, [ ...values ]]),
-  );
-  const fallbackResolveHeadingId = createHeadingIdResolver();
-  const consumeHeadingId = (level: 2 | 3, text: string) => {
-    const normalized = normalizeHeadingText(text);
-    const key = `${level}:${normalized}`;
-    const queue = idQueues.get(key);
-    if (queue?.length) {
-      return queue.shift()!;
-    }
-    return fallbackResolveHeadingId(normalized);
-  };
-
-  if (loading) {
-    return <p className={isDark ? "text-slate-300" : "text-slate-500"}>加载中...</p>;
-  }
-
-  if (error || !data) {
-    return <p className={isDark ? "text-rose-300" : "text-rose-600"}>{error || "文章不存在"}</p>;
-  }
-
-  const postTags = Array.isArray(data.tags)
-    ? data.tags.map((tag) => String(tag).trim()).filter((tag) => tag.length > 0)
-    : [];
-  const detailCover = String(data.cover || "").trim() || null;
-  const mobileTabs: Array<{ key: MobileTabKey; label: string }> = [
-    { key: "article", label: "文章" },
-    { key: "toc", label: "目录" },
-    { key: "info", label: "信息" },
-  ];
-
-  const markdownComponents = {
-    h2: ({ children, ...props }: HTMLAttributes<HTMLHeadingElement>) => {
-      const text = plainText(children);
-      const id = consumeHeadingId(2, text);
-      const isActive = activeHeadingId === id;
-      return (
-        <h2
-          {...props}
-          className={`mt-8 scroll-mt-24 rounded-md px-1 text-2xl font-semibold transition-colors ${
-            isActive
-              ? isDark
-                ? "bg-indigo-500/20 text-indigo-200 ring-1 ring-indigo-400/40"
-                : "bg-indigo-50/70 text-indigo-700 ring-1 ring-indigo-100"
-              : isDark
-                ? "text-slate-200"
-                : "text-slate-900"
-          }`}
-          id={id}
-        >
+    return {
+      h2: ({ children, ...props }: HTMLAttributes<HTMLHeadingElement>) => {
+        const text = plainText(children);
+        const id = consumeHeadingId(2, text);
+        return (
+          <h2
+            {...props}
+            id={id}
+            className={cn(
+              "mt-10 scroll-mt-24 text-2xl font-semibold tracking-tight text-slate-900",
+              activeHeadingId === id && "text-indigo-700",
+            )}
+          >
+            {children}
+          </h2>
+        );
+      },
+      h3: ({ children, ...props }: HTMLAttributes<HTMLHeadingElement>) => {
+        const text = plainText(children);
+        const id = consumeHeadingId(3, text);
+        return (
+          <h3
+            {...props}
+            id={id}
+            className={cn(
+              "mt-7 scroll-mt-24 text-xl font-semibold tracking-tight text-slate-800",
+              activeHeadingId === id && "text-indigo-700",
+            )}
+          >
+            {children}
+          </h3>
+        );
+      },
+      p: ({ children, ...props }: HTMLAttributes<HTMLParagraphElement>) => (
+        <p {...props} className="mt-4 leading-8 text-slate-700">
           {children}
-        </h2>
-      );
-    },
-    h3: ({ children, ...props }: HTMLAttributes<HTMLHeadingElement>) => {
-      const text = plainText(children);
-      const id = consumeHeadingId(3, text);
-      const isActive = activeHeadingId === id;
-      return (
-        <h3
-          {...props}
-          className={`mt-6 scroll-mt-24 rounded-md px-1 text-xl font-semibold transition-colors ${
-            isActive
-              ? isDark
-                ? "bg-indigo-500/20 text-indigo-200 ring-1 ring-indigo-400/40"
-                : "bg-indigo-50/70 text-indigo-700 ring-1 ring-indigo-100"
-              : isDark
-                ? "text-slate-300"
-                : "text-slate-800"
-          }`}
-          id={id}
-        >
-          {children}
-        </h3>
-      );
-    },
-    p: ({ children, ...props }: HTMLAttributes<HTMLParagraphElement>) => (
-      <p {...props} className={`mt-4 leading-8 ${isDark ? "text-slate-300" : "text-slate-700"}`}>
-        {children}
-      </p>
-    ),
-    code: ({ children, className, ...props }: HTMLAttributes<HTMLElement>) => {
-      const isInline = !(className ?? "").includes("language-");
-      if (isInline) {
+        </p>
+      ),
+      a: ({ children, href, ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) => {
+        const link = String(href ?? "").trim();
+        const isExternal = /^https?:\/\//i.test(link);
+        const isHash = link.startsWith("#");
+
+        return (
+          <a
+            {...props}
+            href={link || undefined}
+            target={isExternal ? "_blank" : undefined}
+            rel={isExternal ? "noopener noreferrer nofollow" : undefined}
+            className="font-medium text-indigo-700 underline underline-offset-4 transition hover:text-indigo-800"
+            onClick={(event) => {
+              if (!isHash) {
+                return;
+              }
+
+              const rawId = link.slice(1);
+              if (!rawId) {
+                return;
+              }
+
+              event.preventDefault();
+              let decodedId = rawId;
+              try {
+                decodedId = decodeURIComponent(rawId);
+              } catch {
+                decodedId = rawId;
+              }
+
+              if (scrollToHeading(decodedId)) {
+                setActiveHeadingId(decodedId);
+                if (typeof window !== "undefined") {
+                  window.history.replaceState(
+                    null,
+                    "",
+                    `${window.location.pathname}${window.location.search}#${encodeURIComponent(decodedId)}`,
+                  );
+                }
+              }
+            }}
+          >
+            {children}
+          </a>
+        );
+      },
+      code: ({ children, className, ...props }: HTMLAttributes<HTMLElement>) => {
+        const isInline = !(className ?? "").includes("language-");
+        if (isInline) {
+          return (
+            <code {...props} className="rounded bg-slate-100 px-1.5 py-0.5 text-sm text-slate-800">
+              {children}
+            </code>
+          );
+        }
         return (
           <code
             {...props}
-            className={`rounded px-1 py-0.5 text-sm ${isDark ? "bg-slate-700/70 text-slate-200" : "bg-slate-100 text-slate-800"}`}
+            className="mt-4 block overflow-x-auto rounded-xl bg-slate-900 p-4 text-sm leading-6 text-slate-100"
           >
             {children}
           </code>
         );
-      }
-      return (
-        <code
+      },
+      ul: ({ children, ...props }: HTMLAttributes<HTMLUListElement>) => (
+        <ul {...props} className="mt-4 list-disc space-y-2 pl-6 text-slate-700">
+          {children}
+        </ul>
+      ),
+      ol: ({ children, ...props }: HTMLAttributes<HTMLOListElement>) => (
+        <ol {...props} className="mt-4 list-decimal space-y-2 pl-6 text-slate-700">
+          {children}
+        </ol>
+      ),
+      blockquote: ({ children, ...props }: HTMLAttributes<HTMLQuoteElement>) => (
+        <blockquote
           {...props}
-          className={`block overflow-x-auto rounded-xl p-4 text-sm ${isDark ? "bg-slate-950 text-slate-100" : "bg-slate-900 text-slate-100"}`}
+          className="mt-5 rounded-r-lg border-l-4 border-indigo-300 bg-indigo-50/50 px-4 py-3 text-slate-700"
         >
           {children}
-        </code>
-      );
-    },
-    ul: ({ children, ...props }: HTMLAttributes<HTMLUListElement>) => (
-      <ul {...props} className={`mt-4 list-disc space-y-2 pl-6 ${isDark ? "text-slate-300" : "text-slate-700"}`}>
-        {children}
-      </ul>
-    ),
-    table: ({ children, ...props }: HTMLAttributes<HTMLTableElement>) => (
-      <div className="mt-5 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
-        <table
-          {...props}
-          className={`w-full border-collapse text-sm ${isDark ? "text-slate-300" : "text-slate-700"}`}
-        >
+        </blockquote>
+      ),
+      table: ({ children, ...props }: HTMLAttributes<HTMLTableElement>) => (
+        <div className="mt-5 overflow-x-auto rounded-lg border border-slate-200">
+          <table {...props} className="w-full border-collapse text-sm text-slate-700">
+            {children}
+          </table>
+        </div>
+      ),
+      thead: ({ children, ...props }: HTMLAttributes<HTMLTableSectionElement>) => (
+        <thead {...props} className="bg-slate-50">
           {children}
-        </table>
-      </div>
-    ),
-    thead: ({ children, ...props }: HTMLAttributes<HTMLTableSectionElement>) => (
-      <thead
-        {...props}
-        className={isDark ? "bg-slate-800/80" : "bg-slate-50"}
-      >
-        {children}
-      </thead>
-    ),
-    th: ({ children, ...props }: HTMLAttributes<HTMLTableCellElement>) => (
-      <th
-        {...props}
-        className={`border-b px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide ${
-          isDark ? "border-slate-700 text-slate-400" : "border-slate-200 text-slate-600"
-        }`}
-      >
-        {children}
-      </th>
-    ),
-    td: ({ children, ...props }: HTMLAttributes<HTMLTableCellElement>) => (
-      <td
-        {...props}
-        className={`border-b px-4 py-2.5 ${isDark ? "border-slate-700/60" : "border-slate-100"}`}
-      >
-        {children}
-      </td>
-    ),
-    tr: ({ children, ...props }: HTMLAttributes<HTMLTableRowElement>) => (
-      <tr
-        {...props}
-        className={`transition-colors ${isDark ? "hover:bg-slate-800/50" : "hover:bg-slate-50/80"}`}
-      >
-        {children}
-      </tr>
-    ),
-    a: ({ children, href, ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) => {
-      const link = String(href ?? "").trim();
-      const isExternal = /^https?:\/\//i.test(link);
-      return (
-        <a
-          {...props}
-          href={link || undefined}
-          target={isExternal ? "_blank" : undefined}
-          rel={isExternal ? "noopener noreferrer nofollow" : undefined}
-          className={`font-medium underline underline-offset-4 transition ${
-            isDark
-              ? "text-indigo-300 decoration-indigo-400 hover:text-indigo-200 hover:decoration-indigo-300"
-              : "text-indigo-700 decoration-indigo-300 hover:text-indigo-800 hover:decoration-indigo-500"
-          }`}
-        >
+        </thead>
+      ),
+      tr: ({ children, ...props }: HTMLAttributes<HTMLTableRowElement>) => (
+        <tr {...props} className="transition hover:bg-slate-50">
           {children}
-        </a>
-      );
-    },
-    img: ({ src, alt, ...props }: ImgHTMLAttributes<HTMLImageElement>) => {
-      const initialSrc = resolveMarkdownAssetUrl(String(src ?? ""));
-      return (
-        <figure
-          className={`mt-5 overflow-hidden rounded-xl border ${isDark ? "border-slate-700 bg-slate-900/88" : "border-slate-200 bg-slate-50"}`}
-        >
-          <img
-            {...props}
-            src={initialSrc}
-            alt={String(alt ?? "")}
-            loading="lazy"
-            className={`max-h-[460px] w-full object-contain ${isDark ? "bg-slate-950" : "bg-white"}`}
-            onError={(event) => {
-              const img = event.currentTarget;
-              if (img.dataset.fallbackTried === "1") {
-                return;
-              }
-              try {
-                const parsed = new URL(img.currentSrc || img.src, window.location.origin);
-                if (parsed.hostname.toLowerCase() !== "blog.oc.slgneon.cn") {
+        </tr>
+      ),
+      th: ({ children, ...props }: HTMLAttributes<HTMLTableCellElement>) => (
+        <th {...props} className="border-b border-slate-200 px-4 py-2.5 text-left text-xs font-semibold uppercase text-slate-600">
+          {children}
+        </th>
+      ),
+      td: ({ children, ...props }: HTMLAttributes<HTMLTableCellElement>) => (
+        <td {...props} className="border-b border-slate-100 px-4 py-2.5 align-top text-sm">
+          {children}
+        </td>
+      ),
+      img: ({ src, alt, ...props }: ImgHTMLAttributes<HTMLImageElement>) => {
+        const resolvedSrc = resolveMarkdownAssetUrl(String(src ?? ""));
+        return (
+          <figure className="mt-5 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+            <img
+              {...props}
+              src={resolvedSrc}
+              alt={String(alt ?? "")}
+              loading="lazy"
+              className="max-h-[460px] w-full object-contain bg-white"
+              onError={(event) => {
+                const image = event.currentTarget;
+                if (image.dataset.fallbackTried === "1") {
                   return;
                 }
-                img.dataset.fallbackTried = "1";
-                img.src = `${window.location.origin}${parsed.pathname}${parsed.search}${parsed.hash}`;
-              } catch {
-                // ignore fallback parse failures
-              }
-            }}
-          />
-          {alt ? (
-            <figcaption
-              className={`border-t px-3 py-2 text-sm ${
-                isDark ? "border-slate-700 bg-slate-900/95 text-slate-400" : "border-slate-200 bg-white text-slate-500"
-              }`}
-            >
-              {alt}
-            </figcaption>
-          ) : null}
-        </figure>
-      );
-    },
-  };
+
+                try {
+                  const parsed = new URL(image.currentSrc || image.src, window.location.origin);
+                  if (parsed.hostname.toLowerCase() !== "blog.oc.slgneon.cn") {
+                    return;
+                  }
+                  image.dataset.fallbackTried = "1";
+                  image.src = `${window.location.origin}${parsed.pathname}${parsed.search}${parsed.hash}`;
+                } catch {
+                  // ignore fallback parse failures
+                }
+              }}
+            />
+            {alt ? <figcaption className="border-t border-slate-200 bg-white px-3 py-2 text-sm text-slate-500">{alt}</figcaption> : null}
+          </figure>
+        );
+      },
+    };
+  }, [activeHeadingId, headingIdLookup, scrollToHeading]);
+
+  if (loading) {
+    return <p className="rounded-2xl border border-slate-200 bg-white/80 p-6 text-sm text-slate-500">加载中...</p>;
+  }
+
+  if (error || !data) {
+    return <p className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-600">{error || "文章不存在"}</p>;
+  }
+
+  const readMinutes = Math.max(1, Math.round((data.word_count || 0) / 280));
+  const detailCover = String(data.cover || "").trim() || null;
 
   return (
-    <section className="space-y-6">
-      <Confetti
-        ref={likeConfettiRef}
-        manualStart
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 z-[60] h-full w-full"
-      />
+    <section className="relative overflow-hidden rounded-[28px] border border-slate-200/80 bg-white/92 shadow-sm">
       <Helmet>
         <title>{`${data.title} | Keyon Blog ｜ 云际漫游者`}</title>
         <meta content={data.excerpt || "Keyon Blog ｜ 云际漫游者文章详情"} name="description" />
@@ -530,237 +594,191 @@ export function PostDetailPage() {
         <link href={`https://blog.oc.slgneon.cn/posts/${data.slug}`} rel="canonical" />
       </Helmet>
 
-      <div
-        className={`pointer-events-none fixed inset-x-0 top-0 z-40 h-1 backdrop-blur-sm ${isDark ? "bg-slate-800/85" : "bg-slate-200/85"}`}
-      >
-        <motion.div className="h-full origin-left bg-indigo-600" style={{ scaleX: smoothProgress }} />
-      </div>
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-52 bg-[radial-gradient(circle_at_20%_20%,rgba(79,106,229,0.16),transparent_55%),radial-gradient(circle_at_80%_0%,rgba(107,145,123,0.14),transparent_45%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-52 opacity-70 [background-size:32px_32px] [background-image:linear-gradient(to_right,rgba(148,163,184,0.12)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.12)_1px,transparent_1px)]" />
 
-      <div className={`relative overflow-hidden rounded-2xl border shadow ${isDark ? "border-slate-700" : "border-slate-200"}`}>
-        {detailCover ? (
-          <BlurRevealImage
-            alt={`${data.title} 封面`}
-            className="h-full w-full object-cover"
-            src={detailCover}
-            wrapperClassName="h-72"
-          />
-        ) : (
-          <GenerativeCover
-            category={data.category}
-            className="h-40"
-            seed={data.slug}
-          />
-        )}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/18 via-transparent to-transparent" />
-      </div>
+      <header className="relative space-y-4 border-b border-slate-200/80 p-6 md:p-8">
+        <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
+          <Link
+            to={categoryPathMap[data.category]}
+            className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-600 transition hover:border-slate-300 hover:text-slate-800"
+          >
+            ← 返回{categoryLabelMap[data.category]}
+          </Link>
 
-      <div className={`xl:hidden sticky top-[60px] z-20 rounded-2xl border p-1 backdrop-blur ${
-        isDark ? "border-slate-700 bg-slate-900/90" : "border-slate-200 bg-white/90"
-      }`}>
-        <div className="grid grid-cols-3 gap-1">
-          {mobileTabs.map((tab) => {
-            const active = mobileTab === tab.key;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setMobileTabState({ slug, tab: tab.key })}
-                className={`rounded-xl px-3 py-2 text-sm font-medium transition ${
-                  active
-                    ? isDark
-                      ? "bg-indigo-500/20 text-indigo-200 ring-1 ring-indigo-400/40"
-                      : "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200"
-                    : isDark
-                      ? "text-slate-300 hover:bg-slate-800"
-                      : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_260px]">
-        <article
-          className={`rounded-2xl border p-6 shadow-sm ${
-            isDark ? "border-slate-700 bg-slate-900/84 text-slate-200" : "border-slate-200 bg-white text-slate-900"
-          } ${mobileTab === "article" ? "block" : "hidden"} xl:block`}
-        >
-          <h1 className={`text-3xl font-bold tracking-tight ${isDark ? "text-slate-200" : "text-slate-900"}`}>{data.title}</h1>
-
-          <div className={`mt-3 flex flex-wrap items-center gap-2 text-sm ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+          {postTags.map((tag) => (
             <span
-              className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                isDark ? "bg-slate-800 text-slate-200" : "bg-slate-100 text-slate-700"
-              }`}
+              key={tag}
+              className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-500"
             >
-              {categoryLabelMap[data.category]}
+              {tag}
             </span>
-            <span>{new Date(data.updated_at).toLocaleDateString("zh-CN")}</span>
-            <span>·</span>
-            <span>{readMinutes} min</span>
-            <span>·</span>
-            <span>阅读 {data.views_count}</span>
-          </div>
+          ))}
 
-          <div className="mt-6">
+          <time className="ml-auto text-xs text-slate-500">{formatDate(data.updated_at)}</time>
+        </div>
+
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-900 md:text-5xl">{data.title}</h1>
+        {data.excerpt ? <p className="max-w-4xl text-sm text-slate-600 md:text-base">{data.excerpt}</p> : null}
+      </header>
+
+      {detailCover ? (
+        <div className="relative h-64 overflow-hidden border-b border-slate-200/80 md:h-[420px]">
+          <img src={detailCover} alt={`${data.title} 封面`} className="h-full w-full object-cover" />
+        </div>
+      ) : null}
+
+      <div className="relative grid lg:grid-cols-[minmax(0,1fr)_300px]">
+        <main className="min-w-0 lg:border-r lg:border-slate-200/80">
+          <article className="p-6 md:p-8">
+            <div className="mb-6 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+              <span className="rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-600">{categoryLabelMap[data.category]}</span>
+              <span>{formatDate(data.updated_at)}</span>
+              <span>·</span>
+              <span>{readMinutes} 分钟</span>
+              <span>·</span>
+              <span>{data.views_count} 阅读</span>
+            </div>
+
             <ReactMarkdown components={markdownComponents} remarkPlugins={[remarkGfm]}>
               {data.content}
             </ReactMarkdown>
+          </article>
+
+          <div className="flex flex-col items-center gap-2 border-t border-slate-200/80 py-8">
+            <p className="text-sm text-slate-500">觉得不错？给文章点个赞吧</p>
+            <LikeButton
+              size="md"
+              liked={postLiked}
+              likes={postLikes}
+              onToggle={handleToggleLike}
+            />
           </div>
 
-          <div className={`mt-10 space-y-4 border-t pt-5 ${isDark ? "border-slate-700" : "border-slate-200"}`}>
-            <div className="flex flex-col items-center gap-2 py-4">
-              <motion.button
-                type="button"
-                disabled={likeLoading}
-                onClick={handleToggleLike}
-                whileTap={{ scale: 0.9 }}
-                className={`flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-medium transition ${
-                  liked
-                    ? isDark
-                      ? "border-rose-400/50 bg-rose-500/20 text-rose-300 hover:bg-rose-500/30"
-                      : "border-rose-300 bg-rose-50 text-rose-600 hover:bg-rose-100"
-                    : isDark
-                      ? "border-slate-600 bg-slate-800 text-slate-400 hover:border-slate-500 hover:bg-slate-700"
-                      : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300 hover:bg-slate-100"
-                }`}
-              >
-                <motion.span
-                  key={liked ? "liked" : "unliked"}
-                  initial={{ scale: 0.6, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 15 }}
-                  className="text-lg"
-                >
-                  {liked ? "❤️" : "🤍"}
-                </motion.span>
-                觉得不错？给这篇文章一个赞
-              </motion.button>
-              <span className={`text-sm ${isDark ? "text-slate-500" : "text-slate-500"}`}>
-                {likesCount > 0 ? `${likesCount} 人觉得很赞` : "成为第一个点赞的人"}
-              </span>
-            </div>
+          <section className="border-t border-slate-200/80 p-6 md:p-8">
+            <h2 className="text-2xl font-semibold tracking-tight text-slate-900">继续阅读</h2>
 
-            {postTags.length > 0 ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className={`text-sm font-medium ${isDark ? "text-slate-400" : "text-slate-500"}`}>文末标签</span>
-                {postTags.map((tag) => (
+            {loadingRelated ? <p className="mt-4 text-sm text-slate-500">加载相关文章中...</p> : null}
+
+            {!loadingRelated && relatedPosts.length === 0 ? (
+              <p className="mt-4 text-sm text-slate-500">暂无相关文章。</p>
+            ) : null}
+
+            {!loadingRelated && relatedPosts.length > 0 ? (
+              <div className="mt-5 grid gap-4 md:grid-cols-3">
+                {relatedPosts.map((post) => (
                   <Link
-                    key={`post-tag-${tag}`}
-                    to={`${categoryPathMap[data.category]}?tag=${encodeURIComponent(tag)}`}
-                    className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
-                      isDark
-                        ? "border-slate-600 bg-slate-800 text-slate-200 hover:border-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-200"
-                        : "border-slate-200 bg-slate-50 text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
-                    }`}
+                    key={post.slug}
+                    to={`/posts/${post.slug}`}
+                    className="group rounded-xl border border-slate-200 bg-white p-4 transition hover:border-slate-300 hover:bg-slate-50"
                   >
-                    #{tag}
+                    <h3 className="line-clamp-2 text-base font-semibold text-slate-900 group-hover:underline">{post.title}</h3>
+                    <p className="mt-2 line-clamp-2 text-sm text-slate-600">{post.excerpt || "暂无摘要"}</p>
+                    <time className="mt-3 block text-xs text-slate-500">{formatDate(post.updated_at)}</time>
                   </Link>
                 ))}
               </div>
             ) : null}
+          </section>
+        </main>
 
-            <div>
-              <Link
-                to={categoryPathMap[data.category]}
-                className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium transition ${
-                  isDark
-                    ? "border-indigo-400/50 bg-indigo-500/20 text-indigo-200 hover:border-indigo-300 hover:bg-indigo-500/30"
-                    : "border-indigo-200 bg-indigo-50 text-indigo-700 hover:border-indigo-300 hover:bg-indigo-100"
-                }`}
-              >
-                返回{categoryLabelMap[data.category]}分类
-              </Link>
-            </div>
+        <aside className="hidden bg-slate-50/70 p-6 lg:block">
+          <div className="sticky top-24 space-y-6">
+            <section className="rounded-xl border border-slate-200 bg-white p-4">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">On this page</h2>
+              {headings.length === 0 ? (
+                <p className="mt-3 text-sm text-slate-400">暂无目录</p>
+              ) : (
+                <ul className="mt-3 space-y-2 text-sm">
+                  {headings.map((item) => (
+                    <li key={item.id} className={item.level === 3 ? "pl-3" : ""}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (scrollToHeading(item.id)) {
+                            setActiveHeadingId(item.id);
+                            if (typeof window !== "undefined") {
+                              window.history.replaceState(
+                                null,
+                                "",
+                                `${window.location.pathname}${window.location.search}#${encodeURIComponent(item.id)}`,
+                              );
+                            }
+                          }
+                        }}
+                        className={cn(
+                          "w-full rounded-md px-2 py-1 text-left transition",
+                          activeHeadingId === item.id
+                            ? "bg-indigo-50 font-medium text-indigo-700"
+                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+                        )}
+                      >
+                        {item.text}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">文章信息</h2>
+              <div className="mt-3 space-y-2">
+                <p>
+                  <span className="text-slate-500">分类：</span>
+                  {categoryLabelMap[data.category]}
+                </p>
+                <p>
+                  <span className="text-slate-500">阅读时长：</span>
+                  {readMinutes} 分钟
+                </p>
+                <p>
+                  <span className="text-slate-500">阅读量：</span>
+                  {data.views_count}
+                </p>
+                <p>
+                  <span className="text-slate-500">更新时间：</span>
+                  {formatDate(data.updated_at)}
+                </p>
+              </div>
+            </section>
           </div>
-        </article>
-
-        <aside
-          className={`h-fit rounded-2xl border p-4 shadow-sm xl:sticky xl:top-8 ${
-            isDark ? "border-slate-700 bg-slate-900/84" : "border-slate-200 bg-white"
-          } ${mobileTab === "toc" ? "block" : "hidden"} xl:block`}
-        >
-          <h2 className={`text-sm font-semibold uppercase tracking-wide ${isDark ? "text-slate-400" : "text-slate-500"}`}>目录</h2>
-          <ul className="mt-3 space-y-2 text-sm">
-            {headings.length === 0 ? <li className={isDark ? "text-slate-500" : "text-slate-400"}>暂无目录</li> : null}
-            {headings.map((item) => (
-              <li key={item.id} className={item.level === 3 ? "pl-3" : ""}>
-                <a
-                  className={`block rounded-md px-2 py-1 transition ${
-                    activeHeadingId === item.id
-                      ? isDark
-                        ? "bg-indigo-500/20 font-semibold text-indigo-200 ring-1 ring-indigo-400/40"
-                        : "bg-indigo-100 font-semibold text-indigo-800 ring-1 ring-indigo-200"
-                      : isDark
-                        ? "text-slate-300 hover:bg-slate-800 hover:text-indigo-200"
-                        : "text-slate-700 hover:bg-slate-50 hover:text-indigo-700"
-                  }`}
-                  href={`#${item.id}`}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    if (scrollToHeading(item.id)) {
-                      setActiveHeadingId(item.id);
-                      window.history.replaceState(
-                        null,
-                        "",
-                        `${window.location.pathname}${window.location.search}#${encodeURIComponent(item.id)}`,
-                      );
-                    }
-                  }}
-                >
-                  {item.text}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </aside>
-
-        <aside
-          className={`rounded-2xl border p-4 shadow-sm xl:hidden ${
-            isDark ? "border-slate-700 bg-slate-900/84 text-slate-200" : "border-slate-200 bg-white text-slate-800"
-          } ${mobileTab === "info" ? "block" : "hidden"}`}
-        >
-          <h2 className={`text-sm font-semibold uppercase tracking-wide ${isDark ? "text-slate-400" : "text-slate-500"}`}>信息</h2>
-          <div className={`mt-3 space-y-2 text-sm ${isDark ? "text-slate-300" : "text-slate-700"}`}>
-            <p>
-              <span className={isDark ? "text-slate-500" : "text-slate-500"}>分类：</span>
-              {categoryLabelMap[data.category]}
-            </p>
-            <p>
-              <span className={isDark ? "text-slate-500" : "text-slate-500"}>阅读时长：</span>
-              {readMinutes} min
-            </p>
-            <p>
-              <span className={isDark ? "text-slate-500" : "text-slate-500"}>阅读量：</span>
-              {data.views_count}
-            </p>
-            <p>
-              <span className={isDark ? "text-slate-500" : "text-slate-500"}>更新时间：</span>
-              {new Date(data.updated_at).toLocaleDateString("zh-CN")}
-            </p>
-          </div>
-          {postTags.length > 0 ? (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {postTags.map((tag) => (
-                <Link
-                  key={`mobile-info-tag-${tag}`}
-                  to={`${categoryPathMap[data.category]}?tag=${encodeURIComponent(tag)}`}
-                  className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
-                    isDark
-                      ? "border-slate-600 bg-slate-800 text-slate-200 hover:border-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-200"
-                      : "border-slate-200 bg-slate-50 text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
-                  }`}
-                >
-                  #{tag}
-                </Link>
-              ))}
-            </div>
-          ) : null}
         </aside>
       </div>
+
+      <details className="border-t border-slate-200/80 lg:hidden">
+        <summary className="cursor-pointer px-6 py-4 text-sm font-semibold text-slate-700">文章目录</summary>
+        <div className="space-y-2 px-6 pb-5 text-sm">
+          {headings.length === 0 ? <p className="text-slate-400">暂无目录</p> : null}
+          {headings.map((item) => (
+            <button
+              key={`mobile-${item.id}`}
+              type="button"
+              onClick={() => {
+                if (scrollToHeading(item.id)) {
+                  setActiveHeadingId(item.id);
+                  if (typeof window !== "undefined") {
+                    window.history.replaceState(
+                      null,
+                      "",
+                      `${window.location.pathname}${window.location.search}#${encodeURIComponent(item.id)}`,
+                    );
+                  }
+                }
+              }}
+              className={cn(
+                "block w-full rounded-md px-2 py-1 text-left transition",
+                item.level === 3 && "pl-5",
+                activeHeadingId === item.id
+                  ? "bg-indigo-50 font-medium text-indigo-700"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+              )}
+            >
+              {item.text}
+            </button>
+          ))}
+        </div>
+      </details>
     </section>
   );
 }

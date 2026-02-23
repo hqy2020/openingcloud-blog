@@ -5,6 +5,7 @@ import type { CurrentLocation } from "../../data/revamp/location";
 import { ScrollReveal } from "../motion/ScrollReveal";
 import { StaggerContainer, StaggerItem } from "../motion/StaggerContainer";
 import { CardSpotlight } from "../ui/CardSpotlight";
+import { SparklesText } from "../ui/SparklesText";
 
 type TravelSectionProps = {
   travel: TravelProvince[];
@@ -387,7 +388,11 @@ export function TravelSection({ travel, currentLocation }: TravelSectionProps) {
   return (
     <ScrollReveal className="space-y-6">
       <div className="flex items-end justify-between">
-        <h2 className="text-2xl font-semibold text-slate-900">旅行足迹</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">
+          <SparklesText className="text-inherit" sparklesCount={8} colors={{ first: "#22d3ee", second: "#22c55e" }}>
+            旅行足迹
+          </SparklesText>
+        </h2>
         <div className="text-right">
           <p className="text-sm text-slate-500">已点亮 {displayProvinceCount} 个省份 / 34</p>
           {currentLocation ? <p className="text-xs text-slate-500">当前所在：{currentLocation.city}</p> : null}
