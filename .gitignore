@@ -38,3 +38,6 @@ assets/*.dmg
 
 # Temporary files
 tmp_*
+
+# Reports (may contain secrets/db dumps)
+reports/
