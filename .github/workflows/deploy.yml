@@ -175,6 +175,10 @@ jobs:
             -e "ssh ${SSH_OPTS[*]}" \
             --exclude ".git" \
             --exclude "backend/.venv" \
+            --exclude "data/" \
+            --exclude "backend/db.sqlite3" \
+            --exclude "*.sqlite3" \
+            --exclude "*.sqlite3-*" \
             ./ "${ECS_USER}@${ECS_HOST}:/opt/openingclouds-blog/"
 
           run_remote_deploy() {
@@ -182,8 +186,18 @@ jobs:
             ssh "${SSH_OPTS[@]}" "${ECS_USER}@${ECS_HOST}" "BACKEND_IMAGE='${BACKEND_IMAGE}' bash -se" << 'DEPLOY'
               set -euo pipefail
               cd /opt/openingclouds-blog
+              if [ -f data/blog.sqlite3 ]; then
+                mkdir -p data/backups
+                TS="$(date +%Y%m%d_%H%M%S)"
+                if command -v sqlite3 >/dev/null 2>&1; then
+                  sqlite3 data/blog.sqlite3 ".backup data/backups/blog.deploy_${TS}.sqlite3"
+                else
+                  cp data/blog.sqlite3 "data/backups/blog.deploy_${TS}.sqlite3"
+                fi
+              fi
               docker compose pull backend || true
               docker compose up -d --remove-orphans
+              docker compose ps --status running --services | grep -qx backend
           DEPLOY
           }
 
