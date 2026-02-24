@@ -360,15 +360,17 @@ class ApiTests(TestCase):
         self.assertGreaterEqual(payload["stats"]["site_days"], 1)
 
     def test_home_time_series_normalized_to_100(self):
-        TimeSeriesConfig.objects.create(
+        TimeSeriesConfig.objects.update_or_create(
             key="default",
-            x_axis=["0", "5", "10"],
-            series=[
-                {"name": "Study", "color": "#B3D4FF", "data": [10, 60, 40]},
-                {"name": "Game", "color": "#80E5FF", "data": [0, 0, 30]},
-                {"name": "Social", "color": "#A3F0C7", "data": [90, 40, 30]},
-            ],
-            is_active=True,
+            defaults={
+                "x_axis": ["0", "5", "10"],
+                "series": [
+                    {"name": "Study", "color": "#B3D4FF", "data": [10, 60, 40]},
+                    {"name": "Game", "color": "#80E5FF", "data": [0, 0, 30]},
+                    {"name": "Social", "color": "#A3F0C7", "data": [90, 40, 30]},
+                ],
+                "is_active": True,
+            },
         )
 
         resp = self.client.get(reverse("home"))
