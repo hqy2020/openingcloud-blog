@@ -62,18 +62,6 @@ function isGeoJsonLike(value: unknown): value is GeoJsonLike {
   return Array.isArray((value as GeoJsonLike).features);
 }
 
-function formatVisitedAtLabel(value: string | null | undefined) {
-  if (!value) {
-    return "时间未记录";
-  }
-  const parts = value.split("-");
-  if (parts.length !== 3) {
-    return value;
-  }
-  const [year, month, day] = parts;
-  return `${year}年${Number(month)}月${Number(day)}日`;
-}
-
 function formatCityTooltip(params: unknown) {
   if (!params || typeof params !== "object") {
     return "";

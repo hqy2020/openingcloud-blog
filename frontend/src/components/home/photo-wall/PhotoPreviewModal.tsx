@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
-import { OBSIDIAN_IMAGES_REPO_URL, type PhotoWallRenderItem } from "./photoWallUtils";
+import type { PhotoWallRenderItem } from "./photoWallUtils";
 
 type PhotoPreviewModalProps = {
   open: boolean;
@@ -32,8 +32,6 @@ export function PhotoPreviewModal({ open, item, onClose }: PhotoPreviewModalProp
   if (!open || !item) {
     return null;
   }
-
-  const sourceUrl = item.__normalizedSourceUrl || OBSIDIAN_IMAGES_REPO_URL;
 
   return createPortal(
     <div
