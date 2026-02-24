@@ -349,6 +349,13 @@ class PhotoWallImageAdmin(SortableAdminMixin, admin.ModelAdmin):
 
 
 
+@admin.register(HighlightItem)
+class HighlightItemAdmin(SortableAdminMixin, admin.ModelAdmin):
+    list_display = ["title", "stage", "achieved_at", "sort_order", "updated_at"]
+    list_filter = ["stage"]
+    search_fields = ["title", "description"]
+
+
 @admin.register(ObsidianDocument)
 class ObsidianDocumentAdmin(admin.ModelAdmin):
     change_list_template = "admin/blog/obsidiandocument/change_list.html"
