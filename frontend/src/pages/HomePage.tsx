@@ -279,7 +279,7 @@ export function HomePage() {
         </SectionParallaxTransition>
       )}
 
-      <Dock magnification={80} distance={150} draggable>
+      <Dock magnification={80} distance={150} draggable className="hidden md:flex">
         <DockIcon label="置顶" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
           <ArrowUpDockIcon />
         </DockIcon>
