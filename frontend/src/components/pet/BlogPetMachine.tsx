@@ -138,7 +138,7 @@ export function BlogPetMachine() {
         <fog attach="fog" args={["black", 12, 20]} />
         <Stage
           adjustCamera={false}
-          environment="city"
+          environment={{ files: "/hdr/potsdamer_platz_1k.hdr" }}
           intensity={0.5}
           shadows={{ type: "accumulative", bias: -0.001, intensity: Math.PI }}
         >
@@ -157,7 +157,7 @@ export function BlogPetMachine() {
           <Bloom luminanceThreshold={4} mipmapBlur />
           <ToneMapping />
         </EffectComposer>
-        <Environment blur={0.5} preset="sunset" />
+        <Environment blur={0.5} files="/hdr/venice_sunset_1k.hdr" />
       </Canvas>
     </div>
   );
