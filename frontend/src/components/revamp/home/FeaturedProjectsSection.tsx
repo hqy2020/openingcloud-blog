@@ -95,6 +95,7 @@ export function FeaturedProjectsSection({ projects }: { projects: GithubProject[
   const cardRefMap = useRef<Map<string, HTMLElement>>(new Map());
   const techCardRefMap = useRef<Map<string, HTMLDivElement>>(new Map());
   const [hoveredProjectId, setHoveredProjectId] = useState<string>("");
+  const [hoveredTech, setHoveredTech] = useState<string | null>(null);
   const [pointerLines, setPointerLines] = useState<PointerLine[]>([]);
   const [isDesktopInteractive, setIsDesktopInteractive] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -204,6 +205,7 @@ export function FeaturedProjectsSection({ projects }: { projects: GithubProject[
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {internalProjects.map((project) => {
             const active = hoveredProjectId === project.id;
+            const techDimmed = hoveredTech !== null && !project.tech_stack.includes(hoveredTech);
             return (
               <motion.article
                 key={project.id}
@@ -257,7 +259,11 @@ export function FeaturedProjectsSection({ projects }: { projects: GithubProject[
                   }
                   setHoveredProjectId((prev) => (prev === project.id ? "" : prev));
                 }}
-                className="group relative z-20 h-full cursor-pointer rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
+                animate={{ opacity: techDimmed ? 0.35 : 1 }}
+                transition={{ duration: 0.2 }}
+                className={`group relative z-20 h-full cursor-pointer rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${
+                  hoveredTech && !techDimmed ? "ring-2 ring-orange-400" : ""
+                }`}
               >
                 <CardSpotlight
                   glowColor={active ? "255,255,255" : "148,163,184"}
@@ -396,7 +402,9 @@ export function FeaturedProjectsSection({ projects }: { projects: GithubProject[
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Tech Stack</p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {techUsage.map((tech) => {
-              const active = activeTechStack.includes(tech.name);
+              const activeFromProject = activeTechStack.includes(tech.name);
+              const activeFromHover = hoveredTech === tech.name;
+              const active = activeFromProject || activeFromHover;
               return (
                 <div
                   key={tech.name}
@@ -407,16 +415,18 @@ export function FeaturedProjectsSection({ projects }: { projects: GithubProject[
                     }
                     techCardRefMap.current.delete(tech.name);
                   }}
-                  className={`rounded-2xl border p-4 transition ${
+                  onMouseEnter={() => isDesktopInteractive && setHoveredTech(tech.name)}
+                  onMouseLeave={() => isDesktopInteractive && setHoveredTech(null)}
+                  className={`rounded-2xl border p-4 transition cursor-default ${
                     active
-                      ? "border-blue-300/90 bg-blue-50/80 shadow-[0_0_0_1px_rgba(59,130,246,0.26),0_10px_24px_rgba(59,130,246,0.16)]"
+                      ? "border-orange-300/90 bg-orange-50/80 shadow-[0_0_0_1px_rgba(251,146,60,0.26),0_10px_24px_rgba(251,146,60,0.16)]"
                       : "border-slate-200/90 bg-white/88 shadow-[0_8px_20px_rgba(15,23,42,0.08)]"
                   }`}
                 >
-                  <p className={`text-sm font-semibold ${active ? "text-blue-700" : "text-slate-700"}`}>{tech.name}</p>
+                  <p className={`text-sm font-semibold ${active ? "text-orange-700" : "text-slate-700"}`}>{tech.name}</p>
                   <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-200/75">
                     <motion.div
-                      className={`h-full rounded-full ${active ? "bg-gradient-to-r from-blue-500 to-sky-400" : "bg-slate-400/75"}`}
+                      className={`h-full rounded-full ${active ? "bg-gradient-to-r from-orange-500 to-amber-400" : "bg-slate-400/75"}`}
                       initial={false}
                       animate={{ width: `${tech.percent}%` }}
                       transition={{ duration: prefersReducedMotion ? 0 : 0.32, ease: "easeOut" }}

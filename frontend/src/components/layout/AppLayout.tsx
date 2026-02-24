@@ -14,8 +14,8 @@ const headerTabs = [
   { to: "/#recommended", label: "Article", nativeAnchor: true },
   { to: "/#achievements", label: "HighLight", nativeAnchor: true },
   { to: "/#projects", label: "Code", nativeAnchor: true },
-  { to: "/#game", label: "Game", nativeAnchor: true },
   { to: "/#life", label: "Life", nativeAnchor: true },
+  { to: "/#game", label: "Game", nativeAnchor: true },
 ];
 
 const navbarShadow =

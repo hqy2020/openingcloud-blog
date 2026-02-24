@@ -40,6 +40,7 @@ from .models import (
     TimelineNode,
     TimeSeriesConfig,
     TravelPlace,
+    WishItem,
 )
 from .permissions import IsStaffOrSyncToken, IsStaffUser
 from .serializers import (
@@ -72,6 +73,7 @@ from .serializers import (
     TimelineNodePublicSerializer,
     TravelPlaceAdminSerializer,
     TravelProvinceSerializer,
+    WishItemSerializer,
 )
 from sync.service import reconcile_obsidian_publications, sync_post_payload
 
@@ -1415,6 +1417,7 @@ def _home_payload(*, show_real_name: bool = False) -> dict:
         },
         "radar_charts": _radar_charts_payload(),
         "section_quotes": _home_section_quotes_payload(),
+        "wishes": WishItemSerializer(WishItem.objects.filter(is_active=True), many=True).data,
     }
 
 

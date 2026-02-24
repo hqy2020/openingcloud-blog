@@ -235,9 +235,7 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
                       </p>
                       {node.description ? (
                         <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">{node.description}</p>
-                      ) : (
-                        <p className="mt-3 text-sm text-slate-400 dark:text-slate-500">这段旅程暂无补充描述。</p>
-                      )}
+                      ) : null}
 
                       {node.tags.length > 0 ? (
                         <div className="mt-4 flex flex-wrap gap-2">

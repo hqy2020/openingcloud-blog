@@ -159,6 +159,15 @@ export type SectionQuoteItem = {
   tail: string;
 };
 
+export type WishItem = {
+  id: number;
+  emoji: string;
+  title: string;
+  description: string;
+  priority: "high" | "medium" | "low";
+  sort_order: number;
+};
+
 export type HomePayload = {
   hero: {
     title: string;
@@ -209,6 +218,7 @@ export type HomePayload = {
   };
   radar_charts?: RadarChartConfig[];
   section_quotes?: Record<string, SectionQuoteItem>;
+  wishes?: WishItem[];
 };
 
 export async function fetchHome() {

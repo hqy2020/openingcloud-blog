@@ -230,20 +230,6 @@ export function HomePage() {
         <FeaturedProjectsSection projects={payload.projects} />
       </SectionParallaxTransition>
 
-      {/* #5 Game */}
-      <SectionParallaxTransition strength={18} fade={false}>
-        <SectionCard id="game" fullWidth>
-          <GameSection />
-        </SectionCard>
-      </SectionParallaxTransition>
-
-      {/* #5.5 Quote */}
-      {quotes.after_game && (
-        <SectionParallaxTransition strength={12} fade={false}>
-          <SectionQuoteHighlight quote={quotes.after_game} />
-        </SectionParallaxTransition>
-      )}
-
       {/* #6 Life Section (consolidated) */}
       <SectionParallaxTransition strength={26}>
         <SectionTitleCard category="Life" title="生活" accentColor="#a855f7" tagline="记录走过的路、遇见的人、看过的风景。" />
@@ -265,7 +251,7 @@ export function HomePage() {
                 <StatsSection stats={payload.stats} />
                 <DualRadarSection radarData={payload.radar_charts} />
                 <PhotoWallSection photos={photoWallItems} />
-                <DreamSection />
+                <DreamSection wishes={payload.wishes ?? []} />
               </div>
             </div>
           </div>
@@ -276,6 +262,20 @@ export function HomePage() {
       {quotes.after_dream && (
         <SectionParallaxTransition strength={12} fade={false}>
           <SectionQuoteHighlight quote={quotes.after_dream} />
+        </SectionParallaxTransition>
+      )}
+
+      {/* #5 Game - moved to end */}
+      <SectionParallaxTransition strength={18} fade={false}>
+        <SectionCard id="game" fullWidth>
+          <GameSection />
+        </SectionCard>
+      </SectionParallaxTransition>
+
+      {/* #5.5 Quote after game */}
+      {quotes.after_game && (
+        <SectionParallaxTransition strength={12} fade={false}>
+          <SectionQuoteHighlight quote={quotes.after_game} />
         </SectionParallaxTransition>
       )}
 

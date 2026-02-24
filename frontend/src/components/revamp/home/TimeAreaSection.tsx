@@ -30,7 +30,16 @@ type ChartDataset = {
   series: ChartSeries[];
 };
 
-const FALLBACK_COLORS = ["#B3D4FF", "#80E5FF", "#A3F0C7", "#8BB8FF", "#7DD3FC", "#86EFAC"];
+const FALLBACK_COLORS = [
+  "#FFAAB5", // 玫瑰粉
+  "#FFD6A5", // 蜜桃橙
+  "#FDFFB6", // 柠檬黄
+  "#CAFFBF", // 薄荷绿
+  "#9BF6FF", // 天蓝
+  "#BDB2FF", // 薰衣草紫
+  "#FFC6FF", // 浅粉紫
+  "#A8DADC", // 墨绿青
+];
 
 // x 轴只在这些年龄处显示数字标签
 const AGE_TICKS = [5, 10, 15, 20, 25];

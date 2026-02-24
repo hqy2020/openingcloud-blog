@@ -82,9 +82,6 @@ function formatCityTooltip(params: unknown) {
     seriesType?: string;
     data?: {
       name?: string;
-      province?: string;
-      visitedAt?: string | null;
-      status?: string;
       isCurrent?: boolean;
     };
   };
@@ -94,15 +91,8 @@ function formatCityTooltip(params: unknown) {
   }
 
   const city = payload.data?.name ?? "未知城市";
-  const province = payload.data?.province ?? "";
-  if (payload.data?.isCurrent) {
-    const cityLine = province ? `${province} · ${city}` : city;
-    const status = payload.data?.status ?? "当前所在";
-    return `${cityLine}<br/>${status}`;
-  }
-  const visitedAt = formatVisitedAtLabel(payload.data?.visitedAt);
-  const cityLine = province ? `${province} · ${city}` : city;
-  return `${cityLine}<br/>${visitedAt}`;
+  if (payload.data?.isCurrent) return `${city}（当前居住）`;
+  return city;
 }
 
 export function TravelSection({ travel }: TravelSectionProps) {
@@ -112,7 +102,7 @@ export function TravelSection({ travel }: TravelSectionProps) {
   const [fallbackHint, setFallbackHint] = useState<string | null>(null);
   const [activeLoad, setActiveLoad] = useState(false);
   const [revealedCityCount, setRevealedCityCount] = useState(0);
-  const [hasPlayedOnce, setHasPlayedOnce] = useState(false);
+  const [inView, setInView] = useState(false);
   const hostRef = useRef<HTMLDivElement | null>(null);
 
   const currentResidence = useMemo(() => {
@@ -134,9 +124,10 @@ export function TravelSection({ travel }: TravelSectionProps) {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
+        const isIntersecting = entries.some((entry) => entry.isIntersecting);
+        setInView(isIntersecting);
+        if (isIntersecting) {
           setActiveLoad(true);
-          observer.disconnect();
         }
       },
       { rootMargin: "240px 0px" },
@@ -258,7 +249,7 @@ export function TravelSection({ travel }: TravelSectionProps) {
   }, [travel]);
 
   useEffect(() => {
-    if (!activeLoad || !mapReady || hasPlayedOnce || orderedCities.length === 0) {
+    if (!inView || !mapReady || orderedCities.length === 0) {
       return;
     }
 
@@ -269,23 +260,15 @@ export function TravelSection({ travel }: TravelSectionProps) {
       setRevealedCityCount(next);
       if (next >= orderedCities.length) {
         window.clearInterval(timerId);
-        setHasPlayedOnce(true);
       }
     }, CITY_REVEAL_INTERVAL_MS);
 
     return () => {
       window.clearInterval(timerId);
     };
-  }, [activeLoad, mapReady, hasPlayedOnce, orderedCities.length]);
+  }, [inView, mapReady, orderedCities.length]);
 
-  useEffect(() => {
-    if (!hasPlayedOnce) {
-      return;
-    }
-    setRevealedCityCount(orderedCities.length);
-  }, [hasPlayedOnce, orderedCities.length]);
-
-  const effectiveRevealedCityCount = hasPlayedOnce ? orderedCities.length : Math.min(revealedCityCount, orderedCities.length);
+  const effectiveRevealedCityCount = Math.min(revealedCityCount, orderedCities.length);
   const revealedCities = useMemo(
     () => orderedCities.slice(0, effectiveRevealedCityCount),
     [orderedCities, effectiveRevealedCityCount],

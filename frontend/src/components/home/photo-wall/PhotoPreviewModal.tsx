@@ -47,7 +47,7 @@ export function PhotoPreviewModal({ open, item, onClose }: PhotoPreviewModalProp
       aria-modal="true"
       aria-label={item.title ? `预览：${item.title}` : "照片预览"}
     >
-      <div className="relative w-full max-w-3xl overflow-hidden rounded-2xl border border-white/20 bg-white shadow-[0_24px_54px_rgba(15,23,42,0.4)]">
+      <div className="relative w-full max-w-3xl overflow-hidden rounded-2xl border border-white/20 bg-slate-950 shadow-[0_24px_54px_rgba(15,23,42,0.4)]">
         <button
           aria-label="关闭照片预览"
           className="absolute right-3 top-3 z-10 rounded-full bg-slate-950/65 p-2 text-white transition hover:bg-slate-950/80"
@@ -59,34 +59,15 @@ export function PhotoPreviewModal({ open, item, onClose }: PhotoPreviewModalProp
           </svg>
         </button>
 
-        <div className="max-h-[68vh] min-h-[280px] bg-slate-100">
+        <div className="max-h-[80vh] min-h-[280px] bg-slate-950 flex items-center justify-center">
           <img
             alt={item.title || "照片预览"}
-            className="h-full w-full object-contain"
+            className="max-h-[80vh] w-full object-contain"
             decoding="async"
             loading="eager"
             referrerPolicy="no-referrer"
             src={item.__normalizedImageUrl}
           />
-        </div>
-
-        <div className="space-y-3 px-5 pb-5 pt-4">
-          <div className="space-y-1">
-            <h3 className="text-lg font-semibold text-slate-900">{item.title || "未命名照片"}</h3>
-            {item.captured_at ? <p className="text-xs text-slate-500">拍摄时间：{item.captured_at}</p> : null}
-            {item.description ? <p className="text-sm text-slate-600">{item.description}</p> : null}
-          </div>
-
-          <div className="flex items-center justify-end">
-            <a
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
-              href={sourceUrl}
-              rel="noreferrer"
-              target="_blank"
-            >
-              查看原图
-            </a>
-          </div>
         </div>
       </div>
     </div>,

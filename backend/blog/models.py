@@ -659,3 +659,25 @@ class GithubProject(TimeStampedModel):
 
     def __str__(self) -> str:
         return self.full_name
+
+
+class WishItem(TimeStampedModel):
+    class Priority(models.TextChoices):
+        HIGH = "high", "高优先级"
+        MEDIUM = "medium", "中优先级"
+        LOW = "low", "低优先级"
+
+    emoji = models.CharField(max_length=10)
+    title = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    priority = models.CharField(max_length=10, choices=Priority.choices, default=Priority.MEDIUM)
+    sort_order = models.PositiveIntegerField(default=0, db_index=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["sort_order", "-priority"]
+        verbose_name = "心愿清单"
+        verbose_name_plural = "心愿清单"
+
+    def __str__(self) -> str:
+        return f"{self.emoji} {self.title}"

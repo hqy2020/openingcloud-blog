@@ -36,6 +36,7 @@ from .models import (
     TimeSeriesConfig,
     TimelineNode,
     TravelPlace,
+    WishItem,
 )
 
 
@@ -730,3 +731,11 @@ admin.site.site_header = "openingClouds 管理后台"
 admin.site.site_title = "openingClouds Admin"
 admin.site.index_title = "内容管理面板"
 admin.site.index_template = "admin/custom_index.html"
+
+
+@admin.register(WishItem)
+class WishItemAdmin(SortableAdminMixin, admin.ModelAdmin):
+    list_display = ["emoji", "title", "priority", "sort_order", "is_active", "updated_at"]
+    list_editable = ["sort_order", "is_active"]
+    list_filter = ["priority", "is_active"]
+    search_fields = ["title", "description"]

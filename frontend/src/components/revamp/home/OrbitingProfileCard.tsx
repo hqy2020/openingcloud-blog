@@ -75,6 +75,30 @@ const orbitingBadges: OrbitingBadge[] = [
     angle: 302,
     imageClassName: "h-full w-full object-contain",
   },
+  {
+    id: "nio-badge",
+    label: "NIO",
+    src: "/brand/logo-nio.png",
+    radius: 296,
+    duration: 7.8,
+    delay: 0.6,
+    width: 88,
+    height: 88,
+    angle: 160,
+    imageClassName: "h-full w-full rounded-full object-contain bg-white/90",
+  },
+  {
+    id: "sap-badge",
+    label: "SAP",
+    src: "/brand/logo-sap.png",
+    radius: 308,
+    duration: 8.2,
+    delay: 1.4,
+    width: 88,
+    height: 88,
+    angle: 260,
+    imageClassName: "h-full w-full rounded-full object-contain bg-white/90",
+  },
 ];
 
 const defaultRoles = [
@@ -140,7 +164,7 @@ export function OrbitingProfileCard({
 
       <div className="absolute inset-0 z-[2] flex items-center justify-center">
         <CardContainer>
-          <CardBody className="flex flex-col w-[200px] h-[270px] rounded-[20px] border border-white/40 bg-white/70 p-4 pt-8 shadow-xl backdrop-blur-md sm:w-[310px] sm:h-[419px] sm:rounded-[30px] sm:p-7 sm:pt-12 md:w-[450px] md:h-[608px] md:p-10 md:pt-16 lg:w-[538px] lg:h-[727px] lg:pt-20">
+          <CardBody className="relative flex flex-col w-[200px] h-[270px] rounded-[20px] border border-white/40 bg-white/70 p-4 pt-8 shadow-xl backdrop-blur-md sm:w-[310px] sm:h-[419px] sm:rounded-[30px] sm:p-7 sm:pt-12 md:w-[450px] md:h-[608px] md:p-10 md:pt-16 lg:w-[538px] lg:h-[727px] lg:pt-20">
             <CardItem as="p" translateZ={24} className="text-xs font-bold tracking-[0.08em] text-slate-600 sm:text-base sm:text-[34px] sm:leading-[1.1]">
               My name is:
             </CardItem>
@@ -174,6 +198,8 @@ export function OrbitingProfileCard({
                 </li>
               ))}
             </CardItem>
+            {/* 左下角橙色装饰圆 */}
+            <div className="pointer-events-none absolute bottom-4 left-4 h-10 w-10 rounded-full bg-orange-400/80 shadow-[0_0_20px_rgba(251,146,60,0.5)] sm:bottom-6 sm:left-6 sm:h-14 sm:w-14 md:bottom-8 md:left-8 md:h-20 md:w-20" />
           </CardBody>
         </CardContainer>
       </div>

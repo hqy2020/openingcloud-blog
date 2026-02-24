@@ -230,6 +230,22 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
       };
     });
 
+    // 注入自我节点（固定在画布中心）
+    const selfNode: GraphNode = {
+      id: "self",
+      type: "stage" as SocialGraphNode["type"],
+      label: "胡启云（我）",
+      stage_key: "self",
+      order: -1,
+      gender: "male",
+      honorific: "mr",
+      val: 22,
+      fx: centerX,
+      fy: centerY,
+      x: centerX,
+      y: centerY,
+    };
+
     const friendBucket = new Map<string, SocialGraphNode[]>();
 
     friendNodes.forEach((friend) => {
@@ -262,30 +278,42 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
       });
     });
 
-    const graphNodes = [...stages, ...friends];
+    const graphNodes = [selfNode, ...stages, ...friends];
     const positionedById = new Map<string, GraphNode>();
     graphNodes.forEach((node) => positionedById.set(node.id, node));
 
-    const graphLinks = links
-      .map((link, index) => {
-        const sourceId = toNodeId((link as unknown as { source: unknown }).source);
-        const targetId = toNodeId((link as unknown as { target: unknown }).target);
-        const source = positionedById.get(sourceId);
-        const target = positionedById.get(targetId);
-        if (!source || !target) {
-          return null;
-        }
-        const connectsStage = source.type === "stage" || target.type === "stage";
-        const sameStage = source.stage_key === target.stage_key;
-        return {
-          id: `${source.id}-${target.id}-${index}`,
-          source: source.id,
-          target: target.id,
-          distance: connectsStage ? (sameStage ? 100 : 128) : 84,
-          strength: connectsStage ? 0.24 : 0.14,
-        };
-      })
-      .filter((item): item is GraphLink => item !== null);
+    // self → stage 连接
+    const selfLinks: GraphLink[] = stages.map((stage) => ({
+      id: `self-${stage.id}`,
+      source: "self",
+      target: stage.id,
+      distance: 120,
+      strength: 0.6,
+    }));
+
+    const graphLinks = [
+      ...selfLinks,
+      ...links
+        .map((link, index) => {
+          const sourceId = toNodeId((link as unknown as { source: unknown }).source);
+          const targetId = toNodeId((link as unknown as { target: unknown }).target);
+          const source = positionedById.get(sourceId);
+          const target = positionedById.get(targetId);
+          if (!source || !target) {
+            return null;
+          }
+          const connectsStage = source.type === "stage" || target.type === "stage";
+          const sameStage = source.stage_key === target.stage_key;
+          return {
+            id: `${source.id}-${target.id}-${index}`,
+            source: source.id,
+            target: target.id,
+            distance: connectsStage ? (sameStage ? 100 : 128) : 84,
+            strength: connectsStage ? 0.24 : 0.14,
+          };
+        })
+        .filter((item): item is GraphLink => item !== null),
+    ];
 
     return { nodes: graphNodes, links: graphLinks };
   }, [hasCompleteGraphData, stageNodes, friendNodes, links, graphSize.width, graphSize.height]);
@@ -354,7 +382,7 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
     linkForce?.iterations?.(3);
 
     const chargeForce = graph.d3Force("charge") as ForceChargeRuntime | undefined;
-    chargeForce?.strength?.((node) => (node.type === "stage" ? -320 : -140));
+    chargeForce?.strength?.((node) => (node.id === "self" ? -480 : node.type === "stage" ? -320 : -140));
     chargeForce?.distanceMin?.(20);
     chargeForce?.distanceMax?.(420);
 
@@ -424,43 +452,57 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
                   const typedNode = node as GraphNode;
                   const x = typedNode.x ?? 0;
                   const y = typedNode.y ?? 0;
-                  const isStage = typedNode.type === "stage";
+                  const isSelf = typedNode.id === "self";
+                  const isStage = typedNode.type === "stage" && !isSelf;
                   const isHovered = hoveredNodeId === typedNode.id;
                   const isRelated = highlightedNodeIds?.has(typedNode.id) ?? false;
                   const dimmed = Boolean(highlightedNodeIds) && !isRelated;
                   const tone = resolveFriendTone(typedNode);
                   const viewScale = Math.max(globalScale, 0.8);
-                  const radius = (isStage ? 8.6 : 4.4) / viewScale;
+                  const radius = (isSelf ? 11 : isStage ? 8.6 : 4.4) / viewScale;
 
                   canvasContext.beginPath();
                   canvasContext.arc(x, y, radius + (isHovered ? 1.2 / viewScale : 0), 0, Math.PI * 2);
-                  let nodeFill = "rgba(148,163,184,0.95)";
-                  if (tone === "female") {
-                    nodeFill = "rgba(249,115,22,0.92)";
-                  } else if (tone === "male") {
-                    nodeFill = "rgba(59,130,246,0.92)";
-                  }
-                  canvasContext.fillStyle = dimmed
-                    ? "rgba(148,163,184,0.28)"
-                    : isStage
-                      ? "rgba(226,232,240,0.95)"
-                      : nodeFill;
-                  canvasContext.fill();
 
-                  if (isStage) {
-                    canvasContext.lineWidth = (isHovered ? 2.4 : 1.6) / viewScale;
-                    canvasContext.strokeStyle = dimmed ? "rgba(100,116,139,0.2)" : "rgba(100,116,139,0.75)";
+                  if (isSelf) {
+                    canvasContext.fillStyle = dimmed ? "rgba(249,115,22,0.3)" : "rgba(249,115,22,0.92)";
+                    canvasContext.fill();
+                    canvasContext.lineWidth = 2.4 / viewScale;
+                    canvasContext.strokeStyle = dimmed ? "rgba(255,237,213,0.4)" : "rgba(255,237,213,0.9)";
                     canvasContext.stroke();
+                  } else {
+                    let nodeFill = "rgba(148,163,184,0.95)";
+                    if (tone === "female") {
+                      nodeFill = "rgba(249,115,22,0.92)";
+                    } else if (tone === "male") {
+                      nodeFill = "rgba(59,130,246,0.92)";
+                    }
+                    canvasContext.fillStyle = dimmed
+                      ? "rgba(148,163,184,0.28)"
+                      : isStage
+                        ? "rgba(226,232,240,0.95)"
+                        : nodeFill;
+                    canvasContext.fill();
+
+                    if (isStage) {
+                      canvasContext.lineWidth = (isHovered ? 2.4 : 1.6) / viewScale;
+                      canvasContext.strokeStyle = dimmed ? "rgba(100,116,139,0.2)" : "rgba(100,116,139,0.75)";
+                      canvasContext.stroke();
+                    }
                   }
 
-                  const fontSize = (isStage ? 14 : 11) / viewScale;
-                  canvasContext.font = `${isStage ? 700 : 500} ${fontSize}px "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", sans-serif`;
+                  const fontSize = (isSelf ? 14 : isStage ? 14 : 11) / viewScale;
+                  canvasContext.font = `${isSelf || isStage ? 700 : 500} ${fontSize}px "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", sans-serif`;
                   const label = typedNode.label;
                   const textWidth = canvasContext.measureText(label).width;
                   const labelX = x + radius + 6 / viewScale;
                   const labelY = y + fontSize * 0.33;
 
-                  canvasContext.fillStyle = dimmed ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.90)";
+                  if (isSelf) {
+                    canvasContext.fillStyle = dimmed ? "rgba(255,237,213,0.5)" : "rgba(255,237,213,0.92)";
+                  } else {
+                    canvasContext.fillStyle = dimmed ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.90)";
+                  }
                   canvasContext.fillRect(
                     labelX - 4 / viewScale,
                     labelY - fontSize + 2 / viewScale,
@@ -469,17 +511,19 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
                   );
 
                   let labelFill = "rgba(30,41,59,0.85)";
-                  if (tone === "female") {
+                  if (isSelf) {
+                    labelFill = "rgba(154,52,18,0.95)";
+                  } else if (tone === "female") {
                     labelFill = "rgba(154,52,18,0.92)";
                   } else if (tone === "male") {
                     labelFill = "rgba(29,78,216,0.92)";
                   }
                   canvasContext.fillStyle = dimmed
-                    ? isStage
+                    ? isSelf || isStage
                       ? "rgba(15,23,42,0.3)"
                       : "rgba(30,41,59,0.28)"
-                    : isStage
-                      ? "rgba(15,23,42,0.92)"
+                    : isSelf || isStage
+                      ? labelFill
                       : labelFill;
                   canvasContext.fillText(label, labelX, labelY);
                 }}
