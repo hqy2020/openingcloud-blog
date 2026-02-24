@@ -25,9 +25,9 @@ type OrbitingBadge = {
   imageClassName?: string;
 };
 
-const ORBIT_RADIUS_SCALE = 1.5;
-const ORBIT_ELLIPSE_X_SCALE = 1.14;
-const ORBIT_ELLIPSE_Y_SCALE = 0.78;
+const ORBIT_RADIUS_SCALE = 1.4;
+const ORBIT_ELLIPSE_X_SCALE = 1.0;
+const ORBIT_ELLIPSE_Y_SCALE = 1.0;
 
 const orbitingBadges: OrbitingBadge[] = [
   {
@@ -35,10 +35,10 @@ const orbitingBadges: OrbitingBadge[] = [
     label: "Zhejiang University",
     src: "/brand/badge-zju.png",
     radius: 312,
-    duration: 7.4,
+    duration: 6.2,
     delay: 0.2,
-    width: 64,
-    height: 64,
+    width: 96,
+    height: 96,
     angle: 214,
   },
   {
@@ -46,10 +46,10 @@ const orbitingBadges: OrbitingBadge[] = [
     label: "Aliyun",
     src: "/brand/logo-aliyun.png",
     radius: 320,
-    duration: 8.9,
+    duration: 7.4,
     delay: 0.8,
-    width: 68,
-    height: 68,
+    width: 102,
+    height: 102,
     angle: 12,
   },
   {
@@ -57,10 +57,10 @@ const orbitingBadges: OrbitingBadge[] = [
     label: "Tongji University",
     src: "/brand/badge-tongji.png",
     radius: 334,
-    duration: 10.3,
+    duration: 8.6,
     delay: 1.1,
-    width: 64,
-    height: 64,
+    width: 96,
+    height: 96,
     angle: 108,
   },
   {
@@ -68,10 +68,10 @@ const orbitingBadges: OrbitingBadge[] = [
     label: "OpeningCloud",
     src: "/brand/logo-personal.png",
     radius: 360,
-    duration: 11.7,
+    duration: 9.8,
     delay: 0.4,
-    width: 96,
-    height: 96,
+    width: 144,
+    height: 144,
     angle: 302,
     imageClassName: "h-full w-full object-contain",
   },
@@ -127,52 +127,54 @@ export function OrbitingProfileCard({
 
   return (
     <div
-      className={cn("relative mx-auto h-[380px] w-[380px] sm:h-[450px] sm:w-[450px] lg:h-[400px] lg:w-[400px] xl:h-[450px] xl:w-[450px]", className)}
+      className={cn("relative mx-auto", className)}
     >
-      <div className="absolute left-1/2 top-1/2 h-[82%] w-[98%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border border-dashed border-slate-300/75" />
-      <div className="absolute left-1/2 top-1/2 h-[72%] w-[90%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border border-dashed border-slate-300/65" />
+      <div className="absolute left-1/2 top-1/2 z-[1] aspect-square w-full -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-dashed border-slate-400/50" />
+      <div className="absolute left-1/2 top-1/2 z-[1] aspect-square w-[94%] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-dashed border-slate-400/40" />
 
       {orbitingBadges.map((badge) => (
         <OrbitingBadgeNode key={badge.id} badge={badge} reducedMotion={reduceMotion} />
       ))}
 
-      <CardContainer containerClassName="absolute inset-0 flex items-center justify-center">
-        <CardBody className="w-[248px] rounded-[24px] p-6 sm:w-[360px] sm:p-8 lg:w-[430px]">
-          <CardItem as="p" translateZ={24} className="text-base font-bold tracking-[0.08em] text-slate-600 sm:text-[32px] sm:leading-[1.1]">
-            My name is:
-          </CardItem>
-          <CardItem as="div" translateZ={44} className="mt-3 min-h-[3rem] sm:min-h-[4.2rem]">
-            <WordRotate
-              words={activeNameWords}
-              duration={2600}
-              motionProps={{
-                initial: { opacity: 0, x: -26, filter: "blur(8px)" },
-                animate: { opacity: 1, x: 0, filter: "blur(0px)" },
-                exit: { opacity: 0, x: 26, filter: "blur(8px)" },
-                transition: { duration: 0.42, ease: "easeOut" },
-              }}
-              className="inline-block text-left text-4xl font-black leading-none text-[#f79237] sm:text-6xl"
-            />
-          </CardItem>
-          <div className="mt-4 h-px w-full bg-[linear-gradient(90deg,rgba(15,23,42,0.16),rgba(15,23,42,0.32),rgba(15,23,42,0.16))]" />
-          <CardItem as="p" translateZ={24} className="mt-5 text-base font-bold tracking-[0.08em] text-slate-600 sm:text-[32px] sm:leading-[1.1]">
-            I&apos;m a ...
-          </CardItem>
-          <CardItem
-            as="ul"
-            translateZ={38}
-            className="mt-3 w-full space-y-1 text-right text-sm font-medium leading-6 text-slate-700 sm:text-[20px] sm:leading-[1.4]"
-          >
-            {roles.map((role, index) => (
-              <li key={role} className="overflow-hidden">
-                <TextAnimate animation="whipInRight" delay={index * 0.12} className="inline-block">
-                  {role}
-                </TextAnimate>
-              </li>
-            ))}
-          </CardItem>
-        </CardBody>
-      </CardContainer>
+      <div className="absolute inset-0 z-[2] flex items-center justify-center">
+        <CardContainer>
+          <CardBody className="flex flex-col w-[310px] h-[419px] rounded-[30px] border border-white/40 bg-white/70 p-7 pt-12 shadow-xl backdrop-blur-md sm:w-[450px] sm:h-[608px] sm:p-10 sm:pt-16 lg:w-[538px] lg:h-[727px] lg:pt-20">
+            <CardItem as="p" translateZ={24} className="text-base font-bold tracking-[0.08em] text-slate-600 sm:text-[34px] sm:leading-[1.1]">
+              My name is:
+            </CardItem>
+            <CardItem as="div" translateZ={44} className="mt-3 min-h-[3rem] sm:min-h-[4.2rem]">
+              <WordRotate
+                words={activeNameWords}
+                duration={2600}
+                motionProps={{
+                  initial: { opacity: 0, x: -26, filter: "blur(8px)" },
+                  animate: { opacity: 1, x: 0, filter: "blur(0px)" },
+                  exit: { opacity: 0, x: 26, filter: "blur(8px)" },
+                  transition: { duration: 0.42, ease: "easeOut" },
+                }}
+                className="inline-block text-left text-4xl font-black leading-none text-[#f79237] sm:text-[4rem]"
+              />
+            </CardItem>
+            <div className="mt-5 h-px w-full bg-[linear-gradient(90deg,rgba(15,23,42,0.16),rgba(15,23,42,0.32),rgba(15,23,42,0.16))]" />
+            <CardItem as="p" translateZ={24} className="mt-6 text-base font-bold tracking-[0.08em] text-slate-600 sm:text-[34px] sm:leading-[1.1]">
+              I&apos;m a:
+            </CardItem>
+            <CardItem
+              as="ul"
+              translateZ={38}
+              className="mt-3 w-full space-y-1 text-right text-sm font-medium leading-7 text-slate-700 sm:text-[22px] sm:leading-[1.4]"
+            >
+              {roles.map((role, index) => (
+                <li key={role} className="overflow-hidden">
+                  <TextAnimate animation="whipInRight" delay={index * 0.12} className="inline-block">
+                    {role}
+                  </TextAnimate>
+                </li>
+              ))}
+            </CardItem>
+          </CardBody>
+        </CardContainer>
+      </div>
     </div>
   );
 }

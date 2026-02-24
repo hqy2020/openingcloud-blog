@@ -1,6 +1,5 @@
 import { motion } from "motion/react";
 import { Highlight } from "../../ui/hero-highlight";
-import { GradientHeading, type Variant } from "../../ui/gradient-heading";
 
 export type SectionQuote = {
   id: string;
@@ -15,12 +14,6 @@ type SectionQuoteHighlightProps = {
 };
 
 export function SectionQuoteHighlight({ quote }: SectionQuoteHighlightProps) {
-  const variantByCategory: Record<SectionQuote["category"], Variant> = {
-    技术: "default",
-    生活: "pink",
-    整理: "secondary",
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -29,25 +22,22 @@ export function SectionQuoteHighlight({ quote }: SectionQuoteHighlightProps) {
       transition={{ duration: 0.35, ease: "easeOut" }}
       className="mx-auto -my-4 max-w-5xl px-2 text-center"
     >
-      <GradientHeading
-        variant={variantByCategory[quote.category]}
-        size="lg"
-        weight="bold"
-      >
-        <span className="leading-[1.5]">
+      <h3>
+        <span className="inline-block pb-3 text-3xl font-bold !leading-[1.5] tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
           {quote.lead}
           {" "}
           <Highlight
-            className="rounded-md px-1 py-0 align-[0.02em] text-slate-900 from-indigo-300 to-purple-300 dark:text-white dark:from-indigo-500 dark:to-purple-500"
+            className="rounded-md px-1 py-0 align-[0.02em] text-slate-900 from-orange-300 to-amber-300 dark:text-white dark:from-orange-500 dark:to-amber-500"
             backgroundHeight="100%"
             backgroundPosition="left center"
+            duration={3}
           >
             {quote.emphasis}
           </Highlight>
           {" "}
           {quote.tail}
         </span>
-      </GradientHeading>
+      </h3>
     </motion.div>
   );
 }

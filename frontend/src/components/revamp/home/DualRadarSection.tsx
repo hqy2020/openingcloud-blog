@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties, ComponentType } from "react";
 import { radarMetricSets, type RadarMetricSet } from "../../../data/revamp/radarMetrics";
-import { SparklesText } from "../../ui/SparklesText";
+import type { RadarChartConfig } from "../../../api/home";
 
 type EChartsLikeProps = {
   option: unknown;
@@ -17,29 +17,27 @@ function unwrapDefault<T>(moduleValue: unknown): T {
   return second as T;
 }
 
+function apiToRadarMetricSet(cfg: RadarChartConfig): RadarMetricSet {
+  return {
+    id: cfg.id,
+    title: cfg.title,
+    subtitle: cfg.subtitle,
+    metrics: cfg.metrics.map((m) => ({ label: m.label, value: m.value })),
+  };
+}
+
 function buildRadarOption(set: RadarMetricSet) {
   return {
-    tooltip: {
-      trigger: "item",
-    },
+    tooltip: { show: false },
     radar: {
-      shape: "polygon",
-      splitNumber: 5,
-      radius: "68%",
+      shape: "circle",
+      splitNumber: 4,
+      radius: "65%",
       indicator: set.metrics.map((metric) => ({ name: metric.label, max: 100 })),
-      axisName: { color: "#334155", fontSize: 12 },
-      splitLine: { lineStyle: { color: "rgba(148,163,184,0.32)" } },
-      splitArea: {
-        areaStyle: {
-          color: [
-            "rgba(255,255,255,0.04)",
-            "rgba(79,106,229,0.03)",
-            "rgba(79,106,229,0.06)",
-            "rgba(79,106,229,0.09)",
-            "rgba(79,106,229,0.12)",
-          ],
-        },
-      },
+      axisName: { color: "#6b7280", fontSize: 13, fontWeight: 500 },
+      axisLine: { lineStyle: { color: "rgba(209,213,219,0.5)" } },
+      splitLine: { lineStyle: { color: "rgba(209,213,219,0.45)" } },
+      splitArea: { show: false },
     },
     series: [
       {
@@ -49,10 +47,10 @@ function buildRadarOption(set: RadarMetricSet) {
           {
             value: set.metrics.map((metric) => metric.value),
             name: set.title,
-            areaStyle: { color: "rgba(79,106,229,0.3)" },
-            lineStyle: { width: 2.3, color: "#4F6AE5" },
-            itemStyle: { color: "#4F6AE5" },
-            symbolSize: 5,
+            areaStyle: { color: "rgba(134,197,173,0.35)" },
+            lineStyle: { width: 2, color: "#6bc4a0" },
+            itemStyle: { color: "#6bc4a0", borderColor: "#fff", borderWidth: 1.5 },
+            symbolSize: 7,
           },
         ],
       },
@@ -83,10 +81,21 @@ function RadarFallbackTable({ metricSet }: { metricSet: RadarMetricSet }) {
   );
 }
 
-export function DualRadarSection() {
+type DualRadarSectionProps = {
+  radarData?: RadarChartConfig[];
+};
+
+export function DualRadarSection({ radarData }: DualRadarSectionProps) {
   const [Chart, setChart] = useState<ComponentType<EChartsLikeProps> | null>(null);
   const [echartsRuntime, setEchartsRuntime] = useState<unknown>(null);
   const [chartUnavailable, setChartUnavailable] = useState(false);
+
+  const metricSets: RadarMetricSet[] = useMemo(() => {
+    if (radarData && radarData.length > 0) {
+      return radarData.map(apiToRadarMetricSet);
+    }
+    return radarMetricSets;
+  }, [radarData]);
 
   useEffect(() => {
     const canUseCanvas =
@@ -119,42 +128,31 @@ export function DualRadarSection() {
     };
   }, []);
 
-  const options = useMemo(() => radarMetricSets.map((set) => buildRadarOption(set)), []);
+  const options = useMemo(() => metricSets.map((set) => buildRadarOption(set)), [metricSets]);
 
   return (
-    <section id="radar" className="space-y-4">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Radar</p>
-        <h2 className="mt-1 text-2xl font-semibold text-slate-800">
-          <SparklesText className="text-inherit" sparklesCount={8} colors={{ first: "#0ea5e9", second: "#fb7185" }}>
-            双雷达图
-          </SparklesText>
-        </h2>
-      </div>
-      <div className="grid gap-4 lg:grid-cols-2">
-        {radarMetricSets.map((metricSet, index) => (
-          <article
-            key={metricSet.id}
-            className="rounded-2xl border border-slate-200/80 bg-white/82 p-4 shadow-[0_12px_26px_rgba(15,23,42,0.1)] backdrop-blur"
-          >
-            <h3 className="text-base font-semibold text-slate-800">{metricSet.title}</h3>
-            <p className="mt-1 text-sm text-slate-600">{metricSet.subtitle}</p>
-            <div className="mt-3">
-              {Chart && !chartUnavailable ? (
-                <Chart
-                  echarts={echartsRuntime ?? undefined}
-                  lazyUpdate
-                  notMerge
-                  option={options[index]}
-                  style={{ height: 320, width: "100%" }}
-                />
-              ) : (
-                <RadarFallbackTable metricSet={metricSet} />
-              )}
-            </div>
-          </article>
-        ))}
-      </div>
-    </section>
+    <div className="grid gap-4 sm:grid-cols-2">
+      {metricSets.map((metricSet, index) => (
+        <article
+          key={metricSet.id}
+          className="rounded-2xl bg-gray-50/80 px-5 pb-2 pt-5"
+        >
+          <h3 className="text-lg font-bold text-gray-800">{metricSet.title}</h3>
+          <div className="mt-1">
+            {Chart && !chartUnavailable ? (
+              <Chart
+                echarts={echartsRuntime ?? undefined}
+                lazyUpdate
+                notMerge
+                option={options[index]}
+                style={{ height: 240, width: "100%" }}
+              />
+            ) : (
+              <RadarFallbackTable metricSet={metricSet} />
+            )}
+          </div>
+        </article>
+      ))}
+    </div>
   );
 }

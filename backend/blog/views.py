@@ -32,6 +32,8 @@ from .models import (
     PostLike,
     PostLikeVote,
     PostView,
+    RadarConfig,
+    SectionQuote,
     SiteVisit,
     SocialFriend,
     SyncLog,
@@ -1065,6 +1067,7 @@ def _travel_payload() -> list[dict]:
                 "longitude": row.longitude,
                 "cover": row.cover,
                 "sort_order": row.sort_order,
+                "is_current_residence": row.is_current_residence,
             }
         )
         grouped[row.province]["count"] += 1
@@ -1327,58 +1330,43 @@ def _normalize_time_series_payload(raw_payload: dict) -> dict:
     return {"x_axis": axis, "series": series}
 
 
-DEFAULT_HOME_TIME_SERIES = {
-    "x_axis": [str(age) for age in range(0, 27)],
-    "series": [
-        {
-            "name": "学习",
-            "color": "#B3D4FF",
-            "data": [0, 0, 8, 20, 35, 50, 58, 60, 55, 45, 40, 38, 36, 34, 32, 30, 30, 30, 30, 30, 28, 24, 20, 20, 20, 20, 30],
-        },
-        {
-            "name": "游戏",
-            "color": "#80E5FF",
-            "data": [0, 0, 0, 0, 0, 0, 0, 0, 5, 15, 22, 28, 30, 28, 24, 20, 18, 16, 15, 15, 15, 15, 15, 15, 15, 15, 10],
-        },
-        {
-            "name": "写代码",
-            "color": "#8FD9D0",
-            "data": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 10, 14, 18, 22, 24, 24, 24, 24, 24, 23, 22, 20, 18, 16, 14, 10],
-        },
-        {
-            "name": "运动",
-            "color": "#7BC9FF",
-            "data": [0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 8, 10, 12, 12, 10, 10, 9, 8, 8, 6, 6, 5, 5, 5, 5, 5, 3],
-        },
-        {
-            "name": "音乐",
-            "color": "#A7C4FF",
-            "data": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 4, 5, 6, 7, 9, 10, 10, 10, 10, 8],
-        },
-        {
-            "name": "社交&家庭",
-            "color": "#A3F0C7",
-            "data": [100, 100, 92, 80, 65, 50, 42, 40, 40, 35, 25, 14, 8, 8, 12, 16, 17, 18, 18, 19, 21, 25, 30, 32, 34, 36, 39],
-        },
-    ],
-}
-
-
-def _home_time_series_payload() -> dict:
-    default_payload = _normalize_time_series_payload(DEFAULT_HOME_TIME_SERIES)
+def _home_time_series_payload() -> dict | None:
     config = TimeSeriesConfig.objects.filter(is_active=True).order_by("-updated_at", "-id").first()
     if not config:
-        return default_payload
-
-    normalized = _normalize_time_series_payload(
-        {
-            "x_axis": config.x_axis,
-            "series": config.series,
-        }
-    )
+        return None
+    normalized = _normalize_time_series_payload({"x_axis": config.x_axis, "series": config.series})
     if not normalized.get("x_axis") or not normalized.get("series"):
-        return default_payload
+        return None
     return normalized
+
+
+def _radar_charts_payload() -> list[dict]:
+    configs = RadarConfig.objects.filter(is_active=True).order_by("sort_order", "key")
+    return [
+        {
+            "key": config.key,
+            "title": config.title,
+            "subtitle": config.subtitle,
+            "metrics": config.metrics if isinstance(config.metrics, list) else [],
+        }
+        for config in configs
+    ]
+
+
+def _home_section_quotes_payload() -> dict:
+    quotes = SectionQuote.objects.filter(is_active=True).order_by("slot", "sort_order")
+    result: dict = {}
+    for q in quotes:
+        if q.slot not in result:
+            result[q.slot] = {
+                "id": f"quote-{q.id}",
+                "slot": q.slot,
+                "category": q.category,
+                "lead": q.lead,
+                "emphasis": q.emphasis,
+                "tail": q.tail,
+            }
+    return result
 
 
 def _home_payload(*, show_real_name: bool = False) -> dict:
@@ -1425,6 +1413,8 @@ def _home_payload(*, show_real_name: bool = False) -> dict:
             "email": email,
             "github": github,
         },
+        "radar_charts": _radar_charts_payload(),
+        "section_quotes": _home_section_quotes_payload(),
     }
 
 

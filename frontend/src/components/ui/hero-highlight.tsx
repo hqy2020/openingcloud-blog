@@ -13,6 +13,7 @@ type HighlightProps = {
   className?: string;
   backgroundHeight?: string;
   backgroundPosition?: string;
+  duration?: number;
 };
 
 const DOT_PATTERNS = {
@@ -90,12 +91,13 @@ export function Highlight({
   className,
   backgroundHeight = "100%",
   backgroundPosition = "left center",
+  duration = 2,
 }: HighlightProps) {
   return (
     <motion.span
       initial={{ backgroundSize: `0% ${backgroundHeight}` }}
       animate={{ backgroundSize: `100% ${backgroundHeight}` }}
-      transition={{ duration: 2, ease: "linear", delay: 0.5 }}
+      transition={{ duration, ease: "linear", delay: 0.5 }}
       style={{
         backgroundPosition,
         backgroundRepeat: "no-repeat",

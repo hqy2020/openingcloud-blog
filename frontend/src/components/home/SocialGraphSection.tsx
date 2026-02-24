@@ -2,9 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentType } from "react";
 import type { SocialGraphLink, SocialGraphNode } from "../../api/home";
 import { ScrollReveal } from "../motion/ScrollReveal";
-import { SparklesText } from "../ui/SparklesText";
 import { StaggerContainer, StaggerItem } from "../motion/StaggerContainer";
 import { CardSpotlight } from "../ui/CardSpotlight";
+import { SectionTitleCard } from "../revamp/shared/SectionTitleCard";
 
 type SocialGraphSectionProps = {
   nodes: SocialGraphNode[];
@@ -373,24 +373,22 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
   }, [ForceGraph2D, graphData, graphSize.width, graphSize.height, hasCompleteGraphData]);
 
   return (
-    <ScrollReveal className="space-y-6">
-      <div className="flex items-end justify-between">
-        <h2 className="text-2xl font-semibold text-slate-900">
-          <SparklesText className="text-inherit" sparklesCount={8} colors={{ first: "#38bdf8", second: "#f43f5e" }}>
-            社交图谱
-          </SparklesText>
-        </h2>
-        <span className="text-sm text-slate-500">公开匿名节点：{friendNodes.length}</span>
-      </div>
+    <ScrollReveal className="space-y-4">
+      <SectionTitleCard
+        category="Social"
+        title="社交图谱"
+        accentColor="#8b5cf6"
+        tagline="每个阶段，都有并肩同行的人。"
+      />
 
-      <div ref={hostRef} className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 p-2 text-slate-100 shadow-sm">
+      <div ref={hostRef} className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 text-slate-900 shadow-sm">
         {hasCompleteGraphData ? (
           <div className="relative mx-auto overflow-hidden rounded-xl" style={{ width: graphSize.width, height: graphSize.height }}>
             {ForceGraph2D ? (
               <ForceGraph2D
                 ref={graphRef}
                 autoPauseRedraw={false}
-                backgroundColor="#020617"
+                backgroundColor="#ffffff"
                 cooldownTicks={2800}
                 d3AlphaDecay={0.018}
                 d3VelocityDecay={0.28}
@@ -403,11 +401,11 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
                   const sourceId = toNodeId((link as GraphLink).source);
                   const targetId = toNodeId((link as GraphLink).target);
                   if (!hoveredNodeId) {
-                    return "rgba(148,163,184,0.56)";
+                    return "rgba(148,163,184,0.55)";
                   }
                   return sourceId === hoveredNodeId || targetId === hoveredNodeId
-                    ? "rgba(148,163,184,0.92)"
-                    : "rgba(71,85,105,0.24)";
+                    ? "rgba(71,85,105,0.85)"
+                    : "rgba(148,163,184,0.18)";
                 }}
                 linkWidth={(link: unknown) => {
                   const sourceId = toNodeId((link as GraphLink).source);
@@ -438,20 +436,20 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
                   canvasContext.arc(x, y, radius + (isHovered ? 1.2 / viewScale : 0), 0, Math.PI * 2);
                   let nodeFill = "rgba(148,163,184,0.95)";
                   if (tone === "female") {
-                    nodeFill = "rgba(244,114,182,0.98)";
+                    nodeFill = "rgba(249,115,22,0.92)";
                   } else if (tone === "male") {
-                    nodeFill = "rgba(96,165,250,0.98)";
+                    nodeFill = "rgba(59,130,246,0.92)";
                   }
                   canvasContext.fillStyle = dimmed
-                    ? "rgba(148,163,184,0.32)"
+                    ? "rgba(148,163,184,0.28)"
                     : isStage
-                      ? "rgba(248,250,252,0.98)"
+                      ? "rgba(226,232,240,0.95)"
                       : nodeFill;
                   canvasContext.fill();
 
                   if (isStage) {
                     canvasContext.lineWidth = (isHovered ? 2.4 : 1.6) / viewScale;
-                    canvasContext.strokeStyle = dimmed ? "rgba(125,211,252,0.2)" : "rgba(125,211,252,0.9)";
+                    canvasContext.strokeStyle = dimmed ? "rgba(100,116,139,0.2)" : "rgba(100,116,139,0.75)";
                     canvasContext.stroke();
                   }
 
@@ -462,7 +460,7 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
                   const labelX = x + radius + 6 / viewScale;
                   const labelY = y + fontSize * 0.33;
 
-                  canvasContext.fillStyle = dimmed ? "rgba(2,6,23,0.24)" : "rgba(2,6,23,0.48)";
+                  canvasContext.fillStyle = dimmed ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.90)";
                   canvasContext.fillRect(
                     labelX - 4 / viewScale,
                     labelY - fontSize + 2 / viewScale,
@@ -470,18 +468,18 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
                     fontSize + 5 / viewScale,
                   );
 
-                  let labelFill = "rgba(203,213,225,0.9)";
+                  let labelFill = "rgba(30,41,59,0.85)";
                   if (tone === "female") {
-                    labelFill = "rgba(251,207,232,0.96)";
+                    labelFill = "rgba(154,52,18,0.92)";
                   } else if (tone === "male") {
-                    labelFill = "rgba(191,219,254,0.96)";
+                    labelFill = "rgba(29,78,216,0.92)";
                   }
                   canvasContext.fillStyle = dimmed
                     ? isStage
-                      ? "rgba(248,250,252,0.36)"
-                      : "rgba(203,213,225,0.34)"
+                      ? "rgba(15,23,42,0.3)"
+                      : "rgba(30,41,59,0.28)"
                     : isStage
-                      ? "rgba(248,250,252,0.97)"
+                      ? "rgba(15,23,42,0.92)"
                       : labelFill;
                   canvasContext.fillText(label, labelX, labelY);
                 }}
@@ -523,21 +521,21 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
                 width={graphSize.width}
               />
             ) : (
-              <div className="flex h-full items-center justify-center text-sm text-slate-300">
+              <div className="flex h-full items-center justify-center text-sm text-slate-500">
                 {loadError ?? "图谱组件加载中..."}
               </div>
             )}
 
-            <div className="pointer-events-none absolute bottom-3 left-3 rounded-md bg-slate-900/45 px-2 py-1 text-xs text-slate-300">
+            <div className="pointer-events-none absolute bottom-3 left-3 rounded-md bg-slate-100/80 px-2 py-1 text-xs text-slate-500">
               拖拽任意节点可重新编排关系
             </div>
           </div>
         ) : (
           <div className="space-y-3 p-4">
-            <p className="text-xs text-slate-300">匿名连线数据暂不可用，已展示分阶段概览。</p>
+            <p className="text-xs text-slate-500">匿名连线数据暂不可用，已展示分阶段概览。</p>
 
             {stageNodes.length === 0 ? (
-              <div className="rounded-xl border border-slate-700/60 bg-slate-900/80 px-4 py-5 text-sm text-slate-300">
+              <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-5 text-sm text-slate-600">
                 暂无社交图谱数据。
               </div>
             ) : (
@@ -546,9 +544,9 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
                   const count = friendNodes.filter((node) => node.stage_key === stage.stage_key).length;
                   return (
                     <StaggerItem key={stage.id}>
-                      <CardSpotlight className="rounded-xl bg-slate-900 p-4">
-                        <h3 className="font-semibold">{stage.label}</h3>
-                        <p className="mt-1 text-sm text-slate-300">匿名好友 {count} 位</p>
+                      <CardSpotlight className="rounded-xl bg-white/80 p-4">
+                        <h3 className="font-semibold text-slate-900">{stage.label}</h3>
+                        <p className="mt-1 text-sm text-slate-500">匿名好友 {count} 位</p>
                       </CardSpotlight>
                     </StaggerItem>
                   );

@@ -1,4 +1,4 @@
-export type TimeSeriesKey = "learning" | "career" | "family" | "reflection" | "health";
+export type TimeSeriesKey = "family" | "gaming" | "sports" | "music" | "learning" | "coding" | "work";
 
 export type TimeAreaSeriesItem = {
   key: TimeSeriesKey;
@@ -14,12 +14,14 @@ export type TimeAreaSeriesConfig = {
 
 export const timeAreaSeriesConfig: TimeAreaSeriesConfig = {
   birth_date: "2000-09-01",
-  fallback_bucket: "reflection",
+  fallback_bucket: "family",
   series: [
-    { key: "learning", label: "Learning", color: "#4F6AE5" },
-    { key: "career", label: "Career", color: "#0EA5E9" },
-    { key: "family", label: "Family", color: "#F59E0B" },
-    { key: "reflection", label: "Reflection", color: "#8B5CF6" },
-    { key: "health", label: "Health", color: "#10B981" },
+    { key: "family",   label: "社交&家庭", color: "#FF8066" },
+    { key: "gaming",   label: "游戏",      color: "#3BC9DB" },
+    { key: "sports",   label: "运动",      color: "#94D82D" },
+    { key: "music",    label: "音乐",      color: "#F783AC" },
+    { key: "learning", label: "学习",      color: "#FCC419" },
+    { key: "coding",   label: "写代码",    color: "#74C0FC" },
+    { key: "work",     label: "工作",      color: "#9775FA" },
   ],
 };

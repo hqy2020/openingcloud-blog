@@ -210,6 +210,57 @@ GitHub Actions 工作流 (`.github/workflows/deploy.yml`) 包含 4 个阶段：
 | `obsidian_sync_remote.sh` | 客户端远程同步脚本（macOS） |
 | `obsidian_sync_server.sh` | 服务器端 Obsidian 同步（适配 cron） |
 
+## Changelog
+
+### v3.0.0 (2026-02-24) — 首页全面重构
+
+#### 前端：15-Section 首页重构
+
+| # | Section | 说明 |
+|---|---------|------|
+| 1 | **HomeHero** | 全屏品牌展示 + 打字机效果 + 视差背景 |
+| 2 | **RecommendedPostsSection** | 推荐文章 3D 走马灯（Three.js Marquee） |
+| 3 | **SocialMarquee** | 成就/技术标签无缝跑马灯 |
+| 4 | **SectionQuoteHighlight** | 精选引言卡片（后端驱动） |
+| 5 | **FeaturedProjectsSection** | GitHub 精选项目展示，技术栈连线动画 |
+| 6 | **GameSection** | 交互游戏区（像素风宠物/小游戏） |
+| 7 | **TimeAreaSection** | 人生时间堆叠面积图（ECharts 动态加载） |
+| 8 | **TimelineSection** | 成长时间线，横向滚动 |
+| 9 | **TravelSection** | 旅行足迹地图（含当前居住地标记） |
+| 10 | **SocialGraphSection** | 社交关系图谱 |
+| 11 | **StatsSection** | 实时统计面板（文章数/访问量/运行天数） |
+| 12 | **DualRadarSection** | 双雷达图（技能 & 人格维度，ECharts） |
+| 13 | **PhotoWallSection** | 照片墙（3D 轮播 + 网格降级） |
+| 14 | **DreamSection** | 心愿清单（交互式 AnimatedList） |
+| 15 | **OrbitingProfileCard** | 浮动 Dock（固定 Profile + 轨道图标） |
+
+#### 后端：5 个新数据模型
+
+| 模型 | 说明 |
+|------|------|
+| `RadarConfig` | 双雷达图数据，含维度标签、分值、分类 |
+| `TimeSeriesConfig` | 时间序列配置，驱动人生时间堆叠图 |
+| `SectionQuote` | 精选引言，section 字段控制展示位置 |
+| `TravelPlace` (扩展) | 新增 `latitude/longitude` 坐标 + `is_current_residence` 字段 |
+| `GithubProject` (扩展) | 新增 `editorial_description/tags/highlight_color` 编辑字段 |
+
+迁移文件：`0022` ~ `0030`（含种子数据迁移）
+
+#### 新增共享组件
+
+- `SectionTitleCard` — 统一 Section 标题样式卡片
+- `SectionQuoteHighlight` — 引言高亮展示块
+- `SectionParallaxTransition` — Section 视差过渡动画容器
+
+#### 基础设施改进
+
+- 全局视差滚动动画系统（Framer Motion `useScroll` + `useTransform`）
+- ECharts 按需动态 `import()` 加载，降级为静态表格
+- `ParallaxSection` 通用组件抽象视差逻辑
+- `TextGif` 组件支持 GIF 纹理文字
+
+---
+
 ## 许可证
 
 [MIT](LICENSE)

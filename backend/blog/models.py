@@ -239,6 +239,7 @@ class TravelPlace(TimeStampedModel):
     longitude = models.FloatField(null=True, blank=True)
     cover = models.URLField(max_length=500, blank=True)
     sort_order = models.PositiveIntegerField(default=0, db_index=True)
+    is_current_residence = models.BooleanField(default=False, verbose_name="当前居住地")
 
     class Meta:
         ordering = ["sort_order", "province", "city"]
@@ -248,6 +249,11 @@ class TravelPlace(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.province}-{self.city}"
+
+    def save(self, *args, **kwargs):
+        if self.is_current_residence:
+            TravelPlace.objects.filter(is_current_residence=True).exclude(pk=self.pk).update(is_current_residence=False)
+        super().save(*args, **kwargs)
 
 
 class SocialFriend(TimeStampedModel):
@@ -552,6 +558,80 @@ class BarrageComment(TimeStampedModel):
         return f"{self.nickname}: {self.content[:24]}"
 
 
+class RadarConfig(TimeStampedModel):
+    key = models.SlugField(max_length=50, unique=True)
+    title = models.CharField(max_length=100, verbose_name="标题")
+    subtitle = models.CharField(max_length=200, blank=True, verbose_name="副标题")
+    metrics = models.JSONField(
+        default=list,
+        verbose_name="维度数据",
+        help_text='JSON数组, 每项含 {"label": "维度名", "value": 86}',
+    )
+    sort_order = models.PositiveIntegerField(default=0, db_index=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["sort_order", "key"]
+        verbose_name = "雷达图配置"
+        verbose_name_plural = "雷达图配置"
+
+    def __str__(self) -> str:
+        return f"{self.title} ({self.key})"
+
+    def clean(self):
+        metrics = self.metrics
+        if not isinstance(metrics, list):
+            raise ValidationError({"metrics": "metrics 必须是数组"})
+        for idx, item in enumerate(metrics):
+            if not isinstance(item, dict):
+                raise ValidationError({"metrics": f"metrics[{idx}] 必须是对象"})
+            label = item.get("label")
+            if not isinstance(label, str) or not label.strip():
+                raise ValidationError({"metrics": f"metrics[{idx}].label 必须是非空字符串"})
+            value = item.get("value")
+            try:
+                numeric = float(value)
+            except (TypeError, ValueError) as exc:
+                raise ValidationError({"metrics": f"metrics[{idx}].value 必须是数字"}) from exc
+            if numeric < 0 or numeric > 100:
+                raise ValidationError({"metrics": f"metrics[{idx}].value 必须在 0-100 之间"})
+
+
+class SectionQuote(TimeStampedModel):
+    class SlotPosition(models.TextChoices):
+        AFTER_MARQUEE = "after_marquee", "高光成就 → 代码项目之间"
+        AFTER_GAME = "after_game", "互动游戏 → 生活之间"
+        AFTER_DREAM = "after_dream", "心愿清单 → 统计之间"
+
+    class QuoteCategory(models.TextChoices):
+        TECH = "技术", "技术"
+        LIFE = "生活", "生活"
+        ORGANIZE = "整理", "整理"
+
+    slot = models.CharField(max_length=30, choices=SlotPosition.choices, db_index=True)
+    category = models.CharField(max_length=10, choices=QuoteCategory.choices)
+    lead = models.CharField(max_length=200)
+    emphasis = models.CharField(max_length=100)
+    tail = models.CharField(max_length=100, blank=True, default="。")
+    is_active = models.BooleanField(default=True, db_index=True)
+    sort_order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["slot", "sort_order"]
+        verbose_name = "散落的文字"
+        verbose_name_plural = "散落的文字"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["slot"],
+                condition=models.Q(is_active=True),
+                name="unique_active_quote_per_slot",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"[{self.get_slot_display()}] {self.lead[:20]}"
+
+
 class GithubProject(TimeStampedModel):
     name = models.CharField(max_length=255)
     full_name = models.CharField(max_length=255, unique=True)
@@ -563,6 +643,10 @@ class GithubProject(TimeStampedModel):
     stars_count = models.PositiveIntegerField(default=0)
     forks_count = models.PositiveIntegerField(default=0)
     open_issues_count = models.PositiveIntegerField(default=0)
+    description_zh = models.TextField(blank=True, verbose_name="中文简介")
+    detail_en = models.TextField(blank=True, verbose_name="英文详情")
+    detail_zh = models.TextField(blank=True, verbose_name="中文详情")
+    tech_stack = models.JSONField(default=list, blank=True, verbose_name="技术栈")
     is_public = models.BooleanField(default=True)
     sort_order = models.PositiveIntegerField(default=0, db_index=True)
     cover = models.URLField(max_length=500, blank=True)

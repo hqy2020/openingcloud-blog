@@ -13,6 +13,8 @@ from .models import (
     HighlightStage,
     PhotoWallImage,
     Post,
+    RadarConfig,
+    SectionQuote,
     SocialFriend,
     TimelineNode,
     TravelPlace,
@@ -208,6 +210,7 @@ class TravelPlaceAdminSerializer(serializers.ModelSerializer):
             "longitude",
             "cover",
             "sort_order",
+            "is_current_residence",
             "created_at",
             "updated_at",
         ]
@@ -445,6 +448,7 @@ class TravelCitySerializer(serializers.Serializer):
     longitude = serializers.FloatField(allow_null=True)
     cover = serializers.CharField()
     sort_order = serializers.IntegerField()
+    is_current_residence = serializers.BooleanField(default=False)
 
 
 class TravelProvinceSerializer(serializers.Serializer):
@@ -571,6 +575,27 @@ class HomeTimeSeriesSerializer(serializers.Serializer):
     series = HomeTimeSeriesItemSerializer(many=True)
 
 
+class RadarMetricSerializer(serializers.Serializer):
+    label = serializers.CharField()
+    value = serializers.FloatField()
+
+
+class RadarConfigPublicSerializer(serializers.Serializer):
+    id = serializers.CharField(source="key")
+    title = serializers.CharField()
+    subtitle = serializers.CharField()
+    metrics = RadarMetricSerializer(many=True)
+
+
+class SectionQuoteSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    slot = serializers.CharField()
+    category = serializers.CharField()
+    lead = serializers.CharField()
+    emphasis = serializers.CharField()
+    tail = serializers.CharField(allow_blank=True)
+
+
 class HomeAggregateSerializer(serializers.Serializer):
     hero = HomeHeroSerializer()
     timeline = TimelineNodePublicSerializer(many=True)
@@ -583,6 +608,8 @@ class HomeAggregateSerializer(serializers.Serializer):
     projects = serializers.ListField(child=serializers.DictField())
     stats = HomeStatsSerializer()
     contact = HomeContactSerializer()
+    radar_charts = RadarConfigPublicSerializer(many=True, required=False)
+    section_quotes = serializers.DictField(child=SectionQuoteSerializer(), required=False)
 
 
 class AdminImageUploadSerializer(serializers.Serializer):
@@ -672,9 +699,13 @@ class GithubProjectAdminSerializer(serializers.ModelSerializer):
             "name",
             "full_name",
             "description",
+            "description_zh",
+            "detail_en",
+            "detail_zh",
             "html_url",
             "language",
             "topics",
+            "tech_stack",
             "homepage_url",
             "stars_count",
             "forks_count",
@@ -689,6 +720,9 @@ class GithubProjectAdminSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
         extra_kwargs = {
             "description": {"required": False, "allow_blank": True},
+            "description_zh": {"required": False, "allow_blank": True},
+            "detail_en": {"required": False, "allow_blank": True},
+            "detail_zh": {"required": False, "allow_blank": True},
             "language": {"required": False, "allow_blank": True},
             "homepage_url": {"required": False, "allow_blank": True},
             "cover": {"required": False, "allow_blank": True},
@@ -703,9 +737,13 @@ class GithubProjectPublicSerializer(serializers.ModelSerializer):
             "name",
             "full_name",
             "description",
+            "description_zh",
+            "detail_en",
+            "detail_zh",
             "html_url",
             "language",
             "topics",
+            "tech_stack",
             "homepage_url",
             "stars_count",
             "forks_count",

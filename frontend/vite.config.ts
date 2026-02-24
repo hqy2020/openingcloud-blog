@@ -1,3 +1,4 @@
+import http from "node:http";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
@@ -7,10 +8,19 @@ import { defineConfig } from "vite";
 const require = createRequire(import.meta.url);
 const vitePrerender = require("vite-plugin-prerender");
 const JSDOMRenderer = require("@prerenderer/renderer-jsdom");
-const devProxyTarget = process.env.VITE_DEV_PROXY_TARGET ?? "http://127.0.0.1:8000";
+const devProxyTarget = process.env.VITE_DEV_PROXY_TARGET ?? "http://127.0.0.1:8001";
+
+// Bypass system HTTP proxy for local dev proxy
+const directAgent = new http.Agent();
 
 const currentFile = fileURLToPath(import.meta.url);
 const currentDir = path.dirname(currentFile);
+
+const proxyOptions = {
+  target: devProxyTarget,
+  changeOrigin: true,
+  agent: directAgent,
+};
 
 export default defineConfig({
   plugins: [
@@ -25,20 +35,16 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      "/api": {
-        // Default to Django dev server.
-        // Override with VITE_DEV_PROXY_TARGET when routing through nginx or another upstream.
-        target: devProxyTarget,
-        changeOrigin: true,
-      },
+      "/api": proxyOptions,
+      "/admin": proxyOptions,
+      "/static": proxyOptions,
     },
   },
   preview: {
     proxy: {
-      "/api": {
-        target: devProxyTarget,
-        changeOrigin: true,
-      },
+      "/api": proxyOptions,
+      "/admin": proxyOptions,
+      "/static": proxyOptions,
     },
   },
   build: {

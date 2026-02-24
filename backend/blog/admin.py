@@ -19,6 +19,7 @@ from sync.service import sync_post_payload
 
 from .models import (
     BarrageComment,
+    GithubProject,
     HighlightItem,
     HighlightStage,
     ObsidianDocument,
@@ -27,6 +28,8 @@ from .models import (
     Post,
     PostLike,
     PostView,
+    RadarConfig,
+    SectionQuote,
     SiteVisit,
     SocialFriend,
     SyncLog,
@@ -177,6 +180,28 @@ class BarrageCommentAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
+class HighlightItemInline(SortableInlineAdminMixin, admin.TabularInline):
+    model = HighlightItem
+    extra = 1
+    fields = ["title", "description", "achieved_at", "sort_order"]
+
+
+@admin.register(HighlightStage)
+class HighlightStageAdmin(SortableAdminMixin, admin.ModelAdmin):
+    list_display = ["title", "items_count", "start_date", "end_date", "sort_order", "updated_at"]
+    search_fields = ["title", "description"]
+    inlines = [HighlightItemInline]
+    fieldsets = (
+        ("基础信息", {"fields": ("title", "description", "start_date", "end_date")}),
+        ("时间", {"fields": ("created_at", "updated_at")}),
+    )
+    readonly_fields = ["created_at", "updated_at"]
+
+    @admin.display(description="条目数")
+    def items_count(self, obj: HighlightStage) -> int:
+        return obj.items.count()
+
+
 @admin.register(TimelineNode)
 class TimelineNodeAdmin(SortableAdminMixin, admin.ModelAdmin):
     list_display = ["title", "type", "impact", "start_date", "sort_order", "updated_at"]
@@ -186,15 +211,66 @@ class TimelineNodeAdmin(SortableAdminMixin, admin.ModelAdmin):
 
 @admin.register(TimeSeriesConfig)
 class TimeSeriesConfigAdmin(admin.ModelAdmin):
-    list_display = ["key", "is_active", "updated_at"]
+    list_display = ["key", "series_count", "axis_length", "is_active", "updated_at"]
     list_filter = ["is_active"]
     search_fields = ["key"]
+    fieldsets = (
+        ("基础", {"fields": ("key", "is_active")}),
+        ("X 轴 (年龄)", {"fields": ("x_axis",), "description": "JSON 数组，如 [\"0\", \"1\", \"2\", ...]"}),
+        ("数据系列", {"fields": ("series",), "description": "JSON 数组，每项含 name/color/data"}),
+        ("时间", {"fields": ("created_at", "updated_at")}),
+    )
+    readonly_fields = ["created_at", "updated_at"]
+
+    @admin.display(description="系列数")
+    def series_count(self, obj: TimeSeriesConfig) -> int:
+        return len(obj.series) if isinstance(obj.series, list) else 0
+
+    @admin.display(description="X轴长度")
+    def axis_length(self, obj: TimeSeriesConfig) -> int:
+        return len(obj.x_axis) if isinstance(obj.x_axis, list) else 0
+
+
+@admin.register(RadarConfig)
+class RadarConfigAdmin(SortableAdminMixin, admin.ModelAdmin):
+    list_display = ["title", "key", "metrics_count", "is_active", "sort_order", "updated_at"]
+    list_filter = ["is_active"]
+    search_fields = ["key", "title"]
+    fieldsets = (
+        ("基础信息", {"fields": ("key", "title", "subtitle", "is_active")}),
+        ("维度数据", {"fields": ("metrics",), "description": 'JSON 数组，每项含 {"label": "维度名", "value": 86}'}),
+        ("时间", {"fields": ("created_at", "updated_at")}),
+    )
+    readonly_fields = ["created_at", "updated_at"]
+
+    @admin.display(description="维度数")
+    def metrics_count(self, obj: RadarConfig) -> int:
+        return len(obj.metrics) if isinstance(obj.metrics, list) else 0
+
+
+@admin.register(SectionQuote)
+class SectionQuoteAdmin(admin.ModelAdmin):
+    list_display = ["slot", "category", "lead_preview", "emphasis", "is_active", "updated_at"]
+    list_filter = ["slot", "category", "is_active"]
+    list_editable = ["is_active"]
+    fieldsets = (
+        ("位置与分类", {"fields": ("slot", "category", "is_active", "sort_order")}),
+        ("文字内容", {"fields": ("lead", "emphasis", "tail")}),
+        ("时间", {"fields": ("created_at", "updated_at")}),
+    )
+    readonly_fields = ["created_at", "updated_at"]
+
+    @admin.display(description="引言预览")
+    def lead_preview(self, obj: SectionQuote) -> str:
+        text = str(obj.lead or "")
+        return text if len(text) <= 30 else f"{text[:30]}..."
 
 
 @admin.register(TravelPlace)
 class TravelPlaceAdmin(SortableAdminMixin, admin.ModelAdmin):
-    list_display = ["province", "city", "visited_at", "sort_order", "updated_at"]
-    list_filter = ["province"]
+    list_display = ["province", "city", "visited_at", "is_current_residence", "sort_order", "updated_at"]
+    list_filter = ["province", "is_current_residence"]
+    list_editable = ["is_current_residence"]
     search_fields = ["province", "city", "notes"]
 
 
@@ -207,9 +283,16 @@ class SocialFriendAdmin(SortableAdminMixin, admin.ModelAdmin):
 
 @admin.register(PhotoWallImage)
 class PhotoWallImageAdmin(SortableAdminMixin, admin.ModelAdmin):
-    list_display = ["title", "captured_at", "is_public", "sort_order", "updated_at"]
+    list_display = ["thumbnail_preview", "title", "captured_at", "is_public", "sort_order", "updated_at"]
     list_filter = ["is_public"]
     search_fields = ["title", "description", "image_url", "source_url"]
+    list_editable = ["title"]
+
+    @admin.display(description="预览")
+    def thumbnail_preview(self, obj: PhotoWallImage) -> str:
+        if obj.image_url:
+            return format_html('<img src="{}" style="max-height:60px;max-width:100px;object-fit:cover;border-radius:4px" />', obj.image_url)
+        return "-"
 
     allowed_content_types = {"image/jpeg", "image/png", "image/webp"}
     allowed_extensions = {".jpg", ".jpeg", ".png", ".webp"}
@@ -264,24 +347,6 @@ class PhotoWallImageAdmin(SortableAdminMixin, admin.ModelAdmin):
             status=200,
         )
 
-
-class HighlightItemInline(SortableInlineAdminMixin, admin.TabularInline):
-    model = HighlightItem
-    extra = 1
-    fields = ["title", "description", "achieved_at", "sort_order"]
-
-
-@admin.register(HighlightStage)
-class HighlightStageAdmin(SortableAdminMixin, admin.ModelAdmin):
-    list_display = ["title", "start_date", "end_date", "sort_order", "updated_at"]
-    inlines = [HighlightItemInline]
-
-
-@admin.register(HighlightItem)
-class HighlightItemAdmin(SortableAdminMixin, admin.ModelAdmin):
-    list_display = ["title", "stage", "achieved_at", "sort_order", "updated_at"]
-    list_filter = ["stage"]
-    search_fields = ["title", "description"]
 
 
 @admin.register(ObsidianDocument)
@@ -635,6 +700,23 @@ class SiteVisitAdmin(admin.ModelAdmin):
             "title": "站点访问分析",
         }
         return TemplateResponse(request, "admin/blog/sitevisit/analytics.html", context)
+
+
+@admin.register(GithubProject)
+class GithubProjectAdmin(SortableAdminMixin, admin.ModelAdmin):
+    list_display = ["name", "full_name", "language", "stars_count", "is_public", "sort_order", "updated_at"]
+    list_filter = ["is_public", "language"]
+    list_editable = ["is_public"]
+    search_fields = ["name", "full_name", "description"]
+    fieldsets = (
+        ("基础", {"fields": ("name", "full_name", "html_url", "language", "is_public", "sort_order", "cover")}),
+        ("描述 (英文)", {"fields": ("description", "detail_en")}),
+        ("描述 (中文)", {"fields": ("description_zh", "detail_zh")}),
+        ("数据", {"fields": ("topics", "tech_stack", "homepage_url", "stars_count", "forks_count", "open_issues_count")}),
+        ("同步", {"fields": ("synced_at",)}),
+        ("时间", {"fields": ("created_at", "updated_at")}),
+    )
+    readonly_fields = ["created_at", "updated_at"]
 
 
 admin.site.site_header = "openingClouds 管理后台"

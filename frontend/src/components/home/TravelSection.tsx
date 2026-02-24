@@ -1,15 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, ComponentType } from "react";
 import type { TravelProvince } from "../../api/home";
-import type { CurrentLocation } from "../../data/revamp/location";
 import { ScrollReveal } from "../motion/ScrollReveal";
 import { StaggerContainer, StaggerItem } from "../motion/StaggerContainer";
 import { CardSpotlight } from "../ui/CardSpotlight";
-import { SparklesText } from "../ui/SparklesText";
+import { SectionTitleCard } from "../revamp/shared/SectionTitleCard";
 
 type TravelSectionProps = {
   travel: TravelProvince[];
-  currentLocation?: CurrentLocation | null;
 };
 
 type EChartsLikeProps = {
@@ -45,6 +43,7 @@ type OrderedTravelCity = {
   longitude: number | null;
   cover: string;
   sort_order: number;
+  is_current_residence?: boolean;
 };
 
 const CHINA_GEOJSON_URL = "https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json";
@@ -106,7 +105,7 @@ function formatCityTooltip(params: unknown) {
   return `${cityLine}<br/>${visitedAt}`;
 }
 
-export function TravelSection({ travel, currentLocation }: TravelSectionProps) {
+export function TravelSection({ travel }: TravelSectionProps) {
   const [Chart, setChart] = useState<ComponentType<EChartsLikeProps> | null>(null);
   const [echartsRuntime, setEchartsRuntime] = useState<EChartsRuntime | null>(null);
   const [mapReady, setMapReady] = useState(false);
@@ -115,6 +114,17 @@ export function TravelSection({ travel, currentLocation }: TravelSectionProps) {
   const [revealedCityCount, setRevealedCityCount] = useState(0);
   const [hasPlayedOnce, setHasPlayedOnce] = useState(false);
   const hostRef = useRef<HTMLDivElement | null>(null);
+
+  const currentResidence = useMemo(() => {
+    for (const prov of travel) {
+      for (const city of prov.cities) {
+        if (city.is_current_residence && city.latitude && city.longitude) {
+          return { city: city.city, province: prov.province, latitude: city.latitude, longitude: city.longitude, status: city.notes };
+        }
+      }
+    }
+    return null;
+  }, [travel]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -280,9 +290,6 @@ export function TravelSection({ travel, currentLocation }: TravelSectionProps) {
     () => orderedCities.slice(0, effectiveRevealedCityCount),
     [orderedCities, effectiveRevealedCityCount],
   );
-  const totalProvinceCount = useMemo(() => new Set(travel.map((item) => item.province)).size, [travel]);
-  const revealedProvinceCount = useMemo(() => new Set(revealedCities.map((city) => city.province)).size, [revealedCities]);
-  const displayProvinceCount = Chart && mapReady ? revealedProvinceCount : totalProvinceCount;
 
   const option = useMemo(() => {
     const cityData = revealedCities
@@ -294,12 +301,12 @@ export function TravelSection({ travel, currentLocation }: TravelSectionProps) {
         visitedAt: city.visited_at,
       }));
 
-    const currentPoint = currentLocation
+    const currentPoint = currentResidence
       ? {
-          name: currentLocation.city,
-          value: [currentLocation.longitude, currentLocation.latitude, 1],
-          province: currentLocation.province,
-          status: currentLocation.status,
+          name: currentResidence.city,
+          value: [currentResidence.longitude, currentResidence.latitude, 1],
+          province: currentResidence.province,
+          status: currentResidence.status,
           isCurrent: true,
         }
       : null;
@@ -383,21 +390,16 @@ export function TravelSection({ travel, currentLocation }: TravelSectionProps) {
         },
       },
     };
-  }, [currentLocation, revealedCities]);
+  }, [currentResidence, revealedCities]);
 
   return (
-    <ScrollReveal className="space-y-6">
-      <div className="flex items-end justify-between">
-        <h2 className="text-2xl font-semibold text-slate-900">
-          <SparklesText className="text-inherit" sparklesCount={8} colors={{ first: "#22d3ee", second: "#22c55e" }}>
-            旅行足迹
-          </SparklesText>
-        </h2>
-        <div className="text-right">
-          <p className="text-sm text-slate-500">已点亮 {displayProvinceCount} 个省份 / 34</p>
-          {currentLocation ? <p className="text-xs text-slate-500">当前所在：{currentLocation.city}</p> : null}
-        </div>
-      </div>
+    <ScrollReveal className="space-y-4">
+      <SectionTitleCard
+        category="Travel"
+        title="旅行足迹"
+        accentColor="#0ea5e9"
+        tagline="走过的城市，都是人生坐标上的一笔。"
+      />
 
       <div ref={hostRef} className="rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-[0_12px_32px_rgba(15,23,42,0.08)] backdrop-blur">
         {Chart && mapReady ? (
@@ -420,9 +422,9 @@ export function TravelSection({ travel, currentLocation }: TravelSectionProps) {
                         {province.cities
                           .map((city) => {
                             const isCurrent =
-                              currentLocation &&
-                              city.city === currentLocation.city &&
-                              province.province === currentLocation.province;
+                              currentResidence &&
+                              city.city === currentResidence.city &&
+                              province.province === currentResidence.province;
                             return isCurrent ? `${city.city}(当前)` : city.city;
                           })
                           .join("、")}

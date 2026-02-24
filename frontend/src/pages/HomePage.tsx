@@ -19,52 +19,15 @@ import { SocialMarquee } from "../components/revamp/home/SocialMarquee";
 import { TimeAreaSection } from "../components/revamp/home/TimeAreaSection";
 import { DreamSection } from "../components/revamp/home/DreamSection";
 import { SectionCard } from "../components/revamp/shared/SectionCard";
-import { SectionQuoteHighlight, type SectionQuote } from "../components/revamp/shared/SectionQuoteHighlight";
+import { SectionTitleCard } from "../components/revamp/shared/SectionTitleCard";
+import { SectionQuoteHighlight } from "../components/revamp/shared/SectionQuoteHighlight";
+import { SectionParallaxTransition } from "../components/motion/SectionParallaxTransition";
 import { Dock, DockIcon } from "../components/ui/MagicUIDock";
 import { useAsync } from "../hooks/useAsync";
 import { fallbackHomePayload } from "../data/fallback";
-import { currentLocation } from "../data/revamp/location";
 
 const timelineFallbackForUx: TimelineNode[] = fallbackHomePayload.timeline;
 const highlightsFallbackForUx: HighlightStage[] = fallbackHomePayload.highlights;
-
-const interleavedQuotes: SectionQuote[] = [
-  {
-    id: "quote-tech-1",
-    category: "技术",
-    lead: "真正可靠的工程，不是一次写对所有逻辑，而是持续把复杂度",
-    emphasis: "沉淀成可复用的能力",
-    tail: "。",
-  },
-  {
-    id: "quote-life-1",
-    category: "生活",
-    lead: "生活质量的提升，不一定来自更多空闲，而是来自每天都能",
-    emphasis: "认真感受当下",
-    tail: "。",
-  },
-  {
-    id: "quote-organize-1",
-    category: "整理",
-    lead: "整理的核心不是堆叠工具，而是建立一套在需要时可以",
-    emphasis: "快速定位与执行",
-    tail: "的系统。",
-  },
-  {
-    id: "quote-tech-2",
-    category: "技术",
-    lead: "性能优化最有价值的部分，不是跑分本身，而是把用户等待变成",
-    emphasis: "即时反馈的体验",
-    tail: "。",
-  },
-  {
-    id: "quote-life-2",
-    category: "生活",
-    lead: "长期主义不是做很多事，而是把真正重要的事",
-    emphasis: "稳定地做很多次",
-    tail: "。",
-  },
-];
 
 const socialGraphFallbackForUx: {
   nodes: SocialGraphNode[];
@@ -226,6 +189,7 @@ export function HomePage() {
   const photoWallItems =
     Array.isArray(payload.photo_wall) && payload.photo_wall.length > 0 ? payload.photo_wall : photoWallFallbackForUx;
   const pinnedPosts: PinnedPost[] = Array.isArray(payload.pinned_posts) ? payload.pinned_posts : [];
+  const quotes = payload.section_quotes ?? {};
 
   return (
     <section className="space-y-20">
@@ -245,58 +209,75 @@ export function HomePage() {
       />
 
       {/* #2 Recommended Posts 3D Marquee (always shown) */}
-      <RecommendedPostsSection posts={pinnedPosts} />
+      <SectionParallaxTransition strength={20}>
+        <RecommendedPostsSection posts={pinnedPosts} />
+      </SectionParallaxTransition>
 
       {/* #3 Achievement Marquee - HighLight */}
-      <SocialMarquee stages={highlightStages} />
+      <SectionParallaxTransition strength={20}>
+        <SocialMarquee stages={highlightStages} />
+      </SectionParallaxTransition>
 
       {/* #3.5 Quote */}
-      <SectionQuoteHighlight quote={interleavedQuotes[0]} />
+      {quotes.after_marquee && (
+        <SectionParallaxTransition strength={12} fade={false}>
+          <SectionQuoteHighlight quote={quotes.after_marquee} />
+        </SectionParallaxTransition>
+      )}
 
       {/* #4 Featured Projects - Code */}
-      <FeaturedProjectsSection />
+      <SectionParallaxTransition strength={22}>
+        <FeaturedProjectsSection projects={payload.projects} />
+      </SectionParallaxTransition>
 
       {/* #5 Game */}
-      <SectionCard id="game" fullWidth>
-        <GameSection />
-      </SectionCard>
+      <SectionParallaxTransition strength={18} fade={false}>
+        <SectionCard id="game" fullWidth>
+          <GameSection />
+        </SectionCard>
+      </SectionParallaxTransition>
 
       {/* #5.5 Quote */}
-      <SectionQuoteHighlight quote={interleavedQuotes[1]} />
+      {quotes.after_game && (
+        <SectionParallaxTransition strength={12} fade={false}>
+          <SectionQuoteHighlight quote={quotes.after_game} />
+        </SectionParallaxTransition>
+      )}
 
       {/* #6 Life Section (consolidated) */}
-      <SectionCard id="life">
-        <div className="space-y-12">
-          {/* Time */}
-          <TimeAreaSection timeline={timelineNodes} timeSeries={payload.time_series} />
+      <SectionParallaxTransition strength={26}>
+        <SectionTitleCard category="Life" title="生活" accentColor="#a855f7" tagline="记录走过的路、遇见的人、看过的风景。" />
+        <SectionCard id="life">
+          <div className="space-y-12">
+            {/* Time (full-width chart) */}
+            <TimeAreaSection timeline={timelineNodes} timeSeries={payload.time_series} />
 
-          {/* Milestone */}
-          <TimelineSection nodes={timelineNodes} />
-
-          {/* Travel + Radar (2 columns) */}
-          <div className="grid gap-8 lg:grid-cols-2">
-            <TravelSection travel={payload.travel} currentLocation={currentLocation} />
-            <DualRadarSection />
+            {/* Timeline + right column (2 columns) */}
+            <div className="grid gap-8 lg:grid-cols-2">
+              {/* Left: Timeline (long list) */}
+              <div>
+                <TimelineSection nodes={timelineNodes} />
+              </div>
+              {/* Right: Travel + Social + Stats + Radar + Photo + Dream */}
+              <div className="space-y-8">
+                <TravelSection travel={payload.travel} />
+                <SocialGraphSection links={socialLinks} nodes={socialNodes} />
+                <StatsSection stats={payload.stats} />
+                <DualRadarSection radarData={payload.radar_charts} />
+                <PhotoWallSection photos={photoWallItems} />
+                <DreamSection />
+              </div>
+            </div>
           </div>
+        </SectionCard>
+      </SectionParallaxTransition>
 
-          {/* Social */}
-          <SocialGraphSection links={socialLinks} nodes={socialNodes} />
-
-          {/* Photo */}
-          <PhotoWallSection photos={photoWallItems} />
-        </div>
-      </SectionCard>
-
-      {/* #7 Dream */}
-      <DreamSection />
-
-      {/* #7.5 Quote */}
-      <SectionQuoteHighlight quote={interleavedQuotes[2]} />
-
-      {/* #8 Stats */}
-      <SectionCard id="stats" fullWidth>
-        <StatsSection stats={payload.stats} />
-      </SectionCard>
+      {/* Quote after life/dashboard */}
+      {quotes.after_dream && (
+        <SectionParallaxTransition strength={12} fade={false}>
+          <SectionQuoteHighlight quote={quotes.after_dream} />
+        </SectionParallaxTransition>
+      )}
 
       <Dock magnification={80} distance={150} draggable>
         <DockIcon label="置顶" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>

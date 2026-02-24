@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { OBSIDIAN_IMAGES_REPO_URL, type PhotoWallRenderItem } from "./photoWallUtils";
 
 type PhotoPreviewModalProps = {
@@ -34,7 +35,7 @@ export function PhotoPreviewModal({ open, item, onClose }: PhotoPreviewModalProp
 
   const sourceUrl = item.__normalizedSourceUrl || OBSIDIAN_IMAGES_REPO_URL;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/72 px-4 py-6 backdrop-blur-sm"
       onClick={(event) => {
@@ -88,6 +89,7 @@ export function PhotoPreviewModal({ open, item, onClose }: PhotoPreviewModalProp
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

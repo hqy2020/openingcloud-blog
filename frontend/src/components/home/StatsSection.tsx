@@ -1,56 +1,75 @@
-import { useReducedMotion } from "motion/react";
 import type { HomePayload } from "../../api/home";
 import { ScrollReveal } from "../motion/ScrollReveal";
 import { StaggerContainer, StaggerItem } from "../motion/StaggerContainer";
 import { CardSpotlight } from "../ui/CardSpotlight";
-import { NumberTicker } from "../ui/NumberTicker";
-import { SparklesText } from "../ui/SparklesText";
+import { TextGif } from "../ui/TextGif";
+import { SectionTitleCard } from "../revamp/shared/SectionTitleCard";
 
 type StatsSectionProps = {
   stats: HomePayload["stats"];
 };
 
-type StatValueKey = "published_posts_total" | "site_visits_total" | "views_total" | "likes_total" | "travel_total" | "site_days";
+type StatValueKey = "published_posts_total" | "site_visits_total" | "site_days" | "likes_total";
 
 type StatItem = {
   key: StatValueKey;
   label: string;
   note: (stats: HomePayload["stats"]) => string;
+  gifUrl: string;
 };
 
 const statItems: StatItem[] = [
-  { key: "published_posts_total", label: "已发布文章", note: (s) => `本周新增 ${s.published_posts_delta_week} 篇` },
-  { key: "site_visits_total", label: "站点访问量", note: (s) => `本周新增 ${s.site_visits_delta_week} 次` },
-  { key: "views_total", label: "文章阅读量", note: (s) => `本周新增 ${s.views_delta_week} 次` },
-  { key: "likes_total", label: "点赞数", note: (s) => `本周新增 ${s.likes_delta_week} 个` },
-  { key: "travel_total", label: "旅行城市", note: (s) => s.last_travel_date ? `上一次旅行 ${s.last_travel_date}` : "暂无旅行记录" },
-  { key: "site_days", label: "建站天数", note: (s) => `完成 ${s.total_updates} 次更新` },
+  {
+    key: "published_posts_total",
+    label: "已发布文章",
+    note: (s) => `本周新增 ${s.published_posts_delta_week} 篇`,
+    gifUrl: "https://media.giphy.com/media/3zvbrvbRe7wxBofOBI/giphy.gif",
+  },
+  {
+    key: "site_visits_total",
+    label: "站点访问量",
+    note: (s) => `本周新增 ${s.site_visits_delta_week} 次`,
+    gifUrl: "https://media.giphy.com/media/fnglNFjBGiyAFtm6ke/giphy.gif",
+  },
+  {
+    key: "site_days",
+    label: "建站天数",
+    note: (s) => `完成 ${s.total_updates} 次更新`,
+    gifUrl: "https://media.giphy.com/media/9Pmfazv34l7aNIKK05/giphy.gif",
+  },
+  {
+    key: "likes_total",
+    label: "点赞数",
+    note: (s) => `本周新增 ${s.likes_delta_week} 个`,
+    gifUrl: "https://media.giphy.com/media/4bhs1boql4XVJgmm4H/giphy.gif",
+  },
 ];
 
+const numberFormatter = new Intl.NumberFormat("zh-CN");
+
 export function StatsSection({ stats }: StatsSectionProps) {
-  const reduceMotion = Boolean(useReducedMotion());
 
   return (
-    <ScrollReveal className="space-y-6">
-      <h2 className="text-2xl font-semibold text-slate-800">
-        <SparklesText className="text-inherit" sparklesCount={8} colors={{ first: "#0ea5e9", second: "#f59e0b" }}>
-          数据面板
-        </SparklesText>
-      </h2>
-
-      <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" stagger={0.06}>
+    <ScrollReveal className="space-y-4">
+      <SectionTitleCard
+        category="Stats"
+        title="数据面板"
+        accentColor="#f97316"
+        tagline="用数字丈量这个博客的成长轨迹。"
+      />
+      <StaggerContainer className="grid h-full grid-cols-2 gap-4 lg:grid-cols-4" stagger={0.06}>
         {statItems.map((item) => {
           const note = item.note(stats);
           return (
             <StaggerItem key={item.key} className="h-full">
-              <CardSpotlight className="flex h-[188px] w-full flex-col rounded-2xl bg-white/60 p-5 backdrop-blur">
-                <p className="text-sm text-slate-400">{item.label}</p>
-                <p className="mt-2 text-3xl font-semibold leading-none text-slate-800">
-                  <NumberTicker disabled={reduceMotion} locale="zh-CN" value={stats[item.key]} />
-                </p>
-                <div className="mt-auto min-h-5 pt-4">
-                  <p className="text-xs font-medium text-slate-400">{note}</p>
+              <CardSpotlight className="flex h-full w-full flex-col items-center justify-center rounded-2xl bg-white/60 p-5 text-center backdrop-blur">
+                <p className="text-sm font-medium text-slate-400">{item.label}</p>
+                <div className="my-3">
+                  <TextGif gifUrl={item.gifUrl} size="xxl" weight="bold">
+                    {numberFormatter.format(stats[item.key])}
+                  </TextGif>
                 </div>
+                <p className="text-xs font-medium text-slate-400">{note}</p>
               </CardSpotlight>
             </StaggerItem>
           );

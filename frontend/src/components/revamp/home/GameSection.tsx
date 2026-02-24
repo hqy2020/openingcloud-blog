@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { SectionTitleCard } from "../shared/SectionTitleCard";
 
 type GameLoadStatus = "loading" | "ready" | "error" | "timeout";
 
@@ -85,7 +86,7 @@ export function GameSection() {
 
   return (
     <section className="space-y-5">
-      <h2 className="text-2xl font-semibold text-slate-800">Game</h2>
+      <SectionTitleCard category="Game" title="互动游戏" accentColor="#f97316" tagline="认真玩，也是认真生活的一部分。" />
       <div className="space-y-6">
         <GameCard game={racingGame} index={0} />
         <div className="grid gap-6 lg:grid-cols-2">

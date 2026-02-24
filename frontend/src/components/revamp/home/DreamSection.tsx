@@ -1,5 +1,5 @@
 import { AnimatedList } from "../../ui/AnimatedList";
-import { SparklesText } from "../../ui/SparklesText";
+import { SectionTitleCard } from "../shared/SectionTitleCard";
 
 type WishItem = {
   id: string;
@@ -81,16 +81,9 @@ function WishCard({ wish }: { wish: WishItem }) {
 export function DreamSection() {
   return (
     <section id="dream" className="space-y-4">
-      <div className="px-1">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Wishlist</p>
-        <h2 className="mt-1 text-2xl font-semibold text-slate-800">
-          <SparklesText className="text-inherit" sparklesCount={6} colors={{ first: "#f59e0b", second: "#6366f1" }}>
-            Dream
-          </SparklesText>
-        </h2>
-      </div>
+      <SectionTitleCard category="Dream" title="心愿清单" accentColor="#f97316" tagline="还没拥有的东西，先写下来，总有一天会实现。" />
 
-      <div className="mx-auto max-w-xl">
+      <div className="mx-auto min-w-[70%]">
         <AnimatedList delay={2400} className="space-y-3">
           {WISHES.map((wish) => (
             <WishCard key={wish.id} wish={wish} />

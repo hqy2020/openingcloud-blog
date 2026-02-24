@@ -11,12 +11,11 @@ import { MultiFollowCursor } from "../ui/MultiFollowCursor";
 import { StripeBgGuides } from "../ui/StripeBgGuides";
 
 const headerTabs = [
-  { to: "/tech", label: "Article" },
+  { to: "/#recommended", label: "Article", nativeAnchor: true },
   { to: "/#achievements", label: "HighLight", nativeAnchor: true },
   { to: "/#projects", label: "Code", nativeAnchor: true },
   { to: "/#game", label: "Game", nativeAnchor: true },
   { to: "/#life", label: "Life", nativeAnchor: true },
-  { to: "/#dream", label: "Dream", nativeAnchor: true },
 ];
 
 const navbarShadow =

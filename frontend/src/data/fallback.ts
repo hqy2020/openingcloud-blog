@@ -303,7 +303,7 @@ export const fallbackHomePayload: HomePayload = {
       count: 3,
       cities: [
         { city: "舟山", notes: "桃花岛归一到舟山", visited_at: "2021-10-01", latitude: 30.016, longitude: 122.1068, cover: "", sort_order: 4 },
-        { city: "杭州", notes: "浙大学习与实习阶段长期停留", visited_at: "2024-09-01", latitude: 30.2741, longitude: 120.1551, cover: "", sort_order: 7 },
+        { city: "杭州", notes: "浙大学习与实习阶段长期停留", visited_at: "2024-09-01", latitude: 30.2741, longitude: 120.1551, cover: "", sort_order: 7, is_current_residence: true },
         { city: "淳安", notes: "千岛湖旅行", visited_at: "2025-05-01", latitude: 29.608, longitude: 119.042, cover: "", sort_order: 8 },
       ],
     },
@@ -338,11 +338,18 @@ export const fallbackHomePayload: HomePayload = {
     links: [{ source: "stage-tongji", target: "friend-1" }],
   },
   time_series: {
-    x_axis: ["0", "5", "10", "15", "20", "25"],
+    x_axis: [
+      "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12",
+      "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26",
+    ],
     series: [
-      { name: "Study", color: "#B3D4FF", data: [10, 60, 40, 30, 20, 20] },
-      { name: "Game", color: "#80E5FF", data: [0, 0, 30, 20, 20, 10] },
-      { name: "Social", color: "#A3F0C7", data: [90, 40, 30, 50, 60, 70] },
+      { name: "社交&家庭", color: "#A3F0C7", data: [100, 97, 93, 88, 83, 78, 70, 40, 35, 30, 25, 20, 15, 25, 25, 23, 20, 15, 10, 15, 20, 22, 18, 15, 12, 10, 10] },
+      { name: "游戏", color: "#80E5FF", data: [0, 0, 0, 0, 0, 0, 0, 5, 8, 12, 15, 18, 20, 5, 5, 5, 5, 0, 0, 5, 5, 5, 3, 3, 5, 5, 3] },
+      { name: "运动", color: "#7BC9FF", data: [0, 0, 0, 0, 0, 0, 0, 5, 7, 8, 10, 12, 15, 10, 8, 7, 5, 5, 3, 5, 5, 5, 3, 3, 5, 3, 5] },
+      { name: "音乐", color: "#A7C4FF", data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 5, 5, 7, 10, 8, 8, 6, 4, 3, 2, 0] },
+      { name: "学习", color: "#B3D4FF", data: [0, 3, 7, 12, 17, 22, 30, 50, 50, 50, 50, 50, 50, 55, 57, 60, 65, 75, 80, 55, 40, 30, 20, 15, 30, 25, 22] },
+      { name: "写代码", color: "#8FD9D0", data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 22, 30, 20, 15, 25, 40, 45] },
+      { name: "工作", color: "#8BB8FF", data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 30, 45, 20, 15, 15] },
     ],
   },
   photo_wall: [
@@ -399,6 +406,35 @@ export const fallbackHomePayload: HomePayload = {
     email: "hqy200091@163.com",
     github: "https://github.com/hqy2020",
   },
+  radar_charts: [
+    {
+      id: "work-writing",
+      title: "Learn",
+      subtitle: "",
+      metrics: [
+        { label: "编码", value: 80 },
+        { label: "协作", value: 85 },
+        { label: "写作", value: 90 },
+        { label: "沟通", value: 90 },
+        { label: "速学", value: 40 },
+        { label: "规划", value: 60 },
+      ],
+    },
+    {
+      id: "interest-life",
+      title: "Habbit",
+      subtitle: "",
+      metrics: [
+        { label: "运动", value: 90 },
+        { label: "旅行", value: 60 },
+        { label: "社交", value: 70 },
+        { label: "音乐", value: 40 },
+        { label: "厨艺", value: 75 },
+        { label: "摄影", value: 65 },
+      ],
+    },
+  ],
+  section_quotes: {},
 };
 
 const now = new Date().toISOString();

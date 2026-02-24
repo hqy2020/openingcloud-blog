@@ -38,6 +38,7 @@ export type TravelCity = {
   longitude: number | null;
   cover: string;
   sort_order: number;
+  is_current_residence?: boolean;
 };
 
 export type TravelProvince = {
@@ -116,9 +117,13 @@ export type GithubProject = {
   name: string;
   full_name: string;
   description: string;
+  description_zh: string;
+  detail_en: string;
+  detail_zh: string;
   html_url: string;
   language: string;
   topics: string[];
+  tech_stack: string[];
   homepage_url: string;
   stars_count: number;
   forks_count: number;
@@ -136,6 +141,22 @@ export type HomeTimeSeriesItem = {
 export type HomeTimeSeries = {
   x_axis: string[];
   series: HomeTimeSeriesItem[];
+};
+
+export type RadarChartConfig = {
+  id: string;
+  title: string;
+  subtitle: string;
+  metrics: { label: string; value: number }[];
+};
+
+export type SectionQuoteItem = {
+  id: string;
+  slot: string;
+  category: "技术" | "生活" | "整理";
+  lead: string;
+  emphasis: string;
+  tail: string;
 };
 
 export type HomePayload = {
@@ -186,6 +207,8 @@ export type HomePayload = {
     email: string;
     github: string;
   };
+  radar_charts?: RadarChartConfig[];
+  section_quotes?: Record<string, SectionQuoteItem>;
 };
 
 export async function fetchHome() {

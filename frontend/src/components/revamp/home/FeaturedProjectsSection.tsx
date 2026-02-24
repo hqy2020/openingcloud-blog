@@ -1,9 +1,8 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { featuredProjects, featuredTechStack } from "../../../data/revamp/featuredProjects";
+import type { GithubProject } from "../../../api/home";
 import { CardSpotlight } from "../../ui/CardSpotlight";
-import { SparklesText } from "../../ui/SparklesText";
-import { CardBody, CardContainer, CardItem } from "../../ui/ThreeDCard";
+import { SectionTitleCard } from "../shared/SectionTitleCard";
 
 type PointerLine = {
   id: string;
@@ -64,7 +63,33 @@ function ArrowRightIcon() {
   );
 }
 
-export function FeaturedProjectsSection() {
+type InternalProject = {
+  id: string;
+  name: string;
+  summary: string;
+  summary_zh: string;
+  repo_path: string;
+  detail: string;
+  detail_zh: string;
+  href: string;
+  tech_stack: string[];
+};
+
+function toInternalProjects(projects: GithubProject[]): InternalProject[] {
+  return projects.map((p) => ({
+    id: `proj-${p.full_name.replace("/", "-")}`,
+    name: p.name,
+    summary: p.description,
+    summary_zh: p.description_zh,
+    repo_path: p.full_name,
+    detail: p.detail_en,
+    detail_zh: p.detail_zh,
+    href: p.html_url,
+    tech_stack: p.tech_stack,
+  }));
+}
+
+export function FeaturedProjectsSection({ projects }: { projects: GithubProject[] }) {
   const gradientScopeId = useId().replace(/:/g, "");
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const cardRefMap = useRef<Map<string, HTMLElement>>(new Map());
@@ -74,9 +99,21 @@ export function FeaturedProjectsSection() {
   const [isDesktopInteractive, setIsDesktopInteractive] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
+  const internalProjects = useMemo(() => toInternalProjects(projects), [projects]);
+
+  const featuredTechStack = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of projects) {
+      for (const t of p.tech_stack) {
+        set.add(t);
+      }
+    }
+    return Array.from(set);
+  }, [projects]);
+
   const hoveredProject = useMemo(
-    () => featuredProjects.find((project) => project.id === hoveredProjectId) ?? null,
-    [hoveredProjectId],
+    () => internalProjects.find((project) => project.id === hoveredProjectId) ?? null,
+    [hoveredProjectId, internalProjects],
   );
   const activeTechStack = hoveredProject?.tech_stack ?? [];
 
@@ -85,7 +122,7 @@ export function FeaturedProjectsSection() {
     for (const tech of featuredTechStack) {
       techCountMap.set(tech, 0);
     }
-    for (const project of featuredProjects) {
+    for (const project of internalProjects) {
       for (const tech of project.tech_stack) {
         techCountMap.set(tech, (techCountMap.get(tech) ?? 0) + 1);
       }
@@ -98,7 +135,7 @@ export function FeaturedProjectsSection() {
         percent: Math.round((count / maxCount) * 100),
       };
     });
-  }, []);
+  }, [featuredTechStack, internalProjects]);
 
   useEffect(() => {
     const hoverMedia = window.matchMedia("(hover: hover) and (pointer: fine)");
@@ -155,20 +192,17 @@ export function FeaturedProjectsSection() {
 
   const shouldRenderBeam = isDesktopInteractive && pointerLines.length > 0;
 
+  if (internalProjects.length === 0) {
+    return null;
+  }
+
   return (
     <section id="projects" className="space-y-6">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Code</p>
-        <h2 className="mt-1 text-2xl font-semibold text-slate-800">
-          <SparklesText className="text-inherit" sparklesCount={9}>
-            Code
-          </SparklesText>
-        </h2>
-      </div>
+      <SectionTitleCard category="Code" title="开源项目" accentColor="#f97316" tagline="写代码是一种表达，开源是把想法交给世界。" />
 
       <div ref={sectionRef} className="relative space-y-8">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {featuredProjects.map((project) => {
+          {internalProjects.map((project) => {
             const active = hoveredProjectId === project.id;
             return (
               <motion.article
@@ -223,66 +257,48 @@ export function FeaturedProjectsSection() {
                   }
                   setHoveredProjectId((prev) => (prev === project.id ? "" : prev));
                 }}
-                className="group relative z-20 cursor-pointer rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
+                className="group relative z-20 h-full cursor-pointer rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
               >
-                <CardContainer containerClassName="w-full">
-                  <CardBody className="w-full">
-                    <CardSpotlight
-                      glowColor={active ? "79,106,229" : "148,163,184"}
-                      className={`h-full rounded-2xl border p-4 backdrop-blur transition duration-300 ${
-                        active
-                          ? "border-indigo-300/70 bg-white/90 shadow-[0_20px_34px_rgba(79,106,229,0.2)]"
-                          : "border-slate-200/75 bg-white/80 shadow-[0_10px_22px_rgba(15,23,42,0.1)]"
-                      }`}
-                    >
+                <CardSpotlight
+                  glowColor={active ? "255,255,255" : "148,163,184"}
+                  className={`h-full rounded-2xl border p-4 backdrop-blur transition duration-300 ${
+                    active
+                      ? "border-blue-400 bg-blue-600 shadow-[0_20px_34px_rgba(37,99,235,0.4)]"
+                      : "border-slate-200/75 bg-white/80 shadow-[0_10px_22px_rgba(15,23,42,0.1)] group-hover:border-blue-400 group-hover:bg-blue-600 group-hover:shadow-[0_20px_34px_rgba(37,99,235,0.4)]"
+                  }`}
+                >
+                  <div className="relative z-20 flex h-full flex-col">
+                    <h3 className={`mt-1 text-lg font-semibold ${active ? "text-white" : "text-slate-800 group-hover:text-white"}`}>
+                      {project.name}
+                    </h3>
+                    <p className={`mt-3 text-sm leading-6 ${active ? "text-slate-100/95" : "text-slate-600 group-hover:text-slate-100/95"}`}>
+                      {active ? project.summary_zh : project.summary}
+                    </p>
+                    <div className="mt-3">
+                      <p className={`text-[11px] uppercase tracking-[0.14em] ${active ? "text-blue-100/95" : "text-slate-500 group-hover:text-blue-100/95"}`}>
+                        Repository
+                      </p>
+                      <p className={`mt-1 font-mono text-xs ${active ? "text-blue-50/95" : "text-slate-600 group-hover:text-blue-50/95"}`}>
+                        {project.repo_path}
+                      </p>
+                      <p className={`mt-1 text-xs leading-5 ${active ? "text-slate-200/95" : "text-slate-500 group-hover:text-slate-200/95"}`}>
+                        {active ? project.detail_zh : project.detail}
+                      </p>
+                    </div>
+                    <div className="mt-auto pt-4">
                       <div
-                        className={`pointer-events-none absolute inset-0 z-[1] rounded-2xl transition-opacity duration-300 ${
-                          active ? "bg-slate-900/84 opacity-100" : "bg-slate-900/84 opacity-0 group-hover:opacity-100"
+                        className={`inline-flex items-center gap-2 text-sm font-semibold transition-all duration-300 ${
+                          active
+                            ? "translate-x-0 text-white"
+                            : "translate-x-0 text-slate-500 group-hover:translate-x-1 group-hover:text-white"
                         }`}
-                      />
-                      <div
-                        className={`pointer-events-none absolute left-5 top-5 z-[2] h-2.5 w-2.5 rounded-full bg-indigo-500 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                          active ? "scale-[120]" : "scale-100 group-hover:scale-[120]"
-                        }`}
-                      />
-                      <div className="relative z-20 w-full">
-                        <CardItem translateZ={24} className="w-full">
-                          <h3 className={`mt-1 text-lg font-semibold ${active ? "text-white" : "text-slate-800 group-hover:text-white"}`}>
-                            {project.name}
-                          </h3>
-                        </CardItem>
-                        <CardItem translateZ={14} className="mt-3 w-full">
-                          <p className={`text-sm leading-6 ${active ? "text-slate-100/95" : "text-slate-600 group-hover:text-slate-100/95"}`}>
-                            {active ? project.summary_zh : project.summary}
-                          </p>
-                        </CardItem>
-                        <CardItem translateZ={16} className="mt-3 w-full">
-                          <p className={`text-[11px] uppercase tracking-[0.14em] ${active ? "text-indigo-100/95" : "text-slate-500 group-hover:text-indigo-100/95"}`}>
-                            Repository
-                          </p>
-                          <p className={`mt-1 font-mono text-xs ${active ? "text-indigo-50/95" : "text-slate-600 group-hover:text-indigo-50/95"}`}>
-                            {project.repo_path}
-                          </p>
-                          <p className={`mt-1 text-xs leading-5 ${active ? "text-slate-200/95" : "text-slate-500 group-hover:text-slate-200/95"}`}>
-                            {active ? project.detail_zh : project.detail}
-                          </p>
-                        </CardItem>
-                        <CardItem translateZ={20} className="mt-4 w-full">
-                          <div
-                            className={`inline-flex items-center gap-2 text-sm font-semibold transition-all duration-300 ${
-                              active
-                                ? "translate-x-0 text-white"
-                                : "translate-x-0 text-slate-500 group-hover:translate-x-1 group-hover:text-white"
-                            }`}
-                          >
-                            Open on GitHub
-                            <ArrowRightIcon />
-                          </div>
-                        </CardItem>
+                      >
+                        Open on GitHub
+                        <ArrowRightIcon />
                       </div>
-                    </CardSpotlight>
-                  </CardBody>
-                </CardContainer>
+                    </div>
+                  </div>
+                </CardSpotlight>
               </motion.article>
             );
           })}
@@ -312,8 +328,8 @@ export function FeaturedProjectsSection() {
                         x2={line.endX}
                         y2={line.endY}
                       >
-                        <stop stopColor="#4f6ae5" stopOpacity="0" />
-                        <stop offset="0.45" stopColor="#4f6ae5" />
+                        <stop stopColor="#3b82f6" stopOpacity="0" />
+                        <stop offset="0.45" stopColor="#3b82f6" />
                         <stop offset="1" stopColor="#38bdf8" />
                       </linearGradient>
                     );
@@ -331,8 +347,8 @@ export function FeaturedProjectsSection() {
                       animate={{ x1: [line.startX, line.endX], x2: [line.startX + 40, line.endX + 40] }}
                       transition={{ duration: 2.6, repeat: Number.POSITIVE_INFINITY, ease: [0.16, 1, 0.3, 1] }}
                     >
-                      <stop stopColor="#4f6ae5" stopOpacity="0" />
-                      <stop offset="0.35" stopColor="#4f6ae5" />
+                      <stop stopColor="#3b82f6" stopOpacity="0" />
+                      <stop offset="0.35" stopColor="#3b82f6" />
                       <stop offset="0.72" stopColor="#38bdf8" />
                       <stop offset="1" stopColor="#38bdf8" stopOpacity="0" />
                     </motion.linearGradient>
@@ -349,7 +365,7 @@ export function FeaturedProjectsSection() {
                   <g key={line.id}>
                     <motion.path
                       d={line.d}
-                      stroke="rgba(79,106,229,0.24)"
+                      stroke="rgba(59,130,246,0.24)"
                       strokeWidth={2.2}
                       fill="none"
                       strokeLinecap="round"
@@ -393,14 +409,14 @@ export function FeaturedProjectsSection() {
                   }}
                   className={`rounded-2xl border p-4 transition ${
                     active
-                      ? "border-indigo-300/90 bg-indigo-50/80 shadow-[0_0_0_1px_rgba(79,106,229,0.26),0_10px_24px_rgba(79,106,229,0.16)]"
+                      ? "border-blue-300/90 bg-blue-50/80 shadow-[0_0_0_1px_rgba(59,130,246,0.26),0_10px_24px_rgba(59,130,246,0.16)]"
                       : "border-slate-200/90 bg-white/88 shadow-[0_8px_20px_rgba(15,23,42,0.08)]"
                   }`}
                 >
-                  <p className={`text-sm font-semibold ${active ? "text-indigo-700" : "text-slate-700"}`}>{tech.name}</p>
+                  <p className={`text-sm font-semibold ${active ? "text-blue-700" : "text-slate-700"}`}>{tech.name}</p>
                   <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-200/75">
                     <motion.div
-                      className={`h-full rounded-full ${active ? "bg-gradient-to-r from-indigo-500 to-sky-400" : "bg-slate-400/75"}`}
+                      className={`h-full rounded-full ${active ? "bg-gradient-to-r from-blue-500 to-sky-400" : "bg-slate-400/75"}`}
                       initial={false}
                       animate={{ width: `${tech.percent}%` }}
                       transition={{ duration: prefersReducedMotion ? 0 : 0.32, ease: "easeOut" }}

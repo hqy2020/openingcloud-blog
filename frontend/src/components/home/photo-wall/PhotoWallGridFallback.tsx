@@ -38,8 +38,8 @@ export function PhotoWallGridFallback({ photos, onPreview }: PhotoWallGridFallba
   }
 
   return (
-    <div className="max-h-[560px] overflow-y-auto pr-1 sm:max-h-[620px]">
-      <div className="relative grid auto-rows-[120px] grid-cols-2 gap-4 pb-3 sm:auto-rows-[130px] sm:grid-cols-3 lg:auto-rows-[140px] lg:grid-cols-4">
+    <div className="max-h-[380px] overflow-y-auto pr-1 sm:max-h-[420px]">
+      <div className="relative grid auto-rows-[100px] grid-cols-2 gap-3 pb-3 sm:auto-rows-[110px] sm:grid-cols-3 lg:auto-rows-[120px] lg:grid-cols-4">
         {photos.map((photo, index) => {
           const broken = brokenSet.has(photo.__instanceId);
           const leaf = LEAF_LAYOUT_PRESETS[index % LEAF_LAYOUT_PRESETS.length];

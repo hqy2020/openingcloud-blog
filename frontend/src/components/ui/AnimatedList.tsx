@@ -16,7 +16,14 @@ export function AnimatedList({ children, delay = 2000, className }: AnimatedList
       return;
     }
     const timer = setInterval(() => {
-      setIndex((prev) => (prev + 1) % childrenArray.length);
+      setIndex((prev) => {
+        const next = prev + 1;
+        if (next >= childrenArray.length) {
+          clearInterval(timer);
+          return prev;
+        }
+        return next;
+      });
     }, delay);
     return () => clearInterval(timer);
   }, [childrenArray.length, delay]);

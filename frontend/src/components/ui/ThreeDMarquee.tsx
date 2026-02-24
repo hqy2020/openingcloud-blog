@@ -42,31 +42,37 @@ export function ThreeDMarquee<T>({
         }}
         className="grid grid-cols-4 gap-8"
       >
-        {chunks.map((subarray, colIndex) => (
-          <motion.div
-            animate={{ y: colIndex % 2 === 0 ? 100 : -100 }}
-            transition={{
-              duration: colIndex % 2 === 0 ? 10 : 15,
-              repeat: Infinity,
-              repeatType: "reverse",
-            }}
-            key={colIndex + "marquee"}
-            className="flex flex-col items-stretch gap-8"
-          >
-            <GridLineVertical className="-left-4" offset="80px" />
-            {subarray.map((item, itemIndex) => (
-              <div className="relative" key={`${colIndex}-${itemIndex}`}>
-                <GridLineHorizontal className="-top-4" offset="20px" />
-                <motion.div
-                  whileHover={{ y: -10 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                >
-                  {renderItem(item, colIndex * chunkSize + itemIndex)}
-                </motion.div>
-              </div>
-            ))}
-          </motion.div>
-        ))}
+        {chunks.map((subarray, colIndex) => {
+          const doubled = [...subarray, ...subarray];
+          const goingUp = colIndex % 2 === 0;
+          const duration = colIndex % 2 === 0 ? 30 : 40;
+          return (
+            <motion.div
+              animate={{ y: goingUp ? ["0%", "-50%"] : ["-50%", "0%"] }}
+              transition={{
+                duration,
+                repeat: Infinity,
+                repeatType: "loop",
+                ease: "linear",
+              }}
+              key={colIndex + "marquee"}
+              className="flex flex-col items-stretch gap-8"
+            >
+              <GridLineVertical className="-left-4" offset="80px" />
+              {doubled.map((item, itemIndex) => (
+                <div className="relative" key={`${colIndex}-${itemIndex}`}>
+                  <GridLineHorizontal className="-top-4" offset="20px" />
+                  <motion.div
+                    whileHover={{ y: -10 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                  >
+                    {renderItem(item, colIndex * chunkSize + (itemIndex % subarray.length))}
+                  </motion.div>
+                </div>
+              ))}
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );
