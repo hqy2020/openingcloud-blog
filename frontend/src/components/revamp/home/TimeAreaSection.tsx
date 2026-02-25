@@ -449,7 +449,7 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
             })}
           </div>
         )}
-        <div className="grid grid-cols-3 gap-x-4 gap-y-2 px-4 pb-4 sm:grid-cols-4">
+        <div className="grid gap-x-4 gap-y-2 px-4 pb-4" style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}>
           {chartData.series.map((item) => (
             <div key={item.key} className="flex items-center gap-1.5">
               <span className="h-2 w-2 shrink-0 rounded-sm" style={{ background: item.color }} />
