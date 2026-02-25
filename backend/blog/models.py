@@ -670,6 +670,11 @@ class WishItem(TimeStampedModel):
     emoji = models.CharField(max_length=10)
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True)
+    price = models.DecimalField(
+        max_digits=10, decimal_places=2,
+        null=True, blank=True,
+        verbose_name="价格(¥)"
+    )
     priority = models.CharField(max_length=10, choices=Priority.choices, default=Priority.MEDIUM)
     sort_order = models.PositiveIntegerField(default=0, db_index=True)
     is_active = models.BooleanField(default=True)

@@ -74,6 +74,7 @@ from .serializers import (
     TravelPlaceAdminSerializer,
     TravelProvinceSerializer,
     WishItemSerializer,
+    WishItemAdminSerializer,
 )
 from sync.service import reconcile_obsidian_publications, sync_post_payload
 
@@ -1548,3 +1549,14 @@ class HomeView(APIView):
     def get(self, request):
         payload = HomeAggregateSerializer(_home_payload(show_real_name=_is_staff_viewer(request))).data
         return api_ok_private(payload)
+
+
+class AdminWishItemListCreateView(AdminListCreateView):
+    serializer_class = WishItemAdminSerializer
+    queryset = WishItem.objects.all()
+
+
+class AdminWishItemDetailView(AdminDetailView):
+    serializer_class = WishItemAdminSerializer
+    queryset = WishItem.objects.all()
+    pk_url_kwarg = "wish_id"

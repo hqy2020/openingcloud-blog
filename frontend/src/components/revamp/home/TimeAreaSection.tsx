@@ -328,23 +328,12 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
       animationDuration: 700,
       animationDurationUpdate: 560,
       tooltip: { show: false },
-      legend: {
-        show: true,
-        bottom: 0,
-        itemWidth: 12,
-        itemHeight: 12,
-        itemGap: 16,
-        textStyle: { color: "#555", fontSize: 12 },
-        data: chartData.series.map((item) => ({
-          name: item.label,
-          itemStyle: { color: item.color },
-        })),
-      },
+      legend: { show: false },
       grid: {
         left: 12,
         right: 12,
         top: 10,
-        bottom: 40,
+        bottom: 16,
         containLabel: true,
       },
       xAxis: {
@@ -409,7 +398,7 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
           emphasis: {
             focus: "series",
             lineStyle: {
-              width: 5,
+              width: 6,
               color: "rgba(255,255,255,0.98)",
               cap: "round",
               join: "round",
@@ -432,7 +421,7 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
     <section id="time" className="space-y-4">
       <h2 className="text-2xl font-semibold text-slate-800">时间都去哪了?</h2>
 
-      <div className="overflow-hidden rounded-[1.8rem] border border-white/70 bg-[#e8edf2] shadow-[0_14px_28px_rgba(15,23,42,0.12)]">
+      <div className="group overflow-hidden rounded-[1.8rem] border border-white/70 bg-[#e8edf2] shadow-[0_14px_28px_rgba(15,23,42,0.12)] transition-shadow duration-300 hover:shadow-[0_20px_40px_rgba(15,23,42,0.18)]">
         {Chart && !chartUnavailable ? (
           <Chart
             echarts={echartsRuntime ?? undefined}
@@ -460,6 +449,14 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
             })}
           </div>
         )}
+        <div className="grid grid-cols-3 gap-x-4 gap-y-2 px-4 pb-4 sm:grid-cols-4">
+          {chartData.series.map((item) => (
+            <div key={item.key} className="flex items-center gap-1.5">
+              <span className="h-2 w-2 shrink-0 rounded-sm" style={{ background: item.color }} />
+              <span className="truncate text-xs text-slate-600">{item.label}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

@@ -617,7 +617,14 @@ class HomeAggregateSerializer(serializers.Serializer):
 class WishItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = WishItem
-        fields = ["id", "emoji", "title", "description", "priority", "sort_order"]
+        fields = ["id", "emoji", "title", "description", "price", "priority", "sort_order"]
+
+
+class WishItemAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WishItem
+        fields = ["id", "emoji", "title", "description", "price", "priority", "sort_order", "is_active", "created_at", "updated_at"]
+        read_only_fields = ["id", "created_at", "updated_at"]
 
 
 class AdminImageUploadSerializer(serializers.Serializer):
