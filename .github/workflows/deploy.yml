@@ -186,6 +186,8 @@ jobs:
             ssh "${SSH_OPTS[@]}" "${ECS_USER}@${ECS_HOST}" "BACKEND_IMAGE='${BACKEND_IMAGE}' bash -se" << 'DEPLOY'
               set -euo pipefail
               cd /opt/openingclouds-blog
+              COMPOSE_ARGS=(-f docker-compose.yml -f docker-compose.https.yml)
+              export NGINX_CONF_FILE=./nginx/nginx.https.conf
               if [ -f data/blog.sqlite3 ]; then
                 mkdir -p data/backups
                 TS="$(date +%Y%m%d_%H%M%S)"
@@ -195,10 +197,14 @@ jobs:
                   cp data/blog.sqlite3 "data/backups/blog.deploy_${TS}.sqlite3"
                 fi
               fi
-              docker compose pull backend || true
-              docker compose up -d --remove-orphans
-              docker compose ps --status running --services | grep -qx backend
+              docker compose "${COMPOSE_ARGS[@]}" pull backend || true
+              docker compose "${COMPOSE_ARGS[@]}" up -d --remove-orphans
+              docker compose "${COMPOSE_ARGS[@]}" ps --status running --services | grep -qx backend
+              docker compose "${COMPOSE_ARGS[@]}" ps --status running --services | grep -qx nginx
+              docker compose "${COMPOSE_ARGS[@]}" ps --status running --services | grep -qx certbot
+              ss -ltn | grep -q ':443 '
           DEPLOY
           }
 
           retry 3 run_remote_deploy
+          retry 8 curl --fail --silent --show-error --max-time 20 https://blog.oc.slgneon.cn/api/health >/dev/null
