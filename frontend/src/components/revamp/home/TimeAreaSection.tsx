@@ -606,8 +606,116 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
   }, [chartData.series]);
 
   const hasActiveSeries = activeSeriesKey !== null;
+  const activeOverlay = useMemo(() => {
+    if (!activeSeriesKey) {
+      return null;
+    }
+
+    const activeIndex = chartData.series.findIndex((item) => item.key === activeSeriesKey);
+    if (activeIndex < 0) {
+      return null;
+    }
+
+    const activeItem = chartData.series[activeIndex];
+    const upper = chartData.ages.map((_, dataIndex) => {
+      const stackedBefore = chartData.series
+        .slice(0, activeIndex)
+        .reduce((sum, series) => sum + (series.data[dataIndex] ?? 0), 0);
+      return clamp(100 - stackedBefore, 0, 100);
+    });
+    const lower = chartData.ages.map((_, dataIndex) => {
+      const stackedThroughActive = chartData.series
+        .slice(0, activeIndex + 1)
+        .reduce((sum, series) => sum + (series.data[dataIndex] ?? 0), 0);
+      return clamp(100 - stackedThroughActive, 0, 100);
+    });
+
+    return {
+      item: activeItem,
+      upper,
+      lower,
+    };
+  }, [activeSeriesKey, chartData]);
 
   const option = useMemo(() => {
+    const baseSeries = chartData.series.map((item, index) => {
+      const isActive = activeSeriesKey === item.key;
+      const lineColor = hasActiveSeries ? "rgba(255,255,255,0.48)" : "rgba(255,255,255,0.84)";
+      const areaOpacity = isActive ? 1 : hasActiveSeries ? 0.3 : 0.88;
+
+      return {
+        name: item.label,
+        type: "line",
+        z: isActive ? 36 : 20 - index,
+        stack: "Total",
+        smooth: 0.58,
+        smoothMonotone: "x",
+        showSymbol: false,
+        symbol: "none",
+        lineStyle: {
+          width: hasActiveSeries ? 2.5 : 4,
+          color: lineColor,
+          cap: "round",
+          join: "round",
+        },
+        areaStyle: {
+          opacity: areaOpacity,
+          color: item.color,
+        },
+        emphasis: {
+          disabled: true,
+        },
+        data: item.data,
+      };
+    });
+
+    const highlightSeries = activeOverlay
+      ? [
+          {
+            name: `${activeOverlay.item.label}-upper`,
+            type: "line",
+            z: 58,
+            showSymbol: false,
+            symbol: "none",
+            smooth: 0.58,
+            smoothMonotone: "x",
+            silent: true,
+            tooltip: { show: false },
+            lineStyle: {
+              width: 6,
+              color: "rgba(255,255,255,0.98)",
+              cap: "round",
+              join: "round",
+              shadowBlur: 12,
+              shadowColor: "rgba(148,163,184,0.22)",
+            },
+            areaStyle: { opacity: 0 },
+            data: activeOverlay.upper,
+          },
+          {
+            name: `${activeOverlay.item.label}-lower`,
+            type: "line",
+            z: 58,
+            showSymbol: false,
+            symbol: "none",
+            smooth: 0.58,
+            smoothMonotone: "x",
+            silent: true,
+            tooltip: { show: false },
+            lineStyle: {
+              width: 6,
+              color: "rgba(255,255,255,0.98)",
+              cap: "round",
+              join: "round",
+              shadowBlur: 12,
+              shadowColor: "rgba(148,163,184,0.22)",
+            },
+            areaStyle: { opacity: 0 },
+            data: activeOverlay.lower,
+          },
+        ]
+      : [];
+
     return {
       animation: !reduceMotion,
       animationDuration: 950,
@@ -714,44 +822,9 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
           lineStyle: { color: "rgba(71,85,105,0.82)", width: 2 },
         },
       },
-      series: chartData.series.map((item, index) => {
-        const isActive = activeSeriesKey === item.key;
-        const lineColor = isActive
-          ? "rgba(255,255,255,0.98)"
-          : hasActiveSeries
-            ? "rgba(255,255,255,0.42)"
-            : "rgba(255,255,255,0.84)";
-        const areaOpacity = isActive ? 0.98 : hasActiveSeries ? 0.58 : 0.88;
-
-        return {
-          name: item.label,
-          type: "line",
-          z: isActive ? 40 : 20 - index,
-          stack: "Total",
-          smooth: 0.58,
-          smoothMonotone: "x",
-          showSymbol: false,
-          symbol: "none",
-          lineStyle: {
-            width: isActive ? 8 : 4,
-            color: lineColor,
-            cap: "round",
-            join: "round",
-            shadowBlur: isActive ? 14 : 0,
-            shadowColor: "rgba(15,23,42,0.16)",
-          },
-          areaStyle: {
-            opacity: areaOpacity,
-            color: item.color,
-          },
-          emphasis: {
-            disabled: true,
-          },
-          data: item.data,
-        };
-      }),
+      series: [...baseSeries, ...highlightSeries],
     };
-  }, [activeSeriesKey, chartData, chartGrid, chartHeight, hasActiveSeries, reduceMotion]);
+  }, [activeOverlay, activeSeriesKey, chartData, chartGrid, chartHeight, hasActiveSeries, reduceMotion]);
 
   const cardBody = (
     <>

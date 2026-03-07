@@ -30,7 +30,7 @@ export function HomeHero({ hero }: HomeHeroProps) {
           <motion.div
             initial={{ opacity: 0, y: 16, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.42, ease: "easeOut" }}
+            transition={{ duration: 0.63, ease: "easeOut" }}
             className="w-full"
           >
             <OrbitingProfileCard
