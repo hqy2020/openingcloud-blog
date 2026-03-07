@@ -53,6 +53,11 @@ type LabelPlacement = {
   fontClass: string;
 };
 
+type ActiveBoundary = {
+  key: string;
+  data: number[];
+};
+
 const FALLBACK_COLORS = [
   "#FFAAB5",
   "#FFD6A5",
@@ -442,20 +447,20 @@ function buildLabelPlacements(dataset: ChartDataset, compact: boolean): LabelPla
         .reduce((sum, series) => sum + (series.data[bestIndex] ?? 0), 0);
       const profile = getDisplaySeriesProfileByKey(item.key);
       const left = dataset.ages.length === 1 ? 50 : (bestIndex / (dataset.ages.length - 1)) * 100;
-      const top = stackedBefore + value / 2;
+      const top = 100 - (stackedBefore + value / 2);
       const align = left < 20 ? "left" : left > 82 ? "right" : "center";
       const fontClass =
         compact
           ? value >= 26
-            ? "text-[0.72rem] sm:text-[0.8rem]"
+            ? "text-[0.68rem] sm:text-[0.76rem]"
             : value >= 18
-              ? "text-[0.66rem] sm:text-[0.74rem]"
-              : "text-[0.6rem] sm:text-[0.68rem]"
+              ? "text-[0.62rem] sm:text-[0.7rem]"
+              : "text-[0.56rem] sm:text-[0.64rem]"
           : value >= 26
-            ? "text-lg md:text-[2.2rem]"
+            ? "text-base md:text-[1.9rem]"
             : value >= 18
-              ? "text-base md:text-[1.8rem]"
-              : "text-sm md:text-[1.35rem]";
+              ? "text-sm md:text-[1.55rem]"
+              : "text-xs md:text-[1.2rem]";
 
       return {
         key: item.key,
@@ -617,23 +622,27 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
     }
 
     const activeItem = chartData.series[activeIndex];
-    const upper = chartData.ages.map((_, dataIndex) => {
+    const lower = chartData.ages.map((_, dataIndex) => {
       const stackedBefore = chartData.series
         .slice(0, activeIndex)
         .reduce((sum, series) => sum + (series.data[dataIndex] ?? 0), 0);
-      return clamp(100 - stackedBefore, 0, 100);
+      return clamp(stackedBefore, 0, 100);
     });
-    const lower = chartData.ages.map((_, dataIndex) => {
+    const upper = chartData.ages.map((_, dataIndex) => {
       const stackedThroughActive = chartData.series
         .slice(0, activeIndex + 1)
         .reduce((sum, series) => sum + (series.data[dataIndex] ?? 0), 0);
-      return clamp(100 - stackedThroughActive, 0, 100);
+      return clamp(stackedThroughActive, 0, 100);
     });
+
+    const boundaries: ActiveBoundary[] = [
+      { key: "lower", data: lower },
+      { key: "upper", data: upper },
+    ].filter((boundary) => boundary.data.some((value) => value > 0.1 && value < 99.9));
 
     return {
       item: activeItem,
-      upper,
-      lower,
+      boundaries,
     };
   }, [activeSeriesKey, chartData]);
 
@@ -670,50 +679,27 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
     });
 
     const highlightSeries = activeOverlay
-      ? [
-          {
-            name: `${activeOverlay.item.label}-upper`,
-            type: "line",
-            z: 58,
-            showSymbol: false,
-            symbol: "none",
-            smooth: 0.58,
-            smoothMonotone: "x",
-            silent: true,
-            tooltip: { show: false },
-            lineStyle: {
-              width: 6,
-              color: "rgba(255,255,255,0.98)",
-              cap: "round",
-              join: "round",
-              shadowBlur: 12,
-              shadowColor: "rgba(148,163,184,0.22)",
-            },
-            areaStyle: { opacity: 0 },
-            data: activeOverlay.upper,
+      ? activeOverlay.boundaries.map((boundary) => ({
+          name: `${activeOverlay.item.label}-${boundary.key}`,
+          type: "line",
+          z: 58,
+          showSymbol: false,
+          symbol: "none",
+          smooth: 0.58,
+          smoothMonotone: "x",
+          silent: true,
+          tooltip: { show: false },
+          lineStyle: {
+            width: 4.5,
+            color: "rgba(255,255,255,0.98)",
+            cap: "round",
+            join: "round",
+            shadowBlur: 10,
+            shadowColor: "rgba(148,163,184,0.18)",
           },
-          {
-            name: `${activeOverlay.item.label}-lower`,
-            type: "line",
-            z: 58,
-            showSymbol: false,
-            symbol: "none",
-            smooth: 0.58,
-            smoothMonotone: "x",
-            silent: true,
-            tooltip: { show: false },
-            lineStyle: {
-              width: 6,
-              color: "rgba(255,255,255,0.98)",
-              cap: "round",
-              join: "round",
-              shadowBlur: 12,
-              shadowColor: "rgba(148,163,184,0.22)",
-            },
-            areaStyle: { opacity: 0 },
-            data: activeOverlay.lower,
-          },
-        ]
+          areaStyle: { opacity: 0 },
+          data: boundary.data,
+        }))
       : [];
 
     return {
@@ -886,7 +872,7 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
                   );
                 })}
 
-                <div className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 rounded-full border border-white/80 bg-white/74 px-4 py-1 text-xs font-semibold uppercase tracking-[0.32em] text-slate-500 shadow-[0_10px_24px_rgba(148,163,184,0.18)] md:text-sm">
+                <div className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-[140%] text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500 md:text-xs">
                   Age
                 </div>
               </div>
