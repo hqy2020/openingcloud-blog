@@ -2,7 +2,7 @@
 
 > 一个全栈个人博客系统，融合 Obsidian 笔记同步、交互式首页、桌面宠物等特色功能。
 
-**在线地址**: [blog.oc.slgneon.cn](https://blog.oc.slgneon.cn)
+**在线地址**: [blog.openingclouds.xyz](https://blog.openingclouds.xyz)
 
 ---
 
@@ -202,6 +202,8 @@ GitHub Actions 工作流 (`.github/workflows/deploy.yml`) 包含 4 个阶段：
 | 脚本 | 用途 |
 |------|------|
 | `check_health.sh` | API 健康检查 |
+| `check_domain_health.sh` | 域名解析 + HTTPS 可达性联合检查（可区分 DNS/服务故障） |
+| `install_domain_health_cron.sh` | 安装每 3 小时一次的域名探测 cron |
 | `backup_sqlite.sh` | SQLite 数据库备份（带时间戳） |
 | `restore_sqlite.sh` | 从备份恢复数据库 |
 | `monitor_memory.sh` | Docker 容器资源监控（CPU/内存） |
@@ -209,6 +211,21 @@ GitHub Actions 工作流 (`.github/workflows/deploy.yml`) 包含 4 个阶段：
 | `start_https_stack.sh` | 启动 HTTPS 完整服务栈 |
 | `obsidian_sync_remote.sh` | 客户端远程同步脚本（macOS） |
 | `obsidian_sync_server.sh` | 服务器端 Obsidian 同步（适配 cron） |
+
+### 域名健康检查定时任务
+
+```bash
+./scripts/check_domain_health.sh
+./scripts/install_domain_health_cron.sh
+```
+
+默认每 3 小时检查一次 `blog.openingclouds.xyz` 是否：
+
+- 在公共 DNS 中解析到 `47.99.42.71`
+- 能通过公网 HTTPS 正常访问
+- 在必要时通过 `--resolve` 进一步判断是 DNS 问题还是服务本身的问题
+
+日志默认写入 `./logs/domain_health.log`。
 
 ## Changelog
 

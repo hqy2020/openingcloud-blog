@@ -15,7 +15,7 @@ if [[ -f "$ENV_FILE" ]]; then
   source "$ENV_FILE"
 fi
 
-BASE_URL="${OBSIDIAN_SYNC_BASE_URL:-https://blog.oc.slgneon.cn/api}"
+BASE_URL="${OBSIDIAN_SYNC_BASE_URL:-https://blog.openingclouds.xyz/api}"
 
 if [[ -n "${!TOKEN_ENV:-}" ]]; then
   export "${TOKEN_ENV}=${!TOKEN_ENV}"

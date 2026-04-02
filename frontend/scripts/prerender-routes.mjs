@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const distDir = path.resolve(__dirname, "..", "dist");
+const siteOrigin = "https://blog.openingclouds.xyz";
 
 const routes = [
   {
@@ -12,28 +13,28 @@ const routes = [
     title: "Keyon Blog ｜ 云际漫游者",
     description: "在云层之上，记录技术、效率与生活。",
     marker: "Keyon Blog ｜ 云际漫游者",
-    canonical: "https://blog.oc.slgneon.cn/",
+    canonical: `${siteOrigin}/`,
   },
   {
     route: "/tech",
     title: "技术 | Keyon Blog ｜ 云际漫游者",
     description: "技术实践、系统设计与工程复盘。",
     marker: "技术",
-    canonical: "https://blog.oc.slgneon.cn/tech",
+    canonical: `${siteOrigin}/tech`,
   },
   {
     route: "/learning",
     title: "效率 | Keyon Blog ｜ 云际漫游者",
     description: "效率系统、学习方法和个人生产力。",
     marker: "效率",
-    canonical: "https://blog.oc.slgneon.cn/learning",
+    canonical: `${siteOrigin}/learning`,
   },
   {
     route: "/life",
     title: "生活 | Keyon Blog ｜ 云际漫游者",
     description: "旅行、日常观察与生活记录。",
     marker: "生活",
-    canonical: "https://blog.oc.slgneon.cn/life",
+    canonical: `${siteOrigin}/life`,
   },
 ];
 

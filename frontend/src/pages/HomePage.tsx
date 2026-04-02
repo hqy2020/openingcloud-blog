@@ -25,6 +25,7 @@ import { SectionParallaxTransition } from "../components/motion/SectionParallaxT
 import { Dock, DockIcon } from "../components/ui/MagicUIDock";
 import { useAsync } from "../hooks/useAsync";
 import { fallbackHomePayload } from "../data/fallback";
+import { siteUrl } from "../lib/site";
 
 const timelineFallbackForUx: TimelineNode[] = fallbackHomePayload.timeline;
 const highlightsFallbackForUx: HighlightStage[] = fallbackHomePayload.highlights;
@@ -199,7 +200,7 @@ export function HomePage() {
         <meta content="Keyon Blog ｜ 云际漫游者" property="og:title" />
         <meta content="在云层之上，记录技术、效率与生活。" property="og:description" />
         <meta content="/og-cloudscape-card.png" property="og:image" />
-        <link href="https://blog.oc.slgneon.cn/" rel="canonical" />
+        <link href={siteUrl("/")} rel="canonical" />
       </Helmet>
 
       {loading ? <p className="text-sm text-slate-500">首页数据加载中...</p> : null}

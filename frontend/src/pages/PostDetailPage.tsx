@@ -8,6 +8,7 @@ import { fetchPostBySlug, fetchPosts, fetchPostLikeStatus, incrementPostViews, t
 import type { PostSummary } from "../api/posts";
 import { LikeButton } from "../components/ui/LikeButton";
 import { useAsync } from "../hooks/useAsync";
+import { LEGACY_SITE_HOSTS, siteUrl } from "../lib/site";
 import { cn } from "../lib/utils";
 
 type HeadingItem = {
@@ -145,7 +146,7 @@ function resolveMarkdownAssetUrl(src: string): string {
 
   try {
     const parsed = new URL(value);
-    const isLegacyHost = parsed.hostname.toLowerCase() === "blog.oc.slgneon.cn";
+    const isLegacyHost = LEGACY_SITE_HOSTS.has(parsed.hostname.toLowerCase());
     if (isLegacyHost && typeof window !== "undefined" && window.location.hostname !== parsed.hostname) {
       return `${window.location.origin}${parsed.pathname}${parsed.search}${parsed.hash}`;
     }
@@ -555,7 +556,7 @@ export function PostDetailPage() {
 
                 try {
                   const parsed = new URL(image.currentSrc || image.src, window.location.origin);
-                  if (parsed.hostname.toLowerCase() !== "blog.oc.slgneon.cn") {
+                  if (!LEGACY_SITE_HOSTS.has(parsed.hostname.toLowerCase())) {
                     return;
                   }
                   image.dataset.fallbackTried = "1";
@@ -591,7 +592,7 @@ export function PostDetailPage() {
         <meta content={data.title} property="og:title" />
         <meta content={data.excerpt || "Keyon Blog ｜ 云际漫游者文章详情"} property="og:description" />
         <meta content={detailCover || "/og-cloudscape-card.png"} property="og:image" />
-        <link href={`https://blog.oc.slgneon.cn/posts/${data.slug}`} rel="canonical" />
+        <link href={siteUrl(`/posts/${data.slug}`)} rel="canonical" />
       </Helmet>
 
       <div className="pointer-events-none absolute inset-x-0 top-0 h-52 bg-[radial-gradient(circle_at_20%_20%,rgba(79,106,229,0.16),transparent_55%),radial-gradient(circle_at_80%_0%,rgba(107,145,123,0.14),transparent_45%)]" />

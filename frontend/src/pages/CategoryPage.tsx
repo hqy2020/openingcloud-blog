@@ -5,6 +5,7 @@ import { fetchPosts, togglePostLike } from "../api/posts";
 import type { PostSummary } from "../api/posts";
 import { LikeButton } from "../components/ui/LikeButton";
 import { getFallbackPosts } from "../data/fallback";
+import { siteUrl } from "../lib/site";
 import { cn } from "../lib/utils";
 
 type CategoryPageProps = {
@@ -193,7 +194,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
         <meta content={categoryDescriptions[category]} name="description" />
         <meta content={`${title} | Keyon Blog ｜ 云际漫游者`} property="og:title" />
         <meta content={categoryDescriptions[category]} property="og:description" />
-        <link href={`https://blog.oc.slgneon.cn/${category}`} rel="canonical" />
+        <link href={siteUrl(`/${category}`)} rel="canonical" />
       </Helmet>
 
       <div className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-[radial-gradient(circle_at_18%_18%,rgba(79,106,229,0.18),transparent_55%),radial-gradient(circle_at_80%_4%,rgba(107,145,123,0.16),transparent_48%)]" />

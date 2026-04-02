@@ -13,7 +13,7 @@ services:
     expose:
       - "8000"
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')\" || exit 1"]
+      test: ["CMD-SHELL", "python -c \"import urllib.request; req = urllib.request.Request('http://localhost:8000/api/health', headers={'X-Forwarded-Proto': 'https'}); urllib.request.urlopen(req)\" || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -27,7 +27,7 @@ services:
       backend:
         condition: service_healthy
     ports:
-      - "80:80"
+      - "${NGINX_PORT:-80}:80"
     volumes:
       - ./frontend/dist:/usr/share/nginx/html:ro
       - ${NGINX_CONF_FILE:-./nginx/nginx.conf}:/etc/nginx/nginx.conf:ro
