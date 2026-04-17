@@ -62,10 +62,10 @@ export function StatsSection({ stats }: StatsSectionProps) {
           const note = item.note(stats);
           return (
             <StaggerItem key={item.key} className="h-full">
-              <CardSpotlight className="flex h-full w-full flex-col items-center justify-center rounded-2xl bg-white/60 p-5 text-center backdrop-blur">
+              <CardSpotlight className="flex h-full w-full flex-col items-center justify-center rounded-2xl bg-white/60 p-5 text-center backdrop-blur overflow-hidden">
                 <p className="text-sm font-medium text-slate-400">{item.label}</p>
-                <div className="my-3">
-                  <TextGif gifUrl={item.gifUrl} size="xxl" weight="bold">
+                <div className="my-3 w-full flex justify-center">
+                  <TextGif gifUrl={item.gifUrl} size="xxl" weight="bold" className="max-w-full text-5xl sm:text-6xl lg:text-7xl">
                     {numberFormatter.format(stats[item.key])}
                   </TextGif>
                 </div>
