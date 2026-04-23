@@ -99,6 +99,18 @@ const orbitingBadges: OrbitingBadge[] = [
     angle: 260,
     imageClassName: "h-full w-full rounded-full object-contain bg-white/90",
   },
+  {
+    id: "ant-badge",
+    label: "Ant Group · Incoming",
+    src: "/brand/logo-ant.png",
+    radius: 346,
+    duration: 9.2,
+    delay: 0.9,
+    width: 120,
+    height: 120,
+    angle: 68,
+    imageClassName: "h-full w-full rounded-full object-contain bg-white/95 p-2 shadow-whisper ring-1 ring-claude-terracotta/40",
+  },
 ];
 
 const defaultRoles = [
