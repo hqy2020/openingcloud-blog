@@ -215,14 +215,26 @@ jobs:
 
           retry 3 ssh-keyscan -T 10 -H "$ECS_HOST" >> ~/.ssh/known_hosts
 
-          # Fast path: frontend-only → rsync just dist, skip docker work
+          # Health check via SSH → server-internal curl (avoids flaky public 443
+          # returning Recv-failure/reset from GitHub runner IPs or ICP filter)
+          remote_health_check() {
+            ssh "${SSH_OPTS[@]}" "${ECS_USER}@${ECS_HOST}" \
+              "curl --fail --silent --show-error --max-time 10 http://127.0.0.1/api/health -H 'Host: blog.openingclouds.xyz'" \
+              >/dev/null
+          }
+
+          # Fast path: frontend-only → rsync just dist, skip docker work.
+          # Nginx bind-mount may still point to the old inode after rsync --delete
+          # recreates frontend/dist; force-reload nginx so new files are served.
           if [ "$BACKEND_CHANGED" = "false" ] && [ "$FRONTEND_CHANGED" = "true" ]; then
             echo "=== Fast path: frontend-only deploy ==="
             retry 3 timeout --signal=TERM --kill-after=10s 120 \
             rsync -az --delete --timeout=30 \
               -e "ssh ${SSH_OPTS[*]}" \
               ./frontend/dist/ "${ECS_USER}@${ECS_HOST}:/opt/openingclouds-blog/frontend/dist/"
-            retry 8 curl --fail --silent --show-error --max-time 20 https://blog.openingclouds.xyz/api/health >/dev/null
+            ssh "${SSH_OPTS[@]}" "${ECS_USER}@${ECS_HOST}" \
+              "cd /opt/openingclouds-blog && docker compose -f docker-compose.yml -f docker-compose.https.yml restart nginx"
+            retry 8 remote_health_check
             echo "Frontend deploy done."
             exit 0
           fi
@@ -281,4 +293,4 @@ jobs:
           }
 
           retry 3 run_remote_deploy
-          retry 8 curl --fail --silent --show-error --max-time 20 https://blog.openingclouds.xyz/api/health >/dev/null
+          retry 8 remote_health_check
