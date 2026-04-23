@@ -8,6 +8,8 @@ import { SectionTitleCard } from "../revamp/shared/SectionTitleCard";
 type ForceGraphRuntime = {
   d3Force: (forceName: string) => unknown;
   d3ReheatSimulation?: () => void;
+  centerAt?: (x?: number, y?: number, ms?: number) => void;
+  zoom?: (factor?: number, ms?: number) => void;
 };
 
 type ForceLinkRuntime = { distance: (fn: (link: unknown) => number) => unknown };
@@ -193,6 +195,17 @@ export function KnowledgeGraphSection() {
     return new Set(sortedNodes.slice(0, shownCount).map((n) => n.id));
   }, [sortedNodes, shownCount]);
 
+  // Hover 时：被 hover 节点 + 它邻居要高亮，其他所有节点/边变暗
+  const hoveredNeighborIds = useMemo(() => {
+    if (!hoveredId) return null;
+    const set = new Set<string>();
+    for (const e of edges) {
+      if (e.source === hoveredId) set.add(e.target);
+      else if (e.target === hoveredId) set.add(e.source);
+    }
+    return set;
+  }, [hoveredId, edges]);
+
   const graphData = useMemo(() => {
     if (shownCount === 0) return { nodes: [], links: [] };
     const now = performance.now();
@@ -219,18 +232,40 @@ export function KnowledgeGraphSection() {
     return { nodes: visibleNodes, links };
   }, [sortedNodes, shownCount, edges, visibleIds]);
 
+  // Force tuning：更慢 decay + 较小 charge，保证节点像 Obsidian 一样缓缓漂移而不弹跳
   useEffect(() => {
-    if (!ForceGraph2D || graphData.nodes.length === 0) return;
+    if (!ForceGraph2D) return;
     const g = graphRef.current;
     if (!g) return;
     const linkForce = g.d3Force("link") as ForceLinkRuntime | undefined;
-    if (linkForce?.distance) linkForce.distance(() => 42);
+    if (linkForce?.distance) linkForce.distance(() => 36);
     const chargeForce = g.d3Force("charge") as ForceChargeRuntime | undefined;
-    if (chargeForce?.strength) chargeForce.strength(-80);
+    if (chargeForce?.strength) chargeForce.strength(-55);
     const centerForce = g.d3Force("center") as ForceCenterRuntime | undefined;
-    if (centerForce?.strength) centerForce.strength(0.04);
-    g.d3ReheatSimulation?.();
-  }, [ForceGraph2D, graphData]);
+    if (centerForce?.strength) centerForce.strength(0.035);
+  }, [ForceGraph2D]);
+
+  // 初次渲染后固定「上帝视角」：居中 + 锁定 zoom，之后 graphData 变化不动相机
+  const initialCameraSetRef = useRef(false);
+  useEffect(() => {
+    if (!ForceGraph2D || graphData.nodes.length === 0) return;
+    if (initialCameraSetRef.current) return;
+    const g = graphRef.current;
+    if (!g) return;
+    // 给 simulation 一点时间 tick 出初始布局，再固定相机
+    const timer = window.setTimeout(() => {
+      g.centerAt?.(0, 0, 600);
+      g.zoom?.(3.2, 600);
+      initialCameraSetRef.current = true;
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [ForceGraph2D, graphData.nodes.length]);
+
+  // 节点加入时温和 reheat（让新节点滑入）但不重置相机
+  useEffect(() => {
+    if (!ForceGraph2D || graphData.nodes.length === 0) return;
+    graphRef.current?.d3ReheatSimulation?.();
+  }, [ForceGraph2D, graphData.nodes.length]);
 
   // 在节点冒泡期间强制 reheat simulation 以保证 canvas 持续重绘（否则 pop 动画看不到）
   useEffect(() => {
@@ -303,24 +338,51 @@ export function KnowledgeGraphSection() {
             width={graphSize.width}
             height={graphSize.height}
             backgroundColor="#141413"
-            cooldownTicks={180}
-            warmupTicks={60}
-            linkColor={() => "rgba(176, 174, 165, 0.28)"}
+            // 更温和的物理参数：alpha 慢慢衰减 + velocity 更黏 = Obsidian 丝滑漂移感
+            d3AlphaDecay={0.012}
+            d3VelocityDecay={0.38}
+            cooldownTicks={Infinity}
+            warmupTicks={80}
+            enableZoomInteraction
+            enablePanInteraction
+            // 默认关闭自适应缩放，初次渲染由我们手动定位后就固定相机
+            autoPauseRedraw={false}
+            linkColor={(link: unknown) => {
+              const l = link as { source?: unknown; target?: unknown };
+              const srcId =
+                typeof l.source === "object" ? ((l.source as { id?: string }).id ?? "") : String(l.source ?? "");
+              const dstId =
+                typeof l.target === "object" ? ((l.target as { id?: string }).id ?? "") : String(l.target ?? "");
+              if (hoveredId) {
+                if (srcId === hoveredId || dstId === hoveredId) {
+                  return "rgba(217, 119, 87, 0.92)"; // coral 高亮相邻边
+                }
+                return "rgba(176, 174, 165, 0.05)"; // 其他边极淡
+              }
+              const srcAt = appearAtRef.current.get(srcId) ?? 0;
+              const dstAt = appearAtRef.current.get(dstId) ?? 0;
+              const age = performance.now() - Math.max(srcAt, dstAt);
+              const fadeT = Math.min(1, Math.max(0, age / 900));
+              const alpha = 0.05 + 0.27 * fadeT;
+              return `rgba(176, 174, 165, ${alpha.toFixed(3)})`;
+            }}
             linkWidth={(link: unknown) => {
               const l = link as { source?: unknown; target?: unknown };
               const srcId =
                 typeof l.source === "object" ? ((l.source as { id?: string }).id ?? "") : String(l.source ?? "");
               const dstId =
                 typeof l.target === "object" ? ((l.target as { id?: string }).id ?? "") : String(l.target ?? "");
-              if (hoveredId && (srcId === hoveredId || dstId === hoveredId)) return 2;
-              return 0.8;
+              if (hoveredId && (srcId === hoveredId || dstId === hoveredId)) return 2.2;
+              return 0.7;
             }}
             nodeCanvasObjectMode={() => "replace"}
             nodeCanvasObject={(node: unknown, ctx: CanvasRenderingContext2D, globalScale: number) => {
               const n = node as KnowledgeGraphNode & { x?: number; y?: number };
               if (n.x == null || n.y == null) return;
               const isHovered = hoveredId === n.id;
-              const baseRadius = isHovered ? 5.5 : 3.8;
+              const isNeighbor = !!hoveredNeighborIds && hoveredNeighborIds.has(n.id);
+              const isDimmed = !!hoveredId && !isHovered && !isNeighbor;
+              const baseRadius = isHovered ? 6.2 : isNeighbor ? 4.6 : 3.8;
               // Pop-in animation (easeOutBack 0 → ~1.1 → 1.0)
               const appearAt = appearAtRef.current.get(n.id) ?? 0;
               const age = performance.now() - appearAt;
@@ -343,13 +405,29 @@ export function KnowledgeGraphSection() {
                 }
               }
               if (radius <= 0.1) return;
+              // Dim / spotlight 混色
+              const baseColor = CATEGORY_COLOR[n.category] ?? CATEGORY_COLOR.other;
+              let fillColor: string;
+              if (isDimmed) {
+                // 淡化：带 alpha 的暗色
+                fillColor = baseColor + "30"; // hex 30/255 ≈ 0.19 alpha
+              } else if (isNeighbor) {
+                // 邻居：暖色 coral 描边 + 原色填充
+                fillColor = baseColor;
+              } else {
+                fillColor = baseColor;
+              }
               ctx.beginPath();
               ctx.arc(n.x, n.y, radius, 0, 2 * Math.PI, false);
-              ctx.fillStyle = CATEGORY_COLOR[n.category] ?? CATEGORY_COLOR.other;
+              ctx.fillStyle = fillColor;
               ctx.fill();
               if (isHovered) {
+                ctx.lineWidth = 2 / globalScale;
+                ctx.strokeStyle = "rgba(250, 249, 245, 0.95)";
+                ctx.stroke();
+              } else if (isNeighbor) {
                 ctx.lineWidth = 1.5 / globalScale;
-                ctx.strokeStyle = "rgba(250, 249, 245, 0.9)";
+                ctx.strokeStyle = "rgba(217, 119, 87, 0.9)"; // coral 邻居描边
                 ctx.stroke();
               }
               // Label on hover
