@@ -306,7 +306,7 @@ export function AppLayout() {
               title="首页"
               to="/"
             >
-              胡说 AI
+              码阶客
             </NavLink>
 
             <nav
@@ -391,7 +391,7 @@ export function AppLayout() {
                 title="首页"
                 to="/"
               >
-                胡说 AI
+                码阶客
               </NavLink>
 
               <button
