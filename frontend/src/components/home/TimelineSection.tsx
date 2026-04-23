@@ -98,18 +98,18 @@ function impactBadge(impact: TimelineNode["impact"]) {
   if (impact === "high") {
     return {
       label: "关键节点",
-      className: "bg-claude-dark-surface text-claude-charcoal-warm dark:bg-claude-dark-surface/20 dark:text-claude-charcoal-warm",
+      className: "bg-claude-terracotta text-claude-ivory dark:bg-claude-terracotta dark:text-claude-ivory",
     };
   }
   if (impact === "medium") {
     return {
       label: "持续推进",
-      className: "bg-claude-warm-sand text-claude-coral dark:bg-claude-warm-sand dark:text-claude-coral",
+      className: "bg-claude-warm-sand text-claude-charcoal-warm dark:bg-claude-warm-sand dark:text-claude-charcoal-warm",
     };
   }
   return {
     label: "阶段沉淀",
-    className: "bg-slate-100 text-slate-600 dark:bg-claude-dark-surface dark:text-claude-warm-silver",
+    className: "bg-claude-border-cream text-claude-olive-gray dark:bg-claude-dark-surface dark:text-claude-warm-silver",
   };
 }
 
