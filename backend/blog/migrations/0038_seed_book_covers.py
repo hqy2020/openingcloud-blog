@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+from urllib.error import URLError, HTTPError
+from urllib.request import Request, urlopen
 
-import requests
 from django.conf import settings
 from django.db import migrations
 
@@ -40,14 +41,15 @@ def download_covers(apps, schema_editor):
             continue
 
         try:
-            resp = requests.get(url, headers=HEADERS, timeout=20)
-            resp.raise_for_status()
-            if len(resp.content) < 1024:
-                raise ValueError(f"response too small ({len(resp.content)} bytes)")
-            out.write_bytes(resp.content)
+            req = Request(url, headers=HEADERS)
+            with urlopen(req, timeout=20) as resp:
+                content = resp.read()
+            if len(content) < 1024:
+                raise ValueError(f"response too small ({len(content)} bytes)")
+            out.write_bytes(content)
             Book.objects.filter(title=title).update(cover=relative_url)
             print(f"[cover] downloaded {title} -> {out}")
-        except Exception as exc:
+        except (HTTPError, URLError, ValueError, OSError) as exc:
             print(f"[cover] {title} FAILED ({exc!r}); keeping original URL")
 
 
