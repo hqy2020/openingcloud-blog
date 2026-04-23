@@ -261,7 +261,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
             <select
               value={selectedTag}
               onChange={(event) => handleSelectTag(event.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-indigo-100 transition focus:border-indigo-300 focus:ring"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-claude-terracotta/20 transition focus:border-claude-terracotta/40 focus:ring"
             >
               <option value="">全部</option>
               {allTags.map((tag) => (
