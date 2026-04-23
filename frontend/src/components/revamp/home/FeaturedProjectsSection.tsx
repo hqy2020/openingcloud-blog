@@ -199,7 +199,7 @@ export function FeaturedProjectsSection({ projects }: { projects: GithubProject[
 
   return (
     <section id="projects" className="space-y-6">
-      <SectionTitleCard category="Code" title="开源项目" accentColor="#f97316" tagline="写代码是一种表达，开源是把想法交给世界。" />
+      <SectionTitleCard category="Code" title="开源项目" accentColor="#c96442" tagline="写代码是一种表达，开源是把想法交给世界。" />
 
       <div ref={sectionRef} className="relative space-y-8">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -267,10 +267,10 @@ export function FeaturedProjectsSection({ projects }: { projects: GithubProject[
               >
                 <CardSpotlight
                   glowColor={active ? "255,255,255" : "148,163,184"}
-                  className={`h-full rounded-2xl border p-4 backdrop-blur transition duration-300 ${
+                  className={`h-full rounded-2xl border p-4 transition duration-300 ${
                     active
-                      ? "border-blue-400 bg-blue-600 shadow-[0_20px_34px_rgba(37,99,235,0.4)]"
-                      : "border-slate-200/75 bg-white/80 shadow-[0_10px_22px_rgba(15,23,42,0.1)] group-hover:border-blue-400 group-hover:bg-blue-600 group-hover:shadow-[0_20px_34px_rgba(37,99,235,0.4)]"
+                      ? "border-claude-terracotta bg-claude-near-black shadow-whisper-lg"
+                      : "border-slate-200/75 bg-claude-ivory shadow-[0_10px_22px_rgba(15,23,42,0.1)] group-hover:border-claude-terracotta group-hover:bg-claude-near-black group-hover:shadow-whisper-lg"
                   }`}
                 >
                   <div className="relative z-20 flex h-full flex-col">
@@ -281,10 +281,10 @@ export function FeaturedProjectsSection({ projects }: { projects: GithubProject[
                       {active ? project.summary_zh : project.summary}
                     </p>
                     <div className="mt-3">
-                      <p className={`text-[11px] uppercase tracking-[0.14em] ${active ? "text-blue-100/95" : "text-slate-500 group-hover:text-blue-100/95"}`}>
+                      <p className={`text-[11px] uppercase tracking-[0.14em] ${active ? "text-claude-coral/95" : "text-slate-500 group-hover:text-claude-coral/95"}`}>
                         Repository
                       </p>
-                      <p className={`mt-1 font-mono text-xs ${active ? "text-blue-50/95" : "text-slate-600 group-hover:text-blue-50/95"}`}>
+                      <p className={`mt-1 font-mono text-xs ${active ? "text-claude-coral/95" : "text-slate-600 group-hover:text-claude-coral/95"}`}>
                         {project.repo_path}
                       </p>
                       <p className={`mt-1 text-xs leading-5 ${active ? "text-slate-200/95" : "text-slate-500 group-hover:text-slate-200/95"}`}>
@@ -398,7 +398,7 @@ export function FeaturedProjectsSection({ projects }: { projects: GithubProject[
           ) : null}
         </AnimatePresence>
 
-        <div className="relative z-20 rounded-2xl border border-slate-200/80 bg-white/72 p-4 shadow-[0_12px_26px_rgba(15,23,42,0.09)] backdrop-blur">
+        <div className="relative z-20 rounded-2xl border border-slate-200/80 bg-claude-ivory p-4 shadow-whisper">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Tech Stack</p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {techUsage.map((tech) => {
@@ -419,11 +419,11 @@ export function FeaturedProjectsSection({ projects }: { projects: GithubProject[
                   onMouseLeave={() => isDesktopInteractive && setHoveredTech(null)}
                   className={`rounded-2xl border p-4 transition cursor-default ${
                     active
-                      ? "border-orange-300/90 bg-orange-50/80 shadow-[0_0_0_1px_rgba(251,146,60,0.26),0_10px_24px_rgba(251,146,60,0.16)]"
-                      : "border-slate-200/90 bg-white/88 shadow-[0_8px_20px_rgba(15,23,42,0.08)]"
+                      ? "border-claude-terracotta/60 bg-claude-warm-sand shadow-[0_0_0_1px_rgba(251,146,60,0.26),0_10px_24px_rgba(251,146,60,0.16)]"
+                      : "border-slate-200/90 bg-claude-ivory shadow-whisper"
                   }`}
                 >
-                  <p className={`text-sm font-semibold ${active ? "text-orange-700" : "text-slate-700"}`}>{tech.name}</p>
+                  <p className={`text-sm font-semibold ${active ? "text-claude-terracotta" : "text-slate-700"}`}>{tech.name}</p>
                   <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-200/75">
                     <motion.div
                       className={`h-full rounded-full ${active ? "bg-gradient-to-r from-orange-500 to-amber-400" : "bg-slate-400/75"}`}

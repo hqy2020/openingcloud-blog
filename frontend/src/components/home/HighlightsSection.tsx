@@ -17,7 +17,7 @@ type HighlightTheme = {
 };
 
 const HIGHLIGHT_CARD_BASE =
-  "border-slate-200/80 bg-white/90 shadow-[0_12px_32px_rgba(15,23,42,0.08)] dark:border-slate-700/85 dark:bg-slate-900/88 dark:shadow-[0_14px_36px_rgba(2,6,23,0.5)]";
+  "border-slate-200/80 bg-claude-ivory shadow-whisper dark:border-slate-700/85 dark:bg-slate-900/88 dark:shadow-whisper-lg";
 
 const HIGHLIGHT_ITEM_BASE =
   "border-slate-200/80 bg-slate-50/70 text-slate-700 dark:border-slate-500/72 dark:bg-slate-800/64 dark:text-slate-100";
@@ -141,7 +141,7 @@ export function HighlightsSection({ stages }: HighlightsSectionProps) {
           <span className="text-sm text-slate-500 dark:text-slate-400">0 个阶段</span>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white/80 px-5 py-6 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/84 dark:text-slate-300">
+        <div className="rounded-2xl border border-slate-200 bg-claude-ivory px-5 py-6 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/84 dark:text-slate-300">
           暂无高光数据，请先在后台补充阶段与成就。
         </div>
       </ScrollReveal>
@@ -167,7 +167,7 @@ export function HighlightsSection({ stages }: HighlightsSectionProps) {
             <StaggerItem key={`${stage.title}-${idx}`}>
               <CardSpotlight
                 className={[
-                  "h-full overflow-hidden rounded-2xl border p-5 backdrop-blur transition-colors duration-500",
+                  "h-full overflow-hidden rounded-2xl border p-5 transition-colors duration-500",
                   theme.cardClass,
                 ].join(" ")}
                 glowColor={theme.glowColor}

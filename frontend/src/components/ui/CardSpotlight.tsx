@@ -7,7 +7,7 @@ type CardSpotlightProps = PropsWithChildren<{
   style?: CSSProperties;
 }>;
 
-export function CardSpotlight({ children, className = "", glowColor = "79, 106, 229", style: externalStyle }: CardSpotlightProps) {
+export function CardSpotlight({ children, className = "", glowColor = "201, 100, 66", style: externalStyle }: CardSpotlightProps) {
   const [position, setPosition] = useState({ x: 50, y: 50, active: false });
 
   const style = useMemo(() => {

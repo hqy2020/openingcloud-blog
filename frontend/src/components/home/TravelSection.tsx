@@ -368,7 +368,7 @@ export function TravelSection({ travel }: TravelSectionProps) {
       <SectionTitleCard
         category="Travel"
         title="旅行足迹"
-        accentColor="#0ea5e9"
+        accentColor="#c96442"
         tagline="走过的城市，都是人生坐标上的一笔。"
       />
 

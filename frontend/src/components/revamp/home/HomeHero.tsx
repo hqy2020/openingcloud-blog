@@ -41,7 +41,7 @@ export function HomeHero({ hero }: HomeHeroProps) {
             />
           </motion.div>
 
-          <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center text-xs font-semibold tracking-[0.16em] text-slate-500 sm:text-sm">
+          <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center font-serif text-sm italic leading-[1.6] tracking-normal text-claude-olive-gray sm:text-base">
             {hero.subtitle || coverHeroConfig.one_liner}
           </p>
         </div>

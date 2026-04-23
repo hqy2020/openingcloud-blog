@@ -23,39 +23,39 @@ function typeBadge(type: TimelineNode["type"]): TimelineTypeMeta {
     case "career":
       return {
         label: "职业",
-        badge: "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-200",
-        dot: "bg-blue-500",
+        badge: "bg-claude-warm-sand text-claude-coral dark:bg-claude-near-black/20 dark:text-claude-coral",
+        dot: "bg-claude-near-black",
         isDiamond: false,
         glowColor: "92, 138, 249",
       };
     case "health":
       return {
         label: "健康",
-        badge: "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-200",
-        dot: "bg-amber-500",
+        badge: "bg-claude-warm-sand text-claude-terracotta dark:bg-claude-warm-sand dark:text-claude-terracotta",
+        dot: "bg-claude-warm-sand",
         isDiamond: false,
         glowColor: "213, 160, 76",
       };
     case "learning":
       return {
         label: "求学",
-        badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200",
-        dot: "bg-emerald-500",
+        badge: "bg-claude-warm-sand text-claude-olive-gray dark:bg-claude-warm-sand dark:text-claude-olive-gray",
+        dot: "bg-claude-warm-sand",
         isDiamond: false,
         glowColor: "84, 171, 138",
       };
     case "family":
       return {
         label: "家庭",
-        badge: "bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-200",
-        dot: "bg-violet-500",
+        badge: "bg-claude-warm-sand text-claude-charcoal-warm dark:bg-claude-warm-sand dark:text-claude-charcoal-warm",
+        dot: "bg-claude-warm-sand",
         isDiamond: false,
         glowColor: "166, 111, 217",
       };
     case "reflection":
       return {
         label: "沉淀",
-        badge: "bg-slate-200 text-slate-700 dark:bg-slate-700/70 dark:text-slate-200",
+        badge: "bg-slate-200 text-slate-700 dark:bg-claude-dark-surface dark:text-claude-warm-silver",
         dot: "bg-slate-500",
         isDiamond: true,
         glowColor: "148, 163, 184",
@@ -63,7 +63,7 @@ function typeBadge(type: TimelineNode["type"]): TimelineTypeMeta {
     default:
       return {
         label: type,
-        badge: "bg-slate-100 text-slate-700 dark:bg-slate-700/70 dark:text-slate-200",
+        badge: "bg-slate-100 text-slate-700 dark:bg-claude-dark-surface dark:text-claude-warm-silver",
         dot: "bg-slate-500",
         isDiamond: false,
         glowColor: "148, 163, 184",
@@ -98,18 +98,18 @@ function impactBadge(impact: TimelineNode["impact"]) {
   if (impact === "high") {
     return {
       label: "关键节点",
-      className: "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-200",
+      className: "bg-claude-dark-surface text-claude-charcoal-warm dark:bg-claude-dark-surface/20 dark:text-claude-charcoal-warm",
     };
   }
   if (impact === "medium") {
     return {
       label: "持续推进",
-      className: "bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-200",
+      className: "bg-claude-warm-sand text-claude-coral dark:bg-claude-warm-sand dark:text-claude-coral",
     };
   }
   return {
     label: "阶段沉淀",
-    className: "bg-slate-100 text-slate-600 dark:bg-slate-700/70 dark:text-slate-300",
+    className: "bg-slate-100 text-slate-600 dark:bg-claude-dark-surface dark:text-claude-warm-silver",
   };
 }
 
@@ -145,9 +145,9 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
     return (
       <ScrollReveal className="space-y-6">
         <div className="flex items-end justify-between">
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-200">人生足迹</h2>
+          <h2 className="text-2xl font-semibold text-slate-900 dark:text-claude-warm-silver">人生足迹</h2>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white/80 px-5 py-6 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/84 dark:text-slate-300">
+        <div className="rounded-2xl border border-slate-200 bg-claude-ivory px-5 py-6 text-sm text-slate-600 dark:border-claude-dark-surface dark:bg-claude-dark-surface dark:text-claude-warm-silver">
           暂无时间线数据，请先在后台补充人生节点。
         </div>
       </ScrollReveal>
@@ -157,7 +157,7 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
   return (
     <ScrollReveal className="space-y-6">
       <div>
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-200">人生足迹</h2>
+          <h2 className="text-2xl font-semibold text-slate-900 dark:text-claude-warm-silver">人生足迹</h2>
       </div>
 
       <div ref={timelineRef} className="relative">
@@ -181,10 +181,10 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
               <StaggerItem key={`${node.title}-${node.start_date}-${idx}`}>
                 <article className="grid grid-cols-[2.25rem_minmax(0,1fr)] py-5 md:grid-cols-[11rem_2.25rem_minmax(0,1fr)]">
                   <div className="hidden md:flex md:sticky md:top-24 md:self-start md:flex-col md:items-end md:pr-4 md:pt-1">
-                    <span className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+                    <span className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400 dark:text-claude-warm-silver">
                       {formatYear(node)}
                     </span>
-                    <span className="mt-1 text-sm font-semibold text-slate-700 dark:text-slate-200">{formatAnchor(node)}</span>
+                    <span className="mt-1 text-sm font-semibold text-slate-700 dark:text-claude-warm-silver">{formatAnchor(node)}</span>
                   </div>
 
                   <div className="relative flex justify-center pt-1">
@@ -192,8 +192,8 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
                       className={cn(
                         "relative mt-1 flex h-4 w-4 items-center justify-center rounded-full border bg-white shadow-sm transition-colors dark:bg-slate-950",
                         isHighlighted
-                          ? "border-indigo-300 shadow-[0_0_0_4px_rgba(79,106,229,0.16)] dark:border-indigo-400/80 dark:shadow-[0_0_0_4px_rgba(79,106,229,0.25)]"
-                          : "border-slate-300 dark:border-slate-600",
+                          ? "border-claude-border-warm shadow-[0_0_0_4px_rgba(79,106,229,0.16)] dark:border-claude-border-warm dark:shadow-[0_0_0_4px_rgba(79,106,229,0.25)]"
+                          : "border-slate-300 dark:border-claude-dark-surface",
                       )}
                     >
                       <span
@@ -209,10 +209,10 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
                   <div className="pl-2 md:pl-4">
                     <CardSpotlight
                       className={cn(
-                        "rounded-2xl border p-5 backdrop-blur transition-shadow duration-300",
+                        "rounded-2xl border p-5 transition-shadow duration-300",
                         isHighlighted
-                          ? "border-indigo-200/85 bg-white/92 shadow-[0_18px_42px_rgba(79,106,229,0.16)] ring-1 ring-indigo-100/85 dark:border-indigo-500/65 dark:bg-slate-900/88 dark:shadow-[0_16px_38px_rgba(2,6,23,0.55)] dark:ring-indigo-500/35"
-                          : "border-slate-200/82 bg-white/88 shadow-[0_12px_30px_rgba(15,23,42,0.08)] dark:border-slate-700/82 dark:bg-slate-900/86 dark:shadow-[0_14px_34px_rgba(2,6,23,0.48)]",
+                          ? "border-claude-border-warm bg-claude-ivory shadow-whisper-lg ring-1 ring-indigo-100/85 dark:border-claude-border-warm dark:bg-claude-dark-surface dark:shadow-whisper-lg dark:ring-indigo-500/35"
+                          : "border-slate-200/82 bg-claude-ivory shadow-whisper dark:border-claude-dark-surface dark:bg-claude-dark-surface dark:shadow-whisper-lg",
                       )}
                       glowColor={typeMeta.glowColor}
                     >
@@ -222,19 +222,19 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
                           {impactMeta.label}
                         </span>
                         {node.phase ? (
-                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-slate-700/70 dark:text-slate-200">
+                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-claude-dark-surface dark:text-claude-warm-silver">
                             {node.phase}
                           </span>
                         ) : null}
                       </div>
 
-                      <h3 className="mt-3 text-lg font-semibold text-slate-900 dark:text-slate-200">{node.title}</h3>
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{formatPeriod(node)}</p>
-                      <p className="mt-1 text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500 md:hidden">
+                      <h3 className="mt-3 text-lg font-semibold text-slate-900 dark:text-claude-warm-silver">{node.title}</h3>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-claude-warm-silver">{formatPeriod(node)}</p>
+                      <p className="mt-1 text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400 dark:text-claude-warm-silver md:hidden">
                         {formatAnchor(node)}
                       </p>
                       {node.description ? (
-                        <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">{node.description}</p>
+                        <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-claude-warm-silver">{node.description}</p>
                       ) : null}
 
                       {node.tags.length > 0 ? (
@@ -242,7 +242,7 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
                           {node.tags.slice(0, 4).map((tag) => (
                             <span
                               key={`${node.title}-${tag}`}
-                              className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-500 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-400"
+                              className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-500 dark:border-claude-dark-surface dark:bg-claude-dark-surface dark:text-claude-warm-silver"
                             >
                               #{tag}
                             </span>

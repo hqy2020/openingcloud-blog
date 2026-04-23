@@ -22,28 +22,28 @@ export function SectionTitleCard({ category, title, accentColor, tagline, meta }
       initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
       animate={shouldAnimate ? { opacity: 1, y: 0 } : undefined}
       transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="mb-5 w-full rounded-[1.25rem] bg-slate-800 px-6 py-6 shadow-[0_8px_30px_rgba(15,23,42,0.25)] sm:px-8 sm:py-7"
+      className="mb-5 w-full rounded-claude-lg bg-claude-near-black px-6 py-7 shadow-whisper sm:px-8 sm:py-8"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        {/* Left: category + title */}
         <div className="min-w-0 shrink-0">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+          <span className="font-sans text-[10px] font-medium uppercase tracking-[0.5em] text-claude-warm-silver/80">
             {category}
           </span>
           <h2
-            className="mt-1 text-3xl font-bold leading-tight sm:text-4xl"
+            className="mt-2 font-serif text-3xl font-medium leading-[1.1] tracking-normal sm:text-4xl"
             style={{ color: accentColor }}
           >
             {title}
           </h2>
           {meta ? (
-            <span className="mt-1 block text-xs font-medium text-slate-400">{meta}</span>
+            <span className="mt-2 block font-sans text-xs font-normal text-claude-warm-silver/70">
+              {meta}
+            </span>
           ) : null}
         </div>
 
-        {/* Right: tagline fills remaining space */}
         {tagline ? (
-          <p className="max-w-md text-sm leading-relaxed text-slate-400/90 sm:text-right">
+          <p className="max-w-md font-serif text-[15px] leading-[1.6] text-claude-warm-silver sm:text-right">
             {tagline}
           </p>
         ) : null}

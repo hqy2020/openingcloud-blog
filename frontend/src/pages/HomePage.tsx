@@ -232,7 +232,7 @@ export function HomePage() {
 
       {/* #6 Life Section (consolidated) */}
       <SectionParallaxTransition strength={26}>
-        <SectionTitleCard category="Life" title="生活" accentColor="#a855f7" tagline="记录走过的路、遇见的人、看过的风景。" />
+        <SectionTitleCard category="Life" title="生活" accentColor="#c96442" tagline="记录走过的路、遇见的人、看过的风景。" />
         <SectionCard id="life">
           <div className="space-y-12">
             {/* Time (full-width chart) */}

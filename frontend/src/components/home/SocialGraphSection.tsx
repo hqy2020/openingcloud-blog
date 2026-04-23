@@ -405,7 +405,7 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
       <SectionTitleCard
         category="Social"
         title="社交图谱"
-        accentColor="#8b5cf6"
+        accentColor="#c96442"
         tagline="每个阶段，都有并肩同行的人。"
       />
 

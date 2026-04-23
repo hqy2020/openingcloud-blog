@@ -59,13 +59,13 @@ export function PhotoWallSection({ photos }: PhotoWallSectionProps) {
       <SectionTitleCard
         category="Photo"
         title="照片墙"
-        accentColor="#0ea5e9"
+        accentColor="#c96442"
         tagline="用镜头留住每一个值得被记住的瞬间。"
       />
 
-      <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-[0_12px_32px_rgba(15,23,42,0.08)] backdrop-blur sm:p-5">
-        <div className="pointer-events-none absolute -left-6 top-8 h-28 w-28 rounded-full bg-sky-100/70 blur-2xl" />
-        <div className="pointer-events-none absolute -bottom-8 right-6 h-32 w-32 rounded-full bg-emerald-100/60 blur-2xl" />
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-claude-ivory p-4 shadow-whisper sm:p-5">
+        <div className="pointer-events-none absolute -left-6 top-8 h-28 w-28 rounded-full bg-claude-warm-sand blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-8 right-6 h-32 w-32 rounded-full bg-claude-warm-sand blur-2xl" />
 
         {canRender3D ? (
           <PhotoWall3DCarousel photos={renderItems} onPreview={openPreview} />

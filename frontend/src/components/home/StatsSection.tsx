@@ -55,7 +55,7 @@ export function StatsSection({ stats }: StatsSectionProps) {
       <SectionTitleCard
         category="Stats"
         title="数据面板"
-        accentColor="#f97316"
+        accentColor="#c96442"
         tagline="用数字丈量这个博客的成长轨迹。"
       />
       <StaggerContainer className="grid h-full grid-cols-2 gap-4 lg:grid-cols-4" stagger={0.06}>
@@ -73,8 +73,8 @@ export function StatsSection({ stats }: StatsSectionProps) {
                   : "text-5xl sm:text-6xl lg:text-7xl";
           return (
             <StaggerItem key={item.key} className="h-full">
-              <CardSpotlight className="flex h-full w-full flex-col items-center justify-center rounded-2xl bg-white/60 p-5 text-center backdrop-blur overflow-hidden">
-                <p className="text-sm font-medium text-slate-400">{item.label}</p>
+              <CardSpotlight className="flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-claude-lg border border-claude-border-cream bg-claude-ivory p-6 text-center shadow-whisper">
+                <p className="font-sans text-xs font-medium uppercase tracking-[0.2em] text-claude-stone-gray">{item.label}</p>
                 <div className="my-3 flex w-full min-w-0 justify-center">
                   <TextGif
                     gifUrl={item.gifUrl}
@@ -85,7 +85,7 @@ export function StatsSection({ stats }: StatsSectionProps) {
                     {valueText}
                   </TextGif>
                 </div>
-                <p className="text-xs font-medium text-slate-400">{note}</p>
+                <p className="font-serif text-xs italic text-claude-olive-gray">{note}</p>
               </CardSpotlight>
             </StaggerItem>
           );

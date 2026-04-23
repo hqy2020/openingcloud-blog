@@ -461,7 +461,7 @@ export function AppLayout() {
         <Outlet />
       </main>
 
-      <footer className="relative mt-12 w-full overflow-hidden border-t border-slate-200/90 bg-gradient-to-b from-white/94 via-slate-50/80 to-slate-100/70 text-slate-600">
+      <footer className="relative mt-12 w-full overflow-hidden border-t border-claude-border-warm bg-claude-parchment text-claude-olive-gray">
         <StripeBgGuides
           animated
           animationDelay={0.55}

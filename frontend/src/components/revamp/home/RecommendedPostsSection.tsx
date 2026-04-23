@@ -59,7 +59,7 @@ function PostCard({ post }: { post: PinnedPost }) {
       </div>
 
       {/* Hover excerpt overlay */}
-      <div className="absolute inset-0 flex items-center justify-center bg-orange-500/90 p-5 opacity-0 backdrop-blur-sm transition-opacity duration-300 group-hover:opacity-100">
+      <div className="absolute inset-0 flex items-center justify-center bg-claude-terracotta/90 p-5 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
         <p className="line-clamp-5 text-center text-base leading-relaxed text-white">
           {post.excerpt || post.title}
         </p>
@@ -79,7 +79,7 @@ export function RecommendedPostsSection({ posts }: RecommendedPostsSectionProps)
 
   return (
     <section id="recommended" className="space-y-4">
-      <SectionTitleCard category="Article" title="推荐阅读" accentColor="#f97316" tagline="精心挑选的文章，关于技术、效率与生活的思考碎片。" />
+      <SectionTitleCard category="Article" title="推荐阅读" accentColor="#c96442" tagline="精心挑选的文章，关于技术、效率与生活的思考碎片。" />
 
       <ThreeDMarquee
         items={paddedPosts}
