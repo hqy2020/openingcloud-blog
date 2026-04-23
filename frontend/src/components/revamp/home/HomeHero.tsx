@@ -13,12 +13,12 @@ type HomeHeroProps = {
 };
 
 const profileRoles = [
-  "Tongji BS · 2019–2023",
-  "ZJU MSc · 2023–2026",
-  "Ant Group Engineer · 2026–",
-  "Aliyun Intern · 2025",
-  "SAP Intern · 2024",
-  "NIO Intern · 2022",
+  "Ant Group Engineer",
+  "Zhejiang University MSc",
+  "Aliyun Intern",
+  "SAP Intern",
+  "Tongji University BS",
+  "NIO Intern",
   "Badminton Enthusiast",
   "Stephen Curry Fan",
   "AI Enthusiast",
