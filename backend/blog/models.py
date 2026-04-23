@@ -688,6 +688,31 @@ class WishItem(TimeStampedModel):
         return f"{self.emoji} {self.title}"
 
 
+class Book(TimeStampedModel):
+    class Status(models.TextChoices):
+        READING = "reading", "正在读"
+        FINISHED = "finished", "已读"
+
+    title = models.CharField(max_length=200)
+    author = models.CharField(max_length=200, blank=True)
+    cover = models.URLField(max_length=500, blank=True)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.FINISHED)
+    progress = models.PositiveSmallIntegerField(default=0, help_text="正在读时的进度 0-100")
+    rating = models.PositiveSmallIntegerField(null=True, blank=True, help_text="1-5 云朵评分")
+    tags = models.JSONField(default=list, blank=True)
+    review = models.TextField(blank=True, help_text="一句话感想（可选）")
+    sort_order = models.PositiveIntegerField(default=0, db_index=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["sort_order", "-updated_at"]
+        verbose_name = "书架"
+        verbose_name_plural = "书架"
+
+    def __str__(self) -> str:
+        return f"《{self.title}》 - {self.author}" if self.author else f"《{self.title}》"
+
+
 class KnowledgeNode(TimeStampedModel):
     class Category(models.TextChoices):
         ENTITY = "entity", "实体"

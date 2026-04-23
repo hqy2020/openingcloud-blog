@@ -8,6 +8,7 @@ from rest_framework import serializers
 
 from .models import (
     BarrageComment,
+    Book,
     GithubProject,
     HighlightItem,
     HighlightStage,
@@ -612,6 +613,7 @@ class HomeAggregateSerializer(serializers.Serializer):
     radar_charts = RadarConfigPublicSerializer(many=True, required=False)
     section_quotes = serializers.DictField(child=SectionQuoteSerializer(), required=False)
     wishes = serializers.ListField(child=serializers.DictField(), required=False)
+    books = serializers.ListField(child=serializers.DictField(), required=False)
 
 
 class WishItemSerializer(serializers.ModelSerializer):
@@ -624,6 +626,44 @@ class WishItemAdminSerializer(serializers.ModelSerializer):
     class Meta:
         model = WishItem
         fields = ["id", "emoji", "title", "description", "price", "priority", "sort_order", "is_active", "created_at", "updated_at"]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class BookSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Book
+        fields = [
+            "id",
+            "title",
+            "author",
+            "cover",
+            "status",
+            "progress",
+            "rating",
+            "tags",
+            "review",
+            "sort_order",
+        ]
+
+
+class BookAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Book
+        fields = [
+            "id",
+            "title",
+            "author",
+            "cover",
+            "status",
+            "progress",
+            "rating",
+            "tags",
+            "review",
+            "sort_order",
+            "is_active",
+            "created_at",
+            "updated_at",
+        ]
         read_only_fields = ["id", "created_at", "updated_at"]
 
 

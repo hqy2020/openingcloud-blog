@@ -18,6 +18,7 @@ import { RecommendedPostsSection } from "../components/revamp/home/RecommendedPo
 import { SocialMarquee } from "../components/revamp/home/SocialMarquee";
 import { TimeAreaSection } from "../components/revamp/home/TimeAreaSection";
 import { DreamSection } from "../components/revamp/home/DreamSection";
+import { BookshelfSection } from "../components/revamp/home/BookshelfSection";
 import { SectionCard } from "../components/revamp/shared/SectionCard";
 import { SectionTitleCard } from "../components/revamp/shared/SectionTitleCard";
 import { SectionQuoteHighlight } from "../components/revamp/shared/SectionQuoteHighlight";
@@ -260,6 +261,7 @@ export function HomePage() {
                 <DualRadarSection radarData={payload.radar_charts} />
                 <PhotoWallSection photos={photoWallItems} />
                 <DreamSection wishes={payload.wishes ?? []} />
+                <BookshelfSection books={payload.books ?? []} />
               </div>
             </div>
           </div>

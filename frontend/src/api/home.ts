@@ -168,6 +168,19 @@ export type WishItem = {
   sort_order: number;
 };
 
+export type BookItem = {
+  id: number;
+  title: string;
+  author: string;
+  cover: string;
+  status: "reading" | "finished";
+  progress: number;
+  rating: number | null;
+  tags: string[];
+  review: string;
+  sort_order: number;
+};
+
 export type HomePayload = {
   hero: {
     title: string;
@@ -219,6 +232,7 @@ export type HomePayload = {
   radar_charts?: RadarChartConfig[];
   section_quotes?: Record<string, SectionQuoteItem>;
   wishes?: WishItem[];
+  books?: BookItem[];
 };
 
 export async function fetchHome() {

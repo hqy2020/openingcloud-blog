@@ -22,6 +22,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import (
     BarrageComment,
+    Book,
     GithubProject,
     HighlightItem,
     HighlightStage,
@@ -75,6 +76,8 @@ from .serializers import (
     TravelProvinceSerializer,
     WishItemSerializer,
     WishItemAdminSerializer,
+    BookSerializer,
+    BookAdminSerializer,
 )
 from sync.service import reconcile_obsidian_publications, sync_post_payload
 
@@ -1419,6 +1422,7 @@ def _home_payload(*, show_real_name: bool = False) -> dict:
         "radar_charts": _radar_charts_payload(),
         "section_quotes": _home_section_quotes_payload(),
         "wishes": WishItemSerializer(WishItem.objects.filter(is_active=True), many=True).data,
+        "books": BookSerializer(Book.objects.filter(is_active=True), many=True).data,
     }
 
 
@@ -1591,3 +1595,14 @@ class AdminWishItemDetailView(AdminDetailView):
     serializer_class = WishItemAdminSerializer
     queryset = WishItem.objects.all()
     pk_url_kwarg = "wish_id"
+
+
+class AdminBookListCreateView(AdminListCreateView):
+    serializer_class = BookAdminSerializer
+    queryset = Book.objects.all()
+
+
+class AdminBookDetailView(AdminDetailView):
+    serializer_class = BookAdminSerializer
+    queryset = Book.objects.all()
+    pk_url_kwarg = "book_id"

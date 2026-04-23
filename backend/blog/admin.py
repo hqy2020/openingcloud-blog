@@ -37,6 +37,7 @@ from .models import (
     TimelineNode,
     TravelPlace,
     WishItem,
+    Book,
 )
 
 
@@ -739,3 +740,17 @@ class WishItemAdmin(SortableAdminMixin, admin.ModelAdmin):
     list_editable = ["sort_order", "is_active"]
     list_filter = ["priority", "is_active"]
     search_fields = ["title", "description"]
+
+
+@admin.register(Book)
+class BookAdmin(SortableAdminMixin, admin.ModelAdmin):
+    list_display = ["title", "author", "status", "progress", "rating", "sort_order", "is_active", "updated_at"]
+    list_editable = ["sort_order", "is_active", "status"]
+    list_filter = ["status", "is_active"]
+    search_fields = ["title", "author", "review"]
+    fieldsets = (
+        ("基本信息", {"fields": ("title", "author", "cover")}),
+        ("阅读状态", {"fields": ("status", "progress", "rating")}),
+        ("元数据", {"fields": ("tags", "review")}),
+        ("展示控制", {"fields": ("sort_order", "is_active")}),
+    )
