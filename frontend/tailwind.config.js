@@ -5,6 +5,18 @@ export default {
   theme: {
     extend: {
       colors: {
+        theme: {
+          bg: "rgb(var(--theme-bg) / <alpha-value>)",
+          surface: "rgb(var(--theme-surface) / <alpha-value>)",
+          "surface-raised": "rgb(var(--theme-surface-raised) / <alpha-value>)",
+          accent: "rgb(var(--theme-accent) / <alpha-value>)",
+          "accent-soft": "rgb(var(--theme-accent-soft) / <alpha-value>)",
+          ink: "rgb(var(--theme-ink) / <alpha-value>)",
+          muted: "rgb(var(--theme-muted) / <alpha-value>)",
+          soft: "rgb(var(--theme-soft) / <alpha-value>)",
+          line: "rgb(var(--theme-line) / <alpha-value>)",
+          "line-strong": "rgb(var(--theme-line-strong) / <alpha-value>)",
+        },
         claude: {
           parchment: "#f5f4ed",
           ivory: "#faf9f5",
@@ -41,6 +53,9 @@ export default {
         },
       },
       fontFamily: {
+        "theme-display": ["var(--theme-font-display)"],
+        "theme-body": ["var(--theme-font-body)"],
+        "theme-sans": ["var(--theme-font-sans)"],
         serif: [
           '"Source Serif 4"',
           '"Source Serif Pro"',

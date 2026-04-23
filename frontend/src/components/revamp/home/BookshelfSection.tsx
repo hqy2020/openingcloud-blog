@@ -48,7 +48,7 @@ function BookCover({ book, className }: { book: BookItem; className?: string }) 
       <div
         className={`flex h-full w-full items-center justify-center rounded-md bg-gradient-to-br from-claude-parchment to-claude-terracotta/20 p-2 ${className ?? ""}`}
       >
-        <span className="text-center font-serif text-[11px] leading-tight text-claude-near-black/70">
+        <span className="text-center font-theme-display text-[11px] leading-tight text-theme-ink/70">
           {book.title}
         </span>
       </div>
@@ -76,12 +76,12 @@ function ReadingCard({ book }: { book: BookItem }) {
       whileHover={{ y: -5, boxShadow: "0 18px 38px rgba(201,100,66,0.18)" }}
       transition={hoverSpring}
       style={{ perspective: "900px" }}
-      className="group relative overflow-hidden rounded-claude-lg border border-claude-border-cream bg-gradient-to-br from-claude-parchment via-claude-ivory to-claude-ivory p-6 shadow-whisper"
+      className="group relative overflow-hidden rounded-[var(--theme-radius)] border border-theme-line bg-gradient-to-br from-claude-parchment via-claude-ivory to-claude-ivory p-6 shadow-whisper"
     >
       {!prefersReducedMotion ? (
         <motion.div
           aria-hidden="true"
-          className="pointer-events-none absolute -left-8 -bottom-10 h-40 w-40 rounded-full bg-claude-terracotta/15 blur-3xl"
+          className="pointer-events-none absolute -left-8 -bottom-10 h-40 w-40 rounded-full bg-theme-accent/15 blur-3xl"
           animate={{ opacity: [0.35, 0.6, 0.35], scale: [1, 1.08, 1] }}
           transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
         />
@@ -104,21 +104,21 @@ function ReadingCard({ book }: { book: BookItem }) {
         </motion.div>
 
         <div className="flex min-w-0 flex-1 flex-col justify-center">
-          <div className="mb-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-claude-terracotta/10 px-3 py-1 font-sans text-[11px] font-medium uppercase tracking-[0.16em] text-claude-terracotta">
+          <div className="mb-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-theme-accent/10 px-3 py-1 font-theme-sans text-[11px] font-medium uppercase tracking-[0.16em] text-theme-accent">
             <BookOpenIcon className="h-3 w-3" />
             正在读
           </div>
-          <h3 className="font-serif text-xl font-medium leading-tight text-claude-near-black">
+          <h3 className="font-theme-display text-xl font-medium leading-tight text-theme-ink">
             {book.title}
           </h3>
           {book.author ? (
-            <p className="mt-1 font-sans text-xs text-claude-stone-gray">{book.author}</p>
+            <p className="mt-1 font-theme-sans text-xs text-theme-soft">{book.author}</p>
           ) : null}
 
           <div className="mt-4">
-            <div className="relative h-2 w-full overflow-hidden rounded-full bg-claude-parchment">
+            <div className="relative h-2 w-full overflow-hidden rounded-full bg-theme-surface">
               <motion.div
-                className="h-full rounded-full bg-claude-terracotta"
+                className="h-full rounded-full bg-theme-accent"
                 initial={prefersReducedMotion ? false : { width: 0 }}
                 whileInView={prefersReducedMotion ? undefined : { width: `${progress}%` }}
                 viewport={{ once: true, amount: 0.3 }}
@@ -126,14 +126,14 @@ function ReadingCard({ book }: { book: BookItem }) {
                 style={prefersReducedMotion ? { width: `${progress}%` } : undefined}
               />
             </div>
-            <div className="mt-1.5 flex justify-between font-sans text-[10px] text-claude-stone-gray">
+            <div className="mt-1.5 flex justify-between font-theme-sans text-[10px] text-theme-soft">
               <span>进度</span>
-              <span className="font-medium text-claude-terracotta">{progress}%</span>
+              <span className="font-medium text-theme-accent">{progress}%</span>
             </div>
           </div>
 
           {book.review ? (
-            <p className="mt-4 border-l-2 border-claude-terracotta/40 pl-3 font-serif text-[13px] italic leading-[1.55] text-claude-olive-gray">
+            <p className="mt-4 border-l-2 border-theme-accent/40 pl-3 font-theme-display text-[13px] italic leading-[1.55] text-theme-muted">
               「{book.review}」
             </p>
           ) : null}
@@ -152,7 +152,7 @@ function FinishedCard({ book }: { book: BookItem }) {
       whileHover={{ y: -4, scale: 1.02, boxShadow: "0 14px 28px rgba(0,0,0,0.08)" }}
       transition={hoverSpring}
       style={{ perspective: "700px" }}
-      className="group flex flex-col rounded-claude-lg border border-claude-border-cream bg-claude-ivory p-4 shadow-whisper"
+      className="group flex flex-col rounded-[var(--theme-radius)] border border-theme-line bg-theme-bg p-4 shadow-whisper"
     >
       <div className="flex gap-3">
         <motion.div
@@ -163,11 +163,11 @@ function FinishedCard({ book }: { book: BookItem }) {
           <BookCover book={book} />
         </motion.div>
         <div className="flex min-w-0 flex-1 flex-col">
-          <h4 className="line-clamp-2 font-serif text-sm font-medium leading-tight text-claude-near-black">
+          <h4 className="line-clamp-2 font-theme-display text-sm font-medium leading-tight text-theme-ink">
             {book.title}
           </h4>
           {book.author ? (
-            <p className="mt-1 font-sans text-[11px] text-claude-stone-gray">{book.author}</p>
+            <p className="mt-1 font-theme-sans text-[11px] text-theme-soft">{book.author}</p>
           ) : null}
 
           {rating > 0 ? (
@@ -190,7 +190,7 @@ function FinishedCard({ book }: { book: BookItem }) {
           {book.tags.map((tag) => (
             <span
               key={tag}
-              className="rounded border border-claude-border-cream bg-claude-parchment px-2 py-0.5 font-sans text-[10px] text-claude-olive-gray"
+              className="rounded border border-theme-line bg-theme-surface px-2 py-0.5 font-theme-sans text-[10px] text-theme-muted"
             >
               {tag}
             </span>

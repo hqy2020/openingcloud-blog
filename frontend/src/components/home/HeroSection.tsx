@@ -245,7 +245,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
         ) : null}
       </div>
 
-      <HeroAtmosphereCanvas mobile={mobile} reducedMotion={reducedMotion} themeMode={theme} />
+      <HeroAtmosphereCanvas mobile={mobile} reducedMotion={reducedMotion} themeMode="light" />
 
       <motion.div
         className={`pointer-events-none absolute -top-32 left-1/2 h-[42rem] w-[42rem] -translate-x-1/2 rounded-full blur-3xl ${

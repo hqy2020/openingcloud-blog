@@ -24,6 +24,7 @@ import { SectionTitleCard } from "../components/revamp/shared/SectionTitleCard";
 import { SectionQuoteHighlight } from "../components/revamp/shared/SectionQuoteHighlight";
 import { SectionParallaxTransition } from "../components/motion/SectionParallaxTransition";
 import { Dock, DockIcon } from "../components/ui/MagicUIDock";
+import { ThemeDockSwitcher } from "../components/ui/ThemeDockSwitcher";
 import { useAsync } from "../hooks/useAsync";
 import { fallbackHomePayload } from "../data/fallback";
 import { siteUrl } from "../lib/site";
@@ -296,6 +297,7 @@ export function HomePage() {
         <DockIcon label="GitHub" href="https://github.com/hqy2020/openingcloud-blog" external>
           <GithubDockIcon />
         </DockIcon>
+        <ThemeDockSwitcher />
       </Dock>
 
       <Confetti

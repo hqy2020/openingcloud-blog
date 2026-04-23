@@ -4,12 +4,13 @@ import { useRef } from "react";
 type SectionTitleCardProps = {
   category: string;
   title: string;
-  accentColor: string;
+  /** Ignored — kept for backwards compatibility; the theme's accent is used instead. */
+  accentColor?: string;
   tagline?: string;
   meta?: string;
 };
 
-export function SectionTitleCard({ category, title, accentColor, tagline, meta }: SectionTitleCardProps) {
+export function SectionTitleCard({ category, title, tagline, meta }: SectionTitleCardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-40px" });
   const prefersReducedMotion = useReducedMotion();
@@ -23,12 +24,11 @@ export function SectionTitleCard({ category, title, accentColor, tagline, meta }
       initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
       animate={shouldAnimate ? { opacity: 1, y: 0 } : undefined}
       transition={{ duration: 0.5, ease }}
-      className="mb-5 flex w-full items-start gap-5 rounded-claude-lg border border-claude-border-cream bg-claude-ivory px-6 py-7 shadow-whisper sm:px-8 sm:py-8"
+      className="mb-5 flex w-full items-start gap-5 rounded-[var(--theme-radius)] border border-theme-line bg-theme-surface px-6 py-7 shadow-[var(--theme-shadow-whisper)] sm:px-8 sm:py-8"
     >
       <motion.div
         aria-hidden="true"
-        className="mt-1 h-14 w-[3px] flex-shrink-0 origin-top rounded-full sm:h-16"
-        style={{ background: accentColor }}
+        className="mt-1 h-14 w-[3px] flex-shrink-0 origin-top rounded-full bg-theme-accent sm:h-16"
         initial={prefersReducedMotion ? false : { scaleY: 0 }}
         animate={shouldAnimate ? { scaleY: 1 } : undefined}
         transition={{ duration: 0.6, ease, delay: 0.05 }}
@@ -37,7 +37,7 @@ export function SectionTitleCard({ category, title, accentColor, tagline, meta }
       <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
         <div className="min-w-0 shrink-0">
           <motion.span
-            className="block font-sans text-[10px] font-medium uppercase tracking-[0.5em] text-claude-stone-gray"
+            className="block font-theme-sans text-[10px] font-medium uppercase tracking-[0.5em] text-theme-soft"
             initial={prefersReducedMotion ? false : { opacity: 0, x: -8 }}
             animate={shouldAnimate ? { opacity: 1, x: 0 } : undefined}
             transition={{ duration: 0.5, ease, delay: 0.15 }}
@@ -45,8 +45,7 @@ export function SectionTitleCard({ category, title, accentColor, tagline, meta }
             {category}
           </motion.span>
           <motion.h2
-            className="mt-2 font-serif text-3xl font-medium leading-[1.1] tracking-normal sm:text-4xl"
-            style={{ color: accentColor }}
+            className="mt-2 font-theme-display text-3xl font-medium leading-[1.1] tracking-normal text-theme-accent sm:text-4xl"
             initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
             animate={shouldAnimate ? { opacity: 1, y: 0 } : undefined}
             transition={{ duration: 0.55, ease, delay: 0.22 }}
@@ -55,7 +54,7 @@ export function SectionTitleCard({ category, title, accentColor, tagline, meta }
           </motion.h2>
           {meta ? (
             <motion.span
-              className="mt-2 block font-sans text-xs font-normal text-claude-stone-gray"
+              className="mt-2 block font-theme-sans text-xs font-normal text-theme-soft"
               initial={prefersReducedMotion ? false : { opacity: 0 }}
               animate={shouldAnimate ? { opacity: 1 } : undefined}
               transition={{ duration: 0.5, ease, delay: 0.32 }}
@@ -67,7 +66,7 @@ export function SectionTitleCard({ category, title, accentColor, tagline, meta }
 
         {tagline ? (
           <motion.p
-            className="max-w-md font-serif text-[15px] leading-[1.6] text-claude-olive-gray sm:text-right"
+            className="max-w-md font-theme-body text-[15px] leading-[1.6] text-theme-muted sm:text-right"
             initial={prefersReducedMotion ? false : { opacity: 0 }}
             animate={shouldAnimate ? { opacity: 1 } : undefined}
             transition={{ duration: 0.6, ease, delay: 0.35 }}

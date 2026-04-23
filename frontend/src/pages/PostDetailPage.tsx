@@ -400,8 +400,8 @@ export function PostDetailPage() {
             {...props}
             id={id}
             className={cn(
-              "mt-12 scroll-mt-24 font-serif text-3xl font-medium leading-[1.2] tracking-normal text-claude-near-black",
-              activeHeadingId === id && "text-claude-terracotta",
+              "mt-12 scroll-mt-24 font-theme-display text-3xl font-medium leading-[1.2] tracking-normal text-theme-ink",
+              activeHeadingId === id && "text-theme-accent",
             )}
           >
             {children}
@@ -416,8 +416,8 @@ export function PostDetailPage() {
             {...props}
             id={id}
             className={cn(
-              "mt-8 scroll-mt-24 font-serif text-2xl font-medium leading-[1.2] tracking-normal text-claude-near-black",
-              activeHeadingId === id && "text-claude-terracotta",
+              "mt-8 scroll-mt-24 font-theme-display text-2xl font-medium leading-[1.2] tracking-normal text-theme-ink",
+              activeHeadingId === id && "text-theme-accent",
             )}
           >
             {children}
@@ -425,7 +425,7 @@ export function PostDetailPage() {
         );
       },
       p: ({ children, ...props }: HTMLAttributes<HTMLParagraphElement>) => (
-        <p {...props} className="mt-5 font-serif text-[17px] leading-[1.7] text-claude-charcoal-warm">
+        <p {...props} className="mt-5 font-theme-display text-[17px] leading-[1.7] text-theme-ink">
           {children}
         </p>
       ),
@@ -440,7 +440,7 @@ export function PostDetailPage() {
             href={link || undefined}
             target={isExternal ? "_blank" : undefined}
             rel={isExternal ? "noopener noreferrer nofollow" : undefined}
-            className="font-medium text-claude-terracotta underline underline-offset-4 transition hover:text-claude-terracotta"
+            className="font-medium text-theme-accent underline underline-offset-4 transition hover:text-theme-accent"
             onClick={(event) => {
               if (!isHash) {
                 return;
@@ -506,7 +506,7 @@ export function PostDetailPage() {
       blockquote: ({ children, ...props }: HTMLAttributes<HTMLQuoteElement>) => (
         <blockquote
           {...props}
-          className="mt-5 rounded-r-lg border-l-4 border-claude-terracotta/40 bg-claude-warm-sand/60 px-4 py-3 text-slate-700"
+          className="mt-5 rounded-r-lg border-l-4 border-theme-accent/40 bg-theme-surface px-4 py-3 text-slate-700"
         >
           {children}
         </blockquote>
@@ -619,8 +619,8 @@ export function PostDetailPage() {
           <time className="ml-auto text-xs text-slate-500">{formatDate(data.updated_at)}</time>
         </div>
 
-        <h1 className="font-serif text-4xl font-medium leading-[1.1] tracking-normal text-claude-near-black md:text-[52px]">{data.title}</h1>
-        {data.excerpt ? <p className="max-w-4xl font-serif text-base italic leading-[1.6] text-claude-olive-gray md:text-lg">{data.excerpt}</p> : null}
+        <h1 className="font-theme-display text-4xl font-medium leading-[1.1] tracking-normal text-theme-ink md:text-[52px]">{data.title}</h1>
+        {data.excerpt ? <p className="max-w-4xl font-theme-display text-base italic leading-[1.6] text-theme-muted md:text-lg">{data.excerpt}</p> : null}
       </header>
 
       {detailCover ? (
@@ -657,7 +657,7 @@ export function PostDetailPage() {
           </div>
 
           <section className="border-t border-slate-200/80 p-6 md:p-8">
-            <h2 className="font-serif text-2xl font-medium leading-[1.2] tracking-normal text-claude-near-black">继续阅读</h2>
+            <h2 className="font-theme-display text-2xl font-medium leading-[1.2] tracking-normal text-theme-ink">继续阅读</h2>
 
             {loadingRelated ? <p className="mt-4 text-sm text-slate-500">加载相关文章中...</p> : null}
 
@@ -710,7 +710,7 @@ export function PostDetailPage() {
                         className={cn(
                           "w-full rounded-md px-2 py-1 text-left transition",
                           activeHeadingId === item.id
-                            ? "bg-claude-warm-sand font-medium text-claude-terracotta"
+                            ? "bg-claude-warm-sand font-medium text-theme-accent"
                             : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
                         )}
                       >
@@ -771,7 +771,7 @@ export function PostDetailPage() {
                 "block w-full rounded-md px-2 py-1 text-left transition",
                 item.level === 3 && "pl-5",
                 activeHeadingId === item.id
-                  ? "bg-claude-warm-sand font-medium text-claude-terracotta"
+                  ? "bg-claude-warm-sand font-medium text-theme-accent"
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
               )}
             >

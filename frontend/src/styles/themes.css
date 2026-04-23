@@ -1,0 +1,76 @@
+/* Theme tokens — semantic CSS variables consumed by Tailwind via `theme-*` classes.
+ * Switching themes = update [data-theme] on <html>. localStorage persists choice. */
+
+:root,
+:root[data-theme="claude"] {
+  --theme-bg: 250 249 245;            /* #faf9f5 Claude ivory */
+  --theme-surface: 245 244 237;       /* #f5f4ed parchment */
+  --theme-surface-raised: 255 254 249;
+  --theme-accent: 201 100 66;         /* #c96442 terracotta */
+  --theme-accent-soft: 217 119 87;    /* #d97757 coral */
+  --theme-ink: 20 20 19;              /* #141413 near-black */
+  --theme-muted: 111 110 102;         /* #6f6e66 olive */
+  --theme-soft: 135 134 127;          /* #87867f stone */
+  --theme-line: 228 223 201;          /* #e4dfc9 warm cream */
+  --theme-line-strong: 209 207 197;
+
+  --theme-font-display: "Source Serif 4", "Source Serif Pro", Georgia, "LXGW WenKai", "Kaiti SC", serif;
+  --theme-font-body: "Source Serif 4", "Source Serif Pro", Georgia, "LXGW WenKai", "PingFang SC", serif;
+  --theme-font-sans: "Inter", system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
+
+  --theme-radius: 16px;
+  --theme-shadow-whisper: 0 4px 24px rgba(0, 0, 0, 0.05);
+  --theme-shadow-lifted: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+
+:root[data-theme="apple"] {
+  --theme-bg: 255 255 255;            /* pure white */
+  --theme-surface: 245 245 247;       /* #f5f5f7 Apple cool light gray */
+  --theme-surface-raised: 255 255 255;
+  --theme-accent: 0 113 227;          /* #0071E3 Apple blue */
+  --theme-accent-soft: 0 102 204;
+  --theme-ink: 29 29 31;              /* #1d1d1f Apple near-black */
+  --theme-muted: 110 110 115;         /* Apple secondary */
+  --theme-soft: 134 134 139;          /* #86868b Apple tertiary */
+  --theme-line: 210 210 215;          /* #d2d2d7 hairline */
+  --theme-line-strong: 166 166 172;
+
+  --theme-font-display:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro", "Helvetica Neue", Helvetica,
+    "PingFang SC", "Hiragino Sans GB", sans-serif;
+  --theme-font-body:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", "Helvetica Neue", Helvetica,
+    "PingFang SC", sans-serif;
+  --theme-font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "PingFang SC", sans-serif;
+
+  --theme-radius: 14px;
+  --theme-shadow-whisper: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --theme-shadow-lifted: 0 12px 36px rgba(0, 0, 0, 0.12);
+}
+
+:root[data-theme="notion"] {
+  --theme-bg: 255 255 255;            /* white */
+  --theme-surface: 247 246 243;       /* #f7f6f3 Notion warm off-white */
+  --theme-surface-raised: 255 255 255;
+  --theme-accent: 35 131 226;         /* #2383E2 Notion link blue */
+  --theme-accent-soft: 11 110 204;
+  --theme-ink: 55 53 47;              /* #37352F Notion warm black */
+  --theme-muted: 122 118 110;         /* Notion text/medium */
+  --theme-soft: 155 154 151;          /* #9B9A97 Notion quiet */
+  --theme-line: 233 233 231;          /* #E9E9E7 hairline */
+  --theme-line-strong: 207 206 201;
+
+  --theme-font-display:
+    ui-serif, "Lyon", "Charter", "Times New Roman", Georgia, "Source Serif 4", "LXGW WenKai",
+    serif;
+  --theme-font-body:
+    "Inter", ui-sans-serif, system-ui, "Segoe UI", "Helvetica Neue", Helvetica,
+    "PingFang SC", "Hiragino Sans GB", sans-serif;
+  --theme-font-sans:
+    "Inter", ui-sans-serif, system-ui, "Helvetica Neue", "PingFang SC", sans-serif;
+
+  --theme-radius: 6px;
+  --theme-shadow-whisper: 0 1px 2px rgba(15, 15, 15, 0.05), 0 3px 6px rgba(15, 15, 15, 0.04);
+  --theme-shadow-lifted: 0 4px 12px rgba(15, 15, 15, 0.08);
+}
