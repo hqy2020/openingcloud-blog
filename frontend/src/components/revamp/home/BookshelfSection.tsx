@@ -11,16 +11,16 @@ const containerVariants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: { staggerChildren: 0.1 },
+    transition: { staggerChildren: 0.14, delayChildren: 0.08 },
   },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 18 },
-  show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 140, damping: 20 } },
+  hidden: { opacity: 0, y: 24 },
+  show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 130, damping: 18 } },
 };
 
-const hoverSpring = { type: "spring" as const, stiffness: 200, damping: 20 };
+const hoverSpring = { type: "spring" as const, stiffness: 220, damping: 22 };
 
 function BookOpenIcon({ className = "" }: { className?: string }) {
   return (
@@ -68,14 +68,25 @@ function BookCover({ book, className }: { book: BookItem; className?: string }) 
 }
 
 function ReadingCard({ book }: { book: BookItem }) {
+  const prefersReducedMotion = useReducedMotion();
   const progress = book.progress ?? 0;
   return (
     <motion.article
       variants={itemVariants}
-      whileHover={{ y: -4 }}
+      whileHover={{ y: -5, boxShadow: "0 18px 38px rgba(201,100,66,0.18)" }}
       transition={hoverSpring}
-      className="group relative overflow-hidden rounded-claude-lg border border-claude-border-cream bg-gradient-to-br from-claude-parchment to-claude-ivory p-6 shadow-whisper"
+      style={{ perspective: "900px" }}
+      className="group relative overflow-hidden rounded-claude-lg border border-claude-border-cream bg-gradient-to-br from-claude-parchment via-claude-ivory to-claude-ivory p-6 shadow-whisper"
     >
+      {!prefersReducedMotion ? (
+        <motion.div
+          aria-hidden="true"
+          className="pointer-events-none absolute -left-8 -bottom-10 h-40 w-40 rounded-full bg-claude-terracotta/15 blur-3xl"
+          animate={{ opacity: [0.35, 0.6, 0.35], scale: [1, 1.08, 1] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+        />
+      ) : null}
+
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -right-6 -top-8 select-none text-8xl opacity-10 blur-[1px]"
@@ -84,9 +95,13 @@ function ReadingCard({ book }: { book: BookItem }) {
       </div>
 
       <div className="relative z-10 flex gap-5">
-        <div className="h-40 w-28 flex-shrink-0 overflow-hidden rounded shadow-md transition-transform duration-300 group-hover:scale-[1.04]">
+        <motion.div
+          className="h-40 w-28 flex-shrink-0 overflow-hidden rounded shadow-md"
+          whileHover={prefersReducedMotion ? undefined : { rotateY: 6, rotateX: -2, scale: 1.06 }}
+          transition={hoverSpring}
+        >
           <BookCover book={book} />
-        </div>
+        </motion.div>
 
         <div className="flex min-w-0 flex-1 flex-col justify-center">
           <div className="mb-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-claude-terracotta/10 px-3 py-1 font-sans text-[11px] font-medium uppercase tracking-[0.16em] text-claude-terracotta">
@@ -102,9 +117,13 @@ function ReadingCard({ book }: { book: BookItem }) {
 
           <div className="mt-4">
             <div className="relative h-2 w-full overflow-hidden rounded-full bg-claude-parchment">
-              <div
-                className="h-full rounded-full bg-claude-terracotta transition-[width] duration-500"
-                style={{ width: `${progress}%` }}
+              <motion.div
+                className="h-full rounded-full bg-claude-terracotta"
+                initial={prefersReducedMotion ? false : { width: 0 }}
+                whileInView={prefersReducedMotion ? undefined : { width: `${progress}%` }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 1.1, ease: [0.22, 0.9, 0.3, 1], delay: 0.2 }}
+                style={prefersReducedMotion ? { width: `${progress}%` } : undefined}
               />
             </div>
             <div className="mt-1.5 flex justify-between font-sans text-[10px] text-claude-stone-gray">
@@ -125,18 +144,24 @@ function ReadingCard({ book }: { book: BookItem }) {
 }
 
 function FinishedCard({ book }: { book: BookItem }) {
+  const prefersReducedMotion = useReducedMotion();
   const rating = book.rating ?? 0;
   return (
     <motion.article
       variants={itemVariants}
-      whileHover={{ y: -4, scale: 1.015 }}
+      whileHover={{ y: -4, scale: 1.02, boxShadow: "0 14px 28px rgba(0,0,0,0.08)" }}
       transition={hoverSpring}
-      className="flex flex-col rounded-claude-lg border border-claude-border-cream bg-claude-ivory p-4 shadow-whisper"
+      style={{ perspective: "700px" }}
+      className="group flex flex-col rounded-claude-lg border border-claude-border-cream bg-claude-ivory p-4 shadow-whisper"
     >
       <div className="flex gap-3">
-        <div className="h-24 w-16 flex-shrink-0 overflow-hidden rounded shadow-sm">
+        <motion.div
+          className="h-24 w-16 flex-shrink-0 overflow-hidden rounded shadow-sm"
+          whileHover={prefersReducedMotion ? undefined : { rotateY: 8, scale: 1.08 }}
+          transition={hoverSpring}
+        >
           <BookCover book={book} />
-        </div>
+        </motion.div>
         <div className="flex min-w-0 flex-1 flex-col">
           <h4 className="line-clamp-2 font-serif text-sm font-medium leading-tight text-claude-near-black">
             {book.title}
