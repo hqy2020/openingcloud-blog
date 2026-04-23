@@ -13,9 +13,9 @@ type HomeHeroProps = {
 };
 
 const profileRoles = [
-  "Tongji BS · Class of 2023",
-  "ZJU MSc · Class of 2026",
-  "Ant Group Engineer · Incoming 2026",
+  "Tongji BS · 2019–2023",
+  "ZJU MSc · 2023–2026",
+  "Ant Group Engineer · 2026–",
   "Aliyun Intern · 2025",
   "SAP Intern · 2024",
   "NIO Intern · 2022",
