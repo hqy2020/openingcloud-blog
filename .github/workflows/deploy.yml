@@ -229,6 +229,7 @@ jobs:
 
           # Full path: backend or infra changed
           echo "=== Full path: backend/infra deploy ==="
+          # 主 rsync：不带 frontend/dist（由 frontend-build 的 artifact 单独传）
           retry 3 timeout --signal=TERM --kill-after=10s 180 \
           rsync -az --delete --timeout=30 \
             -e "ssh ${SSH_OPTS[*]}" \
@@ -237,10 +238,22 @@ jobs:
             --exclude "data/" \
             --exclude "certbot/conf" \
             --exclude "certbot/www" \
+            --exclude "frontend/dist" \
             --exclude "backend/db.sqlite3" \
             --exclude "*.sqlite3" \
             --exclude "*.sqlite3-*" \
             ./ "${ECS_USER}@${ECS_HOST}:/opt/openingclouds-blog/"
+
+          # 仅当本次 frontend-build 跑了（changes.outputs.frontend/infra=true）才同步 dist
+          if [ -d ./frontend/dist ] && [ -f ./frontend/dist/index.html ]; then
+            echo "=== also syncing frontend/dist ==="
+            retry 3 timeout --signal=TERM --kill-after=10s 120 \
+            rsync -az --delete --timeout=30 \
+              -e "ssh ${SSH_OPTS[*]}" \
+              ./frontend/dist/ "${ECS_USER}@${ECS_HOST}:/opt/openingclouds-blog/frontend/dist/"
+          else
+            echo "=== frontend/dist not present in artifact; keeping server copy intact ==="
+          fi
 
           run_remote_deploy() {
             timeout --signal=TERM --kill-after=15s 420 \
