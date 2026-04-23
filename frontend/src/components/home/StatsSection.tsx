@@ -1,4 +1,5 @@
 import type { HomePayload } from "../../api/home";
+import { cn } from "../../lib/utils";
 import { ScrollReveal } from "../motion/ScrollReveal";
 import { StaggerContainer, StaggerItem } from "../motion/StaggerContainer";
 import { CardSpotlight } from "../ui/CardSpotlight";
@@ -60,13 +61,28 @@ export function StatsSection({ stats }: StatsSectionProps) {
       <StaggerContainer className="grid h-full grid-cols-2 gap-4 lg:grid-cols-4" stagger={0.06}>
         {statItems.map((item) => {
           const note = item.note(stats);
+          const valueText = numberFormatter.format(stats[item.key]);
+          const len = valueText.length;
+          const sizeClass =
+            len >= 9
+              ? "text-2xl sm:text-3xl lg:text-4xl"
+              : len >= 7
+                ? "text-3xl sm:text-4xl lg:text-5xl"
+                : len >= 5
+                  ? "text-4xl sm:text-5xl lg:text-6xl"
+                  : "text-5xl sm:text-6xl lg:text-7xl";
           return (
             <StaggerItem key={item.key} className="h-full">
               <CardSpotlight className="flex h-full w-full flex-col items-center justify-center rounded-2xl bg-white/60 p-5 text-center backdrop-blur overflow-hidden">
                 <p className="text-sm font-medium text-slate-400">{item.label}</p>
-                <div className="my-3 w-full flex justify-center">
-                  <TextGif gifUrl={item.gifUrl} size="xxl" weight="bold" className="max-w-full text-5xl sm:text-6xl lg:text-7xl">
-                    {numberFormatter.format(stats[item.key])}
+                <div className="my-3 flex w-full min-w-0 justify-center">
+                  <TextGif
+                    gifUrl={item.gifUrl}
+                    size="xxl"
+                    weight="bold"
+                    className={cn("max-w-full whitespace-nowrap", sizeClass)}
+                  >
+                    {valueText}
                   </TextGif>
                 </div>
                 <p className="text-xs font-medium text-slate-400">{note}</p>

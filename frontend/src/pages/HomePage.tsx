@@ -12,7 +12,6 @@ import { TimelineSection } from "../components/home/TimelineSection";
 import { TravelSection } from "../components/home/TravelSection";
 import { DualRadarSection } from "../components/revamp/home/DualRadarSection";
 import { FeaturedProjectsSection } from "../components/revamp/home/FeaturedProjectsSection";
-import { GameSection } from "../components/revamp/home/GameSection";
 import { HomeHero } from "../components/revamp/home/HomeHero";
 import { RecommendedPostsSection } from "../components/revamp/home/RecommendedPostsSection";
 import { SocialMarquee } from "../components/revamp/home/SocialMarquee";
@@ -263,20 +262,6 @@ export function HomePage() {
       {quotes.after_dream && (
         <SectionParallaxTransition strength={12} fade={false}>
           <SectionQuoteHighlight quote={quotes.after_dream} />
-        </SectionParallaxTransition>
-      )}
-
-      {/* #5 Game - moved to end */}
-      <SectionParallaxTransition strength={18} fade={false}>
-        <SectionCard id="game" fullWidth>
-          <GameSection />
-        </SectionCard>
-      </SectionParallaxTransition>
-
-      {/* #5.5 Quote after game */}
-      {quotes.after_game && (
-        <SectionParallaxTransition strength={12} fade={false}>
-          <SectionQuoteHighlight quote={quotes.after_game} />
         </SectionParallaxTransition>
       )}
 

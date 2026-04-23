@@ -15,7 +15,6 @@ const headerTabs = [
   { to: "/#achievements", label: "高光", nativeAnchor: true },
   { to: "/#projects", label: "代码", nativeAnchor: true },
   { to: "/#life", label: "生活", nativeAnchor: true },
-  { to: "/#game", label: "游戏", nativeAnchor: true },
 ];
 
 const navbarShadow =
