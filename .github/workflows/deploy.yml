@@ -235,6 +235,8 @@ jobs:
             --exclude ".git" \
             --exclude "backend/.venv" \
             --exclude "data/" \
+            --exclude "certbot/conf" \
+            --exclude "certbot/www" \
             --exclude "backend/db.sqlite3" \
             --exclude "*.sqlite3" \
             --exclude "*.sqlite3-*" \
