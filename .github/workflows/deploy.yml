@@ -199,9 +199,7 @@ jobs:
 
             while [ "$n" -le "$attempts" ]; do
               echo "Attempt $n/$attempts: $*"
-              if "$@"; then
-                return 0
-              fi
+              "$@" && return 0
               exit_code=$?
               if [ "$n" -lt "$attempts" ]; then
                 local delay=$((n * 5))
@@ -221,10 +219,10 @@ jobs:
           if [ "$BACKEND_CHANGED" = "false" ] && [ "$FRONTEND_CHANGED" = "true" ]; then
             echo "=== Fast path: frontend-only deploy ==="
             retry 3 timeout --signal=TERM --kill-after=10s 120 \
-            rsync -az --delete --timeout=30 --contimeout=10 \
+            rsync -az --delete --timeout=30 \
               -e "ssh ${SSH_OPTS[*]}" \
               ./frontend/dist/ "${ECS_USER}@${ECS_HOST}:/opt/openingclouds-blog/frontend/dist/"
-            retry 8 curl --fail --silent --show-error --max-time 20 https://blog.oc.slgneon.cn/api/health >/dev/null
+            retry 8 curl --fail --silent --show-error --max-time 20 https://blog.openingclouds.xyz/api/health >/dev/null
             echo "Frontend deploy done."
             exit 0
           fi
@@ -232,7 +230,7 @@ jobs:
           # Full path: backend or infra changed
           echo "=== Full path: backend/infra deploy ==="
           retry 3 timeout --signal=TERM --kill-after=10s 180 \
-          rsync -az --delete --timeout=30 --contimeout=10 \
+          rsync -az --delete --timeout=30 \
             -e "ssh ${SSH_OPTS[*]}" \
             --exclude ".git" \
             --exclude "backend/.venv" \
@@ -268,4 +266,4 @@ jobs:
           }
 
           retry 3 run_remote_deploy
-          retry 8 curl --fail --silent --show-error --max-time 20 https://blog.oc.slgneon.cn/api/health >/dev/null
+          retry 8 curl --fail --silent --show-error --max-time 20 https://blog.openingclouds.xyz/api/health >/dev/null
