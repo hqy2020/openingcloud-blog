@@ -316,16 +316,16 @@ export function TravelSection({ travel }: TravelSectionProps) {
                 name: "当前",
                 type: "effectScatter",
                 coordinateSystem: "geo",
-                rippleEffect: { scale: 7, brushType: "stroke", period: 3.2 },
-                symbolSize: 14,
+                rippleEffect: { scale: 9, brushType: "stroke", period: 1.8 },
+                symbolSize: 18,
                 zlevel: 5,
                 z: 18,
                 itemStyle: {
-                  color: "#f97316",
-                  borderColor: "#fff7ed",
-                  borderWidth: 2,
-                  shadowBlur: 18,
-                  shadowColor: "rgba(249, 115, 22, 0.42)",
+                  color: "#b53333",
+                  borderColor: "#fff1f1",
+                  borderWidth: 3,
+                  shadowBlur: 24,
+                  shadowColor: "rgba(181, 51, 51, 0.6)",
                 },
                 data: [currentPoint],
               },
@@ -333,12 +333,12 @@ export function TravelSection({ travel }: TravelSectionProps) {
                 name: "雷达圈",
                 type: "effectScatter",
                 coordinateSystem: "geo",
-                rippleEffect: { scale: 11, brushType: "stroke", period: 2.8 },
-                symbolSize: 22,
+                rippleEffect: { scale: 14, brushType: "stroke", period: 1.6 },
+                symbolSize: 26,
                 zlevel: 4,
                 z: 16,
                 itemStyle: {
-                  color: "rgba(249,115,22,0.18)",
+                  color: "rgba(181, 51, 51, 0.22)",
                 },
                 silent: true,
                 tooltip: { show: false },
@@ -390,15 +390,24 @@ export function TravelSection({ travel }: TravelSectionProps) {
                     <CardSpotlight className="rounded-xl bg-slate-50/85 p-4">
                       <h3 className="font-medium text-slate-900">{province.province}</h3>
                       <p className="mt-1 text-sm text-slate-600">
-                        {province.cities
-                          .map((city) => {
-                            const isCurrent =
-                              currentResidence &&
-                              city.city === currentResidence.city &&
-                              province.province === currentResidence.province;
-                            return isCurrent ? `${city.city}(当前)` : city.city;
-                          })
-                          .join("、")}
+                        {province.cities.map((city, idx) => {
+                          const isCurrent =
+                            currentResidence &&
+                            city.city === currentResidence.city &&
+                            province.province === currentResidence.province;
+                          return (
+                            <span key={city.city}>
+                              {idx > 0 ? "、" : ""}
+                              {isCurrent ? (
+                                <span className="font-bold text-claude-error-crimson animate-pulse">
+                                  {city.city}（当前）
+                                </span>
+                              ) : (
+                                city.city
+                              )}
+                            </span>
+                          );
+                        })}
                       </p>
                     </CardSpotlight>
                   </StaggerItem>
