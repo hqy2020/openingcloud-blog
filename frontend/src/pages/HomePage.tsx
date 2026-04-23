@@ -5,6 +5,7 @@ import { fetchHome, fetchHomeLikeStatus, toggleHomeLike } from "../api/home";
 import type { ConfettiRef } from "../components/ui/Confetti";
 import { Confetti } from "../components/ui/Confetti";
 import { getConfettiOriginFromElement } from "../lib/confetti";
+import { KnowledgeGraphSection } from "../components/home/KnowledgeGraphSection";
 import { PhotoWallSection } from "../components/home/PhotoWallSection";
 import { SocialGraphSection } from "../components/home/SocialGraphSection";
 import { StatsSection } from "../components/home/StatsSection";
@@ -207,6 +208,13 @@ export function HomePage() {
       <HomeHero
         hero={payload.hero}
       />
+
+      {/* #1.5 Knowledge Graph (Obsidian-style, time-growth animated) */}
+      <SectionParallaxTransition strength={24}>
+        <SectionCard id="knowledge-graph" fullWidth>
+          <KnowledgeGraphSection />
+        </SectionCard>
+      </SectionParallaxTransition>
 
       {/* #2 Recommended Posts 3D Marquee (always shown) */}
       <SectionParallaxTransition strength={20}>

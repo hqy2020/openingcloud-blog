@@ -686,3 +686,46 @@ class WishItem(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.emoji} {self.title}"
+
+
+class KnowledgeNode(TimeStampedModel):
+    class Category(models.TextChoices):
+        ENTITY = "entity", "实体"
+        SOURCE = "source", "来源"
+        EXPLORATION = "exploration", "探索"
+        HUB = "hub", "枢纽"
+        INDEX = "index", "索引"
+        OTHER = "other", "其他"
+
+    slug = models.SlugField(max_length=220, unique=True, db_index=True)
+    title = models.CharField(max_length=255)
+    path = models.CharField(max_length=500, unique=True)
+    category = models.CharField(max_length=16, choices=Category.choices, default=Category.OTHER)
+    frontmatter = models.JSONField(default=dict, blank=True)
+    file_sha = models.CharField(max_length=64, db_index=True)
+    git_created_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    git_last_modified_at = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True, db_index=True)
+    last_synced_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["git_created_at", "id"]
+        verbose_name = "知识图谱节点"
+        verbose_name_plural = "知识图谱节点"
+
+    def __str__(self) -> str:
+        return f"[{self.category}] {self.title}"
+
+
+class KnowledgeEdge(TimeStampedModel):
+    source = models.ForeignKey(KnowledgeNode, on_delete=models.CASCADE, related_name="outgoing_edges")
+    target = models.ForeignKey(KnowledgeNode, on_delete=models.CASCADE, related_name="incoming_edges")
+    wikilink_text = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        unique_together = ("source", "target")
+        verbose_name = "知识图谱边"
+        verbose_name_plural = "知识图谱边"
+
+    def __str__(self) -> str:
+        return f"{self.source.slug} -> {self.target.slug}"

@@ -1543,6 +1543,37 @@ class PhotoWallView(APIView):
         return api_ok(_photo_wall_payload())
 
 
+class KnowledgeGraphView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        from .models import KnowledgeEdge, KnowledgeNode
+
+        nodes = list(
+            KnowledgeNode.objects.filter(is_active=True).order_by("git_created_at", "id")
+        )
+        node_id_to_slug = {n.id: n.slug for n in nodes}
+        edges_qs = KnowledgeEdge.objects.filter(
+            source_id__in=node_id_to_slug.keys(),
+            target_id__in=node_id_to_slug.keys(),
+        ).values("source_id", "target_id")
+        payload_nodes = [
+            {
+                "id": n.slug,
+                "title": n.title,
+                "category": n.category,
+                "path": n.path,
+                "git_created_at": n.git_created_at.isoformat() if n.git_created_at else None,
+            }
+            for n in nodes
+        ]
+        payload_edges = [
+            {"source": node_id_to_slug[e["source_id"]], "target": node_id_to_slug[e["target_id"]]}
+            for e in edges_qs
+        ]
+        return api_ok({"nodes": payload_nodes, "edges": payload_edges})
+
+
 class HomeView(APIView):
     permission_classes = [AllowAny]
 

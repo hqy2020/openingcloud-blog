@@ -19,6 +19,38 @@ services:
       retries: 3
       start_period: 20s
 
+  knowledge-sync:
+    image: ${BACKEND_IMAGE:-openingclouds-backend:local}
+    container_name: openingclouds-knowledge-sync
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env.production
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      backend:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "[knowledge-sync] scheduler started, daily at 04:00 Asia/Shanghai"
+        LAST_RUN=""
+        while :; do
+          TODAY=$$(date +%Y-%m-%d)
+          HM=$$(date +%H%M)
+          if [ "$$HM" = "0400" ] && [ "$$LAST_RUN" != "$$TODAY" ]; then
+            echo "[$$(date)] running sync_knowledge_github"
+            if python manage.py sync_knowledge_github; then
+              LAST_RUN=$$TODAY
+            else
+              echo "[$$(date)] sync failed, will retry next minute"
+            fi
+          fi
+          sleep 45
+        done
+
   nginx:
     image: nginx:1.27-alpine
     container_name: openingclouds-nginx

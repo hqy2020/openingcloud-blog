@@ -11,6 +11,7 @@ import { MultiFollowCursor } from "../ui/MultiFollowCursor";
 import { StripeBgGuides } from "../ui/StripeBgGuides";
 
 const headerTabs = [
+  { to: "/#knowledge-graph", label: "知识库", nativeAnchor: true },
   { to: "/#recommended", label: "文章", nativeAnchor: true },
   { to: "/#achievements", label: "高光", nativeAnchor: true },
   { to: "/#projects", label: "代码", nativeAnchor: true },
