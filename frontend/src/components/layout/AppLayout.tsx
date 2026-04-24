@@ -9,6 +9,7 @@ import { DotBackground } from "../ui/DotBackground";
 import { DistortedGlassSurface } from "../ui/DistortedGlassSurface";
 import { MultiFollowCursor } from "../ui/MultiFollowCursor";
 import { StripeBgGuides } from "../ui/StripeBgGuides";
+import { ThemeDockSwitcher } from "../ui/ThemeDockSwitcher";
 
 const headerTabs = [
   { to: "/#knowledge-graph", label: "知识库", nativeAnchor: true },
@@ -491,6 +492,12 @@ export function AppLayout() {
       </footer>
 
       <MagicDock items={mobileDockItems} pathname={location.pathname} className="lg:hidden" />
+
+      <div className="pointer-events-none fixed bottom-5 right-5 z-50 hidden md:block">
+        <div className="pointer-events-auto">
+          <ThemeDockSwitcher />
+        </div>
+      </div>
 
       <BarrageCommentsSidebar />
       <BlogPetMachine />
