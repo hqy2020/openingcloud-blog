@@ -23,7 +23,12 @@ const proxyOptions = {
   agent: directAgent,
 };
 
+const BUILD_ID = String(Date.now());
+
 export default defineConfig({
+  define: {
+    __BUILD_ID__: JSON.stringify(BUILD_ID),
+  },
   plugins: [
     react(),
     VitePWA({
