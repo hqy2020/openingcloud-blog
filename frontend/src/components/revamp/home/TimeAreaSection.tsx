@@ -816,7 +816,7 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
     <>
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.82),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(148,163,184,0.12),transparent_28%)]" />
 
-      <div className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] backdrop-blur-sm">
+      <div className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-theme-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.85)]">
         {Chart && !chartUnavailable ? (
           <>
             <div className="relative" onMouseLeave={() => setActiveSeriesKey(null)}>
@@ -844,7 +844,7 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
                       role="button"
                       tabIndex={0}
                       aria-label={`高亮 ${placement.label}`}
-                      className={`pointer-events-auto absolute select-none text-slate-700 transition-all duration-200 ${
+                      className={`pointer-events-auto absolute select-none text-theme-ink transition-all duration-200 ${
                         isActive ? "scale-[1.03]" : isDimmed ? "opacity-55" : "opacity-95"
                       }`}
                       style={{
@@ -858,7 +858,7 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
                       onBlur={() => setActiveSeriesKey(null)}
                     >
                         <span
-                          className={`${placement.fontClass} block whitespace-nowrap font-semibold leading-none tracking-tight text-slate-700 transition-colors duration-200`}
+                          className={`${placement.fontClass} block whitespace-nowrap font-semibold leading-none tracking-tight text-theme-ink transition-colors duration-200`}
                           style={{
                             color: isActive ? "#24364f" : "rgba(51,65,85,0.94)",
                             textShadow: isActive
@@ -872,7 +872,7 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
                   );
                 })}
 
-                <div className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-[140%] text-[10px] font-semibold uppercase tracking-[0.32em] text-slate-500 md:text-xs">
+                <div className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-[140%] text-[10px] font-semibold uppercase tracking-[0.32em] text-theme-muted md:text-xs">
                   Age
                 </div>
               </div>
@@ -886,7 +886,7 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
                   <button
                     key={item.key}
                     type="button"
-                    className="rounded-full bg-white/78 px-3 py-2 text-left shadow-[0_10px_24px_rgba(148,163,184,0.12)] transition-all duration-200"
+                    className="rounded-full bg-theme-surface px-3 py-2 text-left shadow-[0_10px_24px_rgba(148,163,184,0.12)] transition-all duration-200"
                     style={{
                       borderColor: isActive ? item.color : "rgba(226,232,240,0.9)",
                       borderStyle: "solid",
@@ -900,8 +900,8 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
                     onMouseLeave={() => setActiveSeriesKey(null)}
                     onBlur={() => setActiveSeriesKey(null)}
                   >
-                    <span className="block text-sm font-semibold text-slate-700">{item.label}</span>
-                    <span className="mt-0.5 block text-xs text-slate-500">现在约 {formatPercentage(value)}</span>
+                    <span className="block text-sm font-semibold text-theme-ink">{item.label}</span>
+                    <span className="mt-0.5 block text-xs text-theme-muted">现在约 {formatPercentage(value)}</span>
                   </button>
                 );
               })}
@@ -914,12 +914,12 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
               {chartData.series.map((item) => {
                 const value = latestDistribution[item.key] ?? 0;
                 return (
-                  <div key={item.key} className="rounded-2xl border border-white/75 bg-white/65 p-4 shadow-[0_10px_24px_rgba(148,163,184,0.12)]">
-                    <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium text-slate-700">
+                  <div key={item.key} className="rounded-2xl border border-white/75 bg-theme-surface p-4 shadow-[0_10px_24px_rgba(148,163,184,0.12)]">
+                    <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium text-theme-ink">
                       <span>{item.label}</span>
                       <span>{formatPercentage(value)}</span>
                     </div>
-                    <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+                    <div className="h-3 overflow-hidden rounded-full bg-theme-surface">
                       <div className="h-full rounded-full" style={{ width: `${value}%`, background: item.color }} />
                     </div>
                   </div>
@@ -937,10 +937,10 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
       <div className="space-y-3 px-1">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">Time</p>
-            <h2 className="text-3xl font-semibold tracking-tight text-slate-800 md:text-4xl xl:text-[3.8rem]">时间都去哪了？</h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-theme-soft">Time</p>
+            <h2 className="text-3xl font-semibold tracking-tight text-theme-ink md:text-4xl xl:text-[3.8rem]">时间都去哪了？</h2>
           </div>
-          <p className="max-w-2xl text-sm leading-6 text-slate-600 md:text-base">
+          <p className="max-w-2xl text-sm leading-6 text-theme-muted md:text-base">
             把零散活动折叠成更大的生活切片，直接看到每个阶段的重心。悬停标签或底部类目，分界线会加粗。
           </p>
         </div>

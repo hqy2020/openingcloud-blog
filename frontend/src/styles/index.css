@@ -6,33 +6,16 @@
 @tailwind utilities;
 
 :root {
-  /* Claude design tokens */
-  --claude-parchment: #f5f4ed;
-  --claude-ivory: #faf9f5;
-  --claude-warm-sand: #e8e6dc;
-  --claude-border-cream: #f0eee6;
-  --claude-border-warm: #e8e6dc;
-  --claude-ring-warm: #d1cfc5;
-  --claude-terracotta: #c96442;
-  --claude-coral: #d97757;
-  --claude-near-black: #141413;
-  --claude-dark-surface: #30302e;
-  --claude-charcoal-warm: #4d4c48;
-  --claude-olive-gray: #5e5d59;
-  --claude-stone-gray: #87867f;
-  --claude-warm-silver: #b0aea5;
+  /* Legacy vars mapped to theme tokens (backwards compat) */
+  --azure: rgb(var(--theme-accent));
+  --sage: rgb(var(--theme-muted));
+  --amber: rgb(var(--theme-accent-soft));
+  --mauve: rgb(var(--theme-soft));
+  --ink-900: rgb(var(--theme-ink));
+  --paper: rgb(var(--theme-surface));
 
-  /* Legacy vars retained for backwards compat; remapped to Claude palette */
-  --azure: var(--claude-terracotta);
-  --sage: var(--claude-olive-gray);
-  --amber: var(--claude-coral);
-  --mauve: var(--claude-warm-silver);
-  --ink-900: var(--claude-near-black);
-  --paper: var(--claude-ivory);
-
-  color: var(--claude-near-black);
-  font-family: "Inter", system-ui, "PingFang SC", "Hiragino Sans GB",
-    "Microsoft YaHei", sans-serif;
+  color: rgb(var(--theme-ink));
+  font-family: var(--theme-font-sans);
   font-feature-settings: "ss01", "cv11";
 }
 
@@ -43,20 +26,22 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--claude-parchment);
-  color: var(--claude-near-black);
+  background: rgb(var(--theme-bg));
+  color: rgb(var(--theme-ink));
+  font-family: var(--theme-font-body);
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 .glass-surface-light {
-  background: var(--claude-ivory);
-  border: 1px solid var(--claude-border-cream);
-  box-shadow: rgba(0, 0, 0, 0.05) 0px 4px 24px;
+  background: rgb(var(--theme-surface));
+  border: 1px solid rgb(var(--theme-line));
+  box-shadow: var(--theme-shadow-whisper);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
 
 .glass-border-accent {
-  border-color: var(--glass-border-accent, var(--claude-border-warm));
+  border-color: var(--glass-border-accent, rgb(var(--theme-line-strong)));
 }
 
 h1,
@@ -65,12 +50,11 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: "Source Serif 4", "Source Serif Pro", Georgia, "LXGW WenKai",
-    "Kaiti SC", "STKaiti", "PingFang SC", serif;
+  font-family: var(--theme-font-display);
   font-weight: 500;
   letter-spacing: normal;
   line-height: 1.2;
-  color: var(--claude-near-black);
+  color: rgb(var(--theme-ink));
 }
 
 h1 {
@@ -91,9 +75,9 @@ pre {
 }
 
 .distorted-glass-surface__effect {
-  border: 1px solid var(--claude-border-cream);
-  background: var(--claude-ivory);
-  box-shadow: rgba(0, 0, 0, 0.05) 0px 4px 24px;
+  border: 1px solid rgb(var(--theme-line));
+  background: rgb(var(--theme-surface));
+  box-shadow: var(--theme-shadow-whisper);
   filter: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;

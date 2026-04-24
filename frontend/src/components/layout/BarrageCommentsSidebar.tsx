@@ -31,9 +31,9 @@ function formatErrorMessage(err: unknown, fallback: string): string {
 
 function BarrageCard({ item }: { item: BarrageComment }) {
   return (
-    <article className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
-      <p className="break-words text-sm leading-5 text-slate-700">{item.content}</p>
-      <time className="mt-2 block text-[10px] text-slate-400">{item.created_at.slice(0, 16).replace("T", " ")}</time>
+    <article className="rounded-xl border border-theme-line bg-theme-surface-raised px-3 py-2.5">
+      <p className="break-words text-sm leading-5 text-theme-ink">{item.content}</p>
+      <time className="mt-2 block text-[10px] text-theme-soft">{item.created_at.slice(0, 16).replace("T", " ")}</time>
     </article>
   );
 }
@@ -220,7 +220,7 @@ export function BarrageCommentsSidebar() {
 
   return (
     <motion.aside
-      className="fixed left-0 z-30 max-w-[calc(100vw-0.75rem)] overflow-hidden rounded-r-[28px] border border-slate-200 bg-white shadow-[0_18px_45px_-30px_rgba(15,23,42,0.38)]"
+      className="fixed left-0 z-30 max-w-[calc(100vw-0.75rem)] overflow-hidden rounded-r-[28px] border border-theme-line bg-theme-surface-raised shadow-[0_18px_45px_-30px_rgba(15,23,42,0.38)]"
       style={{ top: `${controlPosition.y}px`, maxHeight: panelMaxHeight }}
       animate={{ width: isOpen ? EXPANDED_WIDTH : COLLAPSED_WIDTH }}
       initial={false}
@@ -238,10 +238,10 @@ export function BarrageCommentsSidebar() {
           type="button"
           aria-label={isOpen ? "弹幕 Close" : "弹幕 Open"}
           title={isOpen ? "弹幕 Close" : "弹幕 Open"}
-          className="group inline-flex h-8 w-[118px] shrink-0 items-center justify-between rounded-r-[999px] border border-slate-200 bg-white pl-2.5 pr-1.5 text-slate-800 sm:w-[124px]"
+          className="group inline-flex h-8 w-[118px] shrink-0 items-center justify-between rounded-r-[999px] border border-theme-line bg-theme-surface-raised pl-2.5 pr-1.5 text-theme-ink sm:w-[124px]"
         >
           <span className="whitespace-nowrap text-sm font-black leading-none tracking-tight">弹幕</span>
-          <span className="inline-flex h-6 min-w-[46px] shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-[#0f1115] px-2 text-xs font-medium text-white transition group-hover:bg-slate-800">
+          <span className="inline-flex h-6 min-w-[46px] shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-[#0f1115] px-2 text-xs font-medium text-white transition group-hover:bg-theme-ink">
             {isOpen ? "Close" : "Open"}
           </span>
         </button>
@@ -250,28 +250,28 @@ export function BarrageCommentsSidebar() {
       <AnimatePresence initial={false}>
         {isOpen ? (
           <motion.div
-            className="flex max-h-[calc(100vh-8rem)] flex-col border-t border-slate-200"
+            className="flex max-h-[calc(100vh-8rem)] flex-col border-t border-theme-line"
             initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, x: -8 }}
             transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
           >
-            <div className="border-b border-slate-200 px-4 py-3">
-              <p className="text-sm font-semibold text-slate-800">弹幕评论</p>
-              <p className="mt-0.5 text-xs text-slate-500">发布后立即滚动展示</p>
+            <div className="border-b border-theme-line px-4 py-3">
+              <p className="text-sm font-semibold text-theme-ink">弹幕评论</p>
+              <p className="mt-0.5 text-xs text-theme-muted">发布后立即滚动展示</p>
             </div>
 
-            <div className="border-b border-slate-200 px-4 py-3">
+            <div className="border-b border-theme-line px-4 py-3">
               <form className="space-y-2.5" onSubmit={onSubmit}>
                 <textarea
-                  className="min-h-[96px] w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-slate-400"
+                  className="min-h-[96px] w-full resize-none rounded-xl border border-theme-line bg-theme-surface-raised px-3 py-2 text-sm text-theme-ink outline-none transition placeholder:text-theme-soft focus:border-theme-soft"
                   maxLength={200}
                   onChange={(event) => setContent(event.target.value)}
                   placeholder="说点什么..."
                   value={content}
                 />
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs text-slate-400">{content.trim().length}/200</span>
+                  <span className="text-xs text-theme-soft">{content.trim().length}/200</span>
                   <button
                     className="rounded-xl bg-[#0f1115] px-4 py-2 text-sm font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-60"
                     disabled={submitting}
@@ -287,7 +287,7 @@ export function BarrageCommentsSidebar() {
 
             <div className="barrage-sidebar-viewport flex-1 px-4 py-3">
               {comments.length === 0 ? (
-                <p className="text-xs text-slate-500">暂无弹幕，欢迎第一个留言。</p>
+                <p className="text-xs text-theme-muted">暂无弹幕，欢迎第一个留言。</p>
               ) : (
                 <div className="barrage-sidebar-track barrage-sidebar-animate">
                   <div className="barrage-sidebar-segment">

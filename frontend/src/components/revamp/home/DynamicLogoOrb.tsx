@@ -39,9 +39,9 @@ export function DynamicLogoOrb() {
       onMouseLeave={() => setRotate({ x: 0, y: 0 })}
       style={{ transform }}
     >
-      <div className="absolute inset-0 rounded-full border border-dashed border-slate-300/85" />
-      <div className="absolute inset-[20px] rounded-full border border-slate-200/80" />
-      <div className="absolute inset-[42px] rounded-full border border-slate-200/70" />
+      <div className="absolute inset-0 rounded-full border border-dashed border-theme-line-strong/85" />
+      <div className="absolute inset-[20px] rounded-full border border-theme-line/80" />
+      <div className="absolute inset-[42px] rounded-full border border-theme-line/70" />
 
       {orbitBadges.map((badge, index) => (
         <div
@@ -53,7 +53,7 @@ export function DynamicLogoOrb() {
           }}
         >
           <span
-            className="absolute inline-flex -translate-y-1/2 rounded-full border border-[#E6ECFF] bg-white px-2.5 py-1 text-[11px] font-semibold tracking-[0.08em] text-[#4F6AE5] shadow-[0_8px_18px_rgba(15,23,42,0.14)]"
+            className="absolute inline-flex -translate-y-1/2 rounded-full border border-[#E6ECFF] bg-theme-surface-raised px-2.5 py-1 text-[11px] font-semibold tracking-[0.08em] text-[#4F6AE5] shadow-[0_8px_18px_rgba(15,23,42,0.14)]"
             style={{ transform: `translateX(${badge.distance}px) rotate(${index % 2 === 0 ? "6deg" : "-5deg"})` }}
           >
             {badge.label}

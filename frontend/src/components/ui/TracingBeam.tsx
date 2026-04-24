@@ -44,7 +44,7 @@ export function TracingBeam({
                 ? "none"
                 : "rgba(79,106,229,0.24) 0px 3px 6px 0px",
           }}
-          className="ml-[27px] flex h-4 w-4 items-center justify-center rounded-full border border-[#4f6ae5]/30 bg-white shadow-sm"
+          className="ml-[27px] flex h-4 w-4 items-center justify-center rounded-full border border-[#4f6ae5]/30 bg-theme-surface-raised shadow-sm"
         >
           <motion.div
             transition={{ duration: 0.2, delay: 0.5 }}
@@ -52,7 +52,7 @@ export function TracingBeam({
               backgroundColor: scrollYProgress.get() > 0 ? "#4f6ae5" : "white",
               borderColor: scrollYProgress.get() > 0 ? "#4f6ae5" : "#e2e8f0",
             }}
-            className="h-2 w-2 rounded-full border border-slate-300 bg-white"
+            className="h-2 w-2 rounded-full border border-theme-line-strong bg-theme-surface-raised"
           />
         </motion.div>
         <svg

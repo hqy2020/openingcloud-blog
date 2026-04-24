@@ -22,8 +22,8 @@ export function SkillsSection() {
   return (
     <div>
       <div className="mb-8 text-center">
-        <h2 className="text-2xl font-semibold tracking-tight text-slate-800">技术栈</h2>
-        <p className="mt-2 text-sm text-slate-400">我的核心技能与工具</p>
+        <h2 className="text-2xl font-semibold tracking-tight text-theme-ink">技术栈</h2>
+        <p className="mt-2 text-sm text-theme-soft">我的核心技能与工具</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         {skills.map((skill, i) => (
@@ -33,16 +33,16 @@ export function SkillsSection() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-40px" }}
             transition={{ duration: 0.4, delay: i * 0.06 }}
-            className="rounded-2xl bg-white/60 p-4 backdrop-blur"
+            className="rounded-2xl bg-theme-surface p-4"
           >
             <div className="flex items-center gap-3">
               <span className="text-xl">{skill.icon}</span>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-slate-800">{skill.name}</span>
-                  <span className="text-xs font-medium text-slate-400">{skill.level}%</span>
+                  <span className="text-sm font-semibold text-theme-ink">{skill.name}</span>
+                  <span className="text-xs font-medium text-theme-soft">{skill.level}%</span>
                 </div>
-                <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-theme-surface">
                   <motion.div
                     className="h-full rounded-full bg-gradient-to-r from-[#4f6ae5] to-[#6b917b]"
                     initial={{ width: 0 }}
@@ -53,7 +53,7 @@ export function SkillsSection() {
                 </div>
               </div>
             </div>
-            <p className="mt-2 text-xs text-slate-400">{skill.description}</p>
+            <p className="mt-2 text-xs text-theme-soft">{skill.description}</p>
           </motion.div>
         ))}
       </div>

@@ -479,7 +479,7 @@ export function PostDetailPage() {
         const isInline = !(className ?? "").includes("language-");
         if (isInline) {
           return (
-            <code {...props} className="rounded bg-slate-100 px-1.5 py-0.5 text-sm text-slate-800">
+            <code {...props} className="rounded bg-theme-surface px-1.5 py-0.5 text-sm text-theme-ink">
               {children}
             </code>
           );
@@ -487,67 +487,67 @@ export function PostDetailPage() {
         return (
           <code
             {...props}
-            className="mt-4 block overflow-x-auto rounded-xl bg-claude-near-black p-4 text-sm leading-6 text-claude-warm-silver"
+            className="mt-4 block overflow-x-auto rounded-xl bg-theme-ink p-4 text-sm leading-6 text-theme-soft"
           >
             {children}
           </code>
         );
       },
       ul: ({ children, ...props }: HTMLAttributes<HTMLUListElement>) => (
-        <ul {...props} className="mt-4 list-disc space-y-2 pl-6 text-slate-700">
+        <ul {...props} className="mt-4 list-disc space-y-2 pl-6 text-theme-ink">
           {children}
         </ul>
       ),
       ol: ({ children, ...props }: HTMLAttributes<HTMLOListElement>) => (
-        <ol {...props} className="mt-4 list-decimal space-y-2 pl-6 text-slate-700">
+        <ol {...props} className="mt-4 list-decimal space-y-2 pl-6 text-theme-ink">
           {children}
         </ol>
       ),
       blockquote: ({ children, ...props }: HTMLAttributes<HTMLQuoteElement>) => (
         <blockquote
           {...props}
-          className="mt-5 rounded-r-lg border-l-4 border-theme-accent/40 bg-theme-surface px-4 py-3 text-slate-700"
+          className="mt-5 rounded-r-lg border-l-4 border-theme-accent/40 bg-theme-surface px-4 py-3 text-theme-ink"
         >
           {children}
         </blockquote>
       ),
       table: ({ children, ...props }: HTMLAttributes<HTMLTableElement>) => (
-        <div className="mt-5 overflow-x-auto rounded-lg border border-slate-200">
-          <table {...props} className="w-full border-collapse text-sm text-slate-700">
+        <div className="mt-5 overflow-x-auto rounded-lg border border-theme-line">
+          <table {...props} className="w-full border-collapse text-sm text-theme-ink">
             {children}
           </table>
         </div>
       ),
       thead: ({ children, ...props }: HTMLAttributes<HTMLTableSectionElement>) => (
-        <thead {...props} className="bg-slate-50">
+        <thead {...props} className="bg-theme-surface">
           {children}
         </thead>
       ),
       tr: ({ children, ...props }: HTMLAttributes<HTMLTableRowElement>) => (
-        <tr {...props} className="transition hover:bg-slate-50">
+        <tr {...props} className="transition hover:bg-theme-surface">
           {children}
         </tr>
       ),
       th: ({ children, ...props }: HTMLAttributes<HTMLTableCellElement>) => (
-        <th {...props} className="border-b border-slate-200 px-4 py-2.5 text-left text-xs font-semibold uppercase text-slate-600">
+        <th {...props} className="border-b border-theme-line px-4 py-2.5 text-left text-xs font-semibold uppercase text-theme-muted">
           {children}
         </th>
       ),
       td: ({ children, ...props }: HTMLAttributes<HTMLTableCellElement>) => (
-        <td {...props} className="border-b border-slate-100 px-4 py-2.5 align-top text-sm">
+        <td {...props} className="border-b border-theme-line px-4 py-2.5 align-top text-sm">
           {children}
         </td>
       ),
       img: ({ src, alt, ...props }: ImgHTMLAttributes<HTMLImageElement>) => {
         const resolvedSrc = resolveMarkdownAssetUrl(String(src ?? ""));
         return (
-          <figure className="mt-5 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+          <figure className="mt-5 overflow-hidden rounded-xl border border-theme-line bg-theme-surface">
             <img
               {...props}
               src={resolvedSrc}
               alt={String(alt ?? "")}
               loading="lazy"
-              className="max-h-[460px] w-full object-contain bg-white"
+              className="max-h-[460px] w-full object-contain bg-theme-surface-raised"
               onError={(event) => {
                 const image = event.currentTarget;
                 if (image.dataset.fallbackTried === "1") {
@@ -566,7 +566,7 @@ export function PostDetailPage() {
                 }
               }}
             />
-            {alt ? <figcaption className="border-t border-slate-200 bg-white px-3 py-2 text-sm text-slate-500">{alt}</figcaption> : null}
+            {alt ? <figcaption className="border-t border-theme-line bg-theme-surface-raised px-3 py-2 text-sm text-theme-muted">{alt}</figcaption> : null}
           </figure>
         );
       },
@@ -574,18 +574,18 @@ export function PostDetailPage() {
   }, [activeHeadingId, headingIdLookup, scrollToHeading]);
 
   if (loading) {
-    return <p className="rounded-2xl border border-slate-200 bg-white/80 p-6 text-sm text-slate-500">加载中...</p>;
+    return <p className="rounded-2xl border border-theme-line bg-theme-surface p-6 text-sm text-theme-muted">加载中...</p>;
   }
 
   if (error || !data) {
-    return <p className="rounded-2xl border border-claude-error-crimson/30 bg-claude-error-crimson/5 p-6 text-sm text-claude-error-crimson">{error || "文章不存在"}</p>;
+    return <p className="rounded-2xl border border-red-500/30 bg-red-500/5 p-6 text-sm text-red-500">{error || "文章不存在"}</p>;
   }
 
   const readMinutes = Math.max(1, Math.round((data.word_count || 0) / 280));
   const detailCover = String(data.cover || "").trim() || null;
 
   return (
-    <section className="relative overflow-hidden rounded-[28px] border border-slate-200/80 bg-white/92 shadow-sm">
+    <section className="relative overflow-hidden rounded-[28px] border border-theme-line/80 bg-theme-surface shadow-sm">
       <Helmet>
         <title>{`${data.title} | Keyon Blog ｜ 云际漫游者`}</title>
         <meta content={data.excerpt || "Keyon Blog ｜ 云际漫游者文章详情"} name="description" />
@@ -598,11 +598,11 @@ export function PostDetailPage() {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-52 bg-[radial-gradient(circle_at_20%_20%,rgba(79,106,229,0.16),transparent_55%),radial-gradient(circle_at_80%_0%,rgba(107,145,123,0.14),transparent_45%)]" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-52 opacity-70 [background-size:32px_32px] [background-image:linear-gradient(to_right,rgba(148,163,184,0.12)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.12)_1px,transparent_1px)]" />
 
-      <header className="relative space-y-4 border-b border-slate-200/80 p-6 md:p-8">
-        <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
+      <header className="relative space-y-4 border-b border-theme-line/80 p-6 md:p-8">
+        <div className="flex flex-wrap items-center gap-3 text-sm text-theme-muted">
           <Link
             to={categoryPathMap[data.category]}
-            className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-600 transition hover:border-slate-300 hover:text-slate-800"
+            className="inline-flex items-center rounded-full border border-theme-line bg-theme-surface-raised px-3 py-1.5 text-theme-muted transition hover:border-theme-line-strong hover:text-theme-ink"
           >
             ← 返回{categoryLabelMap[data.category]}
           </Link>
@@ -610,13 +610,13 @@ export function PostDetailPage() {
           {postTags.map((tag) => (
             <span
               key={tag}
-              className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-500"
+              className="rounded-md border border-theme-line bg-theme-surface-raised px-2.5 py-1 text-xs font-medium text-theme-muted"
             >
               {tag}
             </span>
           ))}
 
-          <time className="ml-auto text-xs text-slate-500">{formatDate(data.updated_at)}</time>
+          <time className="ml-auto text-xs text-theme-muted">{formatDate(data.updated_at)}</time>
         </div>
 
         <h1 className="font-theme-display text-4xl font-medium leading-[1.1] tracking-normal text-theme-ink md:text-[52px]">{data.title}</h1>
@@ -624,16 +624,16 @@ export function PostDetailPage() {
       </header>
 
       {detailCover ? (
-        <div className="relative h-64 overflow-hidden border-b border-slate-200/80 md:h-[420px]">
+        <div className="relative h-64 overflow-hidden border-b border-theme-line/80 md:h-[420px]">
           <img src={detailCover} alt={`${data.title} 封面`} className="h-full w-full object-cover" />
         </div>
       ) : null}
 
       <div className="relative grid lg:grid-cols-[minmax(0,1fr)_300px]">
-        <main className="min-w-0 lg:border-r lg:border-slate-200/80">
+        <main className="min-w-0 lg:border-r lg:border-theme-line/80">
           <article className="p-6 md:p-8">
-            <div className="mb-6 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-              <span className="rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-600">{categoryLabelMap[data.category]}</span>
+            <div className="mb-6 flex flex-wrap items-center gap-2 text-xs text-theme-muted">
+              <span className="rounded-full bg-theme-surface px-2.5 py-1 font-medium text-theme-muted">{categoryLabelMap[data.category]}</span>
               <span>{formatDate(data.updated_at)}</span>
               <span>·</span>
               <span>{readMinutes} 分钟</span>
@@ -646,8 +646,8 @@ export function PostDetailPage() {
             </ReactMarkdown>
           </article>
 
-          <div className="flex flex-col items-center gap-2 border-t border-slate-200/80 py-8">
-            <p className="text-sm text-slate-500">觉得不错？给文章点个赞吧</p>
+          <div className="flex flex-col items-center gap-2 border-t border-theme-line/80 py-8">
+            <p className="text-sm text-theme-muted">觉得不错？给文章点个赞吧</p>
             <LikeButton
               size="md"
               liked={postLiked}
@@ -656,13 +656,13 @@ export function PostDetailPage() {
             />
           </div>
 
-          <section className="border-t border-slate-200/80 p-6 md:p-8">
+          <section className="border-t border-theme-line/80 p-6 md:p-8">
             <h2 className="font-theme-display text-2xl font-medium leading-[1.2] tracking-normal text-theme-ink">继续阅读</h2>
 
-            {loadingRelated ? <p className="mt-4 text-sm text-slate-500">加载相关文章中...</p> : null}
+            {loadingRelated ? <p className="mt-4 text-sm text-theme-muted">加载相关文章中...</p> : null}
 
             {!loadingRelated && relatedPosts.length === 0 ? (
-              <p className="mt-4 text-sm text-slate-500">暂无相关文章。</p>
+              <p className="mt-4 text-sm text-theme-muted">暂无相关文章。</p>
             ) : null}
 
             {!loadingRelated && relatedPosts.length > 0 ? (
@@ -671,11 +671,11 @@ export function PostDetailPage() {
                   <Link
                     key={post.slug}
                     to={`/posts/${post.slug}`}
-                    className="group rounded-xl border border-slate-200 bg-white p-4 transition hover:border-slate-300 hover:bg-slate-50"
+                    className="group rounded-xl border border-theme-line bg-theme-surface-raised p-4 transition hover:border-theme-line-strong hover:bg-theme-surface"
                   >
-                    <h3 className="line-clamp-2 text-base font-semibold text-slate-900 group-hover:underline">{post.title}</h3>
-                    <p className="mt-2 line-clamp-2 text-sm text-slate-600">{post.excerpt || "暂无摘要"}</p>
-                    <time className="mt-3 block text-xs text-slate-500">{formatDate(post.updated_at)}</time>
+                    <h3 className="line-clamp-2 text-base font-semibold text-theme-ink group-hover:underline">{post.title}</h3>
+                    <p className="mt-2 line-clamp-2 text-sm text-theme-muted">{post.excerpt || "暂无摘要"}</p>
+                    <time className="mt-3 block text-xs text-theme-muted">{formatDate(post.updated_at)}</time>
                   </Link>
                 ))}
               </div>
@@ -683,12 +683,12 @@ export function PostDetailPage() {
           </section>
         </main>
 
-        <aside className="hidden bg-slate-50/70 p-6 lg:block">
+        <aside className="hidden bg-theme-surface/70 p-6 lg:block">
           <div className="sticky top-24 space-y-6">
-            <section className="rounded-xl border border-slate-200 bg-white p-4">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">On this page</h2>
+            <section className="rounded-xl border border-theme-line bg-theme-surface-raised p-4">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-theme-muted">On this page</h2>
               {headings.length === 0 ? (
-                <p className="mt-3 text-sm text-slate-400">暂无目录</p>
+                <p className="mt-3 text-sm text-theme-soft">暂无目录</p>
               ) : (
                 <ul className="mt-3 space-y-2 text-sm">
                   {headings.map((item) => (
@@ -710,8 +710,8 @@ export function PostDetailPage() {
                         className={cn(
                           "w-full rounded-md px-2 py-1 text-left transition",
                           activeHeadingId === item.id
-                            ? "bg-claude-warm-sand font-medium text-theme-accent"
-                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+                            ? "bg-theme-surface-raised font-medium text-theme-accent"
+                            : "text-theme-muted hover:bg-theme-surface hover:text-theme-ink",
                         )}
                       >
                         {item.text}
@@ -722,23 +722,23 @@ export function PostDetailPage() {
               )}
             </section>
 
-            <section className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">文章信息</h2>
+            <section className="rounded-xl border border-theme-line bg-theme-surface-raised p-4 text-sm text-theme-muted">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-theme-muted">文章信息</h2>
               <div className="mt-3 space-y-2">
                 <p>
-                  <span className="text-slate-500">分类：</span>
+                  <span className="text-theme-muted">分类：</span>
                   {categoryLabelMap[data.category]}
                 </p>
                 <p>
-                  <span className="text-slate-500">阅读时长：</span>
+                  <span className="text-theme-muted">阅读时长：</span>
                   {readMinutes} 分钟
                 </p>
                 <p>
-                  <span className="text-slate-500">阅读量：</span>
+                  <span className="text-theme-muted">阅读量：</span>
                   {data.views_count}
                 </p>
                 <p>
-                  <span className="text-slate-500">更新时间：</span>
+                  <span className="text-theme-muted">更新时间：</span>
                   {formatDate(data.updated_at)}
                 </p>
               </div>
@@ -747,10 +747,10 @@ export function PostDetailPage() {
         </aside>
       </div>
 
-      <details className="border-t border-slate-200/80 lg:hidden">
-        <summary className="cursor-pointer px-6 py-4 text-sm font-semibold text-slate-700">文章目录</summary>
+      <details className="border-t border-theme-line/80 lg:hidden">
+        <summary className="cursor-pointer px-6 py-4 text-sm font-semibold text-theme-ink">文章目录</summary>
         <div className="space-y-2 px-6 pb-5 text-sm">
-          {headings.length === 0 ? <p className="text-slate-400">暂无目录</p> : null}
+          {headings.length === 0 ? <p className="text-theme-soft">暂无目录</p> : null}
           {headings.map((item) => (
             <button
               key={`mobile-${item.id}`}
@@ -771,8 +771,8 @@ export function PostDetailPage() {
                 "block w-full rounded-md px-2 py-1 text-left transition",
                 item.level === 3 && "pl-5",
                 activeHeadingId === item.id
-                  ? "bg-claude-warm-sand font-medium text-theme-accent"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+                  ? "bg-theme-surface-raised font-medium text-theme-accent"
+                  : "text-theme-muted hover:bg-theme-surface hover:text-theme-ink",
               )}
             >
               {item.text}

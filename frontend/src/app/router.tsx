@@ -21,7 +21,7 @@ const NotFoundPage = lazy(async () => {
 });
 
 function withSuspense(element: ReactNode) {
-  return <Suspense fallback={<p className="text-sm text-slate-500">页面加载中...</p>}>{element}</Suspense>;
+  return <Suspense fallback={<p className="text-sm text-theme-muted">页面加载中...</p>}>{element}</Suspense>;
 }
 
 export const router = createBrowserRouter([

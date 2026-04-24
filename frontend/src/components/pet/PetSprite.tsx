@@ -124,7 +124,7 @@ export function PetSprite({ position, state, facing, ariaLabel }: PetSpriteProps
         </div>
 
         {state === "sleep" ? (
-          <span className="pointer-events-none absolute -top-4 left-9 select-none text-[11px] font-semibold text-slate-500">zzz</span>
+          <span className="pointer-events-none absolute -top-4 left-9 select-none text-[11px] font-semibold text-theme-muted">zzz</span>
         ) : null}
       </motion.div>
     </div>

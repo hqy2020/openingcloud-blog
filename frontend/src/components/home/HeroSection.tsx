@@ -99,7 +99,7 @@ function FollowerBadge({ count }: { count: number | null }) {
           animate={{ opacity: 1, scale: 1, width: "auto" }}
           exit={{ opacity: 0, scale: 0.8, width: 0 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
-          className="inline-flex items-center overflow-hidden rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium tabular-nums"
+          className="inline-flex items-center overflow-hidden rounded-full bg-theme-surface px-2 py-0.5 text-xs font-medium tabular-nums"
         >
           <AnimatedFollowerCount value={count} />
         </motion.span>
@@ -281,7 +281,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
           <span className="bg-gradient-to-r from-[#4F6AE5] via-[#84A3FF] to-[#C7D6FF] bg-clip-text text-transparent">Clouds</span>
         </motion.h1>
 
-        <p className={`mt-4 max-w-2xl text-base sm:text-lg ${isDark ? "text-slate-200/95 drop-shadow-[0_4px_14px_rgba(2,6,23,0.7)]" : "text-slate-200"}`}>
+        <p className={`mt-4 max-w-2xl text-base sm:text-lg ${isDark ? "text-theme-line-strong/95 drop-shadow-[0_4px_14px_rgba(2,6,23,0.7)]" : "text-theme-line-strong"}`}>
           {hero.subtitle}
         </p>
 
@@ -295,7 +295,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
             <div className="pointer-events-none absolute -inset-3 rounded-full bg-[#4F6AE5]/0 blur-xl transition-colors duration-300 group-hover:bg-[#4F6AE5]/15" />
             <a
               aria-label={followLabel}
-              className="relative inline-flex items-center gap-2.5 rounded-full border border-white/35 bg-white/10 px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(10,22,62,0.35)] backdrop-blur transition-all duration-200 hover:scale-[1.03] hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/75"
+              className="relative inline-flex items-center gap-2.5 rounded-full border border-white/35 bg-theme-surface px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(10,22,62,0.35)] transition-all duration-200 hover:scale-[1.03] hover:bg-theme-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/75"
               href={githubProfile.profileUrl}
               rel="noopener noreferrer"
               target="_blank"
@@ -314,7 +314,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.7, duration: 0.35, ease: "easeOut" }}
-              className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/8 px-5 py-3 text-sm font-medium text-white/90 backdrop-blur"
+              className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-theme-surface px-5 py-3 text-sm font-medium text-white/90"
             >
               <svg aria-hidden="true" className="h-4 w-4 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -329,7 +329,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.78, duration: 0.35, ease: "easeOut" }}
-            className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/8 px-5 py-3 text-sm font-medium text-white/90 backdrop-blur transition hover:bg-white/18 disabled:cursor-not-allowed disabled:opacity-70"
+            className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-theme-surface px-5 py-3 text-sm font-medium text-white/90 transition hover:bg-theme-surface disabled:cursor-not-allowed disabled:opacity-70"
             type="button"
             onClick={handleToggleHomeLike}
             disabled={homeLikeLoading}
@@ -356,7 +356,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -16 }}
               transition={{ duration: 0.45, ease: "easeOut" }}
-              className={`text-lg font-medium sm:text-2xl ${isDark ? "text-slate-200 drop-shadow-[0_4px_14px_rgba(2,6,23,0.72)]" : "text-[#EAF0FF]"}`}
+              className={`text-lg font-medium sm:text-2xl ${isDark ? "text-theme-line-strong drop-shadow-[0_4px_14px_rgba(2,6,23,0.72)]" : "text-[#EAF0FF]"}`}
             >
               {activeSlogan}
             </motion.div>
@@ -367,7 +367,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.65, duration: 0.4 }}
-          className={`mt-10 flex flex-wrap items-center justify-center gap-2 text-xs tracking-[0.28em] ${isDark ? "text-slate-300" : "text-slate-300"}`}
+          className={`mt-10 flex flex-wrap items-center justify-center gap-2 text-xs tracking-[0.28em] ${isDark ? "text-theme-soft" : "text-theme-soft"}`}
         >
           <span className="rounded-full border border-white/20 px-3 py-1">Tech</span>
           <span className="rounded-full border border-white/20 px-3 py-1">Efficiency</span>
@@ -377,7 +377,7 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
         <motion.div
           animate={{ y: [0, 8, 0], opacity: [0.7, 1, 0.7] }}
           transition={{ duration: 1.8, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-          className={`absolute bottom-8 text-xs uppercase tracking-[0.22em] ${isDark ? "text-slate-300" : "text-slate-300"}`}
+          className={`absolute bottom-8 text-xs uppercase tracking-[0.22em] ${isDark ? "text-theme-soft" : "text-theme-soft"}`}
         >
           Scroll
         </motion.div>

@@ -54,7 +54,7 @@ function Dock({
       dragElastic={0.12}
       whileDrag={draggable ? { scale: 1.01, cursor: "grabbing" } : undefined}
       className={cn(
-        "fixed bottom-6 left-1/2 z-50 hidden -translate-x-1/2 items-end gap-4 rounded-2xl border border-slate-200/70 bg-slate-50/90 px-4 pb-3 pt-2 shadow-[0_14px_34px_rgba(15,23,42,0.14)] backdrop-blur-xl md:flex",
+        "fixed bottom-6 left-1/2 z-50 hidden -translate-x-1/2 items-end gap-4 rounded-2xl border border-theme-line/70 bg-theme-surface/90 px-4 pb-3 pt-2 shadow-[0_14px_34px_rgba(15,23,42,0.14)] md:flex",
         className,
       )}
       style={{ cursor: draggable ? "grab" : "default" }}
@@ -118,7 +118,7 @@ function DockIcon({
       ref={ref}
       style={{ width, height }}
       className={cn(
-        "relative flex aspect-square items-center justify-center rounded-full bg-slate-200/85 text-slate-700",
+        "relative flex aspect-square items-center justify-center rounded-full bg-theme-surface-raised/85 text-theme-ink",
         className,
       )}
       onMouseEnter={() => setHovered(true)}
@@ -130,7 +130,7 @@ function DockIcon({
             initial={{ opacity: 0, y: 10, x: "-50%" }}
             animate={{ opacity: 1, y: 0, x: "-50%" }}
             exit={{ opacity: 0, y: 2, x: "-50%" }}
-            className="pointer-events-none absolute -top-9 left-1/2 w-max rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs whitespace-pre text-slate-700"
+            className="pointer-events-none absolute -top-9 left-1/2 w-max rounded-md border border-theme-line bg-theme-surface px-2 py-0.5 text-xs whitespace-pre text-theme-ink"
           >
             {label}
           </motion.div>

@@ -205,7 +205,7 @@ export function HomePage() {
         <link href={siteUrl("/")} rel="canonical" />
       </Helmet>
 
-      {loading ? <p className="text-sm text-slate-500">首页数据加载中...</p> : null}
+      {loading ? <p className="text-sm text-theme-muted">首页数据加载中...</p> : null}
       {/* #1 Hero */}
       <HomeHero
         hero={payload.hero}

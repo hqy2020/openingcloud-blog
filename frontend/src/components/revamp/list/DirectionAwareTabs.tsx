@@ -51,7 +51,7 @@ export function DirectionAwareTabs({ items, activeId, onSelect, className }: Dir
   const activeSet = useMemo(() => new Set([activeId]), [activeId]);
 
   return (
-    <div className={`inline-flex items-center gap-2 rounded-2xl border border-slate-200/90 bg-white/88 p-2 shadow-[0_8px_24px_rgba(15,23,42,0.08)] ${className ?? ""}`}>
+    <div className={`inline-flex items-center gap-2 rounded-2xl border border-theme-line/90 bg-theme-surface p-2 shadow-[0_8px_24px_rgba(15,23,42,0.08)] ${className ?? ""}`}>
       {items.map((item) => {
         const active = activeSet.has(item.id);
         const hoverState = hoverMotion(hoverDirection);
@@ -66,7 +66,7 @@ export function DirectionAwareTabs({ items, activeId, onSelect, className }: Dir
               setHoverDirection(resolveHoverDirection(event));
             }}
             onMouseLeave={() => setHoveredId((prev) => (prev === item.id ? null : prev))}
-            className="relative overflow-hidden rounded-xl px-4 py-2 text-sm font-semibold text-slate-600 transition hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+            className="relative overflow-hidden rounded-xl px-4 py-2 text-sm font-semibold text-theme-muted transition hover:text-theme-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-line"
             aria-pressed={active}
           >
             <AnimatePresence>
@@ -85,7 +85,7 @@ export function DirectionAwareTabs({ items, activeId, onSelect, className }: Dir
             {active ? (
               <motion.span
                 layoutId="direction-tabs-active-pill"
-                className="absolute inset-0 rounded-xl border border-slate-300/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(79,106,229,0.16))] shadow-[0_8px_14px_rgba(15,23,42,0.12)]"
+                className="absolute inset-0 rounded-xl border border-theme-line-strong/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(79,106,229,0.16))] shadow-[0_8px_14px_rgba(15,23,42,0.12)]"
                 transition={{ type: "spring", stiffness: 420, damping: 34 }}
               />
             ) : null}

@@ -59,7 +59,7 @@ function PostCard({ post }: { post: PinnedPost }) {
       </div>
 
       {/* Hover excerpt overlay */}
-      <div className="absolute inset-0 flex items-center justify-center bg-claude-terracotta/90 p-5 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+      <div className="absolute inset-0 flex items-center justify-center bg-theme-accent/90 p-5 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
         <p className="line-clamp-5 text-center text-base leading-relaxed text-white">
           {post.excerpt || post.title}
         </p>

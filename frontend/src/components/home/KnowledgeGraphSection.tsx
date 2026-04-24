@@ -292,38 +292,38 @@ export function KnowledgeGraphSection() {
 
       <div
         ref={hostRef}
-        className="relative overflow-hidden rounded-claude-lg border border-claude-dark-surface bg-claude-near-black shadow-whisper-lg"
+        className="relative overflow-hidden rounded-[var(--theme-radius)] border border-theme-ink bg-theme-ink shadow-[var(--theme-shadow-lifted)]"
         style={{ minHeight: 420 }}
       >
         {/* 右上角进度游标 */}
-        <div className="pointer-events-none absolute right-4 top-4 z-10 flex flex-col items-end gap-1 font-sans text-[11px] font-medium text-claude-warm-silver/80">
+        <div className="pointer-events-none absolute right-4 top-4 z-10 flex flex-col items-end gap-1 font-sans text-[11px] font-medium text-theme-soft/80">
           <span className="tracking-[0.2em] uppercase">Growth</span>
-          <span className="font-serif text-sm text-claude-coral">{currentBatchLabel}</span>
-          <span className="text-[10px] text-claude-warm-silver/60">
+          <span className="font-serif text-sm text-theme-accent-soft">{currentBatchLabel}</span>
+          <span className="text-[10px] text-theme-soft/60">
             {totalCount === 0 ? "" : `${shownCount} / ${totalCount} notes · ${edgeCount} links`}
           </span>
         </div>
         {/* 左下角起始日期 */}
-        <div className="pointer-events-none absolute bottom-4 left-4 z-10 font-sans text-[10px] text-claude-warm-silver/60">
+        <div className="pointer-events-none absolute bottom-4 left-4 z-10 font-sans text-[10px] text-theme-soft/60">
           since {formatDate(earliestDate)}
         </div>
 
         {loading ? (
-          <div className="flex h-[420px] items-center justify-center text-sm text-claude-warm-silver/70">
+          <div className="flex h-[420px] items-center justify-center text-sm text-theme-soft/70">
             加载知识图谱数据中…
           </div>
         ) : error || loadError ? (
-          <div className="flex h-[420px] flex-col items-center justify-center gap-2 text-sm text-claude-warm-silver/80">
+          <div className="flex h-[420px] flex-col items-center justify-center gap-2 text-sm text-theme-soft/80">
             <span>{error || loadError}</span>
-            <span className="text-xs text-claude-warm-silver/50">
+            <span className="text-xs text-theme-soft/50">
               {totalCount} 条笔记 · {edgeCount} 条关系
             </span>
           </div>
         ) : !ForceGraph2D ? (
           <div className="flex h-[420px] items-center justify-center">
-            <div className="text-center text-sm text-claude-warm-silver/70">
-              <div className="font-serif text-lg text-claude-coral">正在加载图谱引擎…</div>
-              <div className="mt-2 text-xs text-claude-warm-silver/50">
+            <div className="text-center text-sm text-theme-soft/70">
+              <div className="font-serif text-lg text-theme-accent-soft">正在加载图谱引擎…</div>
+              <div className="mt-2 text-xs text-theme-soft/50">
                 {totalCount} 条笔记 · {edgeCount} 条关系
               </div>
             </div>

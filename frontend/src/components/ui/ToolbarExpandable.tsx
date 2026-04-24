@@ -30,7 +30,7 @@ export function ToolbarExpandable({ steps, className }: ToolbarExpandableProps) 
                 "relative inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-all",
                 isActive
                   ? "border-[#4f6ae5]/40 bg-[#4f6ae5]/10 text-[#4f6ae5]"
-                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900",
+                  : "border-theme-line bg-theme-surface-raised text-theme-muted hover:border-theme-line-strong hover:text-theme-ink",
               )}
               onClick={() => setActiveStep(isActive ? null : step.id)}
             >
@@ -58,7 +58,7 @@ export function ToolbarExpandable({ steps, className }: ToolbarExpandableProps) 
             transition={{ type: "spring", stiffness: 300, damping: 28 }}
             className="w-full overflow-hidden"
           >
-            <div className="rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm backdrop-blur">
+            <div className="rounded-2xl border border-theme-line bg-theme-surface p-3 shadow-sm">
               {steps.find((s) => s.id === activeStep)?.content}
             </div>
           </motion.div>

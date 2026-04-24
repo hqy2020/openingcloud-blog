@@ -49,7 +49,7 @@ export function LikeButton({ liked, likes, onToggle, size = "md" }: LikeButtonPr
           isSm ? "px-2 py-1 text-xs" : "px-3.5 py-2 text-sm",
           liked
             ? "border-rose-200 bg-rose-50 text-rose-500"
-            : "border-slate-200 bg-white text-slate-500 hover:border-rose-200 hover:text-rose-400",
+            : "border-theme-line bg-theme-surface-raised text-theme-muted hover:border-rose-200 hover:text-rose-400",
         )}
       >
         <svg

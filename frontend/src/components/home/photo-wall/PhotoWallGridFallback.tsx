@@ -31,7 +31,7 @@ export function PhotoWallGridFallback({ photos, onPreview }: PhotoWallGridFallba
 
   if (photos.length === 0) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-6 text-sm text-slate-600">
+      <div className="rounded-xl border border-theme-line bg-theme-surface/80 px-4 py-6 text-sm text-theme-muted">
         暂无照片数据，请在后台新增远程图片链接。
       </div>
     );
@@ -53,7 +53,7 @@ export function PhotoWallGridFallback({ photos, onPreview }: PhotoWallGridFallba
           return (
             <button
               key={photo.__instanceId}
-              className="group block overflow-hidden rounded-2xl border border-white/80 bg-white/85 shadow-[0_12px_24px_rgba(15,23,42,0.14)] transition-[transform,box-shadow] duration-300 [transform:translate(var(--leaf-x),var(--leaf-y))_rotate(var(--leaf-r))_scale(var(--leaf-s))] hover:z-20 hover:[transform:translate(0px,0px)_rotate(0deg)_scale(1.02)] hover:shadow-[0_20px_30px_rgba(15,23,42,0.2)]"
+              className="group block overflow-hidden rounded-2xl border border-white/80 bg-theme-surface shadow-[0_12px_24px_rgba(15,23,42,0.14)] transition-[transform,box-shadow] duration-300 [transform:translate(var(--leaf-x),var(--leaf-y))_rotate(var(--leaf-r))_scale(var(--leaf-s))] hover:z-20 hover:[transform:translate(0px,0px)_rotate(0deg)_scale(1.02)] hover:shadow-[0_20px_30px_rgba(15,23,42,0.2)]"
               onClick={() => onPreview(photo)}
               style={leafStyle}
               type="button"

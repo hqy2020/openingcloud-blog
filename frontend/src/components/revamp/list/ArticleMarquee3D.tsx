@@ -57,19 +57,19 @@ function ArticleMarqueeCard({
 
   return (
     <article
-      className="group relative w-72 overflow-hidden rounded-2xl border border-slate-200/70 p-4 shadow-[0_12px_30px_rgba(15,23,42,0.12)] backdrop-blur transition-transform hover:-translate-y-1 sm:w-80"
+      className="group relative w-72 overflow-hidden rounded-2xl border border-theme-line/70 p-4 shadow-[0_12px_30px_rgba(15,23,42,0.12)] transition-transform hover:-translate-y-1 sm:w-80"
       style={{ background: cardBackground }}
     >
       <div className="absolute inset-x-0 top-0 h-[2px]" style={{ background: `linear-gradient(90deg, ${accentHex} 0%, transparent 100%)` }} />
-      <p className="text-[11px] font-medium text-slate-500">
+      <p className="text-[11px] font-medium text-theme-muted">
         {new Date(post.updated_at).toLocaleDateString("zh-CN")} · 👁 {formatViews(post.views_count)} · {estimateReadMinutes(post)} min
       </p>
-      <h3 className="mt-2 line-clamp-2 text-base font-semibold leading-snug text-slate-800 sm:text-lg">
+      <h3 className="mt-2 line-clamp-2 text-base font-semibold leading-snug text-theme-ink sm:text-lg">
         <Link className="transition hover:opacity-80" style={{ color: accentHex }} to={`/posts/${post.slug}`}>
           {post.title}
         </Link>
       </h3>
-      <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{post.excerpt || "暂无摘要"}</p>
+      <p className="mt-2 line-clamp-3 text-sm leading-6 text-theme-muted">{post.excerpt || "暂无摘要"}</p>
       <div className="mt-3 flex flex-wrap gap-1.5">
         {post.tags.slice(0, 3).map((tag) => (
           <span
@@ -93,7 +93,7 @@ export function ArticleMarquee3D({ posts, accentHex, glowRgb }: ArticleMarquee3D
   }
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-slate-200/70 bg-white/86 p-4 shadow-sm backdrop-blur sm:p-6">
+    <div className="relative overflow-hidden rounded-3xl border border-theme-line/70 bg-theme-surface p-4 shadow-sm sm:p-6">
       <div className="relative flex h-[420px] w-full items-center justify-center overflow-hidden [perspective:760px] sm:h-[520px]">
         <div
           className="flex w-max min-w-full items-center gap-3 sm:gap-4"

@@ -85,7 +85,7 @@ const orbitingBadges: OrbitingBadge[] = [
     width: 88,
     height: 88,
     angle: 160,
-    imageClassName: "h-full w-full rounded-full object-contain bg-white/90",
+    imageClassName: "h-full w-full rounded-full object-contain bg-theme-surface",
   },
   {
     id: "sap-badge",
@@ -97,7 +97,7 @@ const orbitingBadges: OrbitingBadge[] = [
     width: 88,
     height: 88,
     angle: 260,
-    imageClassName: "h-full w-full rounded-full object-contain bg-white/90",
+    imageClassName: "h-full w-full rounded-full object-contain bg-theme-surface",
   },
   {
     id: "ant-badge",
@@ -109,7 +109,7 @@ const orbitingBadges: OrbitingBadge[] = [
     width: 120,
     height: 120,
     angle: 68,
-    imageClassName: "h-full w-full rounded-full object-contain bg-white/95 p-2 shadow-whisper ring-1 ring-claude-terracotta/40",
+    imageClassName: "h-full w-full rounded-full object-contain bg-theme-surface p-2 shadow-[var(--theme-shadow-whisper)] ring-1 ring-theme-accent/40",
   },
 ];
 
@@ -165,8 +165,8 @@ export function OrbitingProfileCard({
     <div
       className={cn("relative mx-auto", className)}
     >
-      <div className="absolute left-1/2 top-1/2 z-[1] aspect-square w-full -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-dashed border-slate-400/50" />
-      <div className="absolute left-1/2 top-1/2 z-[1] aspect-square w-[94%] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-dashed border-slate-400/40" />
+      <div className="absolute left-1/2 top-1/2 z-[1] aspect-square w-full -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-dashed border-theme-soft/50" />
+      <div className="absolute left-1/2 top-1/2 z-[1] aspect-square w-[94%] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-dashed border-theme-soft/40" />
 
       <div className="absolute inset-0 scale-[0.55] sm:scale-[0.72] md:scale-100">
         {orbitingBadges.map((badge) => (
@@ -176,8 +176,8 @@ export function OrbitingProfileCard({
 
       <div className="absolute inset-0 z-[2] flex items-center justify-center">
         <CardContainer>
-          <CardBody className="relative flex flex-col w-[200px] h-[270px] rounded-[20px] border border-white/40 bg-white/70 p-4 pt-8 shadow-xl backdrop-blur-md sm:w-[310px] sm:h-[419px] sm:rounded-[30px] sm:p-7 sm:pt-12 md:w-[450px] md:h-[608px] md:p-10 md:pt-16 lg:w-[538px] lg:h-[727px] lg:pt-20">
-            <CardItem as="p" translateZ={24} className="text-xs font-bold tracking-[0.08em] text-slate-600 sm:text-base sm:text-[34px] sm:leading-[1.1]">
+          <CardBody className="relative flex flex-col w-[200px] h-[270px] rounded-[20px] border border-white/40 bg-theme-surface p-4 pt-8 shadow-xl sm:w-[310px] sm:h-[419px] sm:rounded-[30px] sm:p-7 sm:pt-12 md:w-[450px] md:h-[608px] md:p-10 md:pt-16 lg:w-[538px] lg:h-[727px] lg:pt-20">
+            <CardItem as="p" translateZ={24} className="text-xs font-bold tracking-[0.08em] text-theme-muted sm:text-base sm:text-[34px] sm:leading-[1.1]">
               My name is:
             </CardItem>
             <CardItem as="div" translateZ={44} className="mt-3 min-h-[2rem] sm:min-h-[3rem] md:min-h-[4.2rem]">
@@ -194,13 +194,13 @@ export function OrbitingProfileCard({
               />
             </CardItem>
             <div className="mt-5 h-px w-full bg-[linear-gradient(90deg,rgba(15,23,42,0.16),rgba(15,23,42,0.32),rgba(15,23,42,0.16))]" />
-            <CardItem as="p" translateZ={24} className="mt-6 text-xs font-bold tracking-[0.08em] text-slate-600 sm:text-base sm:text-[34px] sm:leading-[1.1]">
+            <CardItem as="p" translateZ={24} className="mt-6 text-xs font-bold tracking-[0.08em] text-theme-muted sm:text-base sm:text-[34px] sm:leading-[1.1]">
               I&apos;m a:
             </CardItem>
             <CardItem
               as="ul"
               translateZ={38}
-              className="mt-3 w-full space-y-1 text-right text-[10px] font-medium leading-5 text-slate-700 sm:text-sm sm:leading-7 md:text-[22px] md:leading-[1.4]"
+              className="mt-3 w-full space-y-1 text-right text-[10px] font-medium leading-5 text-theme-ink sm:text-sm sm:leading-7 md:text-[22px] md:leading-[1.4]"
             >
               {roles.map((role, index) => (
                 <li key={role} className="overflow-hidden">

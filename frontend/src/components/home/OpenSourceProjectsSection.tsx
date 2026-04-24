@@ -66,10 +66,10 @@ export function OpenSourceProjectsSection({ projects }: OpenSourceProjectsSectio
     return (
       <ScrollReveal className="space-y-6">
         <div className="flex items-end justify-between">
-          <h2 className="text-2xl font-semibold text-slate-900">Vibe Coding 开源项目</h2>
-          <span className="text-sm text-slate-500">0 个项目</span>
+          <h2 className="text-2xl font-semibold text-theme-ink">Vibe Coding 开源项目</h2>
+          <span className="text-sm text-theme-muted">0 个项目</span>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white/80 px-5 py-6 text-sm text-slate-600">
+        <div className="rounded-2xl border border-theme-line bg-theme-surface px-5 py-6 text-sm text-theme-muted">
           暂无开源项目数据
         </div>
       </ScrollReveal>
@@ -79,8 +79,8 @@ export function OpenSourceProjectsSection({ projects }: OpenSourceProjectsSectio
   return (
     <ScrollReveal className="space-y-6">
       <div className="flex items-end justify-between">
-        <h2 className="text-2xl font-semibold text-slate-900">Vibe Coding 开源项目</h2>
-        <span className="text-sm text-slate-500">{projects.length} 个项目</span>
+        <h2 className="text-2xl font-semibold text-theme-ink">Vibe Coding 开源项目</h2>
+        <span className="text-sm text-theme-muted">{projects.length} 个项目</span>
       </div>
 
       <StaggerContainer className="grid gap-5 md:grid-cols-2 xl:grid-cols-3" stagger={0.07}>
@@ -93,25 +93,25 @@ export function OpenSourceProjectsSection({ projects }: OpenSourceProjectsSectio
               target="_blank"
             >
               <CardSpotlight
-                className="h-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-[0_12px_32px_rgba(15,23,42,0.08)] ring-1 ring-slate-100/70 backdrop-blur transition-colors duration-500"
+                className="h-full overflow-hidden rounded-2xl border border-theme-line/80 bg-theme-surface p-5 shadow-[0_12px_32px_rgba(15,23,42,0.08)] ring-1 ring-theme-line transition-colors duration-500"
                 glowColor="148, 163, 184"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <h3 className="truncate text-lg font-semibold text-slate-900">
+                    <h3 className="truncate text-lg font-semibold text-theme-ink">
                       {project.name}
                     </h3>
-                    <p className="mt-0.5 truncate text-xs text-slate-500">
+                    <p className="mt-0.5 truncate text-xs text-theme-muted">
                       {project.full_name}
                     </p>
                   </div>
                 </div>
 
-                <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-700">
+                <p className="mt-3 line-clamp-2 text-sm leading-6 text-theme-ink">
                   {project.description || "暂无描述"}
                 </p>
 
-                <div className="mt-4 flex items-center gap-4 text-xs text-slate-500">
+                <div className="mt-4 flex items-center gap-4 text-xs text-theme-muted">
                   {project.language && (
                     <span className="flex items-center gap-1.5">
                       <span

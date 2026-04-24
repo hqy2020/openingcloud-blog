@@ -257,7 +257,7 @@ function Carousel({ photos, onPreview }: { photos: PhotoWallRenderItem[]; onPrev
 
 export function PhotoWall3DCarousel({ photos, onPreview }: PhotoWall3DCarouselProps) {
   return (
-    <div className="relative h-[300px] overflow-hidden rounded-2xl border border-slate-200/80 bg-[linear-gradient(160deg,#f8fbff,#eef4ff)]">
+    <div className="relative h-[300px] overflow-hidden rounded-2xl border border-theme-line/80 bg-[linear-gradient(160deg,#f8fbff,#eef4ff)]">
       <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0.6, 7.8], fov: 24 }}>
         <color attach="background" args={["#f6f9ff"]} />
         <fog attach="fog" args={["#e8eefb", 7.8, 15]} />

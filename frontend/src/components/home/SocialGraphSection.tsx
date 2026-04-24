@@ -409,7 +409,7 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
         tagline="每个阶段，都有并肩同行的人。"
       />
 
-      <div ref={hostRef} className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 text-slate-900 shadow-sm">
+      <div ref={hostRef} className="overflow-hidden rounded-2xl border border-theme-line bg-theme-surface-raised p-2 text-theme-ink shadow-sm">
         {hasCompleteGraphData ? (
           <div className="relative mx-auto overflow-hidden rounded-xl" style={{ width: graphSize.width, height: graphSize.height }}>
             {ForceGraph2D ? (
@@ -565,21 +565,21 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
                 width={graphSize.width}
               />
             ) : (
-              <div className="flex h-full items-center justify-center text-sm text-slate-500">
+              <div className="flex h-full items-center justify-center text-sm text-theme-muted">
                 {loadError ?? "图谱组件加载中..."}
               </div>
             )}
 
-            <div className="pointer-events-none absolute bottom-3 left-3 rounded-md bg-slate-100/80 px-2 py-1 text-xs text-slate-500">
+            <div className="pointer-events-none absolute bottom-3 left-3 rounded-md bg-theme-surface/80 px-2 py-1 text-xs text-theme-muted">
               拖拽任意节点可重新编排关系
             </div>
           </div>
         ) : (
           <div className="space-y-3 p-4">
-            <p className="text-xs text-slate-500">匿名连线数据暂不可用，已展示分阶段概览。</p>
+            <p className="text-xs text-theme-muted">匿名连线数据暂不可用，已展示分阶段概览。</p>
 
             {stageNodes.length === 0 ? (
-              <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-5 text-sm text-slate-600">
+              <div className="rounded-xl border border-theme-line bg-theme-surface/80 px-4 py-5 text-sm text-theme-muted">
                 暂无社交图谱数据。
               </div>
             ) : (
@@ -588,9 +588,9 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
                   const count = friendNodes.filter((node) => node.stage_key === stage.stage_key).length;
                   return (
                     <StaggerItem key={stage.id}>
-                      <CardSpotlight className="rounded-xl bg-white/80 p-4">
-                        <h3 className="font-semibold text-slate-900">{stage.label}</h3>
-                        <p className="mt-1 text-sm text-slate-500">匿名好友 {count} 位</p>
+                      <CardSpotlight className="rounded-xl bg-theme-surface p-4">
+                        <h3 className="font-semibold text-theme-ink">{stage.label}</h3>
+                        <p className="mt-1 text-sm text-theme-muted">匿名好友 {count} 位</p>
                       </CardSpotlight>
                     </StaggerItem>
                   );

@@ -29,8 +29,8 @@ function ItemContent({ item, active }: { item: DockItem; active: boolean }) {
     <motion.span
       className={`group relative inline-flex h-12 w-12 items-center justify-center rounded-2xl border text-lg transition sm:h-[3.25rem] sm:w-[3.25rem] ${
         active
-          ? "border-slate-300 bg-white text-slate-900 shadow-[0_10px_20px_rgba(15,23,42,0.16)]"
-          : "border-slate-200/90 bg-white/84 text-slate-500 shadow-[0_6px_14px_rgba(15,23,42,0.08)]"
+          ? "border-theme-line-strong bg-theme-surface-raised text-theme-ink shadow-[0_10px_20px_rgba(15,23,42,0.16)]"
+          : "border-theme-line/90 bg-theme-surface text-theme-muted shadow-[0_6px_14px_rgba(15,23,42,0.08)]"
       }`}
       whileHover={{ scale: 1.14, y: -3 }}
       whileTap={{ scale: 0.96 }}
@@ -48,11 +48,11 @@ export function MagicDock({ items, pathname, className }: MagicDockProps) {
       aria-label="Dock 导航"
       className={`fixed inset-x-0 bottom-4 z-40 flex justify-center px-3 pb-[max(0px,env(safe-area-inset-bottom))] ${className ?? ""}`}
     >
-      <div className="rounded-3xl border border-slate-200/85 bg-white/82 p-2 backdrop-blur-xl shadow-[0_14px_34px_rgba(15,23,42,0.14)]">
+      <div className="rounded-3xl border border-theme-line/85 bg-theme-surface p-2 shadow-[0_14px_34px_rgba(15,23,42,0.14)]">
         <ul className="flex items-center gap-2">
           {items.map((item) => {
             const active = isItemActive(item, pathname);
-            const sharedClassName = "inline-flex items-center justify-center rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400";
+            const sharedClassName = "inline-flex items-center justify-center rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-line";
             return (
               <li key={item.id}>
                 {item.external ? (

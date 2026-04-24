@@ -23,11 +23,11 @@ export function SectionQuoteHighlight({ quote }: SectionQuoteHighlightProps) {
       className="mx-auto -my-4 max-w-5xl px-2 text-center"
     >
       <h3>
-        <span className="inline-block pb-3 text-3xl font-bold !leading-[1.5] tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
+        <span className="inline-block pb-3 text-3xl font-bold !leading-[1.5] tracking-tight text-theme-ink sm:text-4xl lg:text-5xl">
           {quote.lead}
           {" "}
           <Highlight
-            className="rounded-md px-1 py-0 align-[0.02em] text-slate-900 from-orange-300 to-amber-300 dark:text-white dark:from-orange-500 dark:to-amber-500"
+            className="rounded-md px-1 py-0 align-[0.02em] text-theme-ink from-orange-300 to-amber-300 dark:text-white dark:from-orange-500 dark:to-amber-500"
             backgroundHeight="100%"
             backgroundPosition="left center"
             duration={3}

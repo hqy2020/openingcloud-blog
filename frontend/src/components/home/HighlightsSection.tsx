@@ -17,52 +17,52 @@ type HighlightTheme = {
 };
 
 const HIGHLIGHT_CARD_BASE =
-  "border-slate-200/80 bg-claude-ivory shadow-whisper dark:border-slate-700/85 dark:bg-slate-900/88 dark:shadow-whisper-lg";
+  "border-theme-line/80 bg-theme-surface shadow-[var(--theme-shadow-whisper)] dark:border-theme-ink/85 dark:bg-theme-ink/88 dark:shadow-[var(--theme-shadow-lifted)]";
 
 const HIGHLIGHT_ITEM_BASE =
-  "border-slate-200/80 bg-slate-50/70 text-slate-700 dark:border-slate-500/72 dark:bg-slate-800/64 dark:text-slate-100";
+  "border-theme-line/80 bg-theme-surface/70 text-theme-ink dark:border-theme-line dark:bg-theme-ink/64 dark:text-theme-line";
 
 const HIGHLIGHT_THEMES: HighlightTheme[] = [
   {
     cardClass: `${HIGHLIGHT_CARD_BASE} ring-1 ring-sky-100/70 dark:ring-sky-800/45`,
     itemClass: HIGHLIGHT_ITEM_BASE,
-    dateClass: "text-slate-500 dark:text-slate-400",
-    summaryClass: "text-slate-700 dark:text-slate-300",
+    dateClass: "text-theme-muted dark:text-theme-soft",
+    summaryClass: "text-theme-ink dark:text-theme-soft",
     glowColor: "125, 170, 230",
   },
   {
     cardClass: `${HIGHLIGHT_CARD_BASE} ring-1 ring-blue-100/70 dark:ring-blue-800/45`,
     itemClass: HIGHLIGHT_ITEM_BASE,
-    dateClass: "text-slate-500 dark:text-slate-400",
-    summaryClass: "text-slate-700 dark:text-slate-300",
+    dateClass: "text-theme-muted dark:text-theme-soft",
+    summaryClass: "text-theme-ink dark:text-theme-soft",
     glowColor: "129, 161, 223",
   },
   {
     cardClass: `${HIGHLIGHT_CARD_BASE} ring-1 ring-indigo-100/70 dark:ring-indigo-800/45`,
     itemClass: HIGHLIGHT_ITEM_BASE,
-    dateClass: "text-slate-500 dark:text-slate-400",
-    summaryClass: "text-slate-700 dark:text-slate-300",
+    dateClass: "text-theme-muted dark:text-theme-soft",
+    summaryClass: "text-theme-ink dark:text-theme-soft",
     glowColor: "147, 150, 196",
   },
   {
-    cardClass: `${HIGHLIGHT_CARD_BASE} ring-1 ring-slate-100/70 dark:ring-slate-700/55`,
+    cardClass: `${HIGHLIGHT_CARD_BASE} ring-1 ring-theme-line dark:ring-theme-line`,
     itemClass: HIGHLIGHT_ITEM_BASE,
-    dateClass: "text-slate-600 dark:text-slate-400",
-    summaryClass: "text-slate-700 dark:text-slate-300",
+    dateClass: "text-theme-muted dark:text-theme-soft",
+    summaryClass: "text-theme-ink dark:text-theme-soft",
     glowColor: "148, 163, 184",
   },
   {
     cardClass: `${HIGHLIGHT_CARD_BASE} ring-1 ring-stone-100/70 dark:ring-stone-700/45`,
     itemClass: HIGHLIGHT_ITEM_BASE,
-    dateClass: "text-slate-500 dark:text-slate-400",
-    summaryClass: "text-slate-700 dark:text-slate-300",
+    dateClass: "text-theme-muted dark:text-theme-soft",
+    summaryClass: "text-theme-ink dark:text-theme-soft",
     glowColor: "171, 153, 128",
   },
   {
     cardClass: `${HIGHLIGHT_CARD_BASE} ring-1 ring-amber-100/80 dark:ring-amber-800/45`,
     itemClass: HIGHLIGHT_ITEM_BASE,
-    dateClass: "text-slate-500 dark:text-slate-400",
-    summaryClass: "text-slate-700 dark:text-slate-300",
+    dateClass: "text-theme-muted dark:text-theme-soft",
+    summaryClass: "text-theme-ink dark:text-theme-soft",
     glowColor: "195, 161, 110",
   },
 ];
@@ -133,15 +133,15 @@ export function HighlightsSection({ stages }: HighlightsSectionProps) {
     return (
       <ScrollReveal className="space-y-6">
         <div className="flex items-end justify-between">
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-200">
+          <h2 className="text-2xl font-semibold text-theme-ink dark:text-theme-line-strong">
             <SparklesText className="text-inherit" sparklesCount={8} colors={{ first: "#38bdf8", second: "#f97316" }}>
               高光时刻
             </SparklesText>
           </h2>
-          <span className="text-sm text-slate-500 dark:text-slate-400">0 个阶段</span>
+          <span className="text-sm text-theme-muted dark:text-theme-soft">0 个阶段</span>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-claude-ivory px-5 py-6 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/84 dark:text-slate-300">
+        <div className="rounded-2xl border border-theme-line bg-theme-surface px-5 py-6 text-sm text-theme-muted dark:border-theme-ink dark:bg-theme-ink/84 dark:text-theme-soft">
           暂无高光数据，请先在后台补充阶段与成就。
         </div>
       </ScrollReveal>
@@ -151,12 +151,12 @@ export function HighlightsSection({ stages }: HighlightsSectionProps) {
   return (
     <ScrollReveal className="space-y-6">
       <div className="flex items-end justify-between">
-        <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-200">
+        <h2 className="text-2xl font-semibold text-theme-ink dark:text-theme-line-strong">
           <SparklesText className="text-inherit" sparklesCount={8} colors={{ first: "#38bdf8", second: "#f97316" }}>
             高光时刻
           </SparklesText>
         </h2>
-        <span className="text-sm text-slate-500 dark:text-slate-400">{stages.length} 个阶段</span>
+        <span className="text-sm text-theme-muted dark:text-theme-soft">{stages.length} 个阶段</span>
       </div>
 
       <StaggerContainer className="grid gap-5 md:grid-cols-2 xl:grid-cols-3" stagger={0.07}>
@@ -172,7 +172,7 @@ export function HighlightsSection({ stages }: HighlightsSectionProps) {
                 ].join(" ")}
                 glowColor={theme.glowColor}
               >
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-200">{stage.title}</h3>
+                <h3 className="text-lg font-semibold text-theme-ink dark:text-theme-line-strong">{stage.title}</h3>
                 <p className={`mt-1 text-xs ${theme.dateClass}`}>
                   {stage.start_date || ""}
                   {stage.end_date ? ` - ${stage.end_date}` : ""}

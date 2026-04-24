@@ -32,13 +32,13 @@ export function ThemeDockSwitcher() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        aria-label={`主题：${current.label}`}
-        title={`主题：${current.label}`}
-        className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/80 bg-white shadow-sm transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2"
+        aria-label="切换主题"
+        title="切换主题"
+        className="flex h-10 w-10 items-center justify-center rounded-full border bg-theme-surface shadow-[var(--theme-shadow-whisper)] transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-theme-accent"
         style={{ borderColor: current.swatch }}
       >
         <span
-          className="h-4 w-4 rounded-full border border-white shadow-inner"
+          className="h-4 w-4 rounded-full shadow-inner"
           style={{ backgroundColor: current.swatch }}
         />
       </button>
@@ -50,45 +50,38 @@ export function ThemeDockSwitcher() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
-            className="absolute bottom-full left-1/2 mb-3 w-56 -translate-x-1/2 rounded-2xl border border-slate-200/80 bg-white/95 p-2 shadow-[0_14px_34px_rgba(15,23,42,0.14)] backdrop-blur-xl"
+            className="absolute bottom-full left-1/2 mb-3 -translate-x-1/2 rounded-[var(--theme-radius)] border border-theme-line bg-theme-surface-raised p-2 shadow-[var(--theme-shadow-lifted)]"
           >
-            <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-              主题
-            </div>
-            {palettes.map((p) => {
-              const active = p.id === theme;
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => {
-                    setTheme(p.id);
-                    setOpen(false);
-                  }}
-                  className={`mt-1 flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition-colors ${
-                    active ? "bg-slate-100" : "hover:bg-slate-50"
-                  }`}
-                >
-                  <span
-                    className="h-5 w-5 flex-shrink-0 rounded-full border border-slate-200"
-                    style={{ backgroundColor: p.swatch }}
-                  />
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold text-slate-800">{p.label}</span>
-                    <span className="block text-[11px] leading-tight text-slate-500">{p.description}</span>
-                  </span>
-                  {active ? (
+            <div className="flex items-center gap-2">
+              {palettes.map((p) => {
+                const active = p.id === theme;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => {
+                      setTheme(p.id);
+                      setOpen(false);
+                    }}
+                    aria-label={`切换到 ${p.label} 主题`}
+                    title={p.label}
+                    className={`relative flex h-9 w-9 items-center justify-center rounded-full border transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                      active ? "border-transparent ring-2 ring-offset-2" : "border-theme-line"
+                    }`}
+                    style={
+                      active
+                        ? ({ ["--tw-ring-color" as string]: p.swatch } as React.CSSProperties)
+                        : undefined
+                    }
+                  >
                     <span
-                      className="text-xs font-bold"
-                      style={{ color: p.swatch }}
-                      aria-label="当前主题"
-                    >
-                      ✓
-                    </span>
-                  ) : null}
-                </button>
-              );
-            })}
+                      className="h-5 w-5 rounded-full shadow-inner"
+                      style={{ backgroundColor: p.swatch }}
+                    />
+                  </button>
+                );
+              })}
+            </div>
           </motion.div>
         ) : null}
       </AnimatePresence>

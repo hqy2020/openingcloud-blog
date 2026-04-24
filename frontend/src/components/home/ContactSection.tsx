@@ -79,8 +79,8 @@ export function ContactSection({ contact, variant = "section" }: ContactSectionP
   };
 
   const iconSlotClass = isFooter
-    ? "flex h-16 w-16 items-center justify-center rounded-full border border-slate-200 bg-[radial-gradient(circle_at_30%_25%,#ffffff,#e5e7eb)] shadow-[inset_0_0_0_7px_rgba(255,255,255,0.45),0_7px_16px_rgba(15,23,42,0.1)] transition duration-200 group-hover:scale-110 group-hover:text-[#4F6AE5]"
-    : "flex h-24 w-24 items-center justify-center rounded-full border border-slate-200 bg-[radial-gradient(circle_at_30%_25%,#ffffff,#e5e7eb)] shadow-[inset_0_0_0_10px_rgba(255,255,255,0.45),0_10px_24px_rgba(15,23,42,0.12)] transition duration-200 group-hover:scale-110 group-hover:text-[#4F6AE5] sm:h-28 sm:w-28";
+    ? "flex h-16 w-16 items-center justify-center rounded-full border border-theme-line bg-[radial-gradient(circle_at_30%_25%,#ffffff,#e5e7eb)] shadow-[inset_0_0_0_7px_rgba(255,255,255,0.45),0_7px_16px_rgba(15,23,42,0.1)] transition duration-200 group-hover:scale-110 group-hover:text-[#4F6AE5]"
+    : "flex h-24 w-24 items-center justify-center rounded-full border border-theme-line bg-[radial-gradient(circle_at_30%_25%,#ffffff,#e5e7eb)] shadow-[inset_0_0_0_10px_rgba(255,255,255,0.45),0_10px_24px_rgba(15,23,42,0.12)] transition duration-200 group-hover:scale-110 group-hover:text-[#4F6AE5] sm:h-28 sm:w-28";
   const iconClass = isFooter ? "h-8 w-8" : "h-12 w-12";
   const links = (
     <div
@@ -92,7 +92,7 @@ export function ContactSection({ contact, variant = "section" }: ContactSectionP
     >
       <a
         aria-label="邮箱"
-        className="group flex items-center justify-center text-slate-600"
+        className="group flex items-center justify-center text-theme-muted"
         href={`mailto:${contact.email}`}
         onClick={() => {
           void onEmailClick();
@@ -106,7 +106,7 @@ export function ContactSection({ contact, variant = "section" }: ContactSectionP
 
       <a
         aria-label="GitHub"
-        className="group flex items-center justify-center text-slate-600"
+        className="group flex items-center justify-center text-theme-muted"
         href={contact.github}
         rel="noopener noreferrer"
         target="_blank"
@@ -119,7 +119,7 @@ export function ContactSection({ contact, variant = "section" }: ContactSectionP
 
       <a
         aria-label="微信"
-        className="group flex items-center justify-center text-slate-600"
+        className="group flex items-center justify-center text-theme-muted"
         href="/media/contact/wechat-qr.jpg"
         rel="noopener noreferrer"
         target="_blank"
@@ -136,14 +136,14 @@ export function ContactSection({ contact, variant = "section" }: ContactSectionP
     return (
       <div className="relative w-full py-2">
         {feedback ? (
-          <div className="absolute right-0 top-0 rounded-full bg-white/95 px-2.5 py-1 text-[11px] shadow-sm ring-1 ring-slate-200">
+          <div className="absolute right-0 top-0 rounded-full bg-theme-surface px-2.5 py-1 text-[11px] shadow-sm ring-1 ring-theme-line">
             <p className={feedbackTone === "ok" ? "text-emerald-700" : "text-amber-700"}>{feedback}</p>
           </div>
         ) : null}
         <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-semibold text-slate-800">联系方式</p>
-            <p className="mt-1 text-xs text-slate-500">欢迎来信交流技术、效率与生活实践。</p>
+            <p className="text-sm font-semibold text-theme-ink">联系方式</p>
+            <p className="mt-1 text-xs text-theme-muted">欢迎来信交流技术、效率与生活实践。</p>
           </div>
           {links}
         </div>
@@ -153,20 +153,20 @@ export function ContactSection({ contact, variant = "section" }: ContactSectionP
 
   return (
     <FadeIn>
-      <CardSpotlight className="relative rounded-2xl bg-white/60 p-6 backdrop-blur">
-        <h2 className="text-2xl font-semibold text-slate-800">
+      <CardSpotlight className="relative rounded-2xl bg-theme-surface p-6">
+        <h2 className="text-2xl font-semibold text-theme-ink">
           <SparklesText className="text-inherit" sparklesCount={8} colors={{ first: "#22d3ee", second: "#f97316" }}>
             联系方式
           </SparklesText>
         </h2>
         <SlidingEmphasisText
-          className="mt-2 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg"
+          className="mt-2 max-w-3xl text-base leading-8 text-theme-muted sm:text-lg"
           leadText="我正在与不同领域的人协作，这也是我创建这个网站的原因。"
           emphasisText="欢迎随时联系我。"
         />
 
         {feedback ? (
-          <div className="absolute right-6 top-6 rounded-full bg-white/95 px-3 py-1.5 text-xs shadow-sm ring-1 ring-slate-200">
+          <div className="absolute right-6 top-6 rounded-full bg-theme-surface px-3 py-1.5 text-xs shadow-sm ring-1 ring-theme-line">
             <p className={feedbackTone === "ok" ? "text-emerald-700" : "text-amber-700"}>{feedback}</p>
           </div>
         ) : null}

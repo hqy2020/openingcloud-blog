@@ -60,17 +60,17 @@ function buildRadarOption(set: RadarMetricSet) {
 
 function RadarFallbackTable({ metricSet }: { metricSet: RadarMetricSet }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white/88">
-      <table className="w-full border-collapse text-sm text-slate-700">
-        <thead className="bg-slate-50">
+    <div className="overflow-hidden rounded-xl border border-theme-line/80 bg-theme-surface">
+      <table className="w-full border-collapse text-sm text-theme-ink">
+        <thead className="bg-theme-surface">
           <tr>
-            <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">维度</th>
-            <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">数值</th>
+            <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-theme-muted">维度</th>
+            <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-theme-muted">数值</th>
           </tr>
         </thead>
         <tbody>
           {metricSet.metrics.map((metric) => (
-            <tr key={`${metricSet.id}-${metric.label}`} className="border-t border-slate-100">
+            <tr key={`${metricSet.id}-${metric.label}`} className="border-t border-theme-line">
               <td className="px-3 py-2">{metric.label}</td>
               <td className="px-3 py-2 text-right font-medium">{metric.value}</td>
             </tr>

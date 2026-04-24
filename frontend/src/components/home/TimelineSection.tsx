@@ -23,48 +23,48 @@ function typeBadge(type: TimelineNode["type"]): TimelineTypeMeta {
     case "career":
       return {
         label: "职业",
-        badge: "bg-claude-warm-sand text-claude-coral dark:bg-claude-near-black/20 dark:text-claude-coral",
-        dot: "bg-claude-near-black",
+        badge: "bg-theme-surface-raised text-theme-accent-soft dark:bg-theme-ink/20 dark:text-theme-accent-soft",
+        dot: "bg-theme-ink",
         isDiamond: false,
         glowColor: "92, 138, 249",
       };
     case "health":
       return {
         label: "健康",
-        badge: "bg-claude-warm-sand text-claude-terracotta dark:bg-claude-warm-sand dark:text-claude-terracotta",
-        dot: "bg-claude-warm-sand",
+        badge: "bg-theme-surface-raised text-theme-accent dark:bg-theme-surface-raised dark:text-theme-accent",
+        dot: "bg-theme-surface-raised",
         isDiamond: false,
         glowColor: "213, 160, 76",
       };
     case "learning":
       return {
         label: "求学",
-        badge: "bg-claude-warm-sand text-claude-olive-gray dark:bg-claude-warm-sand dark:text-claude-olive-gray",
-        dot: "bg-claude-warm-sand",
+        badge: "bg-theme-surface-raised text-theme-muted dark:bg-theme-surface-raised dark:text-theme-muted",
+        dot: "bg-theme-surface-raised",
         isDiamond: false,
         glowColor: "84, 171, 138",
       };
     case "family":
       return {
         label: "家庭",
-        badge: "bg-claude-warm-sand text-claude-charcoal-warm dark:bg-claude-warm-sand dark:text-claude-charcoal-warm",
-        dot: "bg-claude-warm-sand",
+        badge: "bg-theme-surface-raised text-theme-muted dark:bg-theme-surface-raised dark:text-theme-muted",
+        dot: "bg-theme-surface-raised",
         isDiamond: false,
         glowColor: "166, 111, 217",
       };
     case "reflection":
       return {
         label: "沉淀",
-        badge: "bg-slate-200 text-slate-700 dark:bg-claude-dark-surface dark:text-claude-warm-silver",
-        dot: "bg-slate-500",
+        badge: "bg-theme-surface-raised text-theme-ink dark:bg-theme-ink dark:text-theme-soft",
+        dot: "bg-theme-muted",
         isDiamond: true,
         glowColor: "148, 163, 184",
       };
     default:
       return {
         label: type,
-        badge: "bg-slate-100 text-slate-700 dark:bg-claude-dark-surface dark:text-claude-warm-silver",
-        dot: "bg-slate-500",
+        badge: "bg-theme-surface text-theme-ink dark:bg-theme-ink dark:text-theme-soft",
+        dot: "bg-theme-muted",
         isDiamond: false,
         glowColor: "148, 163, 184",
       };
@@ -98,18 +98,18 @@ function impactBadge(impact: TimelineNode["impact"]) {
   if (impact === "high") {
     return {
       label: "关键节点",
-      className: "bg-claude-terracotta text-claude-ivory dark:bg-claude-terracotta dark:text-claude-ivory",
+      className: "bg-theme-accent text-theme-bg dark:bg-theme-accent dark:text-theme-bg",
     };
   }
   if (impact === "medium") {
     return {
       label: "持续推进",
-      className: "bg-claude-warm-sand text-claude-charcoal-warm dark:bg-claude-warm-sand dark:text-claude-charcoal-warm",
+      className: "bg-theme-surface-raised text-theme-muted dark:bg-theme-surface-raised dark:text-theme-muted",
     };
   }
   return {
     label: "阶段沉淀",
-    className: "bg-claude-border-cream text-claude-olive-gray dark:bg-claude-dark-surface dark:text-claude-warm-silver",
+    className: "bg-theme-line text-theme-muted dark:bg-theme-ink dark:text-theme-soft",
   };
 }
 
@@ -145,9 +145,9 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
     return (
       <ScrollReveal className="space-y-6">
         <div className="flex items-end justify-between">
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-claude-warm-silver">人生足迹</h2>
+          <h2 className="text-2xl font-semibold text-theme-ink dark:text-theme-soft">人生足迹</h2>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-claude-ivory px-5 py-6 text-sm text-slate-600 dark:border-claude-dark-surface dark:bg-claude-dark-surface dark:text-claude-warm-silver">
+        <div className="rounded-2xl border border-theme-line bg-theme-surface px-5 py-6 text-sm text-theme-muted dark:border-theme-ink dark:bg-theme-ink dark:text-theme-soft">
           暂无时间线数据，请先在后台补充人生节点。
         </div>
       </ScrollReveal>
@@ -157,11 +157,11 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
   return (
     <ScrollReveal className="space-y-6">
       <div>
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-claude-warm-silver">人生足迹</h2>
+          <h2 className="text-2xl font-semibold text-theme-ink dark:text-theme-soft">人生足迹</h2>
       </div>
 
       <div ref={timelineRef} className="relative">
-        <div className="pointer-events-none absolute left-[1.125rem] top-8 h-[calc(100%-4rem)] w-px -translate-x-1/2 bg-gradient-to-b from-slate-300/70 via-slate-200/50 to-slate-300/70 dark:from-slate-700/75 dark:via-slate-700/30 dark:to-slate-700/75 md:left-[12.125rem]" />
+        <div className="pointer-events-none absolute left-[1.125rem] top-8 h-[calc(100%-4rem)] w-px -translate-x-1/2 bg-gradient-to-b from-theme-line-strong via-theme-line to-theme-line-strong dark:from-theme-ink dark:via-theme-ink dark:to-theme-ink md:left-[12.125rem]" />
         {prefersReducedMotion ? (
           <div className="pointer-events-none absolute left-[1.125rem] top-8 h-[calc(100%-4rem)] w-px -translate-x-1/2 bg-gradient-to-b from-[#4F6AE5]/95 via-[#6B917B]/80 to-[#B8945E]/92 md:left-[12.125rem]" />
         ) : (
@@ -181,19 +181,19 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
               <StaggerItem key={`${node.title}-${node.start_date}-${idx}`}>
                 <article className="grid grid-cols-[2.25rem_minmax(0,1fr)] py-5 md:grid-cols-[11rem_2.25rem_minmax(0,1fr)]">
                   <div className="hidden md:flex md:sticky md:top-24 md:self-start md:flex-col md:items-end md:pr-4 md:pt-1">
-                    <span className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400 dark:text-claude-warm-silver">
+                    <span className="text-xs font-medium uppercase tracking-[0.14em] text-theme-soft dark:text-theme-soft">
                       {formatYear(node)}
                     </span>
-                    <span className="mt-1 text-sm font-semibold text-slate-700 dark:text-claude-warm-silver">{formatAnchor(node)}</span>
+                    <span className="mt-1 text-sm font-semibold text-theme-ink dark:text-theme-soft">{formatAnchor(node)}</span>
                   </div>
 
                   <div className="relative flex justify-center pt-1">
                     <span
                       className={cn(
-                        "relative mt-1 flex h-4 w-4 items-center justify-center rounded-full border bg-white shadow-sm transition-colors dark:bg-slate-950",
+                        "relative mt-1 flex h-4 w-4 items-center justify-center rounded-full border bg-theme-surface-raised shadow-sm transition-colors dark:bg-theme-ink",
                         isHighlighted
-                          ? "border-claude-border-warm shadow-[0_0_0_4px_rgba(79,106,229,0.16)] dark:border-claude-border-warm dark:shadow-[0_0_0_4px_rgba(79,106,229,0.25)]"
-                          : "border-slate-300 dark:border-claude-dark-surface",
+                          ? "border-theme-line-strong shadow-[0_0_0_4px_rgba(79,106,229,0.16)] dark:border-theme-line-strong dark:shadow-[0_0_0_4px_rgba(79,106,229,0.25)]"
+                          : "border-theme-line-strong dark:border-theme-ink",
                       )}
                     >
                       <span
@@ -211,8 +211,8 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
                       className={cn(
                         "rounded-2xl border p-5 transition-shadow duration-300",
                         isHighlighted
-                          ? "border-claude-border-warm bg-claude-ivory shadow-whisper-lg ring-1 ring-indigo-100/85 dark:border-claude-border-warm dark:bg-claude-dark-surface dark:shadow-whisper-lg dark:ring-indigo-500/35"
-                          : "border-slate-200/82 bg-claude-ivory shadow-whisper dark:border-claude-dark-surface dark:bg-claude-dark-surface dark:shadow-whisper-lg",
+                          ? "border-theme-line-strong bg-theme-surface shadow-[var(--theme-shadow-lifted)] ring-1 ring-indigo-100/85 dark:border-theme-line-strong dark:bg-theme-ink dark:shadow-[var(--theme-shadow-lifted)] dark:ring-indigo-500/35"
+                          : "border-theme-line/82 bg-theme-surface shadow-[var(--theme-shadow-whisper)] dark:border-theme-ink dark:bg-theme-ink dark:shadow-[var(--theme-shadow-lifted)]",
                       )}
                       glowColor={typeMeta.glowColor}
                     >
@@ -222,19 +222,19 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
                           {impactMeta.label}
                         </span>
                         {node.phase ? (
-                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-claude-dark-surface dark:text-claude-warm-silver">
+                          <span className="rounded-full bg-theme-surface px-2.5 py-1 text-xs font-medium text-theme-muted dark:bg-theme-ink dark:text-theme-soft">
                             {node.phase}
                           </span>
                         ) : null}
                       </div>
 
-                      <h3 className="mt-3 text-lg font-semibold text-slate-900 dark:text-claude-warm-silver">{node.title}</h3>
-                      <p className="mt-1 text-xs text-slate-500 dark:text-claude-warm-silver">{formatPeriod(node)}</p>
-                      <p className="mt-1 text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400 dark:text-claude-warm-silver md:hidden">
+                      <h3 className="mt-3 text-lg font-semibold text-theme-ink dark:text-theme-soft">{node.title}</h3>
+                      <p className="mt-1 text-xs text-theme-muted dark:text-theme-soft">{formatPeriod(node)}</p>
+                      <p className="mt-1 text-[11px] font-medium uppercase tracking-[0.14em] text-theme-soft dark:text-theme-soft md:hidden">
                         {formatAnchor(node)}
                       </p>
                       {node.description ? (
-                        <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-claude-warm-silver">{node.description}</p>
+                        <p className="mt-3 text-sm leading-6 text-theme-ink dark:text-theme-soft">{node.description}</p>
                       ) : null}
 
                       {node.tags.length > 0 ? (
@@ -242,7 +242,7 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
                           {node.tags.slice(0, 4).map((tag) => (
                             <span
                               key={`${node.title}-${tag}`}
-                              className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-500 dark:border-claude-dark-surface dark:bg-claude-dark-surface dark:text-claude-warm-silver"
+                              className="rounded-md border border-theme-line bg-theme-surface px-2 py-1 text-[11px] text-theme-muted dark:border-theme-ink dark:bg-theme-ink dark:text-theme-soft"
                             >
                               #{tag}
                             </span>

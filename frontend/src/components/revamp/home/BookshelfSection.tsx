@@ -46,7 +46,7 @@ function BookCover({ book, className }: { book: BookItem; className?: string }) 
   if (broken || !book.cover) {
     return (
       <div
-        className={`flex h-full w-full items-center justify-center rounded-md bg-gradient-to-br from-claude-parchment to-claude-terracotta/20 p-2 ${className ?? ""}`}
+        className={`flex h-full w-full items-center justify-center rounded-md bg-gradient-to-br from-theme-bg to-theme-accent/20 p-2 ${className ?? ""}`}
       >
         <span className="text-center font-theme-display text-[11px] leading-tight text-theme-ink/70">
           {book.title}
@@ -76,7 +76,7 @@ function ReadingCard({ book }: { book: BookItem }) {
       whileHover={{ y: -5, boxShadow: "0 18px 38px rgba(201,100,66,0.18)" }}
       transition={hoverSpring}
       style={{ perspective: "900px" }}
-      className="group relative overflow-hidden rounded-[var(--theme-radius)] border border-theme-line bg-gradient-to-br from-claude-parchment via-claude-ivory to-claude-ivory p-6 shadow-whisper"
+      className="group relative overflow-hidden rounded-[var(--theme-radius)] border border-theme-line bg-gradient-to-br from-theme-bg via-theme-surface to-theme-surface p-6 shadow-[var(--theme-shadow-whisper)]"
     >
       {!prefersReducedMotion ? (
         <motion.div
@@ -152,7 +152,7 @@ function FinishedCard({ book }: { book: BookItem }) {
       whileHover={{ y: -4, scale: 1.02, boxShadow: "0 14px 28px rgba(0,0,0,0.08)" }}
       transition={hoverSpring}
       style={{ perspective: "700px" }}
-      className="group flex flex-col rounded-[var(--theme-radius)] border border-theme-line bg-theme-bg p-4 shadow-whisper"
+      className="group flex flex-col rounded-[var(--theme-radius)] border border-theme-line bg-theme-bg p-4 shadow-[var(--theme-shadow-whisper)]"
     >
       <div className="flex gap-3">
         <motion.div

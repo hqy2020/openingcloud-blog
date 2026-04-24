@@ -57,7 +57,7 @@ export const SidePanel = forwardRef<HTMLDivElement, SidePanelProps>(
             <motion.button
               type="button"
               aria-label="关闭侧边栏"
-              className="fixed inset-0 z-40 hidden bg-slate-900/8 backdrop-blur-[1px] lg:block"
+              className="fixed inset-0 z-40 hidden bg-theme-ink/8-[1px] lg:block"
               initial={reducedMotion ? { opacity: 1 } : { opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={reducedMotion ? { opacity: 1 } : { opacity: 0 }}
@@ -83,11 +83,11 @@ export const SidePanel = forwardRef<HTMLDivElement, SidePanelProps>(
               "flex h-full w-full flex-col overflow-hidden",
               panelOpen
                 ? cn(
-                    "bg-white/88 text-slate-800 ring-1 ring-slate-200/70 shadow-[0_18px_45px_-30px_rgba(15,23,42,0.38)] backdrop-blur-xl",
+                    "bg-theme-surface text-theme-ink ring-1 ring-theme-line shadow-[0_18px_45px_-30px_rgba(15,23,42,0.38)]",
                     side === "right" ? "rounded-l-[34px]" : "rounded-r-[34px]",
                   )
                 : cn(
-                    "bg-white/78 text-slate-700 ring-1 ring-slate-200/65 shadow-[0_12px_28px_-24px_rgba(15,23,42,0.35)] backdrop-blur-xl",
+                    "bg-theme-surface text-theme-ink ring-1 ring-theme-line shadow-[0_12px_28px_-24px_rgba(15,23,42,0.35)]",
                     side === "right" ? "rounded-l-[18px]" : "rounded-r-[18px]",
                   ),
             )}
@@ -95,7 +95,7 @@ export const SidePanel = forwardRef<HTMLDivElement, SidePanelProps>(
             <div
               className={cn(
                 "flex shrink-0",
-                panelOpen ? "items-center justify-between border-b border-slate-200/70 px-4 pb-3 pt-20" : "h-full items-start justify-center px-1.5 pt-[32vh]",
+                panelOpen ? "items-center justify-between border-b border-theme-line/70 px-4 pb-3 pt-20" : "h-full items-start justify-center px-1.5 pt-[32vh]",
               )}
             >
               {renderButton ? renderButton(handlePanelOpen, panelOpen) : null}

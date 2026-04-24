@@ -374,7 +374,7 @@ export function TravelSection({ travel }: TravelSectionProps) {
         tagline="走过的城市，都是人生坐标上的一笔。"
       />
 
-      <div ref={hostRef} className="rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-[0_12px_32px_rgba(15,23,42,0.08)] backdrop-blur">
+      <div ref={hostRef} className="rounded-2xl border border-theme-line/80 bg-theme-surface p-4 shadow-[0_12px_32px_rgba(15,23,42,0.08)]">
         {Chart && mapReady ? (
           <Chart echarts={echartsRuntime ?? undefined} lazyUpdate notMerge option={option} style={{ height: 480, width: "100%" }} />
         ) : (
@@ -382,16 +382,16 @@ export function TravelSection({ travel }: TravelSectionProps) {
             {fallbackHint ? <p className="text-xs text-amber-700">{fallbackHint}</p> : null}
 
             {travel.length === 0 ? (
-              <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-5 text-sm text-slate-600">
+              <div className="rounded-xl border border-theme-line bg-theme-surface/80 px-4 py-5 text-sm text-theme-muted">
                 暂无旅行足迹数据。
               </div>
             ) : (
               <StaggerContainer className="grid gap-3 md:grid-cols-3" stagger={0.06}>
                 {travel.map((province) => (
                   <StaggerItem key={province.province}>
-                    <CardSpotlight className="rounded-xl bg-slate-50/85 p-4">
-                      <h3 className="font-medium text-slate-900">{province.province}</h3>
-                      <p className="mt-1 text-sm text-slate-600">
+                    <CardSpotlight className="rounded-xl bg-theme-surface/85 p-4">
+                      <h3 className="font-medium text-theme-ink">{province.province}</h3>
+                      <p className="mt-1 text-sm text-theme-muted">
                         {province.cities.map((city, idx) => {
                           const isCurrent =
                             currentResidence &&
@@ -401,7 +401,7 @@ export function TravelSection({ travel }: TravelSectionProps) {
                             <span key={city.city}>
                               {idx > 0 ? "、" : ""}
                               {isCurrent ? (
-                                <span className="font-bold text-claude-error-crimson animate-pulse">
+                                <span className="font-bold text-red-500 animate-pulse">
                                   {city.city}（当前）
                                 </span>
                               ) : (

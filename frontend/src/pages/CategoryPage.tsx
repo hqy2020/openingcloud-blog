@@ -188,7 +188,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
   );
 
   return (
-    <section className="relative overflow-hidden rounded-[28px] border border-slate-200/80 bg-white/92 shadow-sm">
+    <section className="relative overflow-hidden rounded-[28px] border border-theme-line/80 bg-theme-surface shadow-sm">
       <Helmet>
         <title>{`${title} | Keyon Blog ｜ 云际漫游者`}</title>
         <meta content={categoryDescriptions[category]} name="description" />
@@ -200,7 +200,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-[radial-gradient(circle_at_18%_18%,rgba(79,106,229,0.18),transparent_55%),radial-gradient(circle_at_80%_4%,rgba(107,145,123,0.16),transparent_48%)]" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-56 opacity-70 [background-size:32px_32px] [background-image:linear-gradient(to_right,rgba(148,163,184,0.12)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.12)_1px,transparent_1px)]" />
 
-      <header className="relative border-b border-slate-200/80 p-6 md:p-8">
+      <header className="relative border-b border-theme-line/80 p-6 md:p-8">
         <div className="flex flex-wrap items-center gap-2">
           {categoryTabs.map((tab) => {
             const active = tab.id === category;
@@ -213,7 +213,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
                   "rounded-full border px-5 py-2.5 text-base font-medium transition",
                   active
                     ? "border-[#4f6ae5]/35 bg-[#4f6ae5]/10 text-[#4f6ae5]"
-                    : "border-slate-200 bg-white/75 text-slate-600 hover:border-slate-300 hover:text-slate-800",
+                    : "border-theme-line bg-theme-surface text-theme-muted hover:border-theme-line-strong hover:text-theme-ink",
                 )}
               >
                 {tab.label}
@@ -222,10 +222,10 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
           })}
         </div>
 
-        <h1 className="mt-5 text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">{title}文章</h1>
-        <p className="mt-2 max-w-2xl text-sm text-slate-600 md:text-base">{categoryDescriptions[category]}</p>
+        <h1 className="mt-5 text-3xl font-semibold tracking-tight text-theme-ink md:text-4xl">{title}文章</h1>
+        <p className="mt-2 max-w-2xl text-sm text-theme-muted md:text-base">{categoryDescriptions[category]}</p>
         {!loading ? (
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-theme-muted">
             {filteredPosts.length} / {effectivePosts.length} 篇文章
             {selectedTag ? ` · 当前标签：${selectedTag}` : ""}
           </p>
@@ -244,7 +244,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
                     "rounded-lg border px-4 py-2 text-base transition",
                     active
                       ? "border-[#4f6ae5]/35 bg-[#4f6ae5] text-white"
-                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
+                      : "border-theme-line bg-theme-surface-raised text-theme-muted hover:bg-theme-surface",
                   )}
                 >
                   {tag.label}
@@ -257,11 +257,11 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
           </div>
 
           <label className="block md:hidden">
-            <span className="mb-1 block text-xs font-medium text-slate-500">按标签筛选</span>
+            <span className="mb-1 block text-xs font-medium text-theme-muted">按标签筛选</span>
             <select
               value={selectedTag}
               onChange={(event) => handleSelectTag(event.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-claude-terracotta/20 transition focus:border-claude-terracotta/40 focus:ring"
+              className="w-full rounded-xl border border-theme-line bg-theme-surface-raised px-3 py-2 text-sm text-theme-ink outline-none ring-theme-accent/20 transition focus:border-theme-accent/40 focus:ring"
             >
               <option value="">全部</option>
               {allTags.map((tag) => (
@@ -274,10 +274,10 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
         </div>
       </header>
 
-      {loading ? <p className="relative px-6 py-10 text-sm text-slate-500 md:px-8">加载文章中...</p> : null}
+      {loading ? <p className="relative px-6 py-10 text-sm text-theme-muted md:px-8">加载文章中...</p> : null}
 
       {!loading && filteredPosts.length > 0 ? (
-        <div className="relative grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 border-x border-slate-200/80">
+        <div className="relative grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 border-x border-theme-line/80">
           {filteredPosts.map((post, index) => {
             const cover = resolvePostCover(post);
             return (
@@ -285,13 +285,13 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
                 key={post.slug}
                 to={`/posts/${post.slug}`}
                 className={cn(
-                  "group block border-t border-slate-200/80 p-5 transition hover:bg-slate-50/80 md:p-6",
+                  "group block border-t border-theme-line/80 p-5 transition hover:bg-theme-surface/80 md:p-6",
                   index % 2 === 0 && "md:border-r",
                   index % 3 !== 2 && "xl:border-r",
                 )}
               >
                 {cover ? (
-                  <div className="relative h-48 overflow-hidden rounded-xl border border-slate-200/70 bg-slate-100">
+                  <div className="relative h-48 overflow-hidden rounded-xl border border-theme-line/70 bg-theme-surface">
                     <img
                       src={cover}
                       alt={`${post.title} 封面`}
@@ -300,12 +300,12 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
                     />
                   </div>
                 ) : (
-                  <div className="flex h-48 items-end rounded-xl border border-slate-200/70 bg-gradient-to-br from-slate-100 to-slate-50 p-4">
-                    <span className="line-clamp-2 text-sm font-medium text-slate-500">{post.title}</span>
+                  <div className="flex h-48 items-end rounded-xl border border-theme-line/70 bg-gradient-to-br from-theme-surface to-theme-bg p-4">
+                    <span className="line-clamp-2 text-sm font-medium text-theme-muted">{post.title}</span>
                   </div>
                 )}
 
-                <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-theme-muted">
                   <time>{formatDate(post.updated_at)}</time>
                   <span>·</span>
                   <span>{estimateReadMinutes(post)} 分钟</span>
@@ -321,17 +321,17 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
                   </span>
                 </div>
 
-                <h2 className="mt-2 line-clamp-2 text-xl font-semibold tracking-tight text-slate-900 group-hover:underline">
+                <h2 className="mt-2 line-clamp-2 text-xl font-semibold tracking-tight text-theme-ink group-hover:underline">
                   {post.title}
                 </h2>
-                <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{post.excerpt || "暂无摘要"}</p>
+                <p className="mt-2 line-clamp-3 text-sm leading-6 text-theme-muted">{post.excerpt || "暂无摘要"}</p>
 
                 {post.tags.length > 0 ? (
                   <div className="mt-3 flex flex-wrap gap-2">
                     {post.tags.slice(0, 3).map((tag) => (
                       <span
                         key={`${post.slug}-${tag}`}
-                        className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-xs text-slate-500"
+                        className="rounded-md border border-theme-line bg-theme-surface-raised px-2 py-0.5 text-xs text-theme-muted"
                       >
                         {tag}
                       </span>
@@ -345,13 +345,13 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
       ) : null}
 
       {!loading && filteredPosts.length === 0 ? (
-        <p className="relative px-6 py-10 text-sm text-slate-500 md:px-8">
+        <p className="relative px-6 py-10 text-sm text-theme-muted md:px-8">
           {selectedTag ? "当前标签下暂无文章。" : "暂无文章。"}
         </p>
       ) : null}
 
       {error ? (
-        <p className="relative border-t border-slate-200/80 px-6 py-3 text-xs text-amber-700 md:px-8">
+        <p className="relative border-t border-theme-line/80 px-6 py-3 text-xs text-amber-700 md:px-8">
           接口请求失败，当前显示本地回退内容。
         </p>
       ) : null}

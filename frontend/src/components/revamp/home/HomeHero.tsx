@@ -44,7 +44,7 @@ export function HomeHero({ hero }: HomeHeroProps) {
             />
           </motion.div>
 
-          <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center font-serif text-sm italic leading-[1.6] tracking-normal text-claude-olive-gray sm:text-base">
+          <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center font-serif text-sm italic leading-[1.6] tracking-normal text-theme-muted sm:text-base">
             {hero.subtitle || coverHeroConfig.one_liner}
           </p>
         </div>

@@ -85,7 +85,7 @@ function PulsatingSocialLink({
       onClick={onClick}
       aria-label={label}
       title={label}
-      className="group relative inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-slate-50/90 text-slate-600 transition hover:bg-slate-100 hover:text-slate-800 lg:h-11 lg:w-11 xl:h-12 xl:w-12"
+      className="group relative inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-theme-surface/90 text-theme-muted transition hover:bg-theme-surface hover:text-theme-ink lg:h-11 lg:w-11 xl:h-12 xl:w-12"
     >
       <span className="relative z-10">{children}</span>
       <span
@@ -284,7 +284,7 @@ export function AppLayout() {
   const activeDesktopIndex = headerTabs.findIndex((item) => !item.nativeAnchor && item.to === location.pathname);
 
   return (
-    <DotBackground className="min-h-screen text-slate-800">
+    <DotBackground className="min-h-screen text-theme-ink">
       <header className="fixed inset-x-0 top-0 z-40">
         <div className="w-full">
           <motion.div
@@ -297,13 +297,13 @@ export function AppLayout() {
               stiffness: 220,
               damping: 36,
             }}
-            className="relative z-[60] hidden w-full overflow-hidden border-y border-slate-200/70 px-4 py-2 isolate lg:grid lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center lg:gap-4 lg:px-8 lg:py-4 xl:gap-6"
+            className="relative z-[60] hidden w-full overflow-hidden border-y border-theme-line/70 px-4 py-2 isolate lg:grid lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center lg:gap-4 lg:px-8 lg:py-4 xl:gap-6"
           >
             <DistortedGlassSurface intensity={compactNavbar ? "regular" : "soft"} className="absolute inset-0" />
 
             <NavLink
               aria-label="返回首页"
-              className="relative z-20 inline-flex items-center px-2 py-1 text-2xl font-semibold tracking-tight text-slate-800 lg:px-4 lg:py-2 lg:text-4xl"
+              className="relative z-20 inline-flex items-center px-2 py-1 text-2xl font-semibold tracking-tight text-theme-ink lg:px-4 lg:py-2 lg:text-4xl"
               title="首页"
               to="/"
             >
@@ -321,7 +321,7 @@ export function AppLayout() {
                     {showHighlight ? (
                       <motion.span
                         layoutId="desktop-navbar-hover"
-                        className="absolute inset-0 rounded-full bg-slate-200/70"
+                        className="absolute inset-0 rounded-full bg-theme-surface-raised/70"
                         transition={{ type: "spring", stiffness: 280, damping: 28 }}
                       />
                     ) : null}
@@ -334,7 +334,7 @@ export function AppLayout() {
                     <a
                       key={item.label}
                       href={item.to}
-                      className="relative shrink-0 rounded-full px-3 py-1.5 text-slate-600 transition hover:text-slate-900 lg:px-3 lg:py-2 xl:px-5 xl:py-2.5"
+                      className="relative shrink-0 rounded-full px-3 py-1.5 text-theme-muted transition hover:text-theme-ink lg:px-3 lg:py-2 xl:px-5 xl:py-2.5"
                       onFocus={() => setHoveredNavIndex(index)}
                       onMouseEnter={() => setHoveredNavIndex(index)}
                     >
@@ -347,7 +347,7 @@ export function AppLayout() {
                   <Link
                     key={item.label}
                     to={item.to}
-                    className="relative shrink-0 rounded-full px-3 py-1.5 text-slate-600 transition hover:text-slate-900 lg:px-3 lg:py-2 xl:px-5 xl:py-2.5"
+                    className="relative shrink-0 rounded-full px-3 py-1.5 text-theme-muted transition hover:text-theme-ink lg:px-3 lg:py-2 xl:px-5 xl:py-2.5"
                     onFocus={() => setHoveredNavIndex(index)}
                     onMouseEnter={() => setHoveredNavIndex(index)}
                   >
@@ -359,12 +359,12 @@ export function AppLayout() {
 
             <div className="relative z-20 flex shrink-0 items-center gap-1 lg:gap-1.5 xl:gap-2">
               <SocialLinksRow />
-              <span className="mx-0.5 h-5 w-px bg-slate-200 lg:mx-1 lg:h-7 xl:mx-1.5 xl:h-8" />
+              <span className="mx-0.5 h-5 w-px bg-theme-surface-raised lg:mx-1 lg:h-7 xl:mx-1.5 xl:h-8" />
               <a
                 href="/admin/"
                 aria-label="后台管理"
                 title="后台管理"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100 hover:text-slate-800 lg:h-11 lg:w-11 xl:h-12 xl:w-12"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-theme-muted transition hover:bg-theme-surface hover:text-theme-ink lg:h-11 lg:w-11 xl:h-12 xl:w-12"
               >
                 <AdminEntryIcon />
               </a>
@@ -381,14 +381,14 @@ export function AppLayout() {
               stiffness: 220,
               damping: 36,
             }}
-            className="relative z-50 flex w-full flex-col overflow-hidden border-y border-slate-200/70 px-3 py-2 isolate lg:hidden"
+            className="relative z-50 flex w-full flex-col overflow-hidden border-y border-theme-line/70 px-3 py-2 isolate lg:hidden"
           >
             <DistortedGlassSurface intensity={compactNavbar ? "regular" : "soft"} className="absolute inset-0" />
 
             <div className="relative z-10 flex w-full items-center justify-between">
               <NavLink
                 aria-label="返回首页"
-                className="inline-flex items-center px-1.5 py-0.5 text-lg font-semibold tracking-tight text-slate-800"
+                className="inline-flex items-center px-1.5 py-0.5 text-lg font-semibold tracking-tight text-theme-ink"
                 title="首页"
                 to="/"
               >
@@ -397,7 +397,7 @@ export function AppLayout() {
 
               <button
                 type="button"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full text-theme-muted transition hover:bg-theme-surface"
                 onClick={() => setMobileMenuOwnerKey((current) => (current === locationKey ? null : locationKey))}
                 aria-expanded={mobileMenuOpen}
                 aria-label={mobileMenuOpen ? "关闭菜单" : "打开菜单"}
@@ -413,7 +413,7 @@ export function AppLayout() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.2, ease: "easeOut" }}
-                  className="relative mt-3 flex flex-col gap-1 overflow-hidden rounded-2xl border border-slate-200/70 px-3 py-3 shadow-lg"
+                  className="relative mt-3 flex flex-col gap-1 overflow-hidden rounded-2xl border border-theme-line/70 px-3 py-3 shadow-lg"
                 >
                   <DistortedGlassSurface intensity="soft" className="absolute inset-0 rounded-2xl" />
 
@@ -423,7 +423,7 @@ export function AppLayout() {
                         <a
                           key={item.label}
                           href={item.to}
-                          className="rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+                          className="rounded-xl px-3 py-2 text-sm font-medium text-theme-muted transition hover:bg-theme-surface"
                           onClick={() => setMobileMenuOwnerKey(null)}
                         >
                           {item.label}
@@ -432,7 +432,7 @@ export function AppLayout() {
                         <Link
                           key={item.label}
                           to={item.to}
-                          className="rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+                          className="rounded-xl px-3 py-2 text-sm font-medium text-theme-muted transition hover:bg-theme-surface"
                           onClick={() => setMobileMenuOwnerKey(null)}
                         >
                           {item.label}
@@ -440,11 +440,11 @@ export function AppLayout() {
                       ),
                     )}
 
-                    <div className="mt-1 flex flex-wrap items-center gap-1 border-t border-slate-100 pt-2">
+                    <div className="mt-1 flex flex-wrap items-center gap-1 border-t border-theme-line pt-2">
                       <SocialLinksRow onClick={() => setMobileMenuOwnerKey(null)} />
                       <a
                         href="/admin/"
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-theme-muted hover:bg-theme-surface"
                         onClick={() => setMobileMenuOwnerKey(null)}
                       >
                         <AdminEntryIcon />
@@ -462,7 +462,7 @@ export function AppLayout() {
         <Outlet />
       </main>
 
-      <footer className="relative mt-12 w-full overflow-hidden border-t border-claude-border-warm bg-claude-parchment text-claude-olive-gray">
+      <footer className="relative mt-12 w-full overflow-hidden border-t border-theme-line-strong bg-theme-bg text-theme-muted">
         <StripeBgGuides
           animated
           animationDelay={0.55}
@@ -481,12 +481,12 @@ export function AppLayout() {
           solidLines={[1, 6]}
         />
         <div className="relative mx-auto w-full max-w-2xl px-4 py-4">
-          <p className="text-sm leading-[1.3] text-slate-600">
+          <p className="text-sm leading-[1.3] text-theme-muted">
             I&apos;m collaborating with individuals from diverse fields, which is precisely why I created this website. Feel
             free to contact me.
           </p>
-          <p className="mt-0.5 text-sm leading-[1.3] text-slate-600">- Keyon · 云际漫游者</p>
-          <p className="mt-0.5 text-sm leading-[1.3] text-slate-600">联系方式：hqy200091@163.com</p>
+          <p className="mt-0.5 text-sm leading-[1.3] text-theme-muted">- Keyon · 云际漫游者</p>
+          <p className="mt-0.5 text-sm leading-[1.3] text-theme-muted">联系方式：hqy200091@163.com</p>
         </div>
       </footer>
 

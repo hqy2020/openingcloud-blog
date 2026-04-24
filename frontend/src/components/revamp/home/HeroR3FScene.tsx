@@ -74,8 +74,8 @@ function PlanetSystem({ hovered, reducedMotion, logoSrc }: { hovered: boolean; r
 
 function FallbackOrbit({ logoSrc, reducedMotion }: { logoSrc: string; reducedMotion: boolean }) {
   return (
-    <div className="relative mx-auto h-[270px] w-[270px] rounded-[36px] border border-slate-200/70 bg-white/70 shadow-[0_18px_44px_rgba(15,23,42,0.14)] backdrop-blur-xl">
-      <div className="absolute left-1/2 top-1/2 h-[210px] w-[210px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-slate-300/75" />
+    <div className="relative mx-auto h-[270px] w-[270px] rounded-[36px] border border-theme-line/70 bg-theme-surface shadow-[0_18px_44px_rgba(15,23,42,0.14)]">
+      <div className="absolute left-1/2 top-1/2 h-[210px] w-[210px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-theme-line-strong/75" />
       <div className="absolute left-1/2 top-1/2 h-[76px] w-[76px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,#fde68a,#fb923c)] shadow-[0_0_32px_rgba(251,146,60,0.55)]" />
       <div
         className="absolute left-1/2 top-1/2 h-0 w-0"
@@ -86,7 +86,7 @@ function FallbackOrbit({ logoSrc, reducedMotion }: { logoSrc: string; reducedMot
         <img
           alt="Logo orbit"
           src={logoSrc}
-          className="absolute h-16 w-16 -translate-y-1/2 rounded-full border border-slate-200/80 bg-white/95 object-contain p-1.5 shadow-[0_10px_20px_rgba(15,23,42,0.18)]"
+          className="absolute h-16 w-16 -translate-y-1/2 rounded-full border border-theme-line/80 bg-theme-surface object-contain p-1.5 shadow-[0_10px_20px_rgba(15,23,42,0.18)]"
           style={{ transform: `translateX(${PLANET_ORBIT_RADIUS * 48}px) translateY(-50%)` }}
         />
       </div>
@@ -119,7 +119,7 @@ export function HeroR3FScene({ logoSrc = "/brand/logo-icon-ink.png", className }
 
   return (
     <div
-      className={`relative mx-auto h-[270px] w-[270px] overflow-hidden rounded-[36px] border border-slate-200/70 bg-white/70 shadow-[0_18px_44px_rgba(15,23,42,0.14)] backdrop-blur-xl ${className ?? ""}`}
+      className={`relative mx-auto h-[270px] w-[270px] overflow-hidden rounded-[36px] border border-theme-line/70 bg-theme-surface shadow-[0_18px_44px_rgba(15,23,42,0.14)] ${className ?? ""}`}
       onMouseEnter={enableHover ? () => setHovered(true) : undefined}
       onMouseLeave={enableHover ? () => setHovered(false) : undefined}
     >
