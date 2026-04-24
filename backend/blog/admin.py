@@ -38,6 +38,7 @@ from .models import (
     TravelPlace,
     WishItem,
     Book,
+    WikiQuote,
 )
 
 
@@ -754,3 +755,11 @@ class BookAdmin(SortableAdminMixin, admin.ModelAdmin):
         ("元数据", {"fields": ("tags", "review", "douban_subject_id")}),
         ("展示控制", {"fields": ("sort_order", "is_active")}),
     )
+
+
+@admin.register(WikiQuote)
+class WikiQuoteAdmin(admin.ModelAdmin):
+    list_display = ["text", "tier", "source", "sort_order", "is_active", "updated_at"]
+    list_editable = ["tier", "sort_order", "is_active"]
+    list_filter = ["tier", "is_active"]
+    search_fields = ["text", "source"]

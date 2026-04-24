@@ -41,8 +41,8 @@ services:
           TODAY=$$(date +%Y-%m-%d)
           HM=$$(date +%H%M)
           if [ "$$HM" = "0400" ] && [ "$$LAST_RUN" != "$$TODAY" ]; then
-            echo "[$$(date)] running sync_knowledge_github"
-            if python manage.py sync_knowledge_github; then
+            echo "[$$(date)] running sync_knowledge_github + sync_quotes_from_wiki"
+            if python manage.py sync_knowledge_github && python manage.py sync_quotes_from_wiki; then
               LAST_RUN=$$TODAY
             else
               echo "[$$(date)] sync failed, will retry next minute"

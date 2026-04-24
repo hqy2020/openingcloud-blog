@@ -612,6 +612,7 @@ class HomeAggregateSerializer(serializers.Serializer):
     contact = HomeContactSerializer()
     radar_charts = RadarConfigPublicSerializer(many=True, required=False)
     section_quotes = serializers.DictField(child=SectionQuoteSerializer(), required=False)
+    quotes_pool = serializers.ListField(child=serializers.DictField(), required=False)
     wishes = serializers.ListField(child=serializers.DictField(), required=False)
     books = serializers.ListField(child=serializers.DictField(), required=False)
 

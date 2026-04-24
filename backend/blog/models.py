@@ -758,3 +758,28 @@ class KnowledgeEdge(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.source.slug} -> {self.target.slug}"
+
+
+class WikiQuote(TimeStampedModel):
+    """启云原创金句池，从 vault 金句集.md 同步而来，首页随机轮播。"""
+
+    class Tier(models.TextChoices):
+        CREED = "creed", "五信条"
+        INSIGHT = "insight", "原创洞见"
+
+    text = models.CharField(max_length=240)
+    tier = models.CharField(max_length=16, choices=Tier.choices, default=Tier.INSIGHT, db_index=True)
+    source = models.CharField(max_length=120, blank=True, default="", help_text="来源标注，如 WHOAMI 或 entity 文件名")
+    sort_order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True, db_index=True)
+
+    class Meta:
+        ordering = ["tier", "sort_order", "id"]
+        verbose_name = "Wiki 金句"
+        verbose_name_plural = "Wiki 金句"
+        constraints = [
+            models.UniqueConstraint(fields=["text"], name="unique_wiki_quote_text"),
+        ]
+
+    def __str__(self) -> str:
+        return f"[{self.tier}] {self.text[:40]}"

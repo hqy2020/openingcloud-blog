@@ -41,6 +41,7 @@ from .models import (
     TimelineNode,
     TimeSeriesConfig,
     TravelPlace,
+    WikiQuote,
     WishItem,
 )
 from .permissions import IsStaffOrSyncToken, IsStaffUser
@@ -1359,6 +1360,11 @@ def _radar_charts_payload() -> list[dict]:
     ]
 
 
+def _wiki_quotes_pool_payload() -> list[dict]:
+    quotes = WikiQuote.objects.filter(is_active=True).order_by("tier", "sort_order", "id")
+    return [{"text": q.text, "tier": q.tier, "source": q.source} for q in quotes]
+
+
 def _home_section_quotes_payload() -> dict:
     quotes = SectionQuote.objects.filter(is_active=True).order_by("slot", "sort_order")
     result: dict = {}
@@ -1421,6 +1427,7 @@ def _home_payload(*, show_real_name: bool = False) -> dict:
         },
         "radar_charts": _radar_charts_payload(),
         "section_quotes": _home_section_quotes_payload(),
+        "quotes_pool": _wiki_quotes_pool_payload(),
         "wishes": WishItemSerializer(WishItem.objects.filter(is_active=True), many=True).data,
         "books": BookSerializer(Book.objects.filter(is_active=True), many=True).data,
     }
