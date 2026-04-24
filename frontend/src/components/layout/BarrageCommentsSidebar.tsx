@@ -16,8 +16,8 @@ type DragState = {
 
 const FLOATING_CONTROL_MIN_TOP = 88;
 const FLOATING_CONTROL_HEIGHT = 40;
-const COLLAPSED_WIDTH = 148;
-const EXPANDED_WIDTH = 420;
+const COLLAPSED_WIDTH = 44;
+const EXPANDED_WIDTH = 360;
 const FLOATING_CONTROL_STORAGE_KEY = "openingcloud_barrage_control_pos_v1";
 const defaultFloatingControlPosition: FloatingControlPosition = { y: 96 };
 
@@ -220,30 +220,38 @@ export function BarrageCommentsSidebar() {
 
   return (
     <motion.aside
-      className="fixed left-0 z-30 max-w-[calc(100vw-0.75rem)] overflow-hidden rounded-r-[28px] border border-theme-line bg-theme-surface-raised shadow-[0_18px_45px_-30px_rgba(15,23,42,0.38)]"
+      className={`fixed left-0 z-30 max-w-[calc(100vw-0.75rem)] overflow-hidden rounded-r-[var(--theme-radius)] border border-theme-line bg-theme-surface-raised/90 backdrop-blur-sm ${
+        isOpen
+          ? "shadow-[var(--theme-shadow-lifted)]"
+          : "shadow-[var(--theme-shadow-whisper)]"
+      }`}
       style={{ top: `${controlPosition.y}px`, maxHeight: panelMaxHeight }}
-      animate={{ width: isOpen ? EXPANDED_WIDTH : COLLAPSED_WIDTH }}
+      animate={{ width: isOpen ? EXPANDED_WIDTH : COLLAPSED_WIDTH, opacity: isOpen ? 1 : 0.78 }}
+      whileHover={{ opacity: 1 }}
       initial={false}
       transition={{ duration: prefersReducedMotion ? 0 : 0.28, ease: [0.42, 0, 0.58, 1] }}
     >
       <div
-        className="flex items-center px-2 py-2"
+        className="flex items-center justify-center p-1.5"
         onPointerDown={onControlPointerDown}
         onPointerMove={onControlPointerMove}
         onPointerUp={onControlPointerUpOrCancel}
         onPointerCancel={onControlPointerUpOrCancel}
         onClick={onTogglePanel}
+        style={{ cursor: isOpen ? "pointer" : "grab" }}
       >
         <button
           type="button"
-          aria-label={isOpen ? "弹幕 Close" : "弹幕 Open"}
-          title={isOpen ? "弹幕 Close" : "弹幕 Open"}
-          className="group inline-flex h-8 w-[118px] shrink-0 items-center justify-between rounded-r-[999px] border border-theme-line bg-theme-surface-raised pl-2.5 pr-1.5 text-theme-ink sm:w-[124px]"
+          aria-label={isOpen ? "收起弹幕" : "打开弹幕"}
+          title={isOpen ? "收起弹幕" : "弹幕 · 拖动换位置"}
+          className="group inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-full bg-transparent text-theme-muted transition-colors hover:text-theme-accent"
         >
-          <span className="whitespace-nowrap text-sm font-black leading-none tracking-tight">弹幕</span>
-          <span className="inline-flex h-6 min-w-[46px] shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-[#0f1115] px-2 text-xs font-medium text-white transition group-hover:bg-theme-ink">
-            {isOpen ? "Close" : "Open"}
-          </span>
+          <svg aria-hidden="true" className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 6.75a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v7.5a2 2 0 0 1-2 2H11l-4 3v-3H6.5a2 2 0 0 1-2-2v-7.5Z" />
+          </svg>
+          {isOpen ? (
+            <span className="whitespace-nowrap text-xs font-medium leading-none">弹幕</span>
+          ) : null}
         </button>
       </div>
 
