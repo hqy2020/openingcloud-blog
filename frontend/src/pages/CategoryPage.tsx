@@ -284,7 +284,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
               <Link
                 key={post.slug}
                 to={`/posts/${post.slug}`}
-                className="group relative flex flex-col overflow-hidden rounded-[var(--theme-radius)] border border-theme-line bg-theme-surface-raised shadow-[var(--theme-shadow-whisper)] transition-all duration-300 hover:-translate-y-1 hover:border-theme-accent/50 hover:shadow-[var(--theme-shadow-lifted)]"
+                className="group theme-card relative flex flex-col overflow-hidden rounded-[var(--theme-radius)] border border-theme-line bg-theme-surface-raised shadow-[var(--theme-shadow-whisper)] transition-all duration-300 hover:border-theme-accent/50 hover:shadow-[var(--theme-shadow-lifted)]"
               >
                 {cover ? (
                   <div className="relative h-48 overflow-hidden bg-theme-surface">

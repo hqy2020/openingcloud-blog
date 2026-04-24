@@ -167,7 +167,7 @@ export function HighlightsSection({ stages }: HighlightsSectionProps) {
             <StaggerItem key={`${stage.title}-${idx}`}>
               <CardSpotlight
                 className={[
-                  "group h-full overflow-hidden rounded-[var(--theme-radius)] border p-5 shadow-[var(--theme-shadow-whisper)] transition-all duration-300 hover:-translate-y-1 hover:border-theme-accent/50 hover:shadow-[var(--theme-shadow-lifted)]",
+                  "group theme-card h-full overflow-hidden rounded-[var(--theme-radius)] border p-5 shadow-[var(--theme-shadow-whisper)] transition-all duration-300 hover:border-theme-accent/50 hover:shadow-[var(--theme-shadow-lifted)]",
                   theme.cardClass,
                 ].join(" ")}
                 glowColor={theme.glowColor}

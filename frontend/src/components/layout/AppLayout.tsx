@@ -304,7 +304,7 @@ export function AppLayout() {
 
             <NavLink
               aria-label="返回首页"
-              className="relative z-20 inline-flex items-center px-2 py-1 text-2xl font-semibold tracking-tight text-theme-ink lg:px-4 lg:py-2 lg:text-4xl"
+              className="theme-nav-tab relative z-20 inline-flex items-center px-2 py-1 text-2xl text-theme-ink lg:px-4 lg:py-2 lg:text-4xl"
               title="首页"
               to="/"
             >
@@ -313,7 +313,7 @@ export function AppLayout() {
 
             <nav
               onMouseLeave={() => setHoveredNavIndex(null)}
-              className="relative z-10 hidden min-w-0 items-center justify-center gap-0.5 text-sm font-medium lg:flex lg:text-lg xl:gap-1 xl:text-xl"
+              className="theme-nav-tab relative z-10 hidden min-w-0 items-center justify-center gap-0.5 text-sm lg:flex lg:text-lg xl:gap-1 xl:text-xl"
             >
               {headerTabs.map((item, index) => {
                 const showHighlight = hoveredNavIndex === index || (hoveredNavIndex === null && activeDesktopIndex === index);
@@ -389,7 +389,7 @@ export function AppLayout() {
             <div className="relative z-10 flex w-full items-center justify-between">
               <NavLink
                 aria-label="返回首页"
-                className="inline-flex items-center px-1.5 py-0.5 text-lg font-semibold tracking-tight text-theme-ink"
+                className="theme-nav-tab inline-flex items-center px-1.5 py-0.5 text-lg text-theme-ink"
                 title="首页"
                 to="/"
               >
@@ -424,7 +424,7 @@ export function AppLayout() {
                         <a
                           key={item.label}
                           href={item.to}
-                          className="rounded-xl px-3 py-2 text-sm font-medium text-theme-muted transition hover:bg-theme-surface"
+                          className="theme-nav-tab rounded-xl px-3 py-2 text-sm text-theme-muted transition hover:bg-theme-surface"
                           onClick={() => setMobileMenuOwnerKey(null)}
                         >
                           {item.label}
@@ -433,7 +433,7 @@ export function AppLayout() {
                         <Link
                           key={item.label}
                           to={item.to}
-                          className="rounded-xl px-3 py-2 text-sm font-medium text-theme-muted transition hover:bg-theme-surface"
+                          className="theme-nav-tab rounded-xl px-3 py-2 text-sm text-theme-muted transition hover:bg-theme-surface"
                           onClick={() => setMobileMenuOwnerKey(null)}
                         >
                           {item.label}

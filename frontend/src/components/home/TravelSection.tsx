@@ -389,7 +389,7 @@ export function TravelSection({ travel }: TravelSectionProps) {
               <StaggerContainer className="grid gap-3 md:grid-cols-3" stagger={0.06}>
                 {travel.map((province) => (
                   <StaggerItem key={province.province}>
-                    <CardSpotlight className="group relative overflow-hidden rounded-[var(--theme-radius)] border border-theme-line bg-theme-surface-raised p-4 shadow-[var(--theme-shadow-whisper)] transition-all duration-300 hover:-translate-y-1 hover:border-theme-accent/50 hover:shadow-[var(--theme-shadow-lifted)]">
+                    <CardSpotlight className="group theme-card relative overflow-hidden rounded-[var(--theme-radius)] border border-theme-line bg-theme-surface-raised p-4 shadow-[var(--theme-shadow-whisper)] transition-all duration-300 hover:border-theme-accent/50 hover:shadow-[var(--theme-shadow-lifted)]">
                       <span
                         aria-hidden="true"
                         className="pointer-events-none absolute left-0 top-0 h-full w-[3px] origin-bottom scale-y-0 bg-theme-accent transition-transform duration-300 group-hover:scale-y-100"

@@ -21,6 +21,14 @@
   --theme-radius: 16px;
   --theme-shadow-whisper: 0 4px 24px rgba(0, 0, 0, 0.05);
   --theme-shadow-lifted: 0 10px 30px rgba(0, 0, 0, 0.06);
+
+  /* Personality: editorial, generous, warm */
+  --theme-tracking-heading: normal;
+  --theme-tracking-body: normal;
+  --theme-title-weight: 500;
+  --theme-body-weight: 400;
+  --theme-card-lift: -4px;
+  --theme-transition-ms: 300ms;
 }
 
 :root[data-theme="apple"] {
@@ -47,6 +55,14 @@
   --theme-radius: 14px;
   --theme-shadow-whisper: 0 2px 12px rgba(0, 0, 0, 0.06);
   --theme-shadow-lifted: 0 12px 36px rgba(0, 0, 0, 0.12);
+
+  /* Personality: bold, tight, premium */
+  --theme-tracking-heading: -0.015em;
+  --theme-tracking-body: -0.005em;
+  --theme-title-weight: 600;
+  --theme-body-weight: 400;
+  --theme-card-lift: -2px;
+  --theme-transition-ms: 200ms;
 }
 
 :root[data-theme="notion"] {
@@ -73,4 +89,85 @@
   --theme-radius: 6px;
   --theme-shadow-whisper: 0 1px 2px rgba(15, 15, 15, 0.05), 0 3px 6px rgba(15, 15, 15, 0.04);
   --theme-shadow-lifted: 0 4px 12px rgba(15, 15, 15, 0.08);
+
+  /* Personality: document-dense, quiet, minimal */
+  --theme-tracking-heading: -0.005em;
+  --theme-tracking-body: normal;
+  --theme-title-weight: 500;
+  --theme-body-weight: 400;
+  --theme-card-lift: -1px;
+  --theme-transition-ms: 180ms;
+}
+
+/* =========================================================================
+ * Per-theme global personality overrides
+ * —— 让每个主题在字体张力/标题字重/阴影硬度等维度产生"一眼可辨"的差异
+ * ========================================================================= */
+
+/* Headings inherit per-theme tracking + weight */
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: var(--theme-tracking-heading);
+  font-weight: var(--theme-title-weight);
+}
+
+body {
+  letter-spacing: var(--theme-tracking-body);
+  font-weight: var(--theme-body-weight);
+}
+
+/* Claude — editorial, warm. More generous line-height in body text. */
+:root[data-theme="claude"] body {
+  line-height: 1.65;
+}
+
+/* Apple — tighter, bolder. Use SF Pro Display for h1 with tighter spacing. */
+:root[data-theme="apple"] h1 {
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+:root[data-theme="apple"] h2,
+:root[data-theme="apple"] h3 {
+  letter-spacing: -0.015em;
+  font-weight: 600;
+}
+:root[data-theme="apple"] p,
+:root[data-theme="apple"] span,
+:root[data-theme="apple"] li {
+  letter-spacing: -0.005em;
+}
+
+/* Notion — serif headlines but tight line-height, document-like density. */
+:root[data-theme="notion"] h1,
+:root[data-theme="notion"] h2,
+:root[data-theme="notion"] h3 {
+  line-height: 1.3;
+}
+:root[data-theme="notion"] body {
+  line-height: 1.55;
+}
+
+/* Cards: per-theme hover translate intensity
+ * Any element with class `theme-card` honors the per-theme lift value. */
+.theme-card {
+  transition: transform var(--theme-transition-ms) ease,
+    box-shadow var(--theme-transition-ms) ease,
+    border-color var(--theme-transition-ms) ease;
+}
+.theme-card:hover {
+  transform: translateY(var(--theme-card-lift));
+}
+
+/* Nav tabs — adopt theme display font (Claude serif / Apple SF / Notion Lyon) */
+.theme-nav-tab {
+  font-family: var(--theme-font-display);
+  letter-spacing: var(--theme-tracking-heading);
+}
+:root[data-theme="claude"] .theme-nav-tab {
+  font-weight: 500;
+}
+:root[data-theme="apple"] .theme-nav-tab {
+  font-weight: 600;
+}
+:root[data-theme="notion"] .theme-nav-tab {
+  font-weight: 500;
 }
