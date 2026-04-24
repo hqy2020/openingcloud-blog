@@ -701,6 +701,10 @@ class Book(TimeStampedModel):
     rating = models.PositiveSmallIntegerField(null=True, blank=True, help_text="1-5 云朵评分")
     tags = models.JSONField(default=list, blank=True)
     review = models.TextField(blank=True, help_text="一句话感想（可选）")
+    douban_subject_id = models.CharField(
+        max_length=32, blank=True,
+        help_text="豆瓣 subject ID，如 35889905；点击封面跳转用。留空则用 title 搜索",
+    )
     sort_order = models.PositiveIntegerField(default=0, db_index=True)
     is_active = models.BooleanField(default=True)
 

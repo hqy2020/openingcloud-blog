@@ -642,6 +642,7 @@ class BookSerializer(serializers.ModelSerializer):
             "rating",
             "tags",
             "review",
+            "douban_subject_id",
             "sort_order",
         ]
 
@@ -659,6 +660,7 @@ class BookAdminSerializer(serializers.ModelSerializer):
             "rating",
             "tags",
             "review",
+            "douban_subject_id",
             "sort_order",
             "is_active",
             "created_at",

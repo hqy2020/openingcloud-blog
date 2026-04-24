@@ -178,6 +178,8 @@ export type BookItem = {
   rating: number | null;
   tags: string[];
   review: string;
+  /** Douban subject id (editable via Django admin). Empty = fall back to search. */
+  douban_subject_id?: string | null;
   sort_order: number;
 };
 

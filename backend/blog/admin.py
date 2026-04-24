@@ -751,6 +751,6 @@ class BookAdmin(SortableAdminMixin, admin.ModelAdmin):
     fieldsets = (
         ("基本信息", {"fields": ("title", "author", "cover")}),
         ("阅读状态", {"fields": ("status", "progress", "rating")}),
-        ("元数据", {"fields": ("tags", "review")}),
+        ("元数据", {"fields": ("tags", "review", "douban_subject_id")}),
         ("展示控制", {"fields": ("sort_order", "is_active")}),
     )

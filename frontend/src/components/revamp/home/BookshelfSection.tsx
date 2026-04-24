@@ -14,23 +14,31 @@ function withCacheBust(url: string): string {
   return `${url}${sep}v=${COVER_CACHE_VERSION}`;
 }
 
-/** Known douban subject IDs keyed by normalized book title.
- * Bump / extend when new books are added to the shelf. */
-const DOUBAN_SUBJECT_BY_TITLE: Record<string, string> = {
+/** Fallback title → douban subject id map, used only when backend has no
+ * douban_subject_id filled in yet. Prefer the backend field (editable via
+ * Django admin) so non-dev users can maintain these mappings. */
+const DOUBAN_SUBJECT_FALLBACK: Record<string, string> = {
   "哥德尔 艾舍尔 巴赫": "1291204",
   "哥德尔、艾舍尔、巴赫": "1291204",
-  "黑客与画家": "1103789",
+  "黑客与画家": "35889905",
   "Effective Java": "30412517",
   "代码整洁之道": "4199741",
   "计算广告": "26596778",
   "智能简史": "37252220",
 };
 
-function doubanSearchUrl(book: { title: string; author?: string }): string {
-  const normalized = book.title.trim();
-  const subjectId = DOUBAN_SUBJECT_BY_TITLE[normalized];
-  if (subjectId) {
-    return `https://book.douban.com/subject/${subjectId}/`;
+function doubanSearchUrl(book: {
+  title: string;
+  author?: string;
+  douban_subject_id?: string | null;
+}): string {
+  const explicitId = (book.douban_subject_id || "").trim();
+  if (explicitId) {
+    return `https://book.douban.com/subject/${explicitId}/`;
+  }
+  const fallbackId = DOUBAN_SUBJECT_FALLBACK[book.title.trim()];
+  if (fallbackId) {
+    return `https://book.douban.com/subject/${fallbackId}/`;
   }
   const parts = [book.title, book.author].filter(Boolean).join(" ");
   return `https://search.douban.com/book/subject_search?search_text=${encodeURIComponent(parts)}`;
