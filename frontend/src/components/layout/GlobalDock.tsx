@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { useLocation, useMatch } from "react-router-dom";
 import { Dock, DockIcon } from "../ui/MagicUIDock";
@@ -141,17 +142,36 @@ function useContextualLike() {
   return { enabled, liked, count, toggle };
 }
 
+type PopupPos = { left: number; bottom: number };
+
 export function GlobalDock() {
   const { theme, palettes, setTheme } = useTheme();
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const paletteWrapperRef = useRef<HTMLDivElement>(null);
+  const [popupPos, setPopupPos] = useState<PopupPos | null>(null);
+  const swatchAnchorRef = useRef<HTMLSpanElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
   const like = useContextualLike();
   const current = palettes.find((p) => p.id === theme) ?? palettes[0];
+
+  // Recompute popup position every time it opens, from the swatch anchor's
+  // viewport rect. This avoids coupling to Dock's draggable transform —
+  // whatever position the user drags Dock to, the popup follows.
+  useLayoutEffect(() => {
+    if (!paletteOpen || !swatchAnchorRef.current) return;
+    const rect = swatchAnchorRef.current.getBoundingClientRect();
+    setPopupPos({
+      left: rect.left + rect.width / 2,
+      bottom: window.innerHeight - rect.top + 12,
+    });
+  }, [paletteOpen]);
 
   useEffect(() => {
     if (!paletteOpen) return;
     const handleClick = (event: MouseEvent) => {
-      if (paletteWrapperRef.current && !paletteWrapperRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const clickedAnchor = swatchAnchorRef.current?.contains(target);
+      const clickedPopup = popupRef.current?.contains(target);
+      if (!clickedAnchor && !clickedPopup) {
         setPaletteOpen(false);
       }
     };
@@ -188,52 +208,68 @@ export function GlobalDock() {
         <GithubIcon />
       </DockIcon>
 
-      {/* Theme switcher — swatch icon with popup palette */}
-      <div ref={paletteWrapperRef} className="relative">
-        <DockIcon label={`主题：${current.label}`} onClick={() => setPaletteOpen((v) => !v)}>
+      {/* Theme switcher — DockIcon is a direct child of Dock, popup is portaled
+          out of the Dock tree so toggling paletteOpen never reshuffles Dock's
+          children (which previously reset the drag position). */}
+      <DockIcon label={`主题：${current.label}`} onClick={() => setPaletteOpen((v) => !v)}>
+        <span ref={swatchAnchorRef}>
           <PaletteIcon swatch={current.swatch} />
-        </DockIcon>
-        <AnimatePresence>
-          {paletteOpen ? (
-            <motion.div
-              initial={{ opacity: 0, y: 8, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 8, scale: 0.96 }}
-              transition={{ duration: 0.18, ease: "easeOut" }}
-              className="absolute bottom-full left-1/2 mb-3 -translate-x-1/2 flex items-center gap-2 rounded-[var(--theme-radius)] border border-theme-line bg-theme-surface-raised p-2 shadow-[var(--theme-shadow-lifted)]"
-            >
-              {palettes.map((p) => {
-                const active = p.id === theme;
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => {
-                      setTheme(p.id);
-                      setPaletteOpen(false);
-                    }}
-                    aria-label={`切换到 ${p.label} 主题`}
-                    title={p.label}
-                    className={`flex h-9 w-9 items-center justify-center rounded-full border transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
-                      active ? "border-transparent ring-2 ring-offset-2" : "border-theme-line"
-                    }`}
-                    style={
-                      active
-                        ? ({ ["--tw-ring-color" as string]: p.swatch } as React.CSSProperties)
-                        : undefined
-                    }
-                  >
-                    <span
-                      className="h-5 w-5 rounded-full shadow-inner"
-                      style={{ backgroundColor: p.swatch }}
-                    />
-                  </button>
-                );
-              })}
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
-      </div>
+        </span>
+      </DockIcon>
+
+      {typeof document !== "undefined"
+        ? createPortal(
+            <AnimatePresence>
+              {paletteOpen && popupPos ? (
+                <motion.div
+                  ref={popupRef}
+                  initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  style={{
+                    position: "fixed",
+                    left: popupPos.left,
+                    bottom: popupPos.bottom,
+                    transform: "translateX(-50%)",
+                    zIndex: 60,
+                  }}
+                  className="flex items-center gap-2 rounded-[var(--theme-radius)] border border-theme-line bg-theme-surface-raised p-2 shadow-[var(--theme-shadow-lifted)]"
+                >
+                  {palettes.map((p) => {
+                    const active = p.id === theme;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => {
+                          setTheme(p.id);
+                          setPaletteOpen(false);
+                        }}
+                        aria-label={`切换到 ${p.label} 主题`}
+                        title={p.label}
+                        className={`flex h-9 w-9 items-center justify-center rounded-full border transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                          active ? "border-transparent ring-2 ring-offset-2" : "border-theme-line"
+                        }`}
+                        style={
+                          active
+                            ? ({ ["--tw-ring-color" as string]: p.swatch } as React.CSSProperties)
+                            : undefined
+                        }
+                      >
+                        <span
+                          className="h-5 w-5 rounded-full shadow-inner"
+                          style={{ backgroundColor: p.swatch }}
+                        />
+                      </button>
+                    );
+                  })}
+                </motion.div>
+              ) : null}
+            </AnimatePresence>,
+            document.body,
+          )
+        : null}
     </Dock>
   );
 }
