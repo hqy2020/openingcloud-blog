@@ -6,7 +6,9 @@ import { useEffect, useRef, useState, type MutableRefObject } from "react";
 import * as THREE from "three";
 import type { GLTF } from "three-stdlib";
 
-const MODEL_SRC = "/media/pet/s2wt_kamdo_industrial_divinities-transformed.glb";
+import kamdoGlbUrl from "../../assets/pet/kamdo.glb?url";
+
+const MODEL_SRC = kamdoGlbUrl;
 
 type KamdoGLTF = GLTF & {
   nodes: {
