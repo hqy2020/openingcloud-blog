@@ -269,7 +269,7 @@ jobs:
 
           run_remote_deploy() {
             timeout --signal=TERM --kill-after=15s 420 \
-            ssh "${SSH_OPTS[@]}" "${ECS_USER}@${ECS_HOST}" "BACKEND_IMAGE='${BACKEND_IMAGE}' bash -se" << 'DEPLOY'
+            ssh "${SSH_OPTS[@]}" "${ECS_USER}@${ECS_HOST}" "BACKEND_IMAGE='${BACKEND_IMAGE}' INFRA_CHANGED='${INFRA_CHANGED}' bash -se" << 'DEPLOY'
               set -euo pipefail
               cd /opt/openingclouds-blog
               COMPOSE_ARGS=(-f docker-compose.yml -f docker-compose.https.yml)
@@ -289,6 +289,17 @@ jobs:
               docker compose "${COMPOSE_ARGS[@]}" ps --status running --services | grep -qx nginx
               docker compose "${COMPOSE_ARGS[@]}" ps --status running --services | grep -qx certbot
               ss -ltn | grep -q ':443 '
+              # nginx 配置走 bind-mount，docker compose up 不会因配置文件改动 recreate 容器；
+              # 如果 infra 改动涉及 nginx/，必须显式 reload 才能生效。
+              if [ "${INFRA_CHANGED:-false}" = "true" ]; then
+                if docker compose "${COMPOSE_ARGS[@]}" exec -T nginx nginx -t; then
+                  docker compose "${COMPOSE_ARGS[@]}" exec -T nginx nginx -s reload
+                  echo "nginx reloaded after infra change."
+                else
+                  echo "nginx config test failed; skipping reload to avoid breaking running instance." >&2
+                  exit 1
+                fi
+              fi
           DEPLOY
           }
 
