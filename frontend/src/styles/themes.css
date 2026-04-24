@@ -27,7 +27,7 @@
   --theme-tracking-body: normal;
   --theme-title-weight: 500;
   --theme-body-weight: 400;
-  --theme-card-lift: -4px;
+  --theme-card-lift: -6px;
   --theme-transition-ms: 300ms;
 }
 
@@ -61,7 +61,7 @@
   --theme-tracking-body: -0.005em;
   --theme-title-weight: 600;
   --theme-body-weight: 400;
-  --theme-card-lift: -2px;
+  --theme-card-lift: -3px;
   --theme-transition-ms: 200ms;
 }
 
@@ -147,14 +147,17 @@ body {
 }
 
 /* Cards: per-theme hover translate intensity
- * Any element with class `theme-card` honors the per-theme lift value. */
+ * Any element with class `theme-card` honors the per-theme lift value.
+ * !important needed because some parents (framer-motion StaggerItem) inject
+ * inline transforms that otherwise override our :hover rule. */
 .theme-card {
   transition: transform var(--theme-transition-ms) ease,
     box-shadow var(--theme-transition-ms) ease,
     border-color var(--theme-transition-ms) ease;
+  will-change: transform;
 }
 .theme-card:hover {
-  transform: translateY(var(--theme-card-lift));
+  transform: translateY(var(--theme-card-lift)) !important;
 }
 
 /* Nav tabs — adopt theme display font (Claude serif / Apple SF / Notion Lyon) */
