@@ -277,67 +277,92 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
       {loading ? <p className="relative px-6 py-10 text-sm text-theme-muted md:px-8">加载文章中...</p> : null}
 
       {!loading && filteredPosts.length > 0 ? (
-        <div className="relative grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 border-x border-theme-line/80">
-          {filteredPosts.map((post, index) => {
+        <div className="relative grid grid-cols-1 gap-5 p-5 md:grid-cols-2 xl:grid-cols-3 md:p-6 md:gap-6">
+          {filteredPosts.map((post) => {
             const cover = resolvePostCover(post);
             return (
               <Link
                 key={post.slug}
                 to={`/posts/${post.slug}`}
-                className={cn(
-                  "group block border-t border-theme-line/80 p-5 transition hover:bg-theme-surface/80 md:p-6",
-                  index % 2 === 0 && "md:border-r",
-                  index % 3 !== 2 && "xl:border-r",
-                )}
+                className="group relative flex flex-col overflow-hidden rounded-[var(--theme-radius)] border border-theme-line bg-theme-surface-raised shadow-[var(--theme-shadow-whisper)] transition-all duration-300 hover:-translate-y-1 hover:border-theme-accent/50 hover:shadow-[var(--theme-shadow-lifted)]"
               >
                 {cover ? (
-                  <div className="relative h-48 overflow-hidden rounded-xl border border-theme-line/70 bg-theme-surface">
+                  <div className="relative h-48 overflow-hidden bg-theme-surface">
                     <img
                       src={cover}
                       alt={`${post.title} 封面`}
                       loading="lazy"
-                      className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
                     />
+                    <div
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent opacity-70 transition-opacity duration-300 group-hover:opacity-90"
+                    />
+                    <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-theme-surface-raised/95 px-2 py-1 font-theme-sans text-[10px] font-medium uppercase tracking-[0.14em] text-theme-muted shadow-[var(--theme-shadow-whisper)]">
+                      {estimateReadMinutes(post)} min read
+                    </span>
                   </div>
                 ) : (
-                  <div className="flex h-48 items-end rounded-xl border border-theme-line/70 bg-gradient-to-br from-theme-surface to-theme-bg p-4">
-                    <span className="line-clamp-2 text-sm font-medium text-theme-muted">{post.title}</span>
+                  <div className="relative h-48 overflow-hidden bg-gradient-to-br from-theme-accent/15 via-theme-surface to-theme-bg">
+                    <div
+                      aria-hidden="true"
+                      className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgb(var(--theme-accent)/0.12),transparent_60%),radial-gradient(circle_at_80%_80%,rgb(var(--theme-accent-soft)/0.1),transparent_55%)]"
+                    />
+                    <div className="relative flex h-full items-end p-5">
+                      <span className="line-clamp-3 font-theme-display text-lg font-medium text-theme-ink/80">
+                        {post.title}
+                      </span>
+                    </div>
                   </div>
                 )}
 
-                <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-theme-muted">
-                  <time>{formatDate(post.updated_at)}</time>
-                  <span>·</span>
-                  <span>{estimateReadMinutes(post)} 分钟</span>
-                  <span>·</span>
-                  <span>{post.views_count} 阅读</span>
-                  <span className="ml-auto">
-                    <LikeButton
-                      size="sm"
-                      liked={likeOverrides[post.slug]?.liked ?? false}
-                      likes={likeOverrides[post.slug]?.likes ?? post.likes_count}
-                      onToggle={() => handleToggleLike(post)}
-                    />
+                <div className="flex flex-1 flex-col gap-3 p-5 md:p-6">
+                  <h2 className="line-clamp-2 font-theme-display text-xl font-medium leading-snug tracking-tight text-theme-ink transition-colors duration-200 group-hover:text-theme-accent">
+                    {post.title}
+                  </h2>
+                  <p className="line-clamp-3 font-theme-body text-sm leading-[1.65] text-theme-muted">
+                    {post.excerpt || "暂无摘要"}
+                  </p>
+
+                  {post.tags.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {post.tags.slice(0, 3).map((tag) => (
+                        <span
+                          key={`${post.slug}-${tag}`}
+                          className="rounded-full border border-theme-line bg-theme-surface px-2 py-0.5 font-theme-sans text-[11px] text-theme-soft"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  <div className="mt-auto flex items-center justify-between gap-2 pt-2 text-xs text-theme-soft">
+                    <div className="flex flex-wrap items-center gap-1.5 font-theme-sans">
+                      <time>{formatDate(post.updated_at)}</time>
+                      <span aria-hidden="true">·</span>
+                      <span>{post.views_count} 阅读</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <LikeButton
+                        size="sm"
+                        liked={likeOverrides[post.slug]?.liked ?? false}
+                        likes={likeOverrides[post.slug]?.likes ?? post.likes_count}
+                        onToggle={() => handleToggleLike(post)}
+                      />
+                    </div>
+                  </div>
+
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none flex items-center gap-1 font-theme-sans text-xs font-medium text-theme-accent opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                  >
+                    阅读全文
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 12h15" />
+                    </svg>
                   </span>
                 </div>
-
-                <h2 className="mt-2 line-clamp-2 text-xl font-semibold tracking-tight text-theme-ink group-hover:underline">
-                  {post.title}
-                </h2>
-                <p className="mt-2 line-clamp-3 text-sm leading-6 text-theme-muted">{post.excerpt || "暂无摘要"}</p>
-
-                {post.tags.length > 0 ? (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {post.tags.slice(0, 3).map((tag) => (
-                      <span
-                        key={`${post.slug}-${tag}`}
-                        className="rounded-md border border-theme-line bg-theme-surface-raised px-2 py-0.5 text-xs text-theme-muted"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
               </Link>
             );
           })}
