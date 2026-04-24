@@ -334,7 +334,7 @@ export function KnowledgeGraphSection() {
             graphData={graphData}
             width={graphSize.width}
             height={graphSize.height}
-            backgroundColor="#141413"
+            backgroundColor="rgba(0,0,0,0)"
             // 更温和的物理参数：alpha 慢慢衰减 + velocity 更黏 = Obsidian 丝滑漂移感
             d3AlphaDecay={0.012}
             d3VelocityDecay={0.38}
