@@ -281,7 +281,7 @@ export function BarrageCommentsSidebar() {
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs text-theme-soft">{content.trim().length}/200</span>
                   <button
-                    className="rounded-xl bg-[#0f1115] px-4 py-2 text-sm font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-xl bg-theme-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-theme-accent/85 disabled:cursor-not-allowed disabled:opacity-60"
                     disabled={submitting}
                     type="submit"
                   >

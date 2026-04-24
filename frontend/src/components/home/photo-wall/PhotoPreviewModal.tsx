@@ -35,7 +35,7 @@ export function PhotoPreviewModal({ open, item, onClose }: PhotoPreviewModalProp
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 px-4 py-6"
+      className="fixed inset-0 z-[90] flex items-center justify-center bg-theme-ink/70 px-4 py-6 backdrop-blur-sm"
       onClick={(event) => {
         if (event.target === event.currentTarget) {
           onClose();
@@ -45,10 +45,10 @@ export function PhotoPreviewModal({ open, item, onClose }: PhotoPreviewModalProp
       aria-modal="true"
       aria-label={item.title ? `预览：${item.title}` : "照片预览"}
     >
-      <div className="relative w-full max-w-3xl overflow-hidden rounded-2xl border border-white/20 bg-black shadow-[0_24px_54px_rgba(15,23,42,0.4)]">
+      <div className="relative w-full max-w-3xl overflow-hidden rounded-2xl border border-theme-line bg-theme-surface-raised shadow-[var(--theme-shadow-lifted)]">
         <button
           aria-label="关闭照片预览"
-          className="absolute right-3 top-3 z-10 rounded-full bg-black/70 p-2 text-white transition hover:bg-black/70"
+          className="absolute right-3 top-3 z-10 rounded-full bg-theme-ink/60 p-2 text-white transition hover:bg-theme-ink/80"
           onClick={onClose}
           type="button"
         >
@@ -57,7 +57,7 @@ export function PhotoPreviewModal({ open, item, onClose }: PhotoPreviewModalProp
           </svg>
         </button>
 
-        <div className="max-h-[80vh] min-h-[280px] bg-black flex items-center justify-center">
+        <div className="max-h-[80vh] min-h-[280px] bg-theme-surface flex items-center justify-center">
           <img
             alt={item.title || "照片预览"}
             className="max-h-[80vh] w-full object-contain"

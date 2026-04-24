@@ -292,7 +292,7 @@ export function KnowledgeGraphSection() {
 
       <div
         ref={hostRef}
-        className="relative overflow-hidden rounded-[var(--theme-radius)] border border-theme-ink bg-theme-ink shadow-[var(--theme-shadow-lifted)]"
+        className="relative overflow-hidden rounded-[var(--theme-radius)] border border-theme-line bg-theme-surface shadow-[var(--theme-shadow-lifted)]"
         style={{ minHeight: 420 }}
       >
         {/* 右上角进度游标 */}
