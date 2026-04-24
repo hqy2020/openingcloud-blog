@@ -14,7 +14,24 @@ function withCacheBust(url: string): string {
   return `${url}${sep}v=${COVER_CACHE_VERSION}`;
 }
 
+/** Known douban subject IDs keyed by normalized book title.
+ * Bump / extend when new books are added to the shelf. */
+const DOUBAN_SUBJECT_BY_TITLE: Record<string, string> = {
+  "哥德尔 艾舍尔 巴赫": "1291204",
+  "哥德尔、艾舍尔、巴赫": "1291204",
+  "黑客与画家": "1103789",
+  "Effective Java": "30412517",
+  "代码整洁之道": "4199741",
+  "计算广告": "26596778",
+  "智能简史": "37252220",
+};
+
 function doubanSearchUrl(book: { title: string; author?: string }): string {
+  const normalized = book.title.trim();
+  const subjectId = DOUBAN_SUBJECT_BY_TITLE[normalized];
+  if (subjectId) {
+    return `https://book.douban.com/subject/${subjectId}/`;
+  }
   const parts = [book.title, book.author].filter(Boolean).join(" ");
   return `https://search.douban.com/book/subject_search?search_text=${encodeURIComponent(parts)}`;
 }
