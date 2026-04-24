@@ -167,12 +167,14 @@ export function HighlightsSection({ stages }: HighlightsSectionProps) {
             <StaggerItem key={`${stage.title}-${idx}`}>
               <CardSpotlight
                 className={[
-                  "h-full overflow-hidden rounded-2xl border p-5 transition-colors duration-500",
+                  "group h-full overflow-hidden rounded-[var(--theme-radius)] border p-5 shadow-[var(--theme-shadow-whisper)] transition-all duration-300 hover:-translate-y-1 hover:border-theme-accent/50 hover:shadow-[var(--theme-shadow-lifted)]",
                   theme.cardClass,
                 ].join(" ")}
                 glowColor={theme.glowColor}
               >
-                <h3 className="text-lg font-semibold text-theme-ink dark:text-theme-line-strong">{stage.title}</h3>
+                <h3 className="font-theme-display text-lg font-medium text-theme-ink transition-colors duration-200 group-hover:text-theme-accent">
+                  {stage.title}
+                </h3>
                 <p className={`mt-1 text-xs ${theme.dateClass}`}>
                   {stage.start_date || ""}
                   {stage.end_date ? ` - ${stage.end_date}` : ""}
@@ -181,7 +183,13 @@ export function HighlightsSection({ stages }: HighlightsSectionProps) {
 
                 <ul className="mt-4 space-y-2">
                   {stage.items.slice(0, 4).map((item) => (
-                    <li key={`${stage.title}-${item.title}`} className={["rounded-lg border px-3 py-2 text-sm", theme.itemClass].join(" ")}>
+                    <li
+                      key={`${stage.title}-${item.title}`}
+                      className={[
+                        "rounded-lg border px-3 py-2 text-sm transition-colors duration-200 hover:border-theme-accent/40 hover:bg-theme-surface-raised",
+                        theme.itemClass,
+                      ].join(" ")}
+                    >
                       {item.title}
                     </li>
                   ))}

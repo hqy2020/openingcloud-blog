@@ -73,7 +73,7 @@ export function StatsSection({ stats }: StatsSectionProps) {
                   : "text-5xl sm:text-6xl lg:text-7xl";
           return (
             <StaggerItem key={item.key} className="h-full">
-              <CardSpotlight className="flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-[var(--theme-radius)] border border-theme-line bg-theme-surface p-6 text-center shadow-[var(--theme-shadow-whisper)]">
+              <CardSpotlight className="group flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-[var(--theme-radius)] border border-theme-line bg-theme-surface p-6 text-center shadow-[var(--theme-shadow-whisper)] transition-all duration-300 hover:-translate-y-1 hover:border-theme-accent/50 hover:shadow-[var(--theme-shadow-lifted)]">
                 <p className="font-sans text-xs font-medium uppercase tracking-[0.2em] text-theme-soft">{item.label}</p>
                 <div className="my-3 flex w-full min-w-0 justify-center">
                   <TextGif

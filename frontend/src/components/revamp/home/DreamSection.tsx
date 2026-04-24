@@ -26,12 +26,16 @@ const priorityLabels: Record<WishItem["priority"], string> = {
 function WishCard({ wish }: { wish: WishItem }) {
   return (
     <article
-      className={`flex items-start gap-3 rounded-[var(--theme-radius)] border p-5 shadow-[var(--theme-shadow-whisper)] transition-shadow duration-200 hover:shadow-[var(--theme-shadow-lifted)] ${priorityColors[wish.priority]}`}
+      className={`group flex items-start gap-3 rounded-[var(--theme-radius)] border p-5 shadow-[var(--theme-shadow-whisper)] transition-all duration-300 hover:-translate-y-0.5 hover:border-theme-accent/50 hover:shadow-[var(--theme-shadow-lifted)] ${priorityColors[wish.priority]}`}
     >
-      <span className="mt-0.5 text-2xl">{wish.emoji}</span>
+      <span className="mt-0.5 text-2xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[-5deg]">
+        {wish.emoji}
+      </span>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <h3 className="font-theme-display text-base font-medium text-theme-ink">{wish.title}</h3>
+          <h3 className="font-theme-display text-base font-medium text-theme-ink transition-colors duration-200 group-hover:text-theme-accent">
+            {wish.title}
+          </h3>
           <span
             className={`rounded-full border px-2 py-0.5 font-theme-sans text-[10px] font-medium uppercase tracking-[0.12em] ${priorityTagColors[wish.priority]}`}
           >
