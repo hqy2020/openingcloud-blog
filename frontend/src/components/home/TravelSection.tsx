@@ -352,14 +352,28 @@ export function TravelSection({ travel }: TravelSectionProps) {
       geo: {
         map: "china",
         roam: false,
-        silent: true,
+        silent: false,
         itemStyle: {
           areaColor: "#eef2f7",
           borderColor: "#c7d3e3",
           borderWidth: 1,
         },
         emphasis: {
-          disabled: true,
+          disabled: false,
+          focus: "self",
+          itemStyle: {
+            areaColor: "rgba(14, 165, 233, 0.22)",
+            borderColor: "#0ea5e9",
+            borderWidth: 1.5,
+            shadowBlur: 12,
+            shadowColor: "rgba(14, 165, 233, 0.35)",
+          },
+          label: {
+            show: true,
+            color: "#0f172a",
+            fontWeight: 600,
+            fontSize: 12,
+          },
         },
       },
     };
@@ -374,7 +388,7 @@ export function TravelSection({ travel }: TravelSectionProps) {
         tagline="走过的城市，都是人生坐标上的一笔。"
       />
 
-      <div ref={hostRef} className="rounded-2xl border border-theme-line/80 bg-theme-surface p-4 shadow-[0_12px_32px_rgba(15,23,42,0.08)]">
+      <div ref={hostRef} className="rounded-2xl border border-theme-line/80 bg-theme-surface p-4 shadow-[0_12px_32px_rgba(15,23,42,0.08)] transition-shadow duration-300 hover:shadow-[var(--theme-shadow-lifted)]">
         {Chart && mapReady ? (
           <Chart echarts={echartsRuntime ?? undefined} lazyUpdate notMerge option={option} style={{ height: 480, width: "100%" }} />
         ) : (
