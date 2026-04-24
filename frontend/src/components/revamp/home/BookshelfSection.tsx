@@ -3,6 +3,22 @@ import { motion, useReducedMotion } from "motion/react";
 import type { BookItem } from "../../../api/home";
 import { SectionTitleCard } from "../shared/SectionTitleCard";
 
+/** Bump this when covers are replaced on disk — busts the 7d browser cache. */
+const COVER_CACHE_VERSION = "20260424a";
+
+function withCacheBust(url: string): string {
+  if (!url) return url;
+  // External URLs (doubanio etc.) don't need busting, and some CDNs choke on extra query.
+  if (/^https?:/i.test(url) && !url.startsWith("/")) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}v=${COVER_CACHE_VERSION}`;
+}
+
+function doubanSearchUrl(book: { title: string; author?: string }): string {
+  const parts = [book.title, book.author].filter(Boolean).join(" ");
+  return `https://search.douban.com/book/subject_search?search_text=${encodeURIComponent(parts)}`;
+}
+
 type BookshelfSectionProps = {
   books?: BookItem[];
 };
@@ -56,7 +72,7 @@ function BookCover({ book, className }: { book: BookItem; className?: string }) 
   }
   return (
     <img
-      src={book.cover}
+      src={withCacheBust(book.cover)}
       alt={book.title}
       className={`h-full w-full object-cover ${className ?? ""}`}
       loading="lazy"
@@ -71,12 +87,16 @@ function ReadingCard({ book }: { book: BookItem }) {
   const prefersReducedMotion = useReducedMotion();
   const progress = book.progress ?? 0;
   return (
-    <motion.article
+    <motion.a
+      href={doubanSearchUrl(book)}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`在豆瓣查看《${book.title}》`}
       variants={itemVariants}
       whileHover={{ y: -5, boxShadow: "0 18px 38px rgba(201,100,66,0.18)" }}
       transition={hoverSpring}
       style={{ perspective: "900px" }}
-      className="group relative overflow-hidden rounded-[var(--theme-radius)] border border-theme-line bg-gradient-to-br from-theme-bg via-theme-surface to-theme-surface p-6 shadow-[var(--theme-shadow-whisper)]"
+      className="group relative block overflow-hidden rounded-[var(--theme-radius)] border border-theme-line bg-gradient-to-br from-theme-bg via-theme-surface to-theme-surface p-6 shadow-[var(--theme-shadow-whisper)] no-underline"
     >
       {!prefersReducedMotion ? (
         <motion.div
@@ -139,7 +159,13 @@ function ReadingCard({ book }: { book: BookItem }) {
           ) : null}
         </div>
       </div>
-    </motion.article>
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute right-4 top-4 inline-flex items-center gap-0.5 rounded-full bg-theme-surface-raised/80 px-2 py-0.5 font-theme-sans text-[10px] text-theme-soft opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+      >
+        豆瓣 ↗
+      </span>
+    </motion.a>
   );
 }
 
@@ -147,12 +173,16 @@ function FinishedCard({ book }: { book: BookItem }) {
   const prefersReducedMotion = useReducedMotion();
   const rating = book.rating ?? 0;
   return (
-    <motion.article
+    <motion.a
+      href={doubanSearchUrl(book)}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`在豆瓣查看《${book.title}》`}
       variants={itemVariants}
       whileHover={{ y: -4, scale: 1.02, boxShadow: "0 14px 28px rgba(0,0,0,0.08)" }}
       transition={hoverSpring}
       style={{ perspective: "700px" }}
-      className="group flex flex-col rounded-[var(--theme-radius)] border border-theme-line bg-theme-bg p-4 shadow-[var(--theme-shadow-whisper)]"
+      className="group relative flex flex-col rounded-[var(--theme-radius)] border border-theme-line bg-theme-bg p-4 shadow-[var(--theme-shadow-whisper)] no-underline"
     >
       <div className="flex gap-3">
         <motion.div
@@ -197,7 +227,13 @@ function FinishedCard({ book }: { book: BookItem }) {
           ))}
         </div>
       ) : null}
-    </motion.article>
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute right-2 top-2 inline-flex items-center gap-0.5 rounded-full bg-theme-surface-raised/80 px-1.5 py-0.5 font-theme-sans text-[9px] text-theme-soft opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+      >
+        豆瓣 ↗
+      </span>
+    </motion.a>
   );
 }
 
