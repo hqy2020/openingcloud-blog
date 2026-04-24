@@ -645,7 +645,7 @@ export function PostDetailPage() {
               <span>·</span>
               <span>{readMinutes} 分钟</span>
               <span>·</span>
-              <span>{data.views_count} 阅读</span>
+              <span className="tabular-nums">{data.views_count} 阅读</span>
             </div>
 
             <ReactMarkdown components={markdownComponents} remarkPlugins={[remarkGfm]}>
@@ -742,7 +742,7 @@ export function PostDetailPage() {
                 </p>
                 <p>
                   <span className="text-theme-muted">阅读量：</span>
-                  {data.views_count}
+                  <span className="tabular-nums">{data.views_count}</span>
                 </p>
                 <p>
                   <span className="text-theme-muted">更新时间：</span>

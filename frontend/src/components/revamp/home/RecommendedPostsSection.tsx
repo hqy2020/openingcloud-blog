@@ -52,9 +52,15 @@ function PostCard({ post }: { post: PinnedPost }) {
         <h3 className="line-clamp-3 text-center text-2xl font-bold leading-tight text-white drop-shadow-md sm:text-3xl">
           {post.title}
         </h3>
-        <div className="mt-3 flex items-center gap-4 text-sm font-medium text-white/80">
-          <span>{post.views_count} 阅读</span>
-          <span>{post.likes_count} 点赞</span>
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm font-medium text-white/80">
+          <span className="inline-flex items-baseline gap-1">
+            <span className="tabular-nums">{post.views_count}</span>
+            <span>阅读</span>
+          </span>
+          <span className="inline-flex items-baseline gap-1">
+            <span className="tabular-nums">{post.likes_count}</span>
+            <span>点赞</span>
+          </span>
         </div>
       </div>
 

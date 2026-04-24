@@ -159,7 +159,7 @@ export function HighlightsSection({ stages }: HighlightsSectionProps) {
         <span className="text-sm text-theme-muted dark:text-theme-soft">{stages.length} 个阶段</span>
       </div>
 
-      <StaggerContainer className="grid gap-5 md:grid-cols-2 xl:grid-cols-3" stagger={0.07}>
+      <StaggerContainer className="grid gap-6 md:grid-cols-2 xl:grid-cols-3" stagger={0.07}>
         {stages.map((stage, idx) => {
           const theme = pickStageTheme(idx, stages.length);
           const stageSummary = resolveStageSummary(stage, idx);
@@ -167,7 +167,7 @@ export function HighlightsSection({ stages }: HighlightsSectionProps) {
             <StaggerItem key={`${stage.title}-${idx}`}>
               <CardSpotlight
                 className={[
-                  "group theme-card h-full overflow-hidden rounded-[var(--theme-radius)] border p-5 shadow-[var(--theme-shadow-whisper)] transition-all duration-300 hover:border-theme-accent/50 hover:shadow-[var(--theme-shadow-lifted)]",
+                  "group theme-card h-full overflow-hidden rounded-[var(--theme-radius)] border p-6 shadow-[var(--theme-shadow-whisper)] transition-all duration-300 hover:border-theme-accent/50 hover:shadow-[var(--theme-shadow-lifted)]",
                   theme.cardClass,
                 ].join(" ")}
                 glowColor={theme.glowColor}
@@ -175,18 +175,18 @@ export function HighlightsSection({ stages }: HighlightsSectionProps) {
                 <h3 className="font-theme-display text-lg font-medium text-theme-ink transition-colors duration-200 group-hover:text-theme-accent">
                   {stage.title}
                 </h3>
-                <p className={`mt-1 text-xs ${theme.dateClass}`}>
+                <p className={`mt-2 text-xs ${theme.dateClass}`}>
                   {stage.start_date || ""}
                   {stage.end_date ? ` - ${stage.end_date}` : ""}
                 </p>
-                <p className={`mt-3 text-sm leading-6 ${theme.summaryClass}`}>{stageSummary}</p>
+                <p className={`mt-4 text-sm leading-7 ${theme.summaryClass}`}>{stageSummary}</p>
 
-                <ul className="mt-4 space-y-2">
+                <ul className="mt-5 space-y-2.5">
                   {stage.items.slice(0, 4).map((item) => (
                     <li
                       key={`${stage.title}-${item.title}`}
                       className={[
-                        "rounded-lg border px-3 py-2 text-sm transition-colors duration-200 hover:border-theme-accent/40 hover:bg-theme-surface-raised",
+                        "rounded-lg border px-4 py-2.5 text-sm leading-relaxed transition-colors duration-200 hover:border-theme-accent/40 hover:bg-theme-surface-raised",
                         theme.itemClass,
                       ].join(" ")}
                     >

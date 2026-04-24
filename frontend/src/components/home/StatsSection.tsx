@@ -58,7 +58,7 @@ export function StatsSection({ stats }: StatsSectionProps) {
         accentColor="#c96442"
         tagline="用数字丈量这个博客的成长轨迹。"
       />
-      <StaggerContainer className="grid h-full grid-cols-2 gap-4 lg:grid-cols-4" stagger={0.06}>
+      <StaggerContainer className="grid h-full grid-cols-2 gap-5 lg:grid-cols-4" stagger={0.06}>
         {statItems.map((item) => {
           const note = item.note(stats);
           const valueText = numberFormatter.format(stats[item.key]);
@@ -80,7 +80,7 @@ export function StatsSection({ stats }: StatsSectionProps) {
                     gifUrl={item.gifUrl}
                     size="xxl"
                     weight="bold"
-                    className={cn("max-w-full whitespace-nowrap", sizeClass)}
+                    className={cn("max-w-full whitespace-nowrap tabular-nums", sizeClass)}
                   >
                     {valueText}
                   </TextGif>

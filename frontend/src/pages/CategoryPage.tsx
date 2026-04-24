@@ -321,7 +321,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
                   <h2 className="line-clamp-2 font-theme-display text-xl font-medium leading-snug tracking-tight text-theme-ink transition-colors duration-200 group-hover:text-theme-accent">
                     {post.title}
                   </h2>
-                  <p className="line-clamp-3 font-theme-body text-sm leading-[1.65] text-theme-muted">
+                  <p className="line-clamp-2 font-theme-body text-sm leading-[1.7] text-theme-muted">
                     {post.excerpt || "暂无摘要"}
                   </p>
 
@@ -342,7 +342,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
                     <div className="flex flex-wrap items-center gap-1.5 font-theme-sans">
                       <time>{formatDate(post.updated_at)}</time>
                       <span aria-hidden="true">·</span>
-                      <span>{post.views_count} 阅读</span>
+                      <span className="tabular-nums">{post.views_count} 阅读</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <LikeButton

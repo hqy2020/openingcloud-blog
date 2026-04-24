@@ -153,11 +153,11 @@ function ReadingCard({ book }: { book: BookItem }) {
             <BookOpenIcon className="h-3 w-3" />
             正在读
           </div>
-          <h3 className="font-theme-display text-xl font-medium leading-tight text-theme-ink">
+          <h3 className="font-theme-display text-xl font-medium leading-snug text-theme-ink">
             {book.title}
           </h3>
           {book.author ? (
-            <p className="mt-1 font-theme-sans text-xs text-theme-soft">{book.author}</p>
+            <p className="mt-1.5 font-theme-sans text-xs text-theme-soft">{book.author}</p>
           ) : null}
 
           <div className="mt-4">
@@ -173,7 +173,7 @@ function ReadingCard({ book }: { book: BookItem }) {
             </div>
             <div className="mt-1.5 flex justify-between font-theme-sans text-[10px] text-theme-soft">
               <span>进度</span>
-              <span className="font-medium text-theme-accent">{progress}%</span>
+              <span className="font-medium text-theme-accent tabular-nums">{progress}%</span>
             </div>
           </div>
 
