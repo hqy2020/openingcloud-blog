@@ -191,8 +191,18 @@ export function GlobalDock() {
       <DockIcon label="置顶" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
         <ArrowUpIcon />
       </DockIcon>
-      <DockIcon label="文章" href="/tech">
-        <ArticleIcon />
+      <DockIcon
+        label="文章"
+        href="/tech"
+        className="bg-theme-accent text-white ring-2 ring-offset-2 ring-offset-transparent ring-theme-accent/35 shadow-[0_6px_22px_rgb(var(--theme-accent)/0.45)] hover:ring-theme-accent/70"
+      >
+        <span className="relative inline-flex items-center justify-center">
+          <ArticleIcon />
+          <span className="pointer-events-none absolute -right-1.5 -top-1.5 inline-flex h-2.5 w-2.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-80" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-white ring-2 ring-theme-accent" />
+          </span>
+        </span>
       </DockIcon>
       {like.enabled ? (
         <DockIcon label={`点赞 ${like.count}`} onClick={like.toggle}>
