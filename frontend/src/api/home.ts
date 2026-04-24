@@ -233,8 +233,15 @@ export type HomePayload = {
   };
   radar_charts?: RadarChartConfig[];
   section_quotes?: Record<string, SectionQuoteItem>;
+  quotes_pool?: WikiQuoteItem[];
   wishes?: WishItem[];
   books?: BookItem[];
+};
+
+export type WikiQuoteItem = {
+  text: string;
+  tier: "creed" | "insight";
+  source?: string;
 };
 
 export async function fetchHome() {

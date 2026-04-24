@@ -10,6 +10,7 @@ type HomeHeroProps = {
     fallback_image: string;
     fallback_video: string;
   };
+  quoteText?: string;
 };
 
 const profileRoles = [
@@ -25,7 +26,7 @@ const profileRoles = [
   "Knowledge Management Researcher",
 ];
 
-export function HomeHero({ hero }: HomeHeroProps) {
+export function HomeHero({ hero, quoteText }: HomeHeroProps) {
   return (
     <section id="hero" className="relative left-1/2 w-screen -translate-x-1/2 scroll-mt-20 px-2 sm:px-5">
       <div className="relative min-h-[60vh] sm:min-h-[88vh] overflow-x-clip">
@@ -45,7 +46,7 @@ export function HomeHero({ hero }: HomeHeroProps) {
           </motion.div>
 
           <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center font-serif text-sm italic leading-[1.6] tracking-normal text-theme-muted sm:text-base">
-            {hero.subtitle || coverHeroConfig.one_liner}
+            {quoteText || hero.subtitle || coverHeroConfig.one_liner}
           </p>
         </div>
       </div>

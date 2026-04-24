@@ -1,10 +1,12 @@
-import { useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Helmet } from "react-helmet-async";
 import type { HighlightStage, PhotoWallItem, PinnedPost, SocialGraphLink, SocialGraphNode, TimelineNode } from "../api/home";
 import { fetchHome } from "../api/home";
+import { loadCachedQuotesPool, pickRandomQuote, saveQuotesPool } from "../lib/quotes";
 import type { ConfettiRef } from "../components/ui/Confetti";
 import { Confetti } from "../components/ui/Confetti";
 import { KnowledgeGraphSection } from "../components/home/KnowledgeGraphSection";
+import { TodayQuoteSection } from "../components/home/TodayQuoteSection";
 import { PhotoWallSection } from "../components/home/PhotoWallSection";
 import { SocialGraphSection } from "../components/home/SocialGraphSection";
 import { StatsSection } from "../components/home/StatsSection";
@@ -102,6 +104,16 @@ export function HomePage() {
     Array.isArray(payload.photo_wall) && payload.photo_wall.length > 0 ? payload.photo_wall : photoWallFallbackForUx;
   const pinnedPosts: PinnedPost[] = Array.isArray(payload.pinned_posts) ? payload.pinned_posts : [];
   const quotes = payload.section_quotes ?? {};
+  const quotesPool = payload.quotes_pool && payload.quotes_pool.length > 0 ? payload.quotes_pool : loadCachedQuotesPool();
+  useEffect(() => {
+    if (payload.quotes_pool && payload.quotes_pool.length > 0) {
+      saveQuotesPool(payload.quotes_pool);
+    }
+  }, [payload.quotes_pool]);
+  const heroQuote = useMemo(
+    () => pickRandomQuote(quotesPool, "creed") ?? pickRandomQuote(quotesPool),
+    [quotesPool],
+  );
 
   return (
     <section className="space-y-20">
@@ -118,7 +130,15 @@ export function HomePage() {
       {/* #1 Hero */}
       <HomeHero
         hero={payload.hero}
+        quoteText={heroQuote?.text}
       />
+
+      {/* #1.2 今日金句 */}
+      {quotesPool.length > 0 ? (
+        <SectionCard id="today-quote">
+          <TodayQuoteSection pool={quotesPool} count={3} />
+        </SectionCard>
+      ) : null}
 
       {/* #1.5 Knowledge Graph (Obsidian-style, time-growth animated) */}
       <SectionParallaxTransition strength={24}>
