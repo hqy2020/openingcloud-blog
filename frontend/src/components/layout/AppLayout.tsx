@@ -304,11 +304,14 @@ export function AppLayout() {
 
             <NavLink
               aria-label="返回首页"
-              className="theme-nav-tab relative z-20 inline-flex items-center px-2 py-1 text-2xl text-theme-ink lg:px-4 lg:py-2 lg:text-4xl"
+              className="theme-nav-tab relative z-20 inline-flex items-baseline gap-2 px-2 py-1 text-2xl text-theme-ink lg:px-4 lg:py-2 lg:text-4xl"
               title="首页"
               to="/"
             >
-              码阶客
+              <span>码阶客</span>
+              <span className="font-theme-sans text-xs font-medium uppercase tracking-[0.22em] text-theme-accent lg:text-sm">
+                Magic
+              </span>
             </NavLink>
 
             <nav
@@ -389,11 +392,14 @@ export function AppLayout() {
             <div className="relative z-10 flex w-full items-center justify-between">
               <NavLink
                 aria-label="返回首页"
-                className="theme-nav-tab inline-flex items-center px-1.5 py-0.5 text-lg text-theme-ink"
+                className="theme-nav-tab inline-flex items-baseline gap-1.5 px-1.5 py-0.5 text-lg text-theme-ink"
                 title="首页"
                 to="/"
               >
-                码阶客
+                <span>码阶客</span>
+                <span className="font-theme-sans text-[10px] font-medium uppercase tracking-[0.2em] text-theme-accent">
+                  Magic
+                </span>
               </NavLink>
 
               <button
