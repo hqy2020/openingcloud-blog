@@ -61,6 +61,8 @@ export function BlurRevealImage({
   return (
     <div className={`blur-reveal-shell ${wrapperClassName}`.trim()}>
       <img
+        loading="lazy"
+        decoding="async"
         {...props}
         ref={imageRef}
         src={src}

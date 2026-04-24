@@ -547,6 +547,7 @@ export function PostDetailPage() {
               src={resolvedSrc}
               alt={String(alt ?? "")}
               loading="lazy"
+              decoding="async"
               className="max-h-[460px] w-full object-contain bg-theme-surface-raised"
               onError={(event) => {
                 const image = event.currentTarget;
@@ -625,7 +626,13 @@ export function PostDetailPage() {
 
       {detailCover ? (
         <div className="relative h-64 overflow-hidden border-b border-theme-line/80 md:h-[420px]">
-          <img src={detailCover} alt={`${data.title} 封面`} className="h-full w-full object-cover" />
+          <img
+            src={detailCover}
+            alt={`${data.title} 封面`}
+            decoding="async"
+            fetchPriority="high"
+            className="h-full w-full object-cover"
+          />
         </div>
       ) : null}
 

@@ -228,6 +228,8 @@ export function HeroSection({ hero, githubUrl, siteVisits }: HeroSectionProps) {
           }`}
           src={hero.fallback_image}
           loading="eager"
+          decoding="async"
+          fetchPriority="high"
         />
         {allowVideo && heroVideoSource ? (
           <video

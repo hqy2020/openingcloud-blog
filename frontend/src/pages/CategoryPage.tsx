@@ -292,6 +292,7 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
                       src={cover}
                       alt={`${post.title} 封面`}
                       loading="lazy"
+                      decoding="async"
                       className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
                     />
                     <div
