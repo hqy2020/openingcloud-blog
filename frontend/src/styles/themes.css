@@ -175,17 +175,29 @@ body {
   transform: translateY(var(--theme-card-lift)) !important;
 }
 
-/* Nav tabs — adopt theme display font (Claude serif / Apple SF / Notion Lyon) */
-.theme-nav-tab {
-  font-family: var(--theme-font-display);
+/* Nav tabs — adopt theme display font (Claude serif / Apple SF / Notion Lyon).
+ * !important because Tailwind `@layer utilities` (font-sans/font-serif) sits
+ * after @tailwind utilities and otherwise wins specificity tie. */
+.theme-nav-tab,
+.theme-nav-tab a,
+.theme-nav-tab button,
+.theme-nav-tab span {
+  font-family: var(--theme-font-display) !important;
   letter-spacing: var(--theme-tracking-heading);
 }
-:root[data-theme="claude"] .theme-nav-tab {
+:root[data-theme="claude"] .theme-nav-tab,
+:root[data-theme="claude"] .theme-nav-tab a,
+:root[data-theme="claude"] .theme-nav-tab button {
   font-weight: 500;
 }
-:root[data-theme="apple"] .theme-nav-tab {
+:root[data-theme="apple"] .theme-nav-tab,
+:root[data-theme="apple"] .theme-nav-tab a,
+:root[data-theme="apple"] .theme-nav-tab button {
   font-weight: 600;
+  letter-spacing: -0.015em;
 }
-:root[data-theme="notion"] .theme-nav-tab {
+:root[data-theme="notion"] .theme-nav-tab,
+:root[data-theme="notion"] .theme-nav-tab a,
+:root[data-theme="notion"] .theme-nav-tab button {
   font-weight: 500;
 }

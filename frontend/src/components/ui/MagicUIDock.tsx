@@ -52,12 +52,16 @@ function Dock({
       drag={draggable}
       dragMomentum={false}
       dragElastic={0.12}
+      /* Initial x: -50% centers the dock at bottom. Framer owns the transform
+         after this, so drag delta is added cleanly on top without CSS
+         -translate-x-1/2 fighting back on re-renders. */
+      initial={{ x: "-50%" }}
       whileDrag={draggable ? { scale: 1.01, cursor: "grabbing" } : undefined}
       className={cn(
-        "fixed bottom-6 left-1/2 z-50 hidden -translate-x-1/2 items-end gap-4 rounded-2xl border border-theme-line/70 bg-theme-surface/90 px-4 pb-3 pt-2 shadow-[0_14px_34px_rgba(15,23,42,0.14)] md:flex",
+        "fixed bottom-6 left-1/2 z-50 hidden items-end gap-4 rounded-2xl border border-theme-line/70 bg-theme-surface/90 px-4 pb-3 pt-2 shadow-[0_14px_34px_rgba(15,23,42,0.14)] md:flex",
+        draggable ? "cursor-grab" : "cursor-default",
         className,
       )}
-      style={{ cursor: draggable ? "grab" : "default" }}
       onMouseMove={(e) => mouseX.set(e.pageX)}
       onMouseLeave={() => mouseX.set(Infinity)}
     >
