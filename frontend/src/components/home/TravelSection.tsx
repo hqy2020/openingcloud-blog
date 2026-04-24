@@ -389,9 +389,20 @@ export function TravelSection({ travel }: TravelSectionProps) {
               <StaggerContainer className="grid gap-3 md:grid-cols-3" stagger={0.06}>
                 {travel.map((province) => (
                   <StaggerItem key={province.province}>
-                    <CardSpotlight className="rounded-xl bg-theme-surface/85 p-4">
-                      <h3 className="font-medium text-theme-ink">{province.province}</h3>
-                      <p className="mt-1 text-sm text-theme-muted">
+                    <CardSpotlight className="group relative overflow-hidden rounded-[var(--theme-radius)] border border-theme-line bg-theme-surface-raised p-4 shadow-[var(--theme-shadow-whisper)] transition-all duration-300 hover:-translate-y-1 hover:border-theme-accent/50 hover:shadow-[var(--theme-shadow-lifted)]">
+                      <span
+                        aria-hidden="true"
+                        className="pointer-events-none absolute left-0 top-0 h-full w-[3px] origin-bottom scale-y-0 bg-theme-accent transition-transform duration-300 group-hover:scale-y-100"
+                      />
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-theme-display text-base font-medium text-theme-ink transition-colors duration-200 group-hover:text-theme-accent">
+                          {province.province}
+                        </h3>
+                        <span className="inline-flex items-center rounded-full border border-theme-line bg-theme-surface px-2 py-0.5 font-theme-sans text-[10px] font-medium text-theme-soft transition-colors duration-200 group-hover:border-theme-accent/40 group-hover:text-theme-accent">
+                          {province.cities.length} 城
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm leading-[1.65] text-theme-muted">
                         {province.cities.map((city, idx) => {
                           const isCurrent =
                             currentResidence &&
@@ -405,7 +416,9 @@ export function TravelSection({ travel }: TravelSectionProps) {
                                   {city.city}（当前）
                                 </span>
                               ) : (
-                                city.city
+                                <span className="transition-colors duration-150 hover:text-theme-accent hover:underline underline-offset-2 cursor-default">
+                                  {city.city}
+                                </span>
                               )}
                             </span>
                           );
