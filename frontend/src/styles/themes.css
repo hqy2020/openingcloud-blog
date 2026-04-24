@@ -6,13 +6,18 @@
   --theme-bg: 250 249 245;            /* #faf9f5 Claude ivory */
   --theme-surface: 245 244 237;       /* #f5f4ed parchment */
   --theme-surface-raised: 255 254 249;
-  --theme-accent: 201 100 66;         /* #c96442 terracotta */
-  --theme-accent-soft: 217 119 87;    /* #d97757 coral */
+  --theme-accent: 217 119 87;         /* #D97757 陶土橘 Japonica — soul color */
+  --theme-accent-soft: 201 100 66;    /* #c96442 terracotta deep */
   --theme-ink: 20 20 19;              /* #141413 near-black */
   --theme-muted: 111 110 102;         /* #6f6e66 olive */
   --theme-soft: 135 134 127;          /* #87867f stone */
   --theme-line: 228 223 201;          /* #e4dfc9 warm cream */
   --theme-line-strong: 209 207 197;
+
+  /* Background grain — echoing the soul color at low opacity */
+  --theme-dot-color: 217 119 87;      /* 陶土橘颗粒 */
+  --theme-dot-glow: 217 119 87;
+  --theme-dot-opacity: 0.16;
 
   --theme-font-display: "Source Serif 4", "Source Serif Pro", Georgia, "LXGW WenKai", "Kaiti SC", serif;
   --theme-font-body: "Source Serif 4", "Source Serif Pro", Georgia, "LXGW WenKai", "PingFang SC", serif;
@@ -32,16 +37,21 @@
 }
 
 :root[data-theme="apple"] {
-  --theme-bg: 255 255 255;            /* pure white */
-  --theme-surface: 245 245 247;       /* #f5f5f7 Apple cool light gray */
+  --theme-bg: 255 255 255;            /* #FFFFFF pure white — soul color (留白) */
+  --theme-surface: 245 245 247;       /* #F5F5F7 classic Apple light gray */
   --theme-surface-raised: 255 255 255;
-  --theme-accent: 0 113 227;          /* #0071E3 Apple blue */
-  --theme-accent-soft: 0 102 204;
+  --theme-accent: 29 29 31;           /* #1D1D1F Apple near-black — 让白成主角，黑为次 */
+  --theme-accent-soft: 110 110 115;   /* 中灰次要 */
   --theme-ink: 29 29 31;              /* #1d1d1f Apple near-black */
   --theme-muted: 110 110 115;         /* Apple secondary */
   --theme-soft: 134 134 139;          /* #86868b Apple tertiary */
   --theme-line: 210 210 215;          /* #d2d2d7 hairline */
   --theme-line-strong: 166 166 172;
+
+  /* Background grain — near-invisible Apple light gray, pure-white feel */
+  --theme-dot-color: 210 210 215;     /* #D2D2D7 极淡灰颗粒 */
+  --theme-dot-glow: 166 166 172;
+  --theme-dot-opacity: 0.12;
 
   --theme-font-display:
     -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro", "Helvetica Neue", Helvetica,
@@ -69,13 +79,18 @@
   --theme-bg: 255 255 255;            /* white */
   --theme-surface: 247 246 243;       /* #f7f6f3 Notion warm off-white */
   --theme-surface-raised: 255 255 255;
-  --theme-accent: 35 131 226;         /* #2383E2 Notion link blue */
-  --theme-accent-soft: 11 110 204;
-  --theme-ink: 55 53 47;              /* #37352F Notion warm black */
+  --theme-accent: 55 53 48;           /* #373530 炭灰墨 Dark Charcoal — soul color */
+  --theme-accent-soft: 35 131 226;    /* #2383E2 Notion link blue (仅链接用) */
+  --theme-ink: 55 53 48;              /* #373530 Notion 墨色 ink */
   --theme-muted: 122 118 110;         /* Notion text/medium */
   --theme-soft: 155 154 151;          /* #9B9A97 Notion quiet */
   --theme-line: 233 233 231;          /* #E9E9E7 hairline */
   --theme-line-strong: 207 206 201;
+
+  /* Background grain — charcoal ink at low opacity, 文档感 */
+  --theme-dot-color: 55 53 48;        /* #373530 炭灰墨颗粒 */
+  --theme-dot-glow: 122 118 110;
+  --theme-dot-opacity: 0.08;
 
   --theme-font-display:
     ui-serif, "Lyon", "Charter", "Times New Roman", Georgia, "Source Serif 4", "LXGW WenKai",

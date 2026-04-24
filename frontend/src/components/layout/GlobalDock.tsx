@@ -67,10 +67,15 @@ function HeartIcon({ filled }: { filled?: boolean }) {
 function PaletteIcon({ swatch }: { swatch: string }) {
   return (
     <span
-      className="inline-block h-5 w-5 rounded-full border border-theme-line"
+      className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-theme-line shadow-inner"
       style={{ backgroundColor: swatch }}
       aria-hidden="true"
-    />
+    >
+      <span
+        className="h-1.5 w-1.5 rounded-full"
+        style={{ backgroundColor: "rgb(var(--theme-ink))" }}
+      />
+    </span>
   );
 }
 

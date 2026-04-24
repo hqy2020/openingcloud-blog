@@ -18,9 +18,9 @@ const THEME_STORAGE_KEY = "oc-theme";
 const DEFAULT_THEME: ThemePalette = "claude";
 
 export const THEME_PALETTES = [
-  { id: "claude" as const, label: "Claude", swatch: "#c96442", description: "Warm terracotta · serif" },
-  { id: "apple" as const, label: "Apple", swatch: "#0071E3", description: "Premium white · SF Pro" },
-  { id: "notion" as const, label: "Notion", swatch: "#2383E2", description: "Warm minimal · serif" },
+  { id: "claude" as const, label: "Claude", swatch: "#D97757", description: "陶土橘 · 人机温度" },
+  { id: "apple" as const, label: "Apple", swatch: "#F5F5F7", description: "极简白 · 硬件留白" },
+  { id: "notion" as const, label: "Notion", swatch: "#373530", description: "炭灰墨 · 理性结构" },
 ];
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
