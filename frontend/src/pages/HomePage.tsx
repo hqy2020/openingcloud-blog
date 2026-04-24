@@ -6,7 +6,8 @@ import { loadCachedQuotesPool, pickRandomQuote, saveQuotesPool } from "../lib/qu
 import type { ConfettiRef } from "../components/ui/Confetti";
 import { Confetti } from "../components/ui/Confetti";
 import { KnowledgeGraphSection } from "../components/home/KnowledgeGraphSection";
-import { TodayQuoteSection } from "../components/home/TodayQuoteSection";
+import { LifeInsightSection } from "../components/home/LifeInsightSection";
+import { RotatingQuoteHighlight } from "../components/home/RotatingQuoteHighlight";
 import { PhotoWallSection } from "../components/home/PhotoWallSection";
 import { SocialGraphSection } from "../components/home/SocialGraphSection";
 import { StatsSection } from "../components/home/StatsSection";
@@ -133,10 +134,10 @@ export function HomePage() {
         quoteText={heroQuote?.text}
       />
 
-      {/* #1.2 今日金句 */}
+      {/* #1.2 人生感悟 */}
       {quotesPool.length > 0 ? (
-        <SectionCard id="today-quote">
-          <TodayQuoteSection pool={quotesPool} count={3} />
+        <SectionCard id="life-insight">
+          <LifeInsightSection pool={quotesPool} count={3} intervalMs={10000} />
         </SectionCard>
       ) : null}
 
@@ -157,12 +158,16 @@ export function HomePage() {
         <SocialMarquee stages={highlightStages} />
       </SectionParallaxTransition>
 
-      {/* #3.5 Quote */}
-      {quotes.after_marquee && (
+      {/* #3.5 Quote — 金句轮播 */}
+      {quotesPool.length > 0 ? (
+        <SectionParallaxTransition strength={12} fade={false}>
+          <RotatingQuoteHighlight pool={quotesPool} intervalMs={10000} seedOffset={0} />
+        </SectionParallaxTransition>
+      ) : quotes.after_marquee ? (
         <SectionParallaxTransition strength={12} fade={false}>
           <SectionQuoteHighlight quote={quotes.after_marquee} />
         </SectionParallaxTransition>
-      )}
+      ) : null}
 
       {/* #4 Featured Projects - Code */}
       <SectionParallaxTransition strength={22}>
@@ -198,12 +203,16 @@ export function HomePage() {
         </SectionCard>
       </SectionParallaxTransition>
 
-      {/* Quote after life/dashboard */}
-      {quotes.after_dream && (
+      {/* Quote after life/dashboard — 金句轮播 */}
+      {quotesPool.length > 0 ? (
+        <SectionParallaxTransition strength={12} fade={false}>
+          <RotatingQuoteHighlight pool={quotesPool} intervalMs={10000} seedOffset={5} />
+        </SectionParallaxTransition>
+      ) : quotes.after_dream ? (
         <SectionParallaxTransition strength={12} fade={false}>
           <SectionQuoteHighlight quote={quotes.after_dream} />
         </SectionParallaxTransition>
-      )}
+      ) : null}
 
       <Confetti
         ref={confettiRef}
