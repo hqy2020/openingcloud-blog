@@ -46,9 +46,9 @@ export function LifeInsightSection({ pool, count = 3, intervalMs = 10000 }: Prop
             {picks.map((q, i) => (
               <li
                 key={`${rotation}-${i}`}
-                className="relative flex min-h-[140px] flex-col justify-between rounded-xl border border-theme-line bg-theme-surface-raised p-5"
+                className="group relative flex min-h-[140px] flex-col justify-between rounded-xl border border-theme-line bg-theme-surface-raised p-5 transition-all duration-300 hover:-translate-y-1 hover:border-theme-accent/60 hover:bg-theme-surface hover:shadow-[var(--theme-shadow-lifted)]"
               >
-                <p className="font-theme-display text-base leading-relaxed text-theme-ink md:text-lg">
+                <p className="font-theme-display text-base leading-relaxed text-theme-ink transition-colors duration-300 group-hover:text-theme-accent md:text-lg">
                   「{q.text}」
                 </p>
                 {q.source ? (

@@ -314,20 +314,22 @@ export function TravelSection({ travel }: TravelSectionProps) {
           ? [
               {
                 name: "当前",
-                type: "effectScatter",
+                type: "scatter",
                 coordinateSystem: "geo",
-                symbol:
-                  "path://M12,2 L14.6,8.6 L22,9.3 L16.3,14.2 L18.2,21.5 L12,17.5 L5.8,21.5 L7.7,14.2 L2,9.3 L9.4,8.6 Z",
-                symbolSize: 26,
-                rippleEffect: { scale: 6, brushType: "stroke", period: 2.4 },
+                symbol: "image:///brand/logo-personal.png",
+                symbolSize: 44,
                 zlevel: 5,
                 z: 18,
                 itemStyle: {
-                  color: "#c96442",
-                  borderColor: "#ffffff",
-                  borderWidth: 1.5,
-                  shadowBlur: 18,
-                  shadowColor: "rgba(201, 100, 66, 0.55)",
+                  opacity: 0.72,
+                  borderColor: "#c96442",
+                  borderWidth: 2,
+                  shadowBlur: 14,
+                  shadowColor: "rgba(201, 100, 66, 0.5)",
+                },
+                emphasis: {
+                  scale: 1.15,
+                  itemStyle: { opacity: 0.95 },
                 },
                 data: [currentPoint],
               },

@@ -941,7 +941,7 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
             <h2 className="text-3xl font-semibold tracking-tight text-theme-ink md:text-4xl xl:text-[3.8rem]">时间都去哪了？</h2>
           </div>
           <p className="max-w-2xl text-sm leading-6 text-theme-muted md:text-base">
-            把零散活动折叠成更大的生活切片，直接看到每个阶段的重心。悬停标签或底部类目，分界线会加粗。
+            把零散活动折叠成更大的生活切片，直接看到每个阶段的重心。
           </p>
         </div>
       </div>
