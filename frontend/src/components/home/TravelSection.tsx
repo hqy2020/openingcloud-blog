@@ -272,12 +272,27 @@ export function TravelSection({ travel }: TravelSectionProps) {
   const option = useMemo(() => {
     const cityData = revealedCities
       .filter((city) => city.longitude !== null && city.latitude !== null)
-      .map((city) => ({
-        name: city.city,
-        value: [city.longitude, city.latitude, 1],
-        province: city.province,
-        visitedAt: city.visited_at,
-      }));
+      .map((city) => {
+        const isCurrent =
+          currentResidence &&
+          city.city === currentResidence.city &&
+          city.province === currentResidence.province;
+        return {
+          name: city.city,
+          value: [city.longitude, city.latitude, 1],
+          province: city.province,
+          visitedAt: city.visited_at,
+          ...(isCurrent && {
+            itemStyle: {
+              color: "#c96442",
+              borderColor: "#ffffff",
+              borderWidth: 1.5,
+              shadowBlur: 12,
+              shadowColor: "rgba(201, 100, 66, 0.5)",
+            },
+          }),
+        };
+      });
 
     const currentPoint = currentResidence
       ? {
@@ -320,17 +335,34 @@ export function TravelSection({ travel }: TravelSectionProps) {
         ...(currentPoint
           ? [
               {
-                name: "当前",
+                name: "当前点",
                 type: "effectScatter",
+                coordinateSystem: "geo",
+                rippleEffect: { scale: 4, brushType: "stroke", period: 2.4 },
+                symbolSize: 12,
+                zlevel: 4,
+                z: 14,
+                itemStyle: {
+                  color: "#c96442",
+                  borderColor: "#ffffff",
+                  borderWidth: 1.5,
+                  shadowBlur: 14,
+                  shadowColor: "rgba(201, 100, 66, 0.55)",
+                },
+                silent: true,
+                tooltip: { show: false },
+                data: [currentPoint],
+              },
+              {
+                name: "当前",
+                type: "scatter",
                 coordinateSystem: "geo",
                 symbol: "image:///brand/logo-personal.png",
                 symbolSize: 18,
-                rippleEffect: { scale: 4, brushType: "stroke", period: 2.4 },
                 zlevel: 5,
                 z: 18,
                 itemStyle: {
                   opacity: 0.6,
-                  color: "rgba(201, 100, 66, 0.6)",
                 },
                 emphasis: {
                   itemStyle: { opacity: 0.85 },
