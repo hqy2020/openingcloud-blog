@@ -26,11 +26,11 @@ function AchievementMarqueeCard({ card }: { card: AchievementCard }) {
     <motion.article
       whileHover={{ y: -3, scale: 1.01 }}
       transition={{ type: "spring", stiffness: 350, damping: 24 }}
-      className="group flex h-[132px] w-[280px] shrink-0 flex-col rounded-2xl border border-theme-line/80 bg-theme-surface/60 px-5 py-4 transition-all duration-200 hover:border-theme-accent hover:bg-theme-surface hover:shadow-[var(--theme-shadow-lifted)]"
+      className="group flex h-[132px] w-[280px] shrink-0 flex-col rounded-2xl border border-theme-line/80 bg-theme-surface/60 px-5 py-4 transition-all duration-200 hover:border-theme-accent hover:bg-theme-ink hover:shadow-[var(--theme-shadow-lifted)]"
     >
       <p className="line-clamp-1 text-[11px] font-semibold tracking-[0.16em] text-theme-muted group-hover:text-theme-accent-soft">{card.period}</p>
-      <p className="mt-1.5 line-clamp-2 text-sm font-semibold leading-snug text-theme-ink group-hover:text-white">{card.title}</p>
-      <p className="mt-auto line-clamp-2 text-xs leading-relaxed text-theme-muted group-hover:text-theme-accent-soft">{card.description}</p>
+      <p className="mt-1.5 line-clamp-2 text-sm font-semibold leading-snug text-theme-ink group-hover:text-theme-bg">{card.title}</p>
+      <p className="mt-auto line-clamp-2 text-xs leading-relaxed text-theme-muted group-hover:text-theme-soft">{card.description}</p>
     </motion.article>
   );
 }
