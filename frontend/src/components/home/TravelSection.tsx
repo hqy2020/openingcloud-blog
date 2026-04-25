@@ -321,14 +321,16 @@ export function TravelSection({ travel }: TravelSectionProps) {
           ? [
               {
                 name: "当前",
-                type: "scatter",
+                type: "effectScatter",
                 coordinateSystem: "geo",
                 symbol: "image:///brand/logo-personal.png",
                 symbolSize: 18,
+                rippleEffect: { scale: 4, brushType: "stroke", period: 2.4 },
                 zlevel: 5,
                 z: 18,
                 itemStyle: {
                   opacity: 0.6,
+                  color: "rgba(201, 100, 66, 0.6)",
                 },
                 emphasis: {
                   itemStyle: { opacity: 0.85 },
