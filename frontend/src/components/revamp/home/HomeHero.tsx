@@ -29,7 +29,7 @@ const profileRoles = [
 export function HomeHero({ hero, quoteText }: HomeHeroProps) {
   return (
     <section id="hero" className="relative left-1/2 w-screen -translate-x-1/2 scroll-mt-20 px-2 sm:px-5">
-      <div className="relative min-h-[60vh] sm:min-h-[88vh] overflow-x-clip">
+      <div className="relative min-h-[60vh] sm:min-h-[88vh]">
         <div className="relative z-10 mx-auto flex min-h-[88vh] w-full max-w-7xl items-start justify-center px-2 pt-6 pb-14 sm:pt-10 sm:px-6">
           <motion.div
             initial={{ opacity: 0, y: 16, scale: 0.98 }}
