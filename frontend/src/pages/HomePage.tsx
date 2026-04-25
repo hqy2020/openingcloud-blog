@@ -25,6 +25,7 @@ import { SectionCard } from "../components/revamp/shared/SectionCard";
 import { SectionTitleCard } from "../components/revamp/shared/SectionTitleCard";
 import { SectionQuoteHighlight } from "../components/revamp/shared/SectionQuoteHighlight";
 import { SectionParallaxTransition } from "../components/motion/SectionParallaxTransition";
+import { SafeBoundary } from "../components/ui/SafeBoundary";
 import { useAsync } from "../hooks/useAsync";
 import { fallbackHomePayload } from "../data/fallback";
 import { siteUrl } from "../lib/site";
@@ -180,17 +181,23 @@ export function HomePage() {
         <SectionCard id="life">
           <div className="space-y-12">
             {/* Time (full-width chart) */}
-            <TimeAreaSection timeline={timelineNodes} timeSeries={payload.time_series} />
+            <SafeBoundary label="TimeAreaSection">
+              <TimeAreaSection timeline={timelineNodes} timeSeries={payload.time_series} />
+            </SafeBoundary>
 
             {/* Timeline + right column (2 columns) */}
             <div className="grid gap-8 lg:grid-cols-2">
               {/* Left: Timeline (long list) */}
               <div>
-                <TimelineSection nodes={timelineNodes} />
+                <SafeBoundary label="TimelineSection">
+                  <TimelineSection nodes={timelineNodes} />
+                </SafeBoundary>
               </div>
               {/* Right: Travel + Social + Stats + Radar + Photo + Dream */}
               <div className="space-y-8">
-                <TravelSection travel={payload.travel} />
+                <SafeBoundary label="TravelSection">
+                  <TravelSection travel={payload.travel} />
+                </SafeBoundary>
                 <SocialGraphSection links={socialLinks} nodes={socialNodes} />
                 <StatsSection stats={payload.stats} />
                 <DualRadarSection radarData={payload.radar_charts} />

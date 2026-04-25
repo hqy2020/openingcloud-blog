@@ -24,7 +24,15 @@ export class SafeBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      return this.props.fallback ?? null;
+      if (this.props.fallback !== undefined) {
+        return this.props.fallback;
+      }
+      const label = this.props.label ?? "section";
+      return (
+        <div className="rounded-2xl border border-red-300/60 bg-red-50/60 px-4 py-3 text-xs text-red-600 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-300">
+          [{label}] 渲染出错，详见浏览器 console
+        </div>
+      );
     }
     return this.props.children;
   }
