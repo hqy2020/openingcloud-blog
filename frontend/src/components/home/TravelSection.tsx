@@ -358,14 +358,14 @@ export function TravelSection({ travel }: TravelSectionProps) {
                 type: "scatter",
                 coordinateSystem: "geo",
                 symbol: "image:///brand/logo-personal.png",
-                symbolSize: 18,
+                symbolSize: 54,
                 zlevel: 5,
                 z: 18,
                 itemStyle: {
-                  opacity: 0.6,
+                  opacity: 0.2,
                 },
                 emphasis: {
-                  itemStyle: { opacity: 0.85 },
+                  itemStyle: { opacity: 0.45 },
                 },
                 data: [currentPoint],
               },
@@ -454,7 +454,7 @@ export function TravelSection({ travel }: TravelSectionProps) {
                                     src="/brand/logo-personal.png"
                                     alt=""
                                     aria-hidden="true"
-                                    className="mr-1 inline-block h-4 w-4 align-text-bottom opacity-70"
+                                    className="mr-1 inline-block h-4 w-4 align-text-bottom opacity-20"
                                   />
                                   {city.city}（当前）
                                 </span>
