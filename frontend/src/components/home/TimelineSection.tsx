@@ -119,11 +119,11 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
   const orderedNodes = useMemo(
     () =>
       [...nodes].sort((left, right) => {
-        if (left.sort_order !== right.sort_order) {
-          return left.sort_order - right.sort_order;
-        }
         if (left.start_date !== right.start_date) {
           return left.start_date.localeCompare(right.start_date);
+        }
+        if (left.sort_order !== right.sort_order) {
+          return left.sort_order - right.sort_order;
         }
         return left.title.localeCompare(right.title);
       }),

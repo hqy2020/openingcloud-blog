@@ -317,8 +317,8 @@ export function TravelSection({ travel }: TravelSectionProps) {
                 type: "effectScatter",
                 coordinateSystem: "geo",
                 symbol: "image:///brand/logo-blog-orange.png",
-                symbolSize: 48,
-                rippleEffect: { scale: 4, brushType: "stroke", period: 2.4 },
+                symbolSize: 56,
+                rippleEffect: { scale: 5, brushType: "stroke", period: 1.6 },
                 zlevel: 5,
                 z: 18,
                 itemStyle: {
@@ -344,6 +344,21 @@ export function TravelSection({ travel }: TravelSectionProps) {
                 z: 16,
                 itemStyle: {
                   color: "rgba(201, 100, 66, 0.22)",
+                },
+                silent: true,
+                tooltip: { show: false },
+                data: [currentPoint],
+              },
+              {
+                name: "呼吸脉冲",
+                type: "effectScatter",
+                coordinateSystem: "geo",
+                rippleEffect: { scale: 22, brushType: "stroke", period: 1.4 },
+                symbolSize: 8,
+                zlevel: 3,
+                z: 14,
+                itemStyle: {
+                  color: "rgba(201, 100, 66, 0.35)",
                 },
                 silent: true,
                 tooltip: { show: false },
@@ -430,6 +445,12 @@ export function TravelSection({ travel }: TravelSectionProps) {
                               {idx > 0 ? "、" : ""}
                               {isCurrent ? (
                                 <span className="font-bold text-red-500 animate-pulse">
+                                  <img
+                                    src="/brand/logo-blog-orange.png"
+                                    alt=""
+                                    aria-hidden="true"
+                                    className="mr-1 inline-block h-4 w-4 align-text-bottom opacity-80"
+                                  />
                                   {city.city}（当前）
                                 </span>
                               ) : (
