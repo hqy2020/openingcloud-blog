@@ -97,7 +97,7 @@ export function Highlight({
     <motion.span
       initial={{ backgroundSize: `0% ${backgroundHeight}` }}
       animate={{ backgroundSize: `100% ${backgroundHeight}` }}
-      transition={{ duration, ease: "linear", delay: 0.5 }}
+      transition={{ duration, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
       style={{
         backgroundPosition,
         backgroundRepeat: "no-repeat",

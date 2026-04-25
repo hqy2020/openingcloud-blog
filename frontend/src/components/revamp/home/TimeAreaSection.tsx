@@ -656,8 +656,7 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
         type: "line",
         z: isActive ? 36 : 20 - index,
         stack: "Total",
-        smooth: 1,
-        smoothMonotone: "x",
+        smooth: true,
         showSymbol: false,
         symbol: "none",
         lineStyle: {
@@ -684,9 +683,8 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
           z: 58,
           showSymbol: false,
           symbol: "none",
-          smooth: 1,
-          smoothMonotone: "x",
-          silent: true,
+          smooth: true,
+            silent: true,
           tooltip: { show: false },
           lineStyle: {
             width: 4.5,
@@ -740,14 +738,7 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
           return `<div><div style="font-weight:600;margin-bottom:6px;">Age ${age}</div>${rows}</div>`;
         },
       },
-      legend: {
-        show: true,
-        bottom: 0,
-        left: "center",
-        icon: "circle",
-        itemGap: 18,
-        textStyle: { color: "#475569", fontSize: 12 },
-      },
+      legend: { show: false },
       grid: {
         ...chartGrid,
         containLabel: false,
@@ -840,7 +831,7 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2 border-t border-white/65 px-4 pb-5 pt-4 md:px-6">
+            <div className="flex flex-wrap justify-center gap-2 border-t border-white/65 px-4 pb-5 pt-4 md:px-6">
               {chartData.series.map((item) => {
                 const value = latestDistribution[item.key] ?? 0;
                 const isActive = activeSeriesKey === item.key;

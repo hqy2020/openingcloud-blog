@@ -294,7 +294,7 @@ export function AppLayout() {
   const activeDesktopIndex = headerTabs.findIndex((item) => !item.nativeAnchor && item.to === location.pathname);
 
   return (
-    <DotBackground className="min-h-screen text-theme-ink">
+    <DotBackground className="flex min-h-screen flex-col text-theme-ink">
       <header className="fixed inset-x-0 top-0 z-40">
         <div className="w-full">
           <motion.div
@@ -480,11 +480,11 @@ export function AppLayout() {
         </div>
       </header>
 
-      <main className="mx-auto w-full px-[5%] pb-28 pt-20 sm:pb-8 sm:pt-24 lg:pb-8 lg:pt-40">
+      <main className="mx-auto w-full flex-1 px-[5%] pb-28 pt-20 sm:pb-8 sm:pt-24 lg:pb-8 lg:pt-40">
         <Outlet />
       </main>
 
-      <footer className="relative mt-12 w-full overflow-hidden border-t border-theme-line-strong bg-theme-bg text-theme-muted">
+      <footer className="relative mt-auto w-full overflow-hidden border-t border-theme-line-strong bg-theme-bg text-theme-muted">
         <StripeBgGuides
           animated
           animationDelay={0.55}
@@ -502,13 +502,11 @@ export function AppLayout() {
           responsive
           solidLines={[1, 6]}
         />
-        <div className="relative mx-auto w-full max-w-2xl px-4 py-4">
-          <p className="text-sm leading-[1.3] text-theme-muted">
-            I&apos;m collaborating with individuals from diverse fields, which is precisely why I created this website. Feel
-            free to contact me.
+        <div className="relative mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-1 px-6 py-3 text-xs leading-[1.4] text-theme-muted md:text-sm">
+          <p className="min-w-0 flex-1">
+            I&apos;m collaborating with individuals from diverse fields, which is precisely why I created this website. Feel free to contact me.
           </p>
-          <p className="mt-0.5 text-sm leading-[1.3] text-theme-muted">- Keyon · 云际漫游者</p>
-          <p className="mt-0.5 text-sm leading-[1.3] text-theme-muted">联系方式：hqy200091@163.com</p>
+          <p className="shrink-0">- Keyon · 云际漫游者 · hqy200091@163.com</p>
         </div>
       </footer>
 

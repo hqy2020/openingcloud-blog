@@ -43,6 +43,13 @@ function buildRadarOption(set: RadarMetricSet) {
       {
         name: set.title,
         type: "radar",
+        emphasis: {
+          focus: "self",
+          areaStyle: { color: "rgba(134,197,173,0.65)" },
+          lineStyle: { width: 3.5, color: "#3fa57f", shadowBlur: 14, shadowColor: "rgba(63,165,127,0.5)" },
+          itemStyle: { color: "#3fa57f", borderColor: "#fff", borderWidth: 2.5 },
+          symbolSize: 11,
+        },
         data: [
           {
             value: set.metrics.map((metric) => metric.value),
