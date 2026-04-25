@@ -11,6 +11,7 @@ import { BarrageCommentsSidebar } from "./BarrageCommentsSidebar";
 import { DotBackground } from "../ui/DotBackground";
 import { DistortedGlassSurface } from "../ui/DistortedGlassSurface";
 import { MultiFollowCursor } from "../ui/MultiFollowCursor";
+import { SafeBoundary } from "../ui/SafeBoundary";
 import { StripeBgGuides } from "../ui/StripeBgGuides";
 import { GlobalDock } from "./GlobalDock";
 
@@ -515,7 +516,9 @@ export function AppLayout() {
       <GlobalDock />
 
       <BarrageCommentsSidebar />
-      <BlogPetMachine />
+      <SafeBoundary label="BlogPetMachine">
+        <BlogPetMachine />
+      </SafeBoundary>
       <MultiFollowCursor />
     </DotBackground>
   );
