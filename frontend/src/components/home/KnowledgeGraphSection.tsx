@@ -111,7 +111,7 @@ export function KnowledgeGraphSection() {
     const today = new Date().toISOString().slice(0, 10);
     const realEarliest = sortedNodes
       .map((n) => n.git_created_at)
-      .filter((t): t is string => Boolean(t) && t.slice(0, 10) < today)
+      .filter((t): t is string => typeof t === "string" && t.length > 0 && t.slice(0, 10) < today)
       .sort()[0];
     return realEarliest ?? "2025-09-01";
   }, [sortedNodes]);

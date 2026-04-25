@@ -670,34 +670,15 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
           color: item.color,
         },
         emphasis: {
-          disabled: true,
+          focus: "self",
+          areaStyle: { opacity: 1, color: item.color },
+          lineStyle: { width: 5, color: "#ffffff" },
         },
         data: item.data,
       };
     });
 
-    const highlightSeries = activeOverlay
-      ? activeOverlay.boundaries.map((boundary) => ({
-          name: `${activeOverlay.item.label}-${boundary.key}`,
-          type: "line",
-          z: 58,
-          showSymbol: false,
-          symbol: "none",
-          smooth: true,
-            silent: true,
-          tooltip: { show: false },
-          lineStyle: {
-            width: 4.5,
-            color: "rgba(255,255,255,0.98)",
-            cap: "round",
-            join: "round",
-            shadowBlur: 10,
-            shadowColor: "rgba(148,163,184,0.18)",
-          },
-          areaStyle: { opacity: 0 },
-          data: boundary.data,
-        }))
-      : [];
+    const highlightSeries: Array<Record<string, unknown>> = [];
 
     return {
       animation: !reduceMotion,
@@ -705,13 +686,7 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
       animationDurationUpdate: 500,
       tooltip: {
         trigger: "axis",
-        axisPointer: {
-          type: "line",
-          lineStyle: {
-            color: "rgba(255,255,255,0.96)",
-            width: 2.5,
-          },
-        },
+        axisPointer: { type: "none" },
         borderWidth: 0,
         backgroundColor: "rgba(15,23,42,0.86)",
         textStyle: { color: "#f8fafc", fontSize: 12 },
@@ -833,7 +808,6 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
 
             <div className="flex flex-wrap justify-center gap-2 border-t border-white/65 px-4 pb-5 pt-4 md:px-6">
               {chartData.series.map((item) => {
-                const value = latestDistribution[item.key] ?? 0;
                 const isActive = activeSeriesKey === item.key;
                 return (
                   <button
@@ -854,7 +828,6 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
                     onBlur={() => setActiveSeriesKey(null)}
                   >
                     <span className="block text-sm font-semibold text-theme-ink">{item.label}</span>
-                    <span className="mt-0.5 block text-xs text-theme-muted">现在约 {formatPercentage(value)}</span>
                   </button>
                 );
               })}
