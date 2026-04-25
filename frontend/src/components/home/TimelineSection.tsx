@@ -72,16 +72,18 @@ function typeBadge(type: TimelineNode["type"]): TimelineTypeMeta {
 }
 
 function formatPeriod(node: TimelineNode) {
+  const start = node.start_date ?? "";
   if (!node.end_date) {
-    return `${node.start_date} - 至今`;
+    return `${start} - 至今`;
   }
-  return `${node.start_date} - ${node.end_date}`;
+  return `${start} - ${node.end_date}`;
 }
 
 function formatAnchor(node: TimelineNode) {
-  const [year = "", month = ""] = node.start_date.split("-");
+  const raw = node.start_date ?? "";
+  const [year = "", month = ""] = raw.split("-");
   if (!year) {
-    return node.start_date;
+    return raw;
   }
   if (!month) {
     return year;
@@ -90,8 +92,9 @@ function formatAnchor(node: TimelineNode) {
 }
 
 function formatYear(node: TimelineNode) {
-  const [year = ""] = node.start_date.split("-");
-  return year || node.start_date;
+  const raw = node.start_date ?? "";
+  const [year = ""] = raw.split("-");
+  return year || raw;
 }
 
 function impactBadge(impact: TimelineNode["impact"]) {
