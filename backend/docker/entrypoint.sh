@@ -3,6 +3,7 @@ set -eu
 
 python manage.py migrate --noinput
 python manage.py collectstatic --noinput
+python manage.py backfill_wiki_quote_emphasis || true
 
 # 幂等创建/更新 superuser（使用环境变量）
 if [ -n "${DJANGO_SUPERUSER_USERNAME:-}" ] && [ -n "${DJANGO_SUPERUSER_PASSWORD:-}" ]; then
