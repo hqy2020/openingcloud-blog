@@ -324,7 +324,7 @@ export function TravelSection({ travel }: TravelSectionProps) {
                 type: "scatter",
                 coordinateSystem: "geo",
                 symbol: "image:///brand/logo-personal.png",
-                symbolSize: 180,
+                symbolSize: 18,
                 zlevel: 5,
                 z: 18,
                 itemStyle: {
