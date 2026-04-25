@@ -121,16 +121,18 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
   const timelineRef = useRef<HTMLDivElement>(null);
   const orderedNodes = useMemo(
     () =>
-      [...nodes].sort((left, right) => {
+      (Array.isArray(nodes) ? [...nodes] : []).sort((left, right) => {
         const leftDate = left.start_date ?? "";
         const rightDate = right.start_date ?? "";
         if (leftDate !== rightDate) {
           return leftDate.localeCompare(rightDate);
         }
-        if (left.sort_order !== right.sort_order) {
-          return left.sort_order - right.sort_order;
+        const leftOrder = left.sort_order ?? 0;
+        const rightOrder = right.sort_order ?? 0;
+        if (leftOrder !== rightOrder) {
+          return leftOrder - rightOrder;
         }
-        return left.title.localeCompare(right.title);
+        return (left.title ?? "").localeCompare(right.title ?? "");
       }),
     [nodes],
   );
@@ -146,7 +148,7 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
   });
   const progressOpacity = useTransform(scrollYProgress, [0, 0.08], [0.25, 1]);
 
-  if (nodes.length === 0) {
+  if (!Array.isArray(nodes) || nodes.length === 0) {
     return (
       <ScrollReveal className="space-y-6">
         <div className="flex items-end justify-between">
@@ -181,9 +183,11 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
             const typeMeta = typeBadge(node.type);
             const impactMeta = impactBadge(node.impact);
             const isHighlighted = node.impact === "high";
+            const safeTags = Array.isArray(node.tags) ? node.tags : [];
+            const safeTitle = node.title ?? "";
 
             return (
-              <StaggerItem key={`${node.title}-${node.start_date}-${idx}`}>
+              <StaggerItem key={`${safeTitle}-${node.start_date ?? ""}-${idx}`}>
                 <article className="grid grid-cols-[2.25rem_minmax(0,1fr)] py-5 md:grid-cols-[11rem_2.25rem_minmax(0,1fr)]">
                   <div className="hidden md:flex md:sticky md:top-24 md:self-start md:flex-col md:items-end md:pr-4 md:pt-1">
                     <span className="text-xs font-medium uppercase tracking-[0.14em] text-theme-soft dark:text-theme-soft">
@@ -233,7 +237,7 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
                         ) : null}
                       </div>
 
-                      <h3 className="mt-3 text-lg font-semibold text-theme-ink dark:text-theme-soft">{node.title}</h3>
+                      <h3 className="mt-3 text-lg font-semibold text-theme-ink dark:text-theme-soft">{safeTitle}</h3>
                       <p className="mt-1 text-xs text-theme-muted dark:text-theme-soft">{formatPeriod(node)}</p>
                       <p className="mt-1 text-[11px] font-medium uppercase tracking-[0.14em] text-theme-soft dark:text-theme-soft md:hidden">
                         {formatAnchor(node)}
@@ -242,11 +246,11 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
                         <p className="mt-3 text-sm leading-6 text-theme-ink dark:text-theme-soft">{node.description}</p>
                       ) : null}
 
-                      {node.tags.length > 0 ? (
+                      {safeTags.length > 0 ? (
                         <div className="mt-4 flex flex-wrap gap-2">
-                          {node.tags.slice(0, 4).map((tag) => (
+                          {safeTags.slice(0, 4).map((tag) => (
                             <span
-                              key={`${node.title}-${tag}`}
+                              key={`${safeTitle}-${tag}`}
                               className="rounded-md border border-theme-line bg-theme-surface px-2 py-1 text-[11px] text-theme-muted dark:border-theme-ink dark:bg-theme-ink dark:text-theme-soft"
                             >
                               #{tag}

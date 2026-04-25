@@ -364,9 +364,9 @@ export function TravelSection({ travel }: TravelSectionProps) {
                 itemStyle: {
                   opacity: 0.4,
                 },
-                emphasis: {
-                  itemStyle: { opacity: 0.65 },
-                },
+                emphasis: { disabled: true },
+                silent: true,
+                tooltip: { show: false },
                 data: [currentPoint],
               },
             ]
