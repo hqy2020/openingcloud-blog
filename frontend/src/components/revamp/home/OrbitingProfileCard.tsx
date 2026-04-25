@@ -210,10 +210,8 @@ export function OrbitingProfileCard({
                 </li>
               ))}
             </CardItem>
-            {/* 左下角邮戳印章：圆心压在卡片左下角，与卡片矩形 50% 相交；微倾 + 白色内环 + 白色中心点 */}
-            <div className="pointer-events-none absolute -bottom-[20px] -left-[20px] flex h-10 w-10 -rotate-[8deg] items-center justify-center rounded-full bg-theme-accent shadow-[0_0_22px_rgb(var(--theme-accent)/0.55)] ring-2 ring-inset ring-white/85 sm:-bottom-[28px] sm:-left-[28px] sm:h-14 sm:w-14 sm:ring-[3px] md:-bottom-[40px] md:-left-[40px] md:h-20 md:w-20 md:ring-4">
-              <span aria-hidden="true" className="block h-2 w-2 rounded-full bg-white/85 sm:h-3 sm:w-3 md:h-4 md:w-4" />
-            </div>
+            {/* 左下角邮戳印章：纯色实心，与卡片矩形约 65% 相交；颜色用 bg-theme-accent 自动适配 claude/apple/notion 三主题 */}
+            <div className="pointer-events-none absolute -bottom-[14px] -left-[14px] h-10 w-10 -rotate-[8deg] rounded-full bg-theme-accent shadow-[0_0_22px_rgb(var(--theme-accent)/0.55)] sm:-bottom-[19px] sm:-left-[19px] sm:h-14 sm:w-14 md:-bottom-[28px] md:-left-[28px] md:h-20 md:w-20" />
           </CardBody>
         </CardContainer>
       </div>
