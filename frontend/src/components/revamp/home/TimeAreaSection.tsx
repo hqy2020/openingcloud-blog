@@ -69,7 +69,6 @@ const FALLBACK_COLORS = [
   "#A8DADC",
 ];
 
-const AGE_TICKS = [0, 5, 10, 15, 20, 25];
 
 const DISPLAY_SERIES_PROFILES: DisplaySeriesProfile[] = [
   {
@@ -657,7 +656,7 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
         type: "line",
         z: isActive ? 36 : 20 - index,
         stack: "Total",
-        smooth: 0.58,
+        smooth: 1,
         smoothMonotone: "x",
         showSymbol: false,
         symbol: "none",
@@ -685,7 +684,7 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
           z: 58,
           showSymbol: false,
           symbol: "none",
-          smooth: 0.58,
+          smooth: 1,
           smoothMonotone: "x",
           silent: true,
           tooltip: { show: false },
@@ -735,13 +734,20 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
               value: Number(item.value ?? 0),
             }))
             .sort((left, right) => right.value - left.value)
-            .map((item) => `${item.marker}${item.seriesName}: ${formatPercentage(item.value)}`)
+            .map((item) => `${item.marker}${item.seriesName}`)
             .join("<br/>");
 
           return `<div><div style="font-weight:600;margin-bottom:6px;">Age ${age}</div>${rows}</div>`;
         },
       },
-      legend: { show: false },
+      legend: {
+        show: true,
+        bottom: 0,
+        left: "center",
+        icon: "circle",
+        itemGap: 18,
+        textStyle: { color: "#475569", fontSize: 12 },
+      },
       grid: {
         ...chartGrid,
         containLabel: false,
@@ -750,63 +756,19 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
         type: "category",
         boundaryGap: false,
         data: chartData.ages,
-        axisLabel: {
-          show: true,
-          color: "#475569",
-          fontSize: chartHeight <= 360 ? 13 : 16,
-          fontWeight: 500,
-          formatter: (value: string) => {
-            const age = Math.round(Number(value));
-            if (AGE_TICKS.includes(age)) {
-              return String(age);
-            }
-            return "";
-          },
-          interval: 0,
-          margin: 16,
-        },
-        axisTick: {
-          show: true,
-          interval: 0,
-          length: chartHeight <= 360 ? 8 : 12,
-          lineStyle: { color: "rgba(71,85,105,0.82)", width: 2 },
-        },
+        axisLabel: { show: false },
+        axisTick: { show: false },
         splitLine: { show: false },
-        axisLine: {
-          lineStyle: { color: "rgba(71,85,105,0.82)", width: 2 },
-        },
+        axisLine: { show: false },
       },
       yAxis: {
         type: "value",
         min: 0,
         max: 100,
-        interval: 20,
-        axisLabel: {
-          show: true,
-          formatter: (value: number) => {
-            if (value === 0) {
-              return "0";
-            }
-            if (value > 0 && value < 100 && value % 20 === 0) {
-              return `${value}%`;
-            }
-            return "";
-          },
-          color: "#475569",
-          fontSize: chartHeight <= 360 ? 13 : 16,
-          fontWeight: 500,
-          margin: 14,
-        },
-        axisTick: {
-          show: true,
-          length: chartHeight <= 360 ? 8 : 12,
-          lineStyle: { color: "rgba(71,85,105,0.82)", width: 2 },
-        },
+        axisLabel: { show: false },
+        axisTick: { show: false },
         splitLine: { show: false },
-        axisLine: {
-          show: true,
-          lineStyle: { color: "rgba(71,85,105,0.82)", width: 2 },
-        },
+        axisLine: { show: false },
       },
       series: [...baseSeries, ...highlightSeries],
     };

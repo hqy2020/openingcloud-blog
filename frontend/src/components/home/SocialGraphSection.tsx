@@ -570,9 +570,6 @@ export function SocialGraphSection({ nodes, links }: SocialGraphSectionProps) {
               </div>
             )}
 
-            <div className="pointer-events-none absolute bottom-3 left-3 rounded-md bg-theme-surface/80 px-2 py-1 text-xs text-theme-muted">
-              拖拽任意节点可重新编排关系
-            </div>
           </div>
         ) : (
           <div className="space-y-3 p-4">

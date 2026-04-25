@@ -180,7 +180,7 @@ export function OrbitingProfileCard({
             <CardItem as="p" translateZ={24} className="text-xs font-bold tracking-[0.08em] text-theme-muted sm:text-base sm:text-[34px] sm:leading-[1.1]">
               My name is:
             </CardItem>
-            <CardItem as="div" translateZ={44} className="mt-3 min-h-[2rem] sm:min-h-[3rem] md:min-h-[4.2rem]">
+            <CardItem as="div" translateZ={44} className="mt-4 min-h-[2.6rem] sm:min-h-[3.6rem] md:min-h-[5rem]">
               <WordRotate
                 words={activeNameWords}
                 duration={2600}
@@ -190,7 +190,7 @@ export function OrbitingProfileCard({
                   exit: { opacity: 0, x: 26, filter: "blur(8px)" },
                   transition: { duration: 0.42, ease: "easeOut" },
                 }}
-                className="inline-block text-left text-2xl font-black leading-none text-[#f79237] sm:text-4xl md:text-[4rem]"
+                className="inline-block text-left text-2xl font-black leading-[1.15] text-[#f79237] sm:text-4xl md:text-[4rem]"
               />
             </CardItem>
             <div className="mt-5 h-px w-full bg-[linear-gradient(90deg,rgba(15,23,42,0.16),rgba(15,23,42,0.32),rgba(15,23,42,0.16))]" />

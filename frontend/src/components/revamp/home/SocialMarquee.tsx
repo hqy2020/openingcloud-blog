@@ -26,7 +26,7 @@ function AchievementMarqueeCard({ card }: { card: AchievementCard }) {
     <motion.article
       whileHover={{ y: -3, scale: 1.01 }}
       transition={{ type: "spring", stiffness: 350, damping: 24 }}
-      className="group flex h-[132px] w-[280px] shrink-0 flex-col rounded-2xl border border-theme-line/80 bg-theme-surface px-5 py-4 shadow-[0_10px_22px_rgba(15,23,42,0.1)] transition-colors duration-200 hover:border-theme-accent hover:bg-theme-ink hover:shadow-[var(--theme-shadow-lifted)]"
+      className="group flex h-[132px] w-[280px] shrink-0 flex-col rounded-2xl bg-transparent px-5 py-4 transition-all duration-200 hover:border hover:border-theme-accent/60 hover:bg-theme-surface/40 hover:shadow-[var(--theme-shadow-lifted)]"
     >
       <p className="line-clamp-1 text-[11px] font-semibold tracking-[0.16em] text-theme-muted group-hover:text-theme-accent-soft">{card.period}</p>
       <p className="mt-1.5 line-clamp-2 text-sm font-semibold leading-snug text-theme-ink group-hover:text-white">{card.title}</p>
@@ -48,14 +48,14 @@ export function SocialMarquee({ stages }: SocialMarqueeProps) {
       <SectionTitleCard category="HighLight" title="高光时刻" accentColor="#c96442" tagline="那些值得被记住的瞬间，散落在时间线的各个角落。" />
 
       <div className="space-y-4">
-        <Marquee pauseOnHover duration={150} className="gap-6 [--gap:1.5rem]">
-          {cards.map((card) => (
+        <Marquee pauseOnHover duration={300} className="gap-6 [--gap:1.5rem]">
+          {cards.filter((_, i) => i % 2 === 0).map((card) => (
             <AchievementMarqueeCard key={`row-a-${card.id}`} card={card} />
           ))}
         </Marquee>
 
-        <Marquee reverse pauseOnHover duration={150} className="gap-6 [--gap:1.5rem]">
-          {cards.map((card) => (
+        <Marquee reverse pauseOnHover duration={300} className="gap-6 [--gap:1.5rem]">
+          {cards.filter((_, i) => i % 2 === 1).map((card) => (
             <AchievementMarqueeCard key={`row-b-${card.id}`} card={card} />
           ))}
         </Marquee>

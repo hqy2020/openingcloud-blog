@@ -316,7 +316,7 @@ export function TravelSection({ travel }: TravelSectionProps) {
                 name: "当前",
                 type: "scatter",
                 coordinateSystem: "geo",
-                symbol: "image:///brand/logo-personal.png",
+                symbol: "image:///brand/logo-blog-orange.png",
                 symbolSize: 44,
                 zlevel: 5,
                 z: 18,
