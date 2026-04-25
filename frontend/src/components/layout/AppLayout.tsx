@@ -1,5 +1,8 @@
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
 import { useState, type ReactNode } from "react";
+import { fetchHome } from "../../api/home";
+import { useAsync } from "../../hooks/useAsync";
+import { useCountUp } from "../../hooks/useCountUp";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { usePageVisitTracker } from "../../hooks/usePageVisitTracker";
 import { BlogPetMachine } from "../pet/BlogPetMachine";
@@ -273,6 +276,12 @@ export function AppLayout() {
   const [mobileMenuOwnerKey, setMobileMenuOwnerKey] = useState<string | null>(null);
   const [hoveredNavIndex, setHoveredNavIndex] = useState<number | null>(null);
   const [compactNavbar, setCompactNavbar] = useState(false);
+
+  const { data: homeData } = useAsync(fetchHome, []);
+  const visitsTarget = homeData?.stats?.site_visits_total ?? 0;
+  const { value: visitsCount, nodeRef: visitsRef } = useCountUp(visitsTarget, { startWhenVisible: false });
+  const visitsText = new Intl.NumberFormat("zh-CN").format(visitsCount);
+
   const locationKey = location.key || `${location.pathname}${location.search}${location.hash}`;
   const mobileMenuOpen = mobileMenuOwnerKey === locationKey;
   const { scrollY } = useScroll();
@@ -311,6 +320,12 @@ export function AppLayout() {
               <span>码阶客</span>
               <span className="font-theme-sans text-xs font-medium uppercase tracking-[0.22em] text-theme-accent lg:text-sm">
                 Magic
+              </span>
+              <span
+                ref={visitsRef as React.RefObject<HTMLSpanElement>}
+                className="ml-1 font-theme-sans text-[11px] font-medium tabular-nums text-theme-soft lg:text-xs"
+              >
+                {visitsText}
               </span>
             </NavLink>
 
