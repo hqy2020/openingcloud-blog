@@ -684,35 +684,7 @@ export function TimeAreaSection({ timeline, timeSeries }: { timeline: TimelineNo
       animation: !reduceMotion,
       animationDuration: 950,
       animationDurationUpdate: 500,
-      tooltip: {
-        trigger: "axis",
-        axisPointer: { type: "none" },
-        borderWidth: 0,
-        backgroundColor: "rgba(15,23,42,0.86)",
-        textStyle: { color: "#f8fafc", fontSize: 12 },
-        padding: [10, 12],
-        formatter: (
-          params: Array<{
-            axisValueLabel?: string;
-            marker?: string;
-            seriesName?: string;
-            value?: number | string;
-          }>,
-        ) => {
-          const age = params[0]?.axisValueLabel ?? "";
-          const rows = [...params]
-            .map((item) => ({
-              marker: item.marker ?? "",
-              seriesName: item.seriesName ?? "",
-              value: Number(item.value ?? 0),
-            }))
-            .sort((left, right) => right.value - left.value)
-            .map((item) => `${item.marker}${item.seriesName}`)
-            .join("<br/>");
-
-          return `<div><div style="font-weight:600;margin-bottom:6px;">Age ${age}</div>${rows}</div>`;
-        },
-      },
+      tooltip: { show: false },
       legend: { show: false },
       grid: {
         ...chartGrid,
