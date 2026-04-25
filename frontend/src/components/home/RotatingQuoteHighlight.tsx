@@ -38,14 +38,27 @@ export function RotatingQuoteHighlight({ pool, intervalMs = 10000, seedOffset = 
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
           <span className="inline-block pb-3 text-2xl font-bold !leading-[1.5] tracking-tight text-theme-ink sm:text-3xl lg:text-4xl">
-            <Highlight
-              className="rounded-md px-2 py-0 align-[0.02em] text-theme-ink from-orange-300 to-amber-300 dark:text-white dark:from-orange-500 dark:to-amber-500"
-              backgroundHeight="100%"
-              backgroundPosition="left center"
-              duration={3}
-            >
-              {current.text}
-            </Highlight>
+            {(() => {
+              const emphasis = (current.emphasis ?? "").trim();
+              const idx = emphasis ? current.text.indexOf(emphasis) : -1;
+              const before = idx > 0 ? current.text.slice(0, idx) : "";
+              const highlighted = idx >= 0 ? current.text.slice(idx, idx + emphasis.length) : current.text;
+              const after = idx >= 0 ? current.text.slice(idx + emphasis.length) : "";
+              return (
+                <>
+                  {before}
+                  <Highlight
+                    className="rounded-md px-2 py-0 align-[0.02em] text-theme-ink from-orange-300 to-amber-300 dark:text-white dark:from-orange-500 dark:to-amber-500"
+                    backgroundHeight="100%"
+                    backgroundPosition="left center"
+                    duration={3}
+                  >
+                    {highlighted}
+                  </Highlight>
+                  {after}
+                </>
+              );
+            })()}
           </span>
         </motion.h3>
       </AnimatePresence>

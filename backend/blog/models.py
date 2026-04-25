@@ -768,6 +768,7 @@ class WikiQuote(TimeStampedModel):
         INSIGHT = "insight", "原创洞见"
 
     text = models.CharField(max_length=240)
+    emphasis = models.CharField(max_length=64, blank=True, default="", help_text="金句中要被黄色滑动高亮的关键子串；留空则整句高亮")
     tier = models.CharField(max_length=16, choices=Tier.choices, default=Tier.INSIGHT, db_index=True)
     source = models.CharField(max_length=120, blank=True, default="", help_text="来源标注，如 WHOAMI 或 entity 文件名")
     sort_order = models.PositiveIntegerField(default=0)

@@ -759,7 +759,7 @@ class BookAdmin(SortableAdminMixin, admin.ModelAdmin):
 
 @admin.register(WikiQuote)
 class WikiQuoteAdmin(admin.ModelAdmin):
-    list_display = ["text", "tier", "source", "sort_order", "is_active", "updated_at"]
-    list_editable = ["tier", "sort_order", "is_active"]
+    list_display = ["text", "emphasis", "tier", "source", "sort_order", "is_active", "updated_at"]
+    list_editable = ["emphasis", "tier", "sort_order", "is_active"]
     list_filter = ["tier", "is_active"]
-    search_fields = ["text", "source"]
+    search_fields = ["text", "emphasis", "source"]

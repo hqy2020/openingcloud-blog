@@ -240,6 +240,7 @@ export type HomePayload = {
 
 export type WikiQuoteItem = {
   text: string;
+  emphasis?: string;
   tier: "creed" | "insight";
   source?: string;
 };

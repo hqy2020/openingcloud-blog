@@ -1362,7 +1362,7 @@ def _radar_charts_payload() -> list[dict]:
 
 def _wiki_quotes_pool_payload() -> list[dict]:
     quotes = WikiQuote.objects.filter(is_active=True).order_by("tier", "sort_order", "id")
-    return [{"text": q.text, "tier": q.tier, "source": q.source} for q in quotes]
+    return [{"text": q.text, "emphasis": q.emphasis, "tier": q.tier, "source": q.source} for q in quotes]
 
 
 def _home_section_quotes_payload() -> dict:
