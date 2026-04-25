@@ -113,7 +113,7 @@ export function KnowledgeGraphSection() {
       .map((n) => n.git_created_at)
       .filter((t): t is string => typeof t === "string" && t.length > 0 && t.slice(0, 10) < today)
       .sort()[0];
-    return realEarliest ?? "2025-09-01";
+    return realEarliest ?? today;
   }, [sortedNodes]);
   const shownBatchIndex =
     batches.length === 0 ? 0 : Math.min(Math.ceil(shownCount / Math.max(1, batches[0].items.length)), batches.length);

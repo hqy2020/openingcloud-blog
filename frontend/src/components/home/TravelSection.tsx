@@ -362,10 +362,10 @@ export function TravelSection({ travel }: TravelSectionProps) {
                 zlevel: 5,
                 z: 18,
                 itemStyle: {
-                  opacity: 0.2,
+                  opacity: 0.4,
                 },
                 emphasis: {
-                  itemStyle: { opacity: 0.45 },
+                  itemStyle: { opacity: 0.65 },
                 },
                 data: [currentPoint],
               },
@@ -454,7 +454,7 @@ export function TravelSection({ travel }: TravelSectionProps) {
                                     src="/brand/logo-personal.png"
                                     alt=""
                                     aria-hidden="true"
-                                    className="mr-1 inline-block h-4 w-4 align-text-bottom opacity-20"
+                                    className="mr-1 inline-block h-4 w-4 align-text-bottom opacity-40"
                                   />
                                   {city.city}（当前）
                                 </span>
