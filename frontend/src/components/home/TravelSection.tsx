@@ -321,54 +321,18 @@ export function TravelSection({ travel }: TravelSectionProps) {
           ? [
               {
                 name: "当前",
-                type: "effectScatter",
+                type: "scatter",
                 coordinateSystem: "geo",
-                symbol: "image:///brand/logo-blog-orange.png",
-                symbolSize: 56,
-                rippleEffect: { scale: 5, brushType: "stroke", period: 1.6 },
+                symbol: "image:///brand/logo-personal.png",
+                symbolSize: 180,
                 zlevel: 5,
                 z: 18,
                 itemStyle: {
-                  opacity: 0.72,
-                  borderColor: "#c96442",
-                  borderWidth: 2,
-                  shadowBlur: 18,
-                  shadowColor: "rgba(201, 100, 66, 0.6)",
+                  opacity: 0.6,
                 },
                 emphasis: {
-                  scale: 1.2,
-                  itemStyle: { opacity: 0.95, shadowBlur: 28 },
+                  itemStyle: { opacity: 0.85 },
                 },
-                data: [currentPoint],
-              },
-              {
-                name: "雷达圈",
-                type: "effectScatter",
-                coordinateSystem: "geo",
-                rippleEffect: { scale: 13, brushType: "stroke", period: 2 },
-                symbolSize: 22,
-                zlevel: 4,
-                z: 16,
-                itemStyle: {
-                  color: "rgba(201, 100, 66, 0.22)",
-                },
-                silent: true,
-                tooltip: { show: false },
-                data: [currentPoint],
-              },
-              {
-                name: "呼吸脉冲",
-                type: "effectScatter",
-                coordinateSystem: "geo",
-                rippleEffect: { scale: 6, brushType: "fill", period: 1.4 },
-                symbolSize: 28,
-                zlevel: 4,
-                z: 14,
-                itemStyle: {
-                  color: "rgba(201, 100, 66, 0.55)",
-                },
-                silent: true,
-                tooltip: { show: false },
                 data: [currentPoint],
               },
             ]
@@ -451,12 +415,12 @@ export function TravelSection({ travel }: TravelSectionProps) {
                             <span key={city.city}>
                               {idx > 0 ? "、" : ""}
                               {isCurrent ? (
-                                <span className="font-bold text-red-500 animate-pulse">
+                                <span className="font-bold text-theme-accent">
                                   <img
-                                    src="/brand/logo-blog-orange.png"
+                                    src="/brand/logo-personal.png"
                                     alt=""
                                     aria-hidden="true"
-                                    className="mr-1 inline-block h-4 w-4 align-text-bottom opacity-80"
+                                    className="mr-1 inline-block h-4 w-4 align-text-bottom opacity-70"
                                   />
                                   {city.city}（当前）
                                 </span>
