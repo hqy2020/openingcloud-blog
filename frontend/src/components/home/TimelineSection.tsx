@@ -2,7 +2,6 @@ import type { TimelineNode } from "../../api/home";
 import { motion, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
 import { useMemo, useRef } from "react";
 import { cn } from "../../lib/utils";
-import { ScrollReveal } from "../motion/ScrollReveal";
 import { StaggerContainer, StaggerItem } from "../motion/StaggerContainer";
 import { CardSpotlight } from "../ui/CardSpotlight";
 
@@ -120,13 +119,6 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
   const prefersReducedMotion = useReducedMotion();
   const timelineRef = useRef<HTMLDivElement>(null);
 
-  // DEBUG: 临时永远可见的标记，定位为什么 timeline 不渲染
-  const debugBanner = (
-    <div className="rounded-lg border-2 border-amber-500 bg-amber-100 px-3 py-2 text-xs font-bold text-amber-900">
-      [TIMELINE-DEBUG] mounted · nodes type={Array.isArray(nodes) ? "array" : typeof nodes} ·
-      length={Array.isArray(nodes) ? nodes.length : "—"} · prefersReducedMotion={String(prefersReducedMotion)}
-    </div>
-  );
   const orderedNodes = useMemo(
     () =>
       (Array.isArray(nodes) ? [...nodes] : []).sort((left, right) => {
@@ -159,25 +151,20 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
   if (!Array.isArray(nodes) || nodes.length === 0) {
     return (
       <div className="space-y-6">
-        {debugBanner}
-        <ScrollReveal className="space-y-6">
-          <div className="flex items-end justify-between">
-            <h2 className="text-2xl font-semibold text-theme-ink dark:text-theme-soft">人生足迹</h2>
-          </div>
-          <div className="rounded-2xl border border-theme-line bg-theme-surface px-5 py-6 text-sm text-theme-muted dark:border-theme-ink dark:bg-theme-ink dark:text-theme-soft">
-            暂无时间线数据，请先在后台补充人生节点。
-          </div>
-        </ScrollReveal>
+        <div className="flex items-end justify-between">
+          <h2 className="text-2xl font-semibold text-theme-ink dark:text-theme-soft">人生足迹</h2>
+        </div>
+        <div className="rounded-2xl border border-theme-line bg-theme-surface px-5 py-6 text-sm text-theme-muted dark:border-theme-ink dark:bg-theme-ink dark:text-theme-soft">
+          暂无时间线数据，请先在后台补充人生节点。
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {debugBanner}
-      <ScrollReveal className="space-y-6">
       <div>
-          <h2 className="text-2xl font-semibold text-theme-ink dark:text-theme-soft">人生足迹</h2>
+        <h2 className="text-2xl font-semibold text-theme-ink dark:text-theme-soft">人生足迹</h2>
       </div>
 
       <div ref={timelineRef} className="relative">
@@ -279,7 +266,6 @@ export function TimelineSection({ nodes }: TimelineSectionProps) {
           })}
         </StaggerContainer>
       </div>
-    </ScrollReveal>
     </div>
   );
 }
