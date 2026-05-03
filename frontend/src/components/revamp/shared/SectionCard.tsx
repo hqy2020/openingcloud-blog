@@ -3,12 +3,13 @@ import { cn } from "../../../lib/utils";
 
 type SectionCardProps = {
   id?: string;
+  title?: string;
   children: ReactNode;
   className?: string;
   fullWidth?: boolean;
 };
 
-export function SectionCard({ id, children, className, fullWidth }: SectionCardProps) {
+export function SectionCard({ id, title, children, className, fullWidth }: SectionCardProps) {
   return (
     <section
       id={id}
@@ -18,6 +19,9 @@ export function SectionCard({ id, children, className, fullWidth }: SectionCardP
         className,
       )}
     >
+      {title && (
+        <h2 className="px-6 pt-6 text-xl font-bold text-theme-ink">{title}</h2>
+      )}
       {children}
     </section>
   );
