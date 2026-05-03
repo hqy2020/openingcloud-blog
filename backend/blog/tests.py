@@ -30,6 +30,7 @@ from .models import (
     PostLikeVote,
     PostView,
     SocialFriend,
+    SocialMediaStat,
     SyncLog,
     TimelineNode,
     TimeSeriesConfig,
