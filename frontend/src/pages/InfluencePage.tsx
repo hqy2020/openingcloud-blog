@@ -82,6 +82,7 @@ function PlatformCard({ stat }: { stat: PlatformStat }) {
 }
 
 export function InfluencePage() {
+  // v2 - frontend deploy trigger
   const { data, loading, error } = useAsync(fetchSocialStats, []);
 
   if (loading) {
