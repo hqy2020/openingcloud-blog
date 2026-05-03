@@ -56,6 +56,12 @@ from .views import (
     TravelView,
 )
 
+from .views_social import (
+    AdminSocialMediaStatsView,
+    SocialMediaStatsHistoryView,
+    SocialMediaStatsView,
+)
+
 urlpatterns = [
     path("health", HealthCheckView.as_view(), name="health"),
     path("home/", HomeView.as_view(), name="home"),

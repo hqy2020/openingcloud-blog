@@ -323,6 +323,68 @@ class SocialFriend(TimeStampedModel):
         return f"{first_char}{suffix}"
 
 
+
+class SocialMediaStat(models.Model):
+    """自媒体平台数据快照 - 每日采集"""
+    class Meta:
+        db_table = "social_media_stats"
+        verbose_name = "自媒体数据"
+        verbose_name_plural = "自媒体数据"
+        ordering = ["-collected_at"]
+
+    platform = models.CharField(max_length=50, verbose_name="平台")
+    account_name = models.CharField(max_length=100, verbose_name="账号名", blank=True)
+    date = models.DateField(verbose_name="数据日期")
+
+    # 核心指标
+    followers = models.IntegerField(default=0, verbose_name="粉丝数")
+    total_views = models.IntegerField(default=0, verbose_name="累计播放/阅读")
+    total_likes = models.IntegerField(default=0, verbose_name="累计获赞")
+
+    # 扩展指标
+    posts_count = models.IntegerField(default=0, verbose_name="内容数")
+    comments = models.IntegerField(default=0, verbose_name="评论数")
+    shares = models.IntegerField(default=0, verbose_name="分享数")
+    favorites = models.IntegerField(default=0, verbose_name="收藏数")
+
+    # 最佳内容
+    best_post_title = models.CharField(max_length=500, blank=True, verbose_name="最佳内容标题")
+    best_post_views = models.IntegerField(default=0, verbose_name="最佳内容播放")
+    best_post_likes = models.IntegerField(default=0, verbose_name="最佳内容赞")
+    best_post_url = models.URLField(max_length=500, blank=True, verbose_name="最佳内容链接")
+
+    # 昨日新增（特定平台）
+    yesterday_followers = models.IntegerField(default=0, verbose_name="昨日新增粉丝")
+    yesterday_views = models.IntegerField(default=0, verbose_name="昨日阅读/播放")
+    yesterday_shares = models.IntegerField(default=0, verbose_name="昨日分享")
+
+    # 元信息
+    is_active = models.BooleanField(default=True, verbose_name="启用")
+    sort_order = models.PositiveIntegerField(default=0, db_index=True, verbose_name="排序")
+    collected_at = models.DateTimeField(auto_now_add=True, verbose_name="采集时间")
+
+    def __str__(self) -> str:
+        return f"[{self.platform}] {self.account_name} - {self.followers}粉"
+
+    @property
+    def engagement_rate(self) -> float:
+        """互动率"""
+        if self.total_views > 0 and self.followers > 0:
+            return round((self.total_likes + self.comments) / self.total_views * 100, 2)
+        return 0.0
+
+    @property
+    def platform_icon(self) -> str:
+        icons = {
+            "bilibili": "📺", "zhihu": "💡", "xiaohongshu": "📕",
+            "wechat_oa": "📱", "blog": "🌐", "douyin": "🎵",
+            "kuaishou": "📱", "shipinhao": "📹", "nowcoder": "💻",
+            "weibo": "📢", "douban": "📚",
+        }
+        return icons.get(self.platform, "🌍")
+
+
+
 class PhotoWallImage(TimeStampedModel):
     title = models.CharField(max_length=120, blank=True)
     description = models.TextField(blank=True)
