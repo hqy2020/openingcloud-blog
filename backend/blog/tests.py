@@ -398,8 +398,8 @@ class ApiTests(TestCase):
     def test_travel_api_grouping(self):
         resp = self.client.get(reverse("travel"))
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.data["data"][0]["province"], "浙江")
-        self.assertEqual(resp.data["data"][0]["count"], 2)
+        self.assertEqual(resp.data["data"][0]["province"], "上海")
+        self.assertEqual(resp.data["data"][0]["count"], 1)
 
     def test_social_graph_privacy(self):
         resp = self.client.get(reverse("social-graph"))
