@@ -36,6 +36,13 @@ const routes = [
     marker: "生活",
     canonical: `${siteOrigin}/life`,
   },
+  {
+    route: "/influence",
+    title: "影响力 | Keyon Blog ｜ 云际漫游者",
+    description: "码阶客自媒体数据看板 — 实时追踪跨平台影响力",
+    marker: "影响力",
+    canonical: `${siteOrigin}/influence`,
+  },
 ];
 
 function applyMeta(template, payload) {
