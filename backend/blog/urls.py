@@ -145,4 +145,9 @@ urlpatterns = [
     path("admin/obsidian-sync/reconcile/", AdminObsidianReconcileView.as_view(), name="admin-obsidian-reconcile"),
     path("admin/analytics", AdminAnalyticsView.as_view(), name="admin-analytics"),
     path("admin/analytics/", AdminAnalyticsView.as_view()),
+
+    # 自媒体数据看板
+    path("social-stats/", SocialMediaStatsView.as_view(), name="social-stats"),
+    path("social-stats/<str:platform>/history/", SocialMediaStatsHistoryView.as_view(), name="social-stats-history"),
+    path("admin/social-stats/", AdminSocialMediaStatsView.as_view(), name="admin-social-stats"),
 ]
