@@ -25,6 +25,7 @@ import { SectionCard } from "../components/revamp/shared/SectionCard";
 import { SectionTitleCard } from "../components/revamp/shared/SectionTitleCard";
 import { SectionQuoteHighlight } from "../components/revamp/shared/SectionQuoteHighlight";
 import { SectionParallaxTransition } from "../components/motion/SectionParallaxTransition";
+import { SocialStatsCarousel } from "../components/home/SocialStatsCarousel";
 import { SafeBoundary } from "../components/ui/SafeBoundary";
 import { useAsync } from "../hooks/useAsync";
 import { fallbackHomePayload } from "../data/fallback";
@@ -134,6 +135,13 @@ export function HomePage() {
         hero={payload.hero}
         quoteText={heroQuote?.text}
       />
+
+      {/* #1.1 自媒体影响力轮播 */}
+      <SectionParallaxTransition strength={16}>
+        <SafeBoundary label="SocialStatsCarousel">
+          <SocialStatsCarousel />
+        </SafeBoundary>
+      </SectionParallaxTransition>
 
       {/* #1.2 人生感悟 */}
       {quotesPool.length > 0 ? (
