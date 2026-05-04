@@ -45,6 +45,7 @@ export const coverHeroConfig: CoverHeroConfig = {
       icon_text: "浙",
       icon_src: "/brand/badge-zju.svg",
       stats: [
+        { label: "实验室", value: "CAD&CG 全国重点实验室" },
         { label: "学习阶段", value: "2024.09 - 2026.03" },
         { label: "代表成果", value: "CCF-B 一作 / CCF-A 二作" },
       ],

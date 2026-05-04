@@ -116,6 +116,7 @@ const orbitingBadges: OrbitingBadge[] = [
 const defaultRoles = [
   "Tongji University Alumni",
   "Zhejiang University MSc",
+  "CAD&CG Lab Researcher",
   "Cloud Platform Builder",
   "Full-stack Developer",
   "Long-term Writer",

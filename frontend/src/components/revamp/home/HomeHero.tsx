@@ -16,11 +16,13 @@ type HomeHeroProps = {
 const profileRoles = [
   "Software Engineer",
   "Zhejiang University MSc",
+  "CAD&CG State Key Lab Researcher",
   "Cloud Computing Intern",
   "Enterprise Software Intern",
   "Tongji University BS",
   "EV Startup Intern",
   "Badminton Enthusiast",
+  "Fitness Enthusiast",
   "Stephen Curry Fan",
   "AI Enthusiast",
   "Knowledge Management Researcher",
