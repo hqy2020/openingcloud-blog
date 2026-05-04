@@ -25,6 +25,7 @@ const DOUBAN_SUBJECT_FALLBACK: Record<string, string> = {
   "代码整洁之道": "4199741",
   "计算广告": "26596778",
   "智能简史": "37252220",
+  "千脑智能": "36171025",
 };
 
 function doubanSearchUrl(book: {
