@@ -14,12 +14,12 @@ type HomeHeroProps = {
 };
 
 const profileRoles = [
-  "Ant Group Engineer",
+  "Software Engineer",
   "Zhejiang University MSc",
-  "Aliyun Intern",
-  "SAP Intern",
+  "Cloud Computing Intern",
+  "Enterprise Software Intern",
   "Tongji University BS",
-  "NIO Intern",
+  "EV Startup Intern",
   "Badminton Enthusiast",
   "Stephen Curry Fan",
   "AI Enthusiast",

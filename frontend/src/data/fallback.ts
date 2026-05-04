@@ -107,7 +107,7 @@ export const fallbackHomePayload: HomePayload = {
       sort_order: 7,
     },
     {
-      title: "蔚来实习",
+      title: "新能源车企实习",
       description: "",
       start_date: "2022-11-01",
       end_date: "2023-05-01",
@@ -133,7 +133,7 @@ export const fallbackHomePayload: HomePayload = {
       sort_order: 9,
     },
     {
-      title: "SAP 实习",
+      title: "外企实习",
       description: "",
       start_date: "2024-06-01",
       end_date: "2024-09-01",
@@ -146,7 +146,7 @@ export const fallbackHomePayload: HomePayload = {
       sort_order: 10,
     },
     {
-      title: "阿里云实习",
+      title: "云计算大厂实习",
       description: "",
       start_date: "2025-04-01",
       end_date: "2025-06-01",

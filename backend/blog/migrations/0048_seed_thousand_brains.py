@@ -9,7 +9,7 @@ def seed_thousand_brains(apps, schema_editor):
         title="千脑智能",
         defaults={
             "author": "杰夫·霍金斯",
-            "cover": "https://img1.doubanio.com/view/subject/l/public/s34324438.jpg",
+            "cover": "/media/uploads/books/thousand-brains.jpg",
             "status": "finished",
             "progress": 0,
             "rating": 4,

@@ -68,8 +68,8 @@ export const achievementCards: AchievementCard[] = [
     description: "完成阶段性成长闭环，从输入到输出形成稳定节奏。",
   },
   {
-    id: "ach-aliyun-intern",
-    title: "阿里云实习",
+    id: "ach-cloud-intern",
+    title: "云计算大厂实习",
     period: "2025.04-2025.06",
     description: "在真实业务环境中锻炼云上工程化能力与交付效率。",
   },

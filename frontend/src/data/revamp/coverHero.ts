@@ -50,8 +50,8 @@ export const coverHeroConfig: CoverHeroConfig = {
       ],
     },
     {
-      id: "aliyun",
-      label: "阿里云",
+      id: "cloud-intern",
+      label: "云计算大厂",
       subtitle: "Cloud Badge",
       icon_text: "云",
       icon_src: "/brand/badge-aliyun.svg",
