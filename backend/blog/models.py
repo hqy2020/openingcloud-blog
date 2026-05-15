@@ -738,6 +738,10 @@ class WishItem(TimeStampedModel):
         verbose_name="价格(¥)"
     )
     priority = models.CharField(max_length=10, choices=Priority.choices, default=Priority.MEDIUM)
+    purchase_url = models.URLField(max_length=800, blank=True, verbose_name="购买/参考链接")
+    source_url = models.URLField(max_length=800, blank=True, verbose_name="Obsidian 来源链接")
+    obsidian_path = models.CharField(max_length=500, blank=True, db_index=True, verbose_name="Obsidian 路径")
+    ai_context = models.JSONField(default=dict, blank=True, verbose_name="AI 补全上下文")
     sort_order = models.PositiveIntegerField(default=0, db_index=True)
     is_active = models.BooleanField(default=True)
 
@@ -763,6 +767,10 @@ class Book(TimeStampedModel):
     rating = models.PositiveSmallIntegerField(null=True, blank=True, help_text="1-5 云朵评分")
     tags = models.JSONField(default=list, blank=True)
     review = models.TextField(blank=True, help_text="一句话感想（可选）")
+    info_url = models.URLField(max_length=800, blank=True, verbose_name="书籍信息链接")
+    source_url = models.URLField(max_length=800, blank=True, verbose_name="Obsidian 来源链接")
+    obsidian_path = models.CharField(max_length=500, blank=True, db_index=True, verbose_name="Obsidian 路径")
+    ai_context = models.JSONField(default=dict, blank=True, verbose_name="AI 补全上下文")
     douban_subject_id = models.CharField(
         max_length=32, blank=True,
         help_text="豆瓣 subject ID，如 35889905；点击封面跳转用。留空则用 title 搜索",

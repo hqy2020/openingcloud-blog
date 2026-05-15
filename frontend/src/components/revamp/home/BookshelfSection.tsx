@@ -31,8 +31,12 @@ const DOUBAN_SUBJECT_FALLBACK: Record<string, string> = {
 function doubanSearchUrl(book: {
   title: string;
   author?: string;
+  info_url?: string;
   douban_subject_id?: string | null;
 }): string {
+  if (book.info_url) {
+    return book.info_url;
+  }
   const explicitId = (book.douban_subject_id || "").trim();
   if (explicitId) {
     return `https://book.douban.com/subject/${explicitId}/`;
@@ -117,7 +121,7 @@ function ReadingCard({ book }: { book: BookItem }) {
       href={doubanSearchUrl(book)}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label={`在豆瓣查看《${book.title}》`}
+      aria-label={`查看《${book.title}》详情`}
       variants={itemVariants}
       whileHover={{ y: -5, boxShadow: "0 18px 38px rgba(201,100,66,0.18)" }}
       transition={hoverSpring}
@@ -189,7 +193,7 @@ function ReadingCard({ book }: { book: BookItem }) {
         aria-hidden="true"
         className="pointer-events-none absolute right-4 top-4 inline-flex items-center gap-0.5 rounded-full bg-theme-surface-raised/80 px-2 py-0.5 font-theme-sans text-[10px] text-theme-soft opacity-0 transition-opacity duration-200 group-hover:opacity-100"
       >
-        豆瓣 ↗
+        详情 ↗
       </span>
     </motion.a>
   );
@@ -203,7 +207,7 @@ function FinishedCard({ book }: { book: BookItem }) {
       href={doubanSearchUrl(book)}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label={`在豆瓣查看《${book.title}》`}
+      aria-label={`查看《${book.title}》详情`}
       variants={itemVariants}
       whileHover={{ y: -4, scale: 1.02, boxShadow: "0 14px 28px rgba(0,0,0,0.08)" }}
       transition={hoverSpring}
@@ -257,7 +261,7 @@ function FinishedCard({ book }: { book: BookItem }) {
         aria-hidden="true"
         className="pointer-events-none absolute right-2 top-2 inline-flex items-center gap-0.5 rounded-full bg-theme-surface-raised/80 px-1.5 py-0.5 font-theme-sans text-[9px] text-theme-soft opacity-0 transition-opacity duration-200 group-hover:opacity-100"
       >
-        豆瓣 ↗
+        详情 ↗
       </span>
     </motion.a>
   );

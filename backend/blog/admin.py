@@ -740,7 +740,14 @@ class WishItemAdmin(SortableAdminMixin, admin.ModelAdmin):
     list_display = ["emoji", "title", "priority", "sort_order", "is_active", "updated_at"]
     list_editable = ["sort_order", "is_active"]
     list_filter = ["priority", "is_active"]
-    search_fields = ["title", "description"]
+    search_fields = ["title", "description", "obsidian_path"]
+    readonly_fields = ["ai_context"]
+    fieldsets = (
+        ("基本信息", {"fields": ("emoji", "title", "description", "price", "priority")}),
+        ("链接", {"fields": ("purchase_url", "source_url", "obsidian_path")}),
+        ("展示控制", {"fields": ("sort_order", "is_active")}),
+        ("AI 上下文", {"fields": ("ai_context",), "classes": ("collapse",)}),
+    )
 
 
 @admin.register(Book)
@@ -748,12 +755,15 @@ class BookAdmin(SortableAdminMixin, admin.ModelAdmin):
     list_display = ["title", "author", "status", "progress", "rating", "sort_order", "is_active", "updated_at"]
     list_editable = ["sort_order", "is_active", "status"]
     list_filter = ["status", "is_active"]
-    search_fields = ["title", "author", "review"]
+    search_fields = ["title", "author", "review", "obsidian_path"]
+    readonly_fields = ["ai_context"]
     fieldsets = (
         ("基本信息", {"fields": ("title", "author", "cover")}),
         ("阅读状态", {"fields": ("status", "progress", "rating")}),
         ("元数据", {"fields": ("tags", "review", "douban_subject_id")}),
+        ("链接", {"fields": ("info_url", "source_url", "obsidian_path")}),
         ("展示控制", {"fields": ("sort_order", "is_active")}),
+        ("AI 上下文", {"fields": ("ai_context",), "classes": ("collapse",)}),
     )
 
 

@@ -27,6 +27,7 @@ services:
       - ./backend/.env.production
     environment:
       TZ: Asia/Shanghai
+      OBSIDIAN_VAULT_PATH: /app/data/knowledge
       KNOWLEDGE_LOCAL_ROOT: /app/data/knowledge/3-Knowledge
     volumes:
       - ./data:/app/data
@@ -37,6 +38,26 @@ services:
     command:
       - |
         echo "[knowledge-sync] scheduler started, daily at 04:00 Asia/Shanghai"
+        sync_vault() {
+          if [ -z "$$OBSIDIAN_VAULT_REPO_URL" ]; then
+            return 0
+          fi
+          AUTH_REPO_URL="$$OBSIDIAN_VAULT_REPO_URL"
+          if [ -n "$$OBSIDIAN_VAULT_GITHUB_TOKEN" ] && echo "$$OBSIDIAN_VAULT_REPO_URL" | grep -q '^https://github.com/'; then
+            AUTH_REPO_URL="https://x-access-token:$$OBSIDIAN_VAULT_GITHUB_TOKEN@$${OBSIDIAN_VAULT_REPO_URL#https://}"
+          elif [ -n "$$GITHUB_TOKEN" ] && echo "$$OBSIDIAN_VAULT_REPO_URL" | grep -q '^https://github.com/'; then
+            AUTH_REPO_URL="https://x-access-token:$$GITHUB_TOKEN@$${OBSIDIAN_VAULT_REPO_URL#https://}"
+          fi
+          if [ -d "$$OBSIDIAN_VAULT_PATH/.git" ]; then
+            git -C "$$OBSIDIAN_VAULT_PATH" fetch --depth 1 origin "$${OBSIDIAN_VAULT_REPO_BRANCH:-main}"
+            git -C "$$OBSIDIAN_VAULT_PATH" checkout "$${OBSIDIAN_VAULT_REPO_BRANCH:-main}"
+            git -C "$$OBSIDIAN_VAULT_PATH" reset --hard "origin/$${OBSIDIAN_VAULT_REPO_BRANCH:-main}"
+          elif [ ! -d "$$OBSIDIAN_VAULT_PATH/3-Knowledge" ]; then
+            rm -rf "$$OBSIDIAN_VAULT_PATH"
+            git clone --depth 1 --branch "$${OBSIDIAN_VAULT_REPO_BRANCH:-main}" "$$AUTH_REPO_URL" "$$OBSIDIAN_VAULT_PATH"
+          fi
+        }
+        sync_vault || true
         if [ -d "$$KNOWLEDGE_LOCAL_ROOT" ]; then
           echo "[$$(date)] running initial local knowledge sync"
           python manage.py sync_knowledge_github --local-root "$$KNOWLEDGE_LOCAL_ROOT" --full || true
@@ -47,6 +68,7 @@ services:
           HM=$$(date +%H%M)
           if [ "$$HM" = "0400" ] && [ "$$LAST_RUN" != "$$TODAY" ]; then
             echo "[$$(date)] running sync_knowledge_github"
+            sync_vault || true
             if [ -d "$$KNOWLEDGE_LOCAL_ROOT" ]; then
               SYNC_CMD="python manage.py sync_knowledge_github --local-root $$KNOWLEDGE_LOCAL_ROOT"
             else
@@ -56,6 +78,64 @@ services:
               LAST_RUN=$$TODAY
             else
               echo "[$$(date)] sync failed, will retry next minute"
+            fi
+          fi
+          sleep 45
+        done
+
+  obsidian-collections-sync:
+    image: ${BACKEND_IMAGE:-openingclouds-backend:local}
+    container_name: openingclouds-obsidian-collections-sync
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env.production
+    environment:
+      TZ: Asia/Shanghai
+      OBSIDIAN_VAULT_PATH: /app/data/knowledge
+      OBSIDIAN_BOOK_ROOT: 1-Information
+      OBSIDIAN_BOOK_FALLBACK_ROOT: 2-Resource/20_书籍文献
+      OBSIDIAN_WISH_PATH: 2-Resource/80_生活记录/消费/愿望清单.md
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-v4-pro}
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      backend:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "[obsidian-collections-sync] scheduler started, daily at 04:20 Asia/Shanghai"
+        sync_vault() {
+          if [ -z "$$OBSIDIAN_VAULT_REPO_URL" ]; then
+            return 0
+          fi
+          AUTH_REPO_URL="$$OBSIDIAN_VAULT_REPO_URL"
+          if [ -n "$$OBSIDIAN_VAULT_GITHUB_TOKEN" ] && echo "$$OBSIDIAN_VAULT_REPO_URL" | grep -q '^https://github.com/'; then
+            AUTH_REPO_URL="https://x-access-token:$$OBSIDIAN_VAULT_GITHUB_TOKEN@$${OBSIDIAN_VAULT_REPO_URL#https://}"
+          elif [ -n "$$GITHUB_TOKEN" ] && echo "$$OBSIDIAN_VAULT_REPO_URL" | grep -q '^https://github.com/'; then
+            AUTH_REPO_URL="https://x-access-token:$$GITHUB_TOKEN@$${OBSIDIAN_VAULT_REPO_URL#https://}"
+          fi
+          if [ -d "$$OBSIDIAN_VAULT_PATH/.git" ]; then
+            git -C "$$OBSIDIAN_VAULT_PATH" fetch --depth 1 origin "$${OBSIDIAN_VAULT_REPO_BRANCH:-main}"
+            git -C "$$OBSIDIAN_VAULT_PATH" checkout "$${OBSIDIAN_VAULT_REPO_BRANCH:-main}"
+            git -C "$$OBSIDIAN_VAULT_PATH" reset --hard "origin/$${OBSIDIAN_VAULT_REPO_BRANCH:-main}"
+          elif [ ! -d "$$OBSIDIAN_VAULT_PATH/1-Information" ]; then
+            rm -rf "$$OBSIDIAN_VAULT_PATH"
+            git clone --depth 1 --branch "$${OBSIDIAN_VAULT_REPO_BRANCH:-main}" "$$AUTH_REPO_URL" "$$OBSIDIAN_VAULT_PATH"
+          fi
+        }
+        sync_vault || true
+        LAST_RUN=""
+        while :; do
+          TODAY=$$(date +%Y-%m-%d)
+          HM=$$(date +%H%M)
+          if [ "$$HM" = "0420" ] && [ "$$LAST_RUN" != "$$TODAY" ]; then
+            echo "[$$(date)] running sync_obsidian_collections"
+            sync_vault || true
+            if python manage.py sync_obsidian_collections; then
+              LAST_RUN=$$TODAY
+            else
+              echo "[$$(date)] collection sync failed, will retry next minute"
             fi
           fi
           sleep 45

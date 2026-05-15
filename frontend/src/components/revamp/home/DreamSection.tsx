@@ -24,9 +24,14 @@ const priorityLabels: Record<WishItem["priority"], string> = {
 };
 
 function WishCard({ wish }: { wish: WishItem }) {
+  const Wrapper = wish.purchase_url ? "a" : "article";
   return (
-    <article
+    <Wrapper
       className={`group theme-card flex items-start gap-3 rounded-[var(--theme-radius)] border p-5 shadow-[var(--theme-shadow-whisper)] transition-all duration-300 hover:border-theme-accent/50 hover:shadow-[var(--theme-shadow-lifted)] ${priorityColors[wish.priority]}`}
+      href={wish.purchase_url || undefined}
+      target={wish.purchase_url ? "_blank" : undefined}
+      rel={wish.purchase_url ? "noopener noreferrer" : undefined}
+      aria-label={wish.purchase_url ? `查看${wish.title}参考链接` : undefined}
     >
       <span className="mt-0.5 text-2xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[-5deg]">
         {wish.emoji}
@@ -43,8 +48,11 @@ function WishCard({ wish }: { wish: WishItem }) {
           </span>
         </div>
         <p className="mt-1.5 font-theme-body text-sm leading-[1.6] text-theme-muted">{wish.description}</p>
+        {wish.price ? (
+          <p className="mt-2 font-theme-sans text-xs text-theme-soft">参考价 ¥{wish.price}</p>
+        ) : null}
       </div>
-    </article>
+    </Wrapper>
   );
 }
 

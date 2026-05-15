@@ -25,7 +25,7 @@ type OrbitingBadge = {
   imageClassName?: string;
 };
 
-const ORBIT_RADIUS_SCALE = 1.4;
+const ORBIT_RADIUS_SCALE = 0.82;
 const ORBIT_ELLIPSE_X_SCALE = 1.0;
 const ORBIT_ELLIPSE_Y_SCALE = 1.0;
 
@@ -169,7 +169,7 @@ export function OrbitingProfileCard({
       <div className="absolute left-1/2 top-1/2 z-[1] aspect-square w-full -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-dashed border-theme-soft/50" />
       <div className="absolute left-1/2 top-1/2 z-[1] aspect-square w-[94%] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-dashed border-theme-soft/40" />
 
-      <div className="absolute inset-0 scale-[0.55] sm:scale-[0.72] md:scale-100">
+      <div className="absolute inset-0 scale-[0.5] sm:scale-[0.62] md:scale-[0.74] lg:scale-[0.82]">
         {orbitingBadges.map((badge) => (
           <OrbitingBadgeNode key={badge.id} badge={badge} reducedMotion={reduceMotion} />
         ))}
@@ -177,11 +177,11 @@ export function OrbitingProfileCard({
 
       <div className="absolute inset-0 z-[2] flex items-center justify-center">
         <CardContainer>
-          <CardBody className="relative flex flex-col w-[200px] h-[270px] rounded-[20px] border border-white/40 bg-theme-surface p-4 pt-8 shadow-xl sm:w-[310px] sm:h-[419px] sm:rounded-[30px] sm:p-7 sm:pt-12 md:w-[450px] md:h-[608px] md:p-10 md:pt-16 lg:w-[538px] lg:h-[727px] lg:pt-20">
-            <CardItem as="p" translateZ={24} className="text-xs font-bold tracking-[0.08em] text-theme-muted sm:text-base sm:text-[34px] sm:leading-[1.1]">
+          <CardBody className="relative flex flex-col w-[200px] h-[270px] rounded-[20px] border border-white/40 bg-theme-surface p-4 pt-8 shadow-xl sm:w-[310px] sm:h-[419px] sm:rounded-[30px] sm:p-7 sm:pt-12 md:w-[370px] md:h-[500px] md:p-8 md:pt-11 lg:w-[390px] lg:h-[510px] lg:p-9 lg:pt-12">
+            <CardItem as="p" translateZ={24} className="text-xs font-bold tracking-[0.08em] text-theme-muted sm:text-base sm:text-[28px] sm:leading-[1.1]">
               My name is:
             </CardItem>
-            <CardItem as="div" translateZ={44} className="mt-4 min-h-[2.6rem] sm:min-h-[3.6rem] md:min-h-[5rem]">
+            <CardItem as="div" translateZ={44} className="mt-4 min-h-[2.6rem] sm:min-h-[3.6rem] md:min-h-[4.4rem]">
               <WordRotate
                 words={activeNameWords}
                 duration={2600}
@@ -191,17 +191,17 @@ export function OrbitingProfileCard({
                   exit: { opacity: 0, x: 26, filter: "blur(8px)" },
                   transition: { duration: 0.42, ease: "easeOut" },
                 }}
-                className="inline-block text-left text-2xl font-black leading-[1.15] text-[#f79237] sm:text-4xl md:text-[4rem]"
+                className="inline-block text-left text-2xl font-black leading-[1.15] text-[#f79237] sm:text-4xl md:text-[3.2rem] lg:text-[3.55rem]"
               />
             </CardItem>
             <div className="mt-5 h-px w-full bg-[linear-gradient(90deg,rgba(15,23,42,0.16),rgba(15,23,42,0.32),rgba(15,23,42,0.16))]" />
-            <CardItem as="p" translateZ={24} className="mt-6 text-xs font-bold tracking-[0.08em] text-theme-muted sm:text-base sm:text-[34px] sm:leading-[1.1]">
+            <CardItem as="p" translateZ={24} className="mt-4 text-xs font-bold tracking-[0.08em] text-theme-muted sm:text-base sm:text-[28px] sm:leading-[1.1]">
               I&apos;m a:
             </CardItem>
             <CardItem
               as="ul"
               translateZ={38}
-              className="mt-3 w-full space-y-1 text-right text-[10px] font-medium leading-5 text-theme-ink sm:text-sm sm:leading-7 md:text-[22px] md:leading-[1.4]"
+              className="mt-3 w-full space-y-1 text-right text-[10px] font-medium leading-5 text-theme-ink sm:text-sm sm:leading-7 md:text-[17px] md:leading-[1.32] lg:text-[18px] lg:leading-[1.33]"
             >
               {roles.map((role, index) => (
                 <li key={role} className="overflow-hidden">

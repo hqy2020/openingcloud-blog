@@ -620,13 +620,28 @@ class HomeAggregateSerializer(serializers.Serializer):
 class WishItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = WishItem
-        fields = ["id", "emoji", "title", "description", "price", "priority", "sort_order"]
+        fields = ["id", "emoji", "title", "description", "price", "priority", "purchase_url", "source_url", "sort_order"]
 
 
 class WishItemAdminSerializer(serializers.ModelSerializer):
     class Meta:
         model = WishItem
-        fields = ["id", "emoji", "title", "description", "price", "priority", "sort_order", "is_active", "created_at", "updated_at"]
+        fields = [
+            "id",
+            "emoji",
+            "title",
+            "description",
+            "price",
+            "priority",
+            "purchase_url",
+            "source_url",
+            "obsidian_path",
+            "ai_context",
+            "sort_order",
+            "is_active",
+            "created_at",
+            "updated_at",
+        ]
         read_only_fields = ["id", "created_at", "updated_at"]
 
 
@@ -643,6 +658,8 @@ class BookSerializer(serializers.ModelSerializer):
             "rating",
             "tags",
             "review",
+            "info_url",
+            "source_url",
             "douban_subject_id",
             "sort_order",
         ]
@@ -661,6 +678,10 @@ class BookAdminSerializer(serializers.ModelSerializer):
             "rating",
             "tags",
             "review",
+            "info_url",
+            "source_url",
+            "obsidian_path",
+            "ai_context",
             "douban_subject_id",
             "sort_order",
             "is_active",

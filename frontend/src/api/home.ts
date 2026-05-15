@@ -164,7 +164,10 @@ export type WishItem = {
   emoji: string;
   title: string;
   description: string;
+  price: string | null;
   priority: "high" | "medium" | "low";
+  purchase_url?: string;
+  source_url?: string;
   sort_order: number;
 };
 
@@ -178,6 +181,8 @@ export type BookItem = {
   rating: number | null;
   tags: string[];
   review: string;
+  info_url?: string;
+  source_url?: string;
   /** Douban subject id (editable via Django admin). Empty = fall back to search. */
   douban_subject_id?: string | null;
   sort_order: number;
