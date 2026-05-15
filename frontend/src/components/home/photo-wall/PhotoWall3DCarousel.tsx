@@ -118,14 +118,20 @@ function PhotoCard({ photo, position, rotation, geometry, alphaMap, onPreview }:
   const materialRef = useRef<THREE.MeshStandardMaterial>(null);
   const [hovered, setHovered] = useState(false);
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
+  const [textureUrlIndex, setTextureUrlIndex] = useState(0);
   const textureZoomRef = useRef(1.34);
+  const textureUrl = photo.__imageFallbackUrls[textureUrlIndex] ?? photo.__normalizedImageUrl;
+
+  useEffect(() => {
+    setTextureUrlIndex(0);
+  }, [photo.__normalizedImageUrl]);
 
   useEffect(() => {
     let alive = true;
     const loader = new THREE.TextureLoader();
 
     loader.load(
-      photo.__normalizedImageUrl,
+      textureUrl,
       (loadedTexture) => {
         if (!alive) {
           loadedTexture.dispose();
@@ -142,6 +148,10 @@ function PhotoCard({ photo, position, rotation, geometry, alphaMap, onPreview }:
         if (!alive) {
           return;
         }
+        if (textureUrlIndex + 1 < photo.__imageFallbackUrls.length) {
+          setTextureUrlIndex((value) => value + 1);
+          return;
+        }
         setTexture(null);
       },
     );
@@ -149,7 +159,7 @@ function PhotoCard({ photo, position, rotation, geometry, alphaMap, onPreview }:
     return () => {
       alive = false;
     };
-  }, [photo.__normalizedImageUrl]);
+  }, [photo.__imageFallbackUrls.length, textureUrl, textureUrlIndex]);
 
   useEffect(
     () => () => {

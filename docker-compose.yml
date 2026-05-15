@@ -27,6 +27,7 @@ services:
       - ./backend/.env.production
     environment:
       TZ: Asia/Shanghai
+      KNOWLEDGE_LOCAL_ROOT: /app/data/knowledge/3-Knowledge
     volumes:
       - ./data:/app/data
     depends_on:
@@ -36,13 +37,22 @@ services:
     command:
       - |
         echo "[knowledge-sync] scheduler started, daily at 04:00 Asia/Shanghai"
+        if [ -d "$$KNOWLEDGE_LOCAL_ROOT" ]; then
+          echo "[$$(date)] running initial local knowledge sync"
+          python manage.py sync_knowledge_github --local-root "$$KNOWLEDGE_LOCAL_ROOT" --full || true
+        fi
         LAST_RUN=""
         while :; do
           TODAY=$$(date +%Y-%m-%d)
           HM=$$(date +%H%M)
           if [ "$$HM" = "0400" ] && [ "$$LAST_RUN" != "$$TODAY" ]; then
             echo "[$$(date)] running sync_knowledge_github"
-            if python manage.py sync_knowledge_github; then
+            if [ -d "$$KNOWLEDGE_LOCAL_ROOT" ]; then
+              SYNC_CMD="python manage.py sync_knowledge_github --local-root $$KNOWLEDGE_LOCAL_ROOT"
+            else
+              SYNC_CMD="python manage.py sync_knowledge_github"
+            fi
+            if $$SYNC_CMD; then
               LAST_RUN=$$TODAY
             else
               echo "[$$(date)] sync failed, will retry next minute"

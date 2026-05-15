@@ -17,16 +17,15 @@ const LEAF_LAYOUT_PRESETS = [
 
 export function PhotoWallGridFallback({ photos, onPreview }: PhotoWallGridFallbackProps) {
   const [brokenSet, setBrokenSet] = useState<Set<string>>(new Set());
+  const [urlIndexById, setUrlIndexById] = useState<Record<string, number>>({});
 
-  const markBroken = (id: string) => {
-    setBrokenSet((prev) => {
-      if (prev.has(id)) {
-        return prev;
-      }
-      const next = new Set(prev);
-      next.add(id);
-      return next;
-    });
+  const handleImageError = (photo: PhotoWallRenderItem) => {
+    const currentIndex = urlIndexById[photo.__instanceId] ?? 0;
+    if (currentIndex + 1 < photo.__imageFallbackUrls.length) {
+      setUrlIndexById((prev) => ({ ...prev, [photo.__instanceId]: currentIndex + 1 }));
+      return;
+    }
+    setBrokenSet((prev) => new Set(prev).add(photo.__instanceId));
   };
 
   if (photos.length === 0) {
@@ -66,9 +65,9 @@ export function PhotoWallGridFallback({ photos, onPreview }: PhotoWallGridFallba
                   className="h-full w-full object-cover transition duration-300"
                   decoding="async"
                   loading="lazy"
-                  onError={() => markBroken(photo.__instanceId)}
+                  onError={() => handleImageError(photo)}
                   referrerPolicy="no-referrer"
-                  src={photo.__normalizedImageUrl}
+                  src={photo.__imageFallbackUrls[urlIndexById[photo.__instanceId] ?? 0] ?? photo.__normalizedImageUrl}
                 />
               )}
             </button>

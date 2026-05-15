@@ -8,6 +8,7 @@ export type PhotoWallRenderItem = PhotoWallItem & {
   __baseIndex: number;
   __instanceId: string;
   __normalizedImageUrl: string;
+  __imageFallbackUrls: string[];
   __normalizedSourceUrl: string;
 };
 
@@ -21,6 +22,20 @@ export function normalizeRemoteUrl(url: string, fallback = "") {
     return `https://raw.githubusercontent.com/hqy2020/obsidian-images/${text.slice(prefix.length)}`;
   }
   return text;
+}
+
+export function buildImageFallbackUrls(url: string) {
+  const normalized = normalizeRemoteUrl(url);
+  const candidates = [normalized];
+  const rawPrefix = "https://raw.githubusercontent.com/";
+
+  if (normalized.startsWith(rawPrefix)) {
+    const path = normalized.slice(rawPrefix.length);
+    candidates.push(`https://cdn.jsdelivr.net/gh/${path.replace("/main/", "@main/")}`);
+    candidates.push(`https://ghfast.top/${normalized}`);
+  }
+
+  return Array.from(new Set(candidates.filter(Boolean)));
 }
 
 function compareCapturedAtDesc(left: string | null, right: string | null) {
@@ -40,10 +55,12 @@ export function preparePhotoItems(photos: PhotoWallItem[]) {
   const normalized = photos
     .map((item) => {
       const normalizedImageUrl = normalizeRemoteUrl(item.image_url);
+      const imageFallbackUrls = buildImageFallbackUrls(item.image_url);
       const normalizedSourceUrl = normalizeRemoteUrl(item.source_url || OBSIDIAN_IMAGES_REPO_URL, OBSIDIAN_IMAGES_REPO_URL);
       return {
         ...item,
-        __normalizedImageUrl: normalizedImageUrl,
+        __normalizedImageUrl: imageFallbackUrls[0] ?? normalizedImageUrl,
+        __imageFallbackUrls: imageFallbackUrls,
         __normalizedSourceUrl: normalizedSourceUrl,
       };
     })

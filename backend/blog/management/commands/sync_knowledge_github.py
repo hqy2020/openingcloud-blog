@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import os
 import re
@@ -9,6 +10,7 @@ import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -36,6 +38,7 @@ FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 class RemoteFile:
     path: str
     sha: str
+    local_path: Path | None = None
 
 
 class GitHubClient:
@@ -114,6 +117,41 @@ class GitHubClient:
                 )
         if isinstance(body, list) and body:
             return _parse_gh_time(body[0].get("commit", {}).get("committer", {}).get("date"))
+        return None
+
+
+class LocalKnowledgeSource:
+    def __init__(self, root: Path):
+        self.root = root
+
+    def get_tree(self) -> list[RemoteFile]:
+        files: list[RemoteFile] = []
+        for local_path in sorted(self.root.rglob("*.md")):
+            relative_path = local_path.relative_to(self.root).as_posix()
+            basename = local_path.name
+            if basename in SYSTEM_BASENAMES:
+                continue
+            content = local_path.read_bytes()
+            files.append(
+                RemoteFile(
+                    path=f"{ROOT_PREFIX}{relative_path}",
+                    sha=hashlib.sha1(content).hexdigest(),
+                    local_path=local_path,
+                )
+            )
+        return files
+
+    def get_content(self, path: str) -> str:
+        if not path.startswith(ROOT_PREFIX):
+            raise RuntimeError(f"local path outside {ROOT_PREFIX}: {path}")
+        relative_path = path[len(ROOT_PREFIX):]
+        local_path = (self.root / relative_path).resolve()
+        root = self.root.resolve()
+        if root not in local_path.parents and local_path != root:
+            raise RuntimeError(f"local path escapes root: {path}")
+        return local_path.read_text(encoding="utf-8", errors="replace")
+
+    def get_first_commit_at(self, path: str) -> datetime | None:
         return None
 
 
@@ -200,16 +238,28 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--dry-run", action="store_true")
         parser.add_argument("--full", action="store_true", help="ignore sha cache; refetch all")
+        parser.add_argument(
+            "--local-root",
+            default=os.environ.get("KNOWLEDGE_LOCAL_ROOT"),
+            help="sync from a mounted local 3-Knowledge directory instead of GitHub",
+        )
 
-    def handle(self, *args, dry_run: bool = False, full: bool = False, **kwargs):
-        token = os.environ.get("GITHUB_TOKEN") or os.environ.get("KNOWLEDGE_GITHUB_TOKEN")
-        if not token:
-            self.stdout.write(self.style.WARNING(
-                "GITHUB_TOKEN not set; using unauthenticated (60 req/h rate limit)."
-            ))
-        client = GitHubClient(token)
+    def handle(self, *args, dry_run: bool = False, full: bool = False, local_root: str | None = None, **kwargs):
+        if local_root:
+            root = Path(local_root).expanduser()
+            if not root.exists() or not root.is_dir():
+                raise RuntimeError(f"KNOWLEDGE_LOCAL_ROOT is not a directory: {root}")
+            client = LocalKnowledgeSource(root)
+            self.stdout.write(f"fetching tree from local root {root} ...")
+        else:
+            token = os.environ.get("GITHUB_TOKEN") or os.environ.get("KNOWLEDGE_GITHUB_TOKEN")
+            if not token:
+                self.stdout.write(self.style.WARNING(
+                    "GITHUB_TOKEN not set; using unauthenticated (60 req/h rate limit)."
+                ))
+            client = GitHubClient(token)
+            self.stdout.write(f"fetching tree for {GITHUB_REPO}@{GITHUB_BRANCH} ...")
 
-        self.stdout.write(f"fetching tree for {GITHUB_REPO}@{GITHUB_BRANCH} ...")
         remote_files = client.get_tree()
         self.stdout.write(f"  tree returned {len(remote_files)} 3-Knowledge/*.md files")
 
