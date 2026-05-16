@@ -16,9 +16,39 @@ DEFAULT_EXCLUDED_DIR_NAMES = (
     "Templates",
 )
 
+ROOT_ALIAS_GROUPS = (
+    ("3-Knowledge（知识库）", "3-Knowledge"),
+    ("2-Resource（参考资源）", "2-Resource"),
+    ("1-Information（项目与任务）", "1-Information"),
+)
+
+ROOT_ALIAS_MAP = {
+    item: group
+    for group in ROOT_ALIAS_GROUPS
+    for item in group
+}
+
 
 def _is_excluded(path: Path, excluded_dir_names: set[str]) -> bool:
     return any(part.lower() in excluded_dir_names for part in path.parts)
+
+
+def _expand_root_aliases(relative: str) -> list[str]:
+    value = str(relative or "").strip().replace("\\", "/")
+    if not value:
+        return []
+
+    head, sep, tail = value.partition("/")
+    variants = ROOT_ALIAS_MAP.get(head, (head,))
+    expanded: list[str] = []
+    seen: set[str] = set()
+    for variant in variants:
+        candidate = f"{variant}{sep}{tail}" if sep else variant
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        expanded.append(candidate)
+    return expanded
 
 
 def scan_markdown_files(
@@ -36,12 +66,13 @@ def scan_markdown_files(
 
     scan_targets: list[Path] = []
     if include_roots:
+        seen_targets: set[Path] = set()
         for relative in include_roots:
-            value = str(relative).strip()
-            if not value:
-                continue
-            candidate = root_path / value
-            if candidate.exists():
+            for expanded in _expand_root_aliases(relative):
+                candidate = root_path / expanded
+                if not candidate.exists() or candidate in seen_targets:
+                    continue
+                seen_targets.add(candidate)
                 scan_targets.append(candidate)
     else:
         scan_targets.append(root_path)

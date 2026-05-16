@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from datetime import datetime
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -18,9 +19,21 @@ from sync.scanner import scan_markdown_files
 from sync.service import reconcile_obsidian_publications, sync_post_payload
 
 DEFAULT_INCLUDE_ROOTS = [
-    "3-Knowledge（知识库）",
-    "2-Resource（参考资源）",
+    "3-Knowledge",
+    "2-Resource",
 ]
+
+
+def _raw_contains_publish_tag(raw_text: str, publish_tag: str) -> bool:
+    tag = re.escape(str(publish_tag or "").strip().lstrip("#"))
+    if not tag:
+        return False
+    patterns = [
+        rf"(?mi)^\s*#\s*{tag}\b",
+        rf"(?mi)^\s*-\s*{tag}\b",
+        rf"(?mi)\btags\s*:\s*\[[^\]]*\b{tag}\b[^\]]*\]",
+    ]
+    return any(re.search(pattern, raw_text or "") for pattern in patterns)
 
 
 def _build_remote_url(base_url: str, endpoint: str) -> str:
@@ -158,12 +171,19 @@ class Command(BaseCommand):
         for file_path in files:
             relative_path = str(file_path.relative_to(source)).replace("\\", "/")
             try:
-                note = frontmatter.load(file_path)
-                metadata = dict(note.metadata)
-                tags = normalize_tags(metadata.get("tags", []))
-                if not contains_publish_tag(tags, publish_tag):
-                    stats["skipped_unpublished"] += 1
-                    continue
+                try:
+                    note = frontmatter.load(file_path)
+                    metadata = dict(note.metadata)
+                    tags = normalize_tags(metadata.get("tags", []))
+                    if not contains_publish_tag(tags, publish_tag):
+                        stats["skipped_unpublished"] += 1
+                        continue
+                except Exception as exc:  # noqa: BLE001
+                    raw_text = file_path.read_text(encoding="utf-8", errors="replace")
+                    if not _raw_contains_publish_tag(raw_text, publish_tag):
+                        stats["skipped_invalid"] += 1
+                        continue
+                    raise ValueError(f"frontmatter parse failed for publish candidate: {exc}") from exc
 
                 title = str(metadata.get("title") or file_path.stem).strip()
                 slug = resolve_slug(metadata, file_path, title, fallback_key=relative_path)

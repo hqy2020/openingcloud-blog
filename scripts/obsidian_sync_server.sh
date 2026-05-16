@@ -35,11 +35,9 @@ mkdir -p "$(dirname "$VAULT_DIR")"
   docker exec openingclouds-backend sh -lc "rm -rf '$CONTAINER_VAULT_DIR' && mkdir -p '$CONTAINER_VAULT_DIR'"
   docker cp "$VAULT_DIR/." "openingclouds-backend:$CONTAINER_VAULT_DIR"
 
-  docker exec openingclouds-backend python manage.py sync_obsidian_documents "$CONTAINER_VAULT_DIR" \
-    --trigger scheduled \
-    --auto-update-published \
-    --missing-behavior draft \
+  docker exec openingclouds-backend python manage.py sync_site_sources "$CONTAINER_VAULT_DIR" \
     --publish-tag "${OBSIDIAN_DOC_SYNC_PUBLISH_TAG:-publish}" \
+    --structured-root "${OBSIDIAN_SITE_SYNC_ROOT:-2-Resource/90_网站同步}" \
     --repo-url "$VAULT_REPO_URL" \
     --repo-branch "$VAULT_BRANCH" \
     --repo-commit "$REPO_COMMIT"

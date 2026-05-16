@@ -174,6 +174,29 @@ python manage.py sync_obsidian_documents /path/to/vault \
   --publish-tag publish
 ```
 
+### 全站一键同步
+
+```bash
+python manage.py sync_site_sources /path/to/vault
+```
+
+默认会做这几件事：
+
+- 同步 `publish` 文章到博客
+- 更新 Obsidian 文档池
+- 同步 `3-Knowledge` 到知识图谱
+- 同步 `2-Resource/90_网站同步` 里的 `照片墙 / 自媒体 / 愿望清单 / 书架`
+
+推荐在 Obsidian 里使用下面这套目录：
+
+```text
+2-Resource/90_网站同步/
+├── 01_照片墙/照片墙.md
+├── 02_自媒体/平台数据.md
+├── 03_愿望清单/愿望清单.md
+└── 04_书架/书架.md
+```
+
 ## CI/CD
 
 GitHub Actions 工作流 (`.github/workflows/deploy.yml`) 包含 4 个阶段：

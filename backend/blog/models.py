@@ -390,6 +390,8 @@ class PhotoWallImage(TimeStampedModel):
     description = models.TextField(blank=True)
     image_url = models.URLField(max_length=800)
     source_url = models.URLField(max_length=800, blank=True)
+    obsidian_path = models.CharField(max_length=500, blank=True, db_index=True)
+    sync_key = models.CharField(max_length=64, null=True, blank=True, unique=True)
     captured_at = models.DateField(null=True, blank=True)
     width = models.PositiveIntegerField(null=True, blank=True)
     height = models.PositiveIntegerField(null=True, blank=True)
