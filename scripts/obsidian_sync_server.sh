@@ -42,5 +42,10 @@ mkdir -p "$(dirname "$VAULT_DIR")"
     --repo-branch "$VAULT_BRANCH" \
     --repo-commit "$REPO_COMMIT"
 
+  if docker ps --format '{{.Names}}' | grep -qx "openingclouds-nginx"; then
+    docker exec openingclouds-nginx sh -lc "rm -rf /tmp/nginx-api-cache/* && nginx -s reload"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] nginx api cache cleared"
+  fi
+
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] finished server obsidian sync"
 } >>"$LOG_FILE" 2>&1
