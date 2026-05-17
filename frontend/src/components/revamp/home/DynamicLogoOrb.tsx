@@ -10,10 +10,10 @@ type OrbitBadge = {
 };
 
 const orbitBadges: OrbitBadge[] = [
-  { id: "orbit-ai", label: "AI", delay: 0, duration: 7.2, distance: 86 },
-  { id: "orbit-dev", label: "DEV", delay: 0.9, duration: 8.4, distance: 66 },
-  { id: "orbit-vibe", label: "VIBE", delay: 0.2, duration: 9.6, distance: 104 },
-  { id: "orbit-log", label: "LOG", delay: 1.4, duration: 10.2, distance: 122 },
+  { id: "orbit-ai", label: "AI", delay: 0, duration: 7.2, distance: 100 },
+  { id: "orbit-dev", label: "DEV", delay: 0.9, duration: 8.4, distance: 80 },
+  { id: "orbit-vibe", label: "VIBE", delay: 0.2, duration: 9.6, distance: 118 },
+  { id: "orbit-log", label: "LOG", delay: 1.4, duration: 10.2, distance: 136 },
 ];
 
 function clamp(value: number, min: number, max: number) {
@@ -27,7 +27,7 @@ export function DynamicLogoOrb() {
 
   return (
     <motion.div
-      className="relative mx-auto hidden h-[280px] w-[280px] lg:block"
+      className="relative mx-auto hidden h-[312px] w-[312px] lg:block"
       animate={{ y: [0, -6, 0] }}
       transition={{ duration: 4.2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
       onMouseMove={(event) => {
@@ -40,8 +40,8 @@ export function DynamicLogoOrb() {
       style={{ transform }}
     >
       <div className="absolute inset-0 rounded-full border border-dashed border-theme-line-strong/85" />
-      <div className="absolute inset-[20px] rounded-full border border-theme-line/80" />
-      <div className="absolute inset-[42px] rounded-full border border-theme-line/70" />
+      <div className="absolute inset-[24px] rounded-full border border-theme-line/80" />
+      <div className="absolute inset-[50px] rounded-full border border-theme-line/70" />
 
       {orbitBadges.map((badge, index) => (
         <div

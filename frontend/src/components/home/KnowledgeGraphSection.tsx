@@ -54,6 +54,10 @@ function easeOutBack(t: number): number {
 }
 
 const POP_DURATION_MS = 520;
+const VISUAL_BATCH_SIZE = 10;
+const GROWTH_BATCH_INTERVAL_MS = 320;
+const CAMERA_SETTLE_MS = 1200;
+const CAMERA_READY_DELAY_MS = 650;
 
 export function KnowledgeGraphSection() {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -81,9 +85,9 @@ export function KnowledgeGraphSection() {
     });
   }, [nodes]);
 
-  // Build batches: 每秒投放一个 batch。
+  // Build batches: 用更紧凑的节奏播放，避免大图谱要等待太久。
   // 有多 commit 时：一个 commit 时间戳 = 一个 batch（真实生长史）。
-  // 只有单 commit（如本仓库当前情况，一次性大迁移）：按 id 字母序等分成若干个"视觉 batch"，每 batch ~5 个节点。
+  // 只有单 commit（如本仓库当前情况，一次性大迁移）：按 id 字母序等分成若干个"视觉 batch"，每 batch ~10 个节点。
   const batches = useMemo(() => {
     const distinctTimes = new Set(sortedNodes.map((n) => n.git_created_at ?? "").filter(Boolean));
     if (distinctTimes.size >= 5) {
@@ -98,18 +102,24 @@ export function KnowledgeGraphSection() {
         .sort((a, b) => a[0].localeCompare(b[0]))
         .map(([time, items]) => ({ time, items }));
     }
-    const BATCH_SIZE = 5;
     const out: Array<{ time: string; items: typeof sortedNodes }> = [];
-    for (let i = 0; i < sortedNodes.length; i += BATCH_SIZE) {
-      const slice = sortedNodes.slice(i, i + BATCH_SIZE);
+    for (let i = 0; i < sortedNodes.length; i += VISUAL_BATCH_SIZE) {
+      const slice = sortedNodes.slice(i, i + VISUAL_BATCH_SIZE);
       out.push({ time: slice[0]?.git_created_at ?? `batch-${i}`, items: slice });
     }
     return out;
   }, [sortedNodes]);
 
   const earliestDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
-  const shownBatchIndex =
-    batches.length === 0 ? 0 : Math.min(Math.ceil(shownCount / Math.max(1, batches[0].items.length)), batches.length);
+  const shownBatchIndex = useMemo(() => {
+    if (batches.length === 0 || shownCount <= 0) return 0;
+    let cumulative = 0;
+    for (let index = 0; index < batches.length; index += 1) {
+      cumulative += batches[index].items.length;
+      if (shownCount <= cumulative) return index + 1;
+    }
+    return batches.length;
+  }, [batches, shownCount]);
   const currentBatchLabel =
     shownBatchIndex > 0 ? `batch ${shownBatchIndex} / ${batches.length}` : "starting...";
 
@@ -176,7 +186,7 @@ export function KnowledgeGraphSection() {
     };
   }, [activeLoad]);
 
-  // Growth animation: 等相机锁定后再一秒一批开播（否则节点在 simulation settle 时满画布飞舞看起来像爆炸）
+  // Growth animation: 相机锁定后用更快的 batch 节奏播出，避免等待过长。
   useEffect(() => {
     if (!activeLoad || !ForceGraph2D || !cameraReady || batches.length === 0) return;
     setShownCount(0);
@@ -189,7 +199,7 @@ export function KnowledgeGraphSection() {
       batchIdx += 1;
       const cumulative = batches.slice(0, batchIdx).reduce((sum, b) => sum + b.items.length, 0);
       setShownCount(cumulative);
-    }, 1000);
+    }, GROWTH_BATCH_INTERVAL_MS);
     return () => window.clearInterval(id);
   }, [activeLoad, ForceGraph2D, cameraReady, batches]);
 
@@ -248,7 +258,7 @@ export function KnowledgeGraphSection() {
     if (centerForce?.strength) centerForce.strength(0.035);
   }, [ForceGraph2D]);
 
-  // 上帝视角：先让 simulation 用全量 157 节点 settle ~1.6s，然后 zoomToFit 把整个图装进视野 → 锁定
+  // 上帝视角：先让 simulation 用全量节点短暂 settle，然后 zoomToFit 把整个图装进视野 → 锁定
   const initialCameraSetRef = useRef(false);
   useEffect(() => {
     if (!ForceGraph2D || graphData.nodes.length === 0) return;
@@ -259,8 +269,8 @@ export function KnowledgeGraphSection() {
       g.zoomToFit?.(800, 60);
       initialCameraSetRef.current = true;
       // 再等 zoomToFit 动画完成才开播生长
-      window.setTimeout(() => setCameraReady(true), 900);
-    }, 1600);
+      window.setTimeout(() => setCameraReady(true), CAMERA_READY_DELAY_MS);
+    }, CAMERA_SETTLE_MS);
     return () => window.clearTimeout(timer);
   }, [ForceGraph2D, graphData.nodes.length]);
 
