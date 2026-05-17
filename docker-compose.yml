@@ -130,12 +130,15 @@ services:
           TODAY=$$(date +%Y-%m-%d)
           HM=$$(date +%H%M)
           if [ "$$HM" = "0420" ] && [ "$$LAST_RUN" != "$$TODAY" ]; then
-            echo "[$$(date)] running sync_obsidian_collections"
+            echo "[$$(date)] running sync_site_sources"
             sync_vault || true
-            if python manage.py sync_obsidian_collections; then
+            if python manage.py sync_site_sources "$$OBSIDIAN_VAULT_PATH" \
+              --structured-root "$${OBSIDIAN_SITE_SYNC_ROOT:-2-Resource/90_网站同步}" \
+              --repo-url "$$OBSIDIAN_VAULT_REPO_URL" \
+              --repo-branch "$${OBSIDIAN_VAULT_REPO_BRANCH:-main}"; then
               LAST_RUN=$$TODAY
             else
-              echo "[$$(date)] collection sync failed, will retry next minute"
+              echo "[$$(date)] site sync failed, will retry next minute"
             fi
           fi
           sleep 45

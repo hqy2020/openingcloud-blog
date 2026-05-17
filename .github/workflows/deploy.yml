@@ -305,3 +305,15 @@ jobs:
 
           retry 3 run_remote_deploy
           retry 8 remote_health_check
+
+          # New structured Obsidian sources live in the vault repo, not this code repo.
+          # After backend deploy, trigger one server-side sync so production data catches
+          # up immediately instead of waiting for the next scheduled sync window.
+          run_remote_sync() {
+            timeout --signal=TERM --kill-after=15s 420 \
+            ssh "${SSH_OPTS[@]}" "${ECS_USER}@${ECS_HOST}" \
+              "cd /opt/openingclouds-blog && bash ./scripts/obsidian_sync_server.sh"
+          }
+
+          retry 3 run_remote_sync
+          retry 8 remote_health_check
