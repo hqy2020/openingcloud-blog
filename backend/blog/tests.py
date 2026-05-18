@@ -20,6 +20,7 @@ from rest_framework.test import APIClient
 from .image_bed import ImageBedUploadError
 from .models import (
     BarrageComment,
+    GameItem,
     HighlightItem,
     HighlightStage,
     HomeLike,
@@ -42,6 +43,7 @@ class ApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         cache.clear()
+        GameItem.objects.all().delete()
         self.post = Post.objects.create(
             title="Hello",
             slug="hello",
@@ -126,6 +128,22 @@ class ApiTests(TestCase):
             image_url="https://raw.githubusercontent.com/hqy2020/obsidian-images/main/gallery/private.jpg",
             is_public=False,
             sort_order=2,
+        )
+        GameItem.objects.create(
+            title="路易吉洋馆3",
+            english_title="Luigi's Mansion 3",
+            platform="Switch",
+            status=GameItem.Status.WISHLIST,
+            sort_order=10,
+            is_active=True,
+        )
+        GameItem.objects.create(
+            title="塞尔达传说：旷野之息",
+            english_title="The Legend of Zelda: Breath of the Wild",
+            platform="Switch",
+            status=GameItem.Status.OWNED,
+            sort_order=20,
+            is_active=True,
         )
 
     def test_health(self):
@@ -510,6 +528,21 @@ class ApiTests(TestCase):
         self.assertEqual(item["title"], "云海日出")
         self.assertTrue(str(item["image_url"]).startswith("https://"))
         self.assertIn("hqy2020/obsidian-images", item["source_url"])
+
+    def test_games_api_groups_wishlist_before_owned(self):
+        resp = self.client.get(reverse("games"))
+        self.assertEqual(resp.status_code, 200)
+        rows = resp.data["data"]
+        self.assertEqual([item["title"] for item in rows], ["路易吉洋馆3", "塞尔达传说：旷野之息"])
+        self.assertEqual(rows[0]["status"], "wishlist")
+        self.assertEqual(rows[1]["status"], "owned")
+
+    def test_home_payload_includes_games(self):
+        resp = self.client.get(reverse("home"))
+        self.assertEqual(resp.status_code, 200)
+        games = resp.data["data"]["games"]
+        self.assertEqual(len(games), 2)
+        self.assertEqual(games[0]["title"], "路易吉洋馆3")
 
     def test_social_graph_and_home_responses_are_private(self):
         social_resp = self.client.get(reverse("social-graph"))

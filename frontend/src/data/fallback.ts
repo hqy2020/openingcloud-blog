@@ -449,6 +449,25 @@ export const fallbackHomePayload: HomePayload = {
     },
   ],
   section_quotes: {},
+  games: [
+    { id: 1, title: "路易吉洋馆3", english_title: "Luigi's Mansion 3", platform: "Switch", status: "wishlist", notes: "", sort_order: 10 },
+    { id: 2, title: "雪地奔驰", english_title: "SnowRunner", platform: "Switch", status: "wishlist", notes: "", sort_order: 20 },
+    { id: 3, title: "杀戮尖塔", english_title: "Slay the Spire", platform: "Switch", status: "wishlist", notes: "", sort_order: 30 },
+    { id: 4, title: "双点医院", english_title: "Two Point Hospital", platform: "Switch", status: "wishlist", notes: "", sort_order: 40 },
+    { id: 5, title: "勇者斗恶龙", english_title: "Dragon Quest", platform: "Switch", status: "wishlist", notes: "", sort_order: 50 },
+    { id: 6, title: "赛博朋克 2077", english_title: "Cyberpunk 2077", platform: "Switch", status: "wishlist", notes: "", sort_order: 60 },
+    { id: 7, title: "潜水员戴夫", english_title: "Dave the Diver", platform: "Switch", status: "wishlist", notes: "", sort_order: 70 },
+    { id: 8, title: "瓦力欧制造", english_title: "WarioWare", platform: "Switch", status: "wishlist", notes: "", sort_order: 80 },
+    { id: 9, title: "塞尔达传说：旷野之息", english_title: "The Legend of Zelda: Breath of the Wild", platform: "Switch", status: "owned", notes: "", sort_order: 1010 },
+    { id: 10, title: "三国志14", english_title: "Romance of the Three Kingdoms 14", platform: "Switch", status: "owned", notes: "", sort_order: 1020 },
+    { id: 11, title: "真三国无双：起源", english_title: "Dynasty Warriors: Origins", platform: "Switch", status: "owned", notes: "", sort_order: 1030 },
+    { id: 12, title: "咚奇刚：蕉力全开", english_title: "Donkey Kong Country: Tropical Freeze", platform: "Switch", status: "owned", notes: "", sort_order: 1040 },
+    { id: 13, title: "马力欧赛车：世界", english_title: "Mario Kart World", platform: "Switch", status: "owned", notes: "", sort_order: 1050 },
+    { id: 14, title: "超级马力欧：奥德赛", english_title: "Super Mario Odyssey", platform: "Switch", status: "owned", notes: "", sort_order: 1060 },
+    { id: 15, title: "超级马力欧派对：空前盛会", english_title: "Super Mario Party Jamboree", platform: "Switch", status: "owned", notes: "", sort_order: 1070 },
+    { id: 16, title: "双影奇境", english_title: "It Takes Two", platform: "Switch", status: "owned", notes: "", sort_order: 1080 },
+    { id: 17, title: "文明7", english_title: "Civilization VII", platform: "Switch", status: "owned", notes: "", sort_order: 1090 },
+  ],
 };
 
 const now = new Date().toISOString();

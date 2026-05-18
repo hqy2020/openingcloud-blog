@@ -9,6 +9,7 @@ from rest_framework import serializers
 from .models import (
     BarrageComment,
     Book,
+    GameItem,
     GithubProject,
     HighlightItem,
     HighlightStage,
@@ -615,6 +616,7 @@ class HomeAggregateSerializer(serializers.Serializer):
     quotes_pool = serializers.ListField(child=serializers.DictField(), required=False)
     wishes = serializers.ListField(child=serializers.DictField(), required=False)
     books = serializers.ListField(child=serializers.DictField(), required=False)
+    games = serializers.ListField(child=serializers.DictField(), required=False)
 
 
 class WishItemSerializer(serializers.ModelSerializer):
@@ -683,6 +685,44 @@ class BookAdminSerializer(serializers.ModelSerializer):
             "obsidian_path",
             "ai_context",
             "douban_subject_id",
+            "sort_order",
+            "is_active",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class GameItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GameItem
+        fields = [
+            "id",
+            "title",
+            "english_title",
+            "platform",
+            "status",
+            "notes",
+            "info_url",
+            "source_url",
+            "sort_order",
+        ]
+
+
+class GameItemAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GameItem
+        fields = [
+            "id",
+            "title",
+            "english_title",
+            "platform",
+            "status",
+            "notes",
+            "info_url",
+            "source_url",
+            "obsidian_path",
+            "ai_context",
             "sort_order",
             "is_active",
             "created_at",

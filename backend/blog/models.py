@@ -789,6 +789,32 @@ class Book(TimeStampedModel):
         return f"《{self.title}》 - {self.author}" if self.author else f"《{self.title}》"
 
 
+class GameItem(TimeStampedModel):
+    class Status(models.TextChoices):
+        WISHLIST = "wishlist", "想买"
+        OWNED = "owned", "已买"
+
+    title = models.CharField(max_length=200)
+    english_title = models.CharField(max_length=240, blank=True, verbose_name="英文名")
+    platform = models.CharField(max_length=60, default="Switch", verbose_name="平台")
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.WISHLIST, db_index=True)
+    notes = models.TextField(blank=True, verbose_name="备注")
+    info_url = models.URLField(max_length=800, blank=True, verbose_name="信息链接")
+    source_url = models.URLField(max_length=800, blank=True, verbose_name="Obsidian 来源链接")
+    obsidian_path = models.CharField(max_length=500, blank=True, db_index=True, verbose_name="Obsidian 路径")
+    ai_context = models.JSONField(default=dict, blank=True, verbose_name="AI 补全上下文")
+    sort_order = models.PositiveIntegerField(default=0, db_index=True)
+    is_active = models.BooleanField(default=True, db_index=True)
+
+    class Meta:
+        ordering = ["sort_order", "title"]
+        verbose_name = "游戏库"
+        verbose_name_plural = "游戏库"
+
+    def __str__(self) -> str:
+        return f"[{self.platform}] {self.title}"
+
+
 class KnowledgeNode(TimeStampedModel):
     class Category(models.TextChoices):
         ENTITY = "entity", "实体"

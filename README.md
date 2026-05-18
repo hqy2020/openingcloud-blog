@@ -185,7 +185,7 @@ python manage.py sync_site_sources /path/to/vault
 - 同步 `publish` 文章到博客
 - 更新 Obsidian 文档池
 - 同步 `3-Knowledge` 到知识图谱
-- 同步 `2-Resource/90_网站同步` 里的 `照片墙 / 自媒体 / 愿望清单 / 书架`
+- 同步 `2-Resource/90_网站同步` 里的 `照片墙 / 自媒体 / 愿望清单 / 书架 / 游戏库`
 
 推荐在 Obsidian 里使用下面这套目录：
 
@@ -194,7 +194,25 @@ python manage.py sync_site_sources /path/to/vault
 ├── 01_照片墙/照片墙.md
 ├── 02_自媒体/平台数据.md
 ├── 03_愿望清单/愿望清单.md
-└── 04_书架/书架.md
+├── 04_书架/书架.md
+├── 05_人生感悟/人生感悟.md
+└── 06_游戏库/游戏库.md
+```
+
+### 游戏库维护格式
+
+`06_游戏库/游戏库.md` 采用 checklist 分组格式，`sync_site_structured` 会按标题解析出想买 / 已买状态：
+
+```markdown
+## 🎮 想买的游戏（Switch）
+
+- [ ] **路易吉洋馆3**（Luigi's Mansion 3）
+- [ ] **雪地奔驰**（SnowRunner）
+
+## 🎮 已买的游戏（Switch）
+
+- [ ] **塞尔达传说：旷野之息**（The Legend of Zelda: Breath of the Wild）
+- [ ] **文明7**（Civilization VII）
 ```
 
 ## CI/CD

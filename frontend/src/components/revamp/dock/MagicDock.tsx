@@ -29,9 +29,12 @@ function ItemContent({ item, active }: { item: DockItem; active: boolean }) {
     <motion.span
       className={`group relative inline-flex h-12 w-12 items-center justify-center rounded-2xl border text-lg transition sm:h-[3.25rem] sm:w-[3.25rem] ${
         active
-          ? "border-theme-line-strong bg-theme-surface-raised text-theme-ink shadow-[0_10px_20px_rgba(15,23,42,0.16)]"
-          : "border-theme-line/90 bg-theme-surface text-theme-muted shadow-[0_6px_14px_rgba(15,23,42,0.08)]"
+          ? "border-theme-line-strong bg-theme-surface-raised text-theme-ink"
+          : "border-theme-line/90 bg-theme-surface text-theme-muted"
       }`}
+      style={{
+        boxShadow: active ? "var(--theme-shadow-lifted)" : "var(--theme-shadow-whisper)",
+      }}
       whileHover={{ scale: 1.14, y: -3 }}
       whileTap={{ scale: 0.96 }}
       transition={{ type: "spring", stiffness: 420, damping: 28 }}
@@ -48,7 +51,10 @@ export function MagicDock({ items, pathname, className }: MagicDockProps) {
       aria-label="Dock 导航"
       className={`fixed inset-x-0 bottom-4 z-40 flex justify-center px-3 pb-[max(0px,env(safe-area-inset-bottom))] ${className ?? ""}`}
     >
-      <div className="rounded-3xl border border-theme-line/85 bg-theme-surface p-2 shadow-[0_14px_34px_rgba(15,23,42,0.14)]">
+      <div
+        className="rounded-3xl border border-theme-line/85 bg-theme-surface p-2"
+        style={{ boxShadow: "var(--theme-shadow-lifted)" }}
+      >
         <ul className="flex items-center gap-2">
           {items.map((item) => {
             const active = isItemActive(item, pathname);

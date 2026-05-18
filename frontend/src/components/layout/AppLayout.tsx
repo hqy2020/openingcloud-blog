@@ -20,11 +20,11 @@ const headerTabs = [
   { to: "/#recommended", label: "文章", nativeAnchor: true },
   { to: "/#achievements", label: "高光", nativeAnchor: true },
   { to: "/#projects", label: "代码", nativeAnchor: true },
+  { to: "/games", label: "游戏" },
   { to: "/#life", label: "生活", nativeAnchor: true },
 ];
 
-const navbarShadow =
-  "0 0 24px rgba(34, 42, 53, 0.06), 0 1px 1px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(34, 42, 53, 0.04), 0 0 4px rgba(34, 42, 53, 0.08), 0 16px 68px rgba(47, 48, 55, 0.05), 0 1px 0 rgba(255, 255, 255, 0.1) inset";
+const navbarShadow = "var(--theme-shadow-lifted)";
 const desktopSocialIconClass = "h-[1.65rem] w-[1.65rem] lg:h-6 lg:w-6 xl:h-7 xl:w-7";
 
 const mobileDockItems: DockItem[] = [
@@ -48,6 +48,13 @@ const mobileDockItems: DockItem[] = [
     href: "/#life",
     icon: <WishlistDockIcon />,
     matchPaths: [],
+  },
+  {
+    id: "games",
+    label: "Games",
+    href: "/games",
+    icon: <GamepadDockIcon />,
+    matchPaths: ["/games"],
   },
   {
     id: "influence",
@@ -90,7 +97,7 @@ function PulsatingSocialLink({
   href,
   label,
   children,
-  pulseColor = "rgba(226, 232, 240, 0.82)",
+  pulseColor = "rgb(var(--theme-accent) / 0.2)",
   duration = "1.5s",
   onClick,
 }: PulsatingSocialLinkProps) {
@@ -266,6 +273,15 @@ function WishlistDockIcon() {
   );
 }
 
+function GamepadDockIcon() {
+  return (
+    <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 9.25h10.5a3.5 3.5 0 0 1 3.43 4.2l-.86 4.03a2.5 2.5 0 0 1-3.98 1.47l-1.98-1.53a3 3 0 0 0-3.72 0l-1.98 1.53a2.5 2.5 0 0 1-3.98-1.47l-.86-4.03a3.5 3.5 0 0 1 3.43-4.2Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 12.5v3m-1.5-1.5h3m6-1.25h.01m1.99 1.75h.01" />
+    </svg>
+  );
+}
+
 function HamburgerIcon() {
   return (
     <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
@@ -313,7 +329,7 @@ export function AppLayout() {
           <motion.div
             animate={{
               boxShadow: compactNavbar ? navbarShadow : "none",
-              borderColor: compactNavbar ? "rgba(226,232,240,0.8)" : "rgba(226,232,240,0)",
+              borderColor: compactNavbar ? "rgb(var(--theme-line-strong) / 0.85)" : "rgb(var(--theme-line) / 0)",
             }}
             transition={{
               type: "spring",
@@ -406,7 +422,7 @@ export function AppLayout() {
           <motion.div
             animate={{
               boxShadow: compactNavbar ? navbarShadow : "none",
-              borderColor: compactNavbar ? "rgba(226,232,240,0.8)" : "rgba(226,232,240,0)",
+              borderColor: compactNavbar ? "rgb(var(--theme-line-strong) / 0.85)" : "rgb(var(--theme-line) / 0)",
             }}
             transition={{
               type: "spring",
@@ -448,7 +464,7 @@ export function AppLayout() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.2, ease: "easeOut" }}
-                  className="relative mt-3 flex flex-col gap-1 overflow-hidden rounded-2xl border border-theme-line/70 px-3 py-3 shadow-lg"
+                  className="relative mt-3 flex flex-col gap-1 overflow-hidden rounded-2xl border border-theme-line/70 px-3 py-3 shadow-[var(--theme-shadow-lifted)]"
                 >
                   <DistortedGlassSurface intensity="soft" className="absolute inset-0 rounded-2xl" />
 
@@ -506,7 +522,7 @@ export function AppLayout() {
           columnCount={6}
           contained
           direction="both"
-          glowColor="rgba(79, 106, 229, 0.58)"
+          glowColor="rgb(var(--theme-accent) / 0.52)"
           glowOpacity={0.46}
           glowSize="20vh"
           maxActiveColumns={3}

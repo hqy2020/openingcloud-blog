@@ -21,6 +21,7 @@ import { SocialMarquee } from "../components/revamp/home/SocialMarquee";
 import { TimeAreaSection } from "../components/revamp/home/TimeAreaSection";
 import { DreamSection } from "../components/revamp/home/DreamSection";
 import { BookshelfSection } from "../components/revamp/home/BookshelfSection";
+import { GameVaultSection } from "../components/revamp/games/GameVaultSection";
 import { SectionCard } from "../components/revamp/shared/SectionCard";
 import { SectionTitleCard } from "../components/revamp/shared/SectionTitleCard";
 import { SectionQuoteHighlight } from "../components/revamp/shared/SectionQuoteHighlight";
@@ -210,6 +211,7 @@ export function HomePage() {
                 <StatsSection stats={payload.stats} />
                 <DualRadarSection radarData={payload.radar_charts} />
                 <PhotoWallSection photos={photoWallItems} />
+                <GameVaultSection games={payload.games ?? []} compact showExplorerLink />
                 <DreamSection wishes={payload.wishes ?? []} />
                 <BookshelfSection books={payload.books ?? []} />
               </div>

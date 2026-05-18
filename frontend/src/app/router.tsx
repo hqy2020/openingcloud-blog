@@ -23,6 +23,10 @@ const InfluencePage = lazy(async () => {
   const mod = await import("../pages/InfluencePage");
   return { default: mod.InfluencePage };
 });
+const GamesPage = lazy(async () => {
+  const mod = await import("../pages/GamesPage");
+  return { default: mod.GamesPage };
+});
 
 function withSuspense(element: ReactNode) {
   return <Suspense fallback={<p className="text-sm text-theme-muted">页面加载中...</p>}>{element}</Suspense>;
@@ -37,6 +41,7 @@ export const router = createBrowserRouter([
       { path: "tech", element: withSuspense(<CategoryPage category="tech" title="技术" />) },
       { path: "learning", element: withSuspense(<CategoryPage category="learning" title="效率" />) },
       { path: "life", element: withSuspense(<CategoryPage category="life" title="生活" />) },
+      { path: "games", element: withSuspense(<GamesPage />) },
       { path: "posts/:slug", element: withSuspense(<PostDetailPage />) },
       { path: "influence", element: withSuspense(<InfluencePage />) },
       { path: "*", element: withSuspense(<NotFoundPage />) },

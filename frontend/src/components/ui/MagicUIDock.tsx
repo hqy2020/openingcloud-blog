@@ -58,10 +58,11 @@ function Dock({
       initial={{ x: "-50%" }}
       whileDrag={draggable ? { scale: 1.01, cursor: "grabbing" } : undefined}
       className={cn(
-        "fixed bottom-6 left-1/2 z-50 hidden items-end gap-4 rounded-2xl border border-theme-line/70 bg-theme-surface/90 px-4 pb-3 pt-2 shadow-[0_14px_34px_rgba(15,23,42,0.14)] md:flex",
+        "fixed bottom-6 left-1/2 z-50 hidden items-end gap-4 rounded-2xl border border-theme-line/70 bg-theme-surface/90 px-4 pb-3 pt-2 md:flex",
         draggable ? "cursor-grab" : "cursor-default",
         className,
       )}
+      style={{ boxShadow: "var(--theme-shadow-lifted)" }}
       onMouseMove={(e) => mouseX.set(e.pageX)}
       onMouseLeave={() => mouseX.set(Infinity)}
     >
@@ -120,9 +121,13 @@ function DockIcon({
   const item = (
     <motion.div
       ref={ref}
-      style={{ width, height }}
+      style={{
+        width,
+        height,
+        boxShadow: "var(--theme-shadow-whisper)",
+      }}
       className={cn(
-        "relative flex aspect-square items-center justify-center rounded-full bg-theme-surface-raised/85 text-theme-ink",
+        "relative flex aspect-square items-center justify-center rounded-full border border-theme-line/80 bg-theme-surface-raised/85 text-theme-ink",
         className,
       )}
       onMouseEnter={() => setHovered(true)}

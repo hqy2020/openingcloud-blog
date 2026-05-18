@@ -9,7 +9,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.files.storage import default_storage
 from django.db import connection, transaction
-from django.db.models import BooleanField, F, IntegerField, Q, Sum, Value
+from django.db.models import BooleanField, Case, F, IntegerField, Q, Sum, Value, When
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Coalesce
 from django.utils import timezone
@@ -24,6 +24,7 @@ from .image_bed import ImageBedUploadError, upload_photo_to_obsidian_images
 from .models import (
     BarrageComment,
     Book,
+    GameItem,
     GithubProject,
     HighlightItem,
     HighlightStage,
@@ -50,6 +51,8 @@ from .serializers import (
     BarrageCommentPublicSerializer,
     BarrageCommentSubmitSerializer,
     AdminImageUploadSerializer,
+    BookAdminSerializer,
+    BookSerializer,
     AdminObsidianPhotoReconcileRequestSerializer,
     AdminObsidianPhotoSyncRequestSerializer,
     AdminObsidianReconcileRequestSerializer,
@@ -57,6 +60,8 @@ from .serializers import (
     AdminObsidianSyncRequestSerializer,
     AdminObsidianSyncResponseSerializer,
     GithubImportRequestSerializer,
+    GameItemAdminSerializer,
+    GameItemSerializer,
     GithubProjectAdminSerializer,
     GithubProjectPublicSerializer,
     HighlightItemAdminSerializer,
@@ -78,10 +83,8 @@ from .serializers import (
     TimelineNodePublicSerializer,
     TravelPlaceAdminSerializer,
     TravelProvinceSerializer,
-    WishItemSerializer,
     WishItemAdminSerializer,
-    BookSerializer,
-    BookAdminSerializer,
+    WishItemSerializer,
 )
 from sync.service import reconcile_obsidian_publications, sync_post_payload
 
@@ -1471,6 +1474,21 @@ def _wiki_quotes_pool_payload() -> list[dict]:
     return [{"text": q.text, "emphasis": q.emphasis, "tier": q.tier, "source": q.source} for q in quotes]
 
 
+def _games_payload() -> list[dict]:
+    queryset = (
+        GameItem.objects.filter(is_active=True)
+        .annotate(
+            status_rank=Case(
+                When(status=GameItem.Status.WISHLIST, then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            )
+        )
+        .order_by("status_rank", "sort_order", "id")
+    )
+    return GameItemSerializer(queryset, many=True).data
+
+
 def _home_section_quotes_payload() -> dict:
     quotes = SectionQuote.objects.filter(is_active=True).order_by("slot", "sort_order")
     result: dict = {}
@@ -1536,6 +1554,7 @@ def _home_payload(*, show_real_name: bool = False) -> dict:
         "quotes_pool": _wiki_quotes_pool_payload(),
         "wishes": WishItemSerializer(WishItem.objects.filter(is_active=True), many=True).data,
         "books": BookSerializer(Book.objects.filter(is_active=True), many=True).data,
+        "games": _games_payload(),
     }
 
 
@@ -1660,6 +1679,13 @@ class PhotoWallView(APIView):
         return api_ok(_photo_wall_payload())
 
 
+class GamesView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        return api_ok(_games_payload())
+
+
 class KnowledgeGraphView(APIView):
     permission_classes = [AllowAny]
 
@@ -1719,3 +1745,14 @@ class AdminBookDetailView(AdminDetailView):
     serializer_class = BookAdminSerializer
     queryset = Book.objects.all()
     pk_url_kwarg = "book_id"
+
+
+class AdminGameItemListCreateView(AdminListCreateView):
+    serializer_class = GameItemAdminSerializer
+    queryset = GameItem.objects.all()
+
+
+class AdminGameItemDetailView(AdminDetailView):
+    serializer_class = GameItemAdminSerializer
+    queryset = GameItem.objects.all()
+    pk_url_kwarg = "game_id"

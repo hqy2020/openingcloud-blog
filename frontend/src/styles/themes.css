@@ -36,6 +36,38 @@
   --theme-transition-ms: 300ms;
 }
 
+:root[data-theme="operator"] {
+  --theme-bg: 8 12 18;               /* #080c12 terminal black */
+  --theme-surface: 11 19 29;         /* deep panel */
+  --theme-surface-raised: 16 26 38;  /* raised console */
+  --theme-accent: 125 255 218;       /* mint-cyan signal */
+  --theme-accent-soft: 255 159 67;   /* amber alert */
+  --theme-ink: 232 246 240;          /* phosphor white */
+  --theme-muted: 141 167 158;        /* desaturated mint */
+  --theme-soft: 96 122 114;          /* quiet matrix */
+  --theme-line: 32 52 63;            /* grid line */
+  --theme-line-strong: 65 108 101;   /* active border */
+
+  --theme-dot-color: 125 255 218;
+  --theme-dot-glow: 88 216 255;
+  --theme-dot-opacity: 0.18;
+
+  --theme-font-display: "Space Grotesk", "IBM Plex Sans", "PingFang SC", sans-serif;
+  --theme-font-body: "IBM Plex Sans", "Inter", "PingFang SC", sans-serif;
+  --theme-font-sans: "IBM Plex Mono", "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+
+  --theme-radius: 14px;
+  --theme-shadow-whisper: 0 10px 30px rgba(0, 0, 0, 0.28);
+  --theme-shadow-lifted: 0 28px 70px rgba(0, 0, 0, 0.34);
+
+  --theme-tracking-heading: -0.015em;
+  --theme-tracking-body: 0.01em;
+  --theme-title-weight: 600;
+  --theme-body-weight: 400;
+  --theme-card-lift: -4px;
+  --theme-transition-ms: 220ms;
+}
+
 :root[data-theme="apple"] {
   --theme-bg: 255 255 255;            /* #FFFFFF pure white — soul color (留白) */
   --theme-surface: 245 245 247;       /* #F5F5F7 classic Apple light gray */
@@ -133,6 +165,23 @@ body {
 /* Claude — editorial, warm. More generous line-height in body text. */
 :root[data-theme="claude"] body {
   line-height: 1.65;
+}
+
+/* Operator — terminal-forward, tighter hierarchy, slightly denser body copy. */
+:root[data-theme="operator"] h1,
+:root[data-theme="operator"] h2,
+:root[data-theme="operator"] h3 {
+  letter-spacing: -0.02em;
+}
+:root[data-theme="operator"] body {
+  line-height: 1.58;
+}
+:root[data-theme="operator"] .theme-nav-tab,
+:root[data-theme="operator"] .theme-nav-tab a,
+:root[data-theme="operator"] .theme-nav-tab button {
+  font-family: var(--theme-font-sans) !important;
+  font-weight: 500;
+  letter-spacing: 0.08em;
 }
 
 /* Apple — tighter, bolder. Use SF Pro Display for h1 with tighter spacing. */

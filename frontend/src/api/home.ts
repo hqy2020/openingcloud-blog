@@ -188,6 +188,18 @@ export type BookItem = {
   sort_order: number;
 };
 
+export type GameItem = {
+  id: number;
+  title: string;
+  english_title: string;
+  platform: string;
+  status: "wishlist" | "owned";
+  notes: string;
+  info_url?: string;
+  source_url?: string;
+  sort_order: number;
+};
+
 export type HomePayload = {
   hero: {
     title: string;
@@ -241,6 +253,7 @@ export type HomePayload = {
   quotes_pool?: WikiQuoteItem[];
   wishes?: WishItem[];
   books?: BookItem[];
+  games?: GameItem[];
 };
 
 export type WikiQuoteItem = {
@@ -293,4 +306,9 @@ export async function fetchSocialGraph() {
 export async function fetchPhotoWall() {
   const { data } = await apiClient.get("/photo-wall/");
   return data.data as PhotoWallItem[];
+}
+
+export async function fetchGames() {
+  const { data } = await apiClient.get("/games/");
+  return data.data as GameItem[];
 }

@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { PropsWithChildren } from "react";
 
-export type ThemePalette = "claude" | "apple" | "notion";
+export type ThemePalette = "operator" | "claude" | "apple" | "notion";
 
 /** Legacy alias kept for backwards compatibility with old light/dark consumers. */
 export type ThemeMode = "light" | "dark";
@@ -15,9 +15,10 @@ type ThemeContextValue = {
 };
 
 const THEME_STORAGE_KEY = "oc-theme";
-const DEFAULT_THEME: ThemePalette = "claude";
+const DEFAULT_THEME: ThemePalette = "operator";
 
 export const THEME_PALETTES = [
+  { id: "operator" as const, label: "Operator", swatch: "#7DFFDA", description: "终端绿 · 协议面板" },
   { id: "claude" as const, label: "Claude", swatch: "#D97757", description: "陶土橘 · 人机温度" },
   { id: "apple" as const, label: "Apple", swatch: "#F5F5F7", description: "极简白 · 硬件留白" },
   { id: "notion" as const, label: "Notion", swatch: "#373530", description: "炭灰墨 · 理性结构" },

@@ -19,6 +19,8 @@ from sync.service import sync_post_payload
 
 from .models import (
     BarrageComment,
+    Book,
+    GameItem,
     GithubProject,
     HighlightItem,
     HighlightStage,
@@ -37,7 +39,6 @@ from .models import (
     TimelineNode,
     TravelPlace,
     WishItem,
-    Book,
     WikiQuote,
 )
 
@@ -762,6 +763,21 @@ class BookAdmin(SortableAdminMixin, admin.ModelAdmin):
         ("阅读状态", {"fields": ("status", "progress", "rating")}),
         ("元数据", {"fields": ("tags", "review", "douban_subject_id")}),
         ("链接", {"fields": ("info_url", "source_url", "obsidian_path")}),
+        ("展示控制", {"fields": ("sort_order", "is_active")}),
+        ("AI 上下文", {"fields": ("ai_context",), "classes": ("collapse",)}),
+    )
+
+
+@admin.register(GameItem)
+class GameItemAdmin(SortableAdminMixin, admin.ModelAdmin):
+    list_display = ["title", "english_title", "platform", "status", "sort_order", "is_active", "updated_at"]
+    list_editable = ["sort_order", "is_active", "status", "platform"]
+    list_filter = ["platform", "status", "is_active"]
+    search_fields = ["title", "english_title", "notes", "obsidian_path"]
+    readonly_fields = ["ai_context"]
+    fieldsets = (
+        ("基本信息", {"fields": ("title", "english_title", "platform", "status")}),
+        ("内容", {"fields": ("notes", "info_url", "source_url", "obsidian_path")}),
         ("展示控制", {"fields": ("sort_order", "is_active")}),
         ("AI 上下文", {"fields": ("ai_context",), "classes": ("collapse",)}),
     )

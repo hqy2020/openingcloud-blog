@@ -9,7 +9,7 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
 
-from blog.models import Book, PhotoWallImage, SocialMediaStat, WikiQuote, WishItem
+from blog.models import Book, GameItem, PhotoWallImage, SocialMediaStat, WikiQuote, WishItem
 
 
 SYNC_ROOT = "2-Resource/90_网站同步"
@@ -18,6 +18,7 @@ SOCIAL_NOTE = f"{SYNC_ROOT}/02_自媒体/平台数据.md"
 WISH_NOTE = f"{SYNC_ROOT}/03_愿望清单/愿望清单.md"
 BOOK_NOTE = f"{SYNC_ROOT}/04_书架/书架.md"
 INSIGHT_NOTE = f"{SYNC_ROOT}/05_人生感悟/人生感悟.md"
+GAME_NOTE = f"{SYNC_ROOT}/06_游戏库/游戏库.md"
 
 
 def _write(path: Path, content: str):
@@ -79,6 +80,20 @@ class StructuredSiteSyncCommandTests(TestCase):
                 | 学习的本质是构建模型而非记忆 | 构建模型 | Obsidian | insight | 是 | 10 |
                 """,
             )
+            _write(
+                vault / GAME_NOTE,
+                """
+                ## 🎮 想买的游戏（Switch）
+
+                - [ ] **路易吉洋馆3**（Luigi's Mansion 3）
+                - [ ] **雪地奔驰**（SnowRunner）
+
+                ## 🎮 已买的游戏（Switch）
+
+                - [ ] **塞尔达传说：旷野之息**（The Legend of Zelda: Breath of the Wild）
+                - [ ] **文明7**（Civilization VII）
+                """,
+            )
 
             call_command("sync_site_structured", "--vault", str(vault))
 
@@ -104,6 +119,16 @@ class StructuredSiteSyncCommandTests(TestCase):
         self.assertEqual(quote.obsidian_path, INSIGHT_NOTE)
         self.assertEqual(quote.tier, WikiQuote.Tier.INSIGHT)
         self.assertEqual(quote.emphasis, "构建模型")
+
+        wishlist_game = GameItem.objects.get(title="路易吉洋馆3")
+        self.assertEqual(wishlist_game.obsidian_path, GAME_NOTE)
+        self.assertEqual(wishlist_game.status, GameItem.Status.WISHLIST)
+        self.assertEqual(wishlist_game.platform, "Switch")
+        self.assertEqual(wishlist_game.english_title, "Luigi's Mansion 3")
+
+        owned_game = GameItem.objects.get(title="文明7")
+        self.assertEqual(owned_game.status, GameItem.Status.OWNED)
+        self.assertEqual(owned_game.sort_order, 1020)
 
     def test_sync_site_structured_deactivates_removed_items(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -162,6 +187,18 @@ class StructuredSiteSyncCommandTests(TestCase):
                 | 旧感悟 | insight | 是 |
                 """,
             )
+            _write(
+                vault / GAME_NOTE,
+                """
+                ## 🎮 想买的游戏（Switch）
+
+                - [ ] **保留游戏**（Keep Game）
+
+                ## 🎮 已买的游戏（Switch）
+
+                - [ ] **旧游戏**（Old Game）
+                """,
+            )
 
             call_command("sync_site_structured", "--vault", str(vault))
 
@@ -205,6 +242,14 @@ class StructuredSiteSyncCommandTests(TestCase):
                 | 保留感悟 | insight | 是 |
                 """,
             )
+            _write(
+                vault / GAME_NOTE,
+                """
+                ## 🎮 想买的游戏（Switch）
+
+                - [ ] **保留游戏**（Keep Game）
+                """,
+            )
 
             call_command("sync_site_structured", "--vault", str(vault))
 
@@ -216,6 +261,8 @@ class StructuredSiteSyncCommandTests(TestCase):
         self.assertFalse(PhotoWallImage.objects.get(title="旧照片").is_public)
         self.assertTrue(WikiQuote.objects.get(text="保留感悟").is_active)
         self.assertFalse(WikiQuote.objects.get(text="旧感悟").is_active)
+        self.assertTrue(GameItem.objects.get(title="保留游戏").is_active)
+        self.assertFalse(GameItem.objects.get(title="旧游戏").is_active)
 
     @patch("blog.management.commands.sync_site_structured.upload_photo_to_obsidian_images")
     def test_sync_site_structured_uploads_local_photo_assets(self, mock_upload):
@@ -244,6 +291,7 @@ class StructuredSiteSyncCommandTests(TestCase):
             _write(vault / WISH_NOTE, "# 愿望清单")
             _write(vault / BOOK_NOTE, "# 书架")
             _write(vault / INSIGHT_NOTE, "# 人生感悟")
+            _write(vault / GAME_NOTE, "# 游戏库")
 
             call_command("sync_site_structured", "--vault", str(vault))
 
@@ -279,6 +327,7 @@ class StructuredSiteSyncCommandTests(TestCase):
             _write(vault / WISH_NOTE, "# 愿望清单")
             _write(vault / BOOK_NOTE, "# 书架")
             _write(vault / INSIGHT_NOTE, "# 人生感悟")
+            _write(vault / GAME_NOTE, "# 游戏库")
 
             call_command("sync_site_structured", "--vault", str(vault))
             call_command("sync_site_structured", "--vault", str(vault))
@@ -327,6 +376,7 @@ class StructuredSiteSyncCommandTests(TestCase):
                             "--skip-social",
                             "--skip-wishes",
                             "--skip-books",
+                            "--skip-games",
                             "--skip-quotes",
                         )
 
@@ -373,6 +423,7 @@ class StructuredSiteSyncCommandTests(TestCase):
                         "--skip-social",
                         "--skip-wishes",
                         "--skip-books",
+                        "--skip-games",
                         "--skip-quotes",
                     )
 

@@ -20,7 +20,7 @@ from django.db import transaction
 from django.utils.dateparse import parse_date
 
 from blog.image_bed import ImageBedUploadError, upload_photo_to_obsidian_images
-from blog.models import Book, PhotoWallImage, SocialMediaStat, WikiQuote, WishItem
+from blog.models import Book, GameItem, PhotoWallImage, SocialMediaStat, WikiQuote, WishItem
 
 
 DEFAULT_SYNC_ROOT = "2-Resource/90_网站同步"
@@ -29,6 +29,7 @@ DEFAULT_SOCIAL_FILE = "02_自媒体/平台数据.md"
 DEFAULT_WISH_FILE = "03_愿望清单/愿望清单.md"
 DEFAULT_BOOK_FILE = "04_书架/书架.md"
 DEFAULT_INSIGHT_FILE = "05_人生感悟/人生感悟.md"
+DEFAULT_GAME_FILE = "06_游戏库/游戏库.md"
 
 PLATFORM_ALIASES = {
     "bilibili": "bilibili",
@@ -77,6 +78,15 @@ GITHUB_RAW_PREFIX = "https://raw.githubusercontent.com/hqy2020/obsidian-images/"
 GITHUB_BLOB_PREFIX = "https://github.com/hqy2020/obsidian-images/blob/"
 WIKI_EMBED_RE = re.compile(r"!\[\[([^\]]+)\]\]")
 MARKDOWN_IMAGE_RE = re.compile(r"!\[[^\]]*]\(([^)]+)\)")
+GAME_SECTION_RE = re.compile(
+    r"^\s{0,3}#{1,6}\s*(?:🎮\s*)?(?P<section>想买的游戏|已买的游戏)"
+    r"(?:（(?P<platform_cn>[^）]+)）|\((?P<platform_en>[^)]+)\))?\s*$"
+)
+GAME_CHECKBOX_RE = re.compile(r"^\s*-\s*\[[ xX]?\]\s*(?P<body>.+?)\s*$")
+GAME_TITLE_RE = re.compile(
+    r"^(?:\*\*(?P<title_bold>.+?)\*\*|(?P<title_plain>.*?))"
+    r"(?:（(?P<english_cn>[^）]+)）|\((?P<english_en>[^)]+)\))?\s*$"
+)
 
 
 @dataclass
@@ -551,6 +561,125 @@ def _sync_books(vault: Path, note_rel: str, *, dry_run: bool, stdout) -> SyncSta
     return stats
 
 
+def _parse_game_items(note_path: Path) -> list[dict[str, str | int]]:
+    current_status = ""
+    current_platform = "Switch"
+    wishlist_order = 0
+    owned_order = 1000
+    items: list[dict[str, str | int]] = []
+
+    for raw_line in _read_text(note_path).splitlines():
+        section_match = GAME_SECTION_RE.match(raw_line.strip())
+        if section_match:
+            section = section_match.group("section")
+            current_status = (
+                GameItem.Status.WISHLIST if section == "想买的游戏" else GameItem.Status.OWNED
+            )
+            current_platform = (
+                section_match.group("platform_cn")
+                or section_match.group("platform_en")
+                or current_platform
+                or "Switch"
+            ).strip()
+            continue
+
+        item_match = GAME_CHECKBOX_RE.match(raw_line)
+        if not item_match or not current_status:
+            continue
+
+        title_match = GAME_TITLE_RE.match(item_match.group("body").strip())
+        if not title_match:
+            continue
+
+        title = (title_match.group("title_bold") or title_match.group("title_plain") or "").strip()
+        if not title:
+            continue
+
+        english_title = (
+            title_match.group("english_cn")
+            or title_match.group("english_en")
+            or ""
+        ).strip()
+
+        if current_status == GameItem.Status.WISHLIST:
+            wishlist_order += 10
+            sort_order = wishlist_order
+        else:
+            owned_order += 10
+            sort_order = owned_order
+
+        items.append(
+            {
+                "title": title,
+                "english_title": english_title,
+                "platform": current_platform,
+                "status": current_status,
+                "sort_order": sort_order,
+            }
+        )
+
+    return items
+
+
+def _sync_games(vault: Path, note_rel: str, *, dry_run: bool, stdout) -> SyncStats:
+    stats = SyncStats()
+    note_path = vault / note_rel
+    if not note_path.exists():
+        stdout.write(f"skip games: {note_rel} not found")
+        return stats
+
+    items = _parse_game_items(note_path)
+    if not items:
+        stdout.write(f"skip games: no checklist items found in {note_rel}")
+        return stats
+
+    active_keys: set[tuple[str, str]] = set()
+    with transaction.atomic():
+        for item in items:
+            title = str(item["title"]).strip()
+            if not title:
+                stats.skipped += 1
+                continue
+            active_keys.add((note_rel, title))
+            defaults = {
+                "english_title": str(item["english_title"] or "")[:240],
+                "platform": str(item["platform"] or "Switch")[:60],
+                "status": str(item["status"] or GameItem.Status.WISHLIST),
+                "notes": "",
+                "info_url": "",
+                "source_url": "",
+                "obsidian_path": note_rel,
+                "sort_order": int(item["sort_order"]),
+                "is_active": True,
+            }
+            existing = (
+                GameItem.objects.filter(obsidian_path=note_rel, title=title).first()
+                or GameItem.objects.filter(title=title).first()
+            )
+            if dry_run:
+                stats.updated += int(existing is not None)
+                stats.created += int(existing is None)
+                continue
+            if existing is None:
+                GameItem.objects.create(title=title[:200], **defaults)
+                stats.created += 1
+            else:
+                for field, value in defaults.items():
+                    setattr(existing, field, value)
+                existing.title = title[:200]
+                existing.save()
+                stats.updated += 1
+
+        if not dry_run:
+            for existing in GameItem.objects.filter(obsidian_path=note_rel, is_active=True):
+                if (note_rel, existing.title) not in active_keys:
+                    existing.is_active = False
+                    existing.save(update_fields=["is_active", "updated_at"])
+                    stats.deactivated += 1
+
+    return stats
+
+
 def _sync_social(vault: Path, note_rel: str, *, dry_run: bool, stdout) -> SyncStats:
     stats = SyncStats()
     note_path = vault / note_rel
@@ -869,10 +998,12 @@ class Command(BaseCommand):
         parser.add_argument("--wish-file", default=DEFAULT_WISH_FILE)
         parser.add_argument("--book-file", default=DEFAULT_BOOK_FILE)
         parser.add_argument("--insight-file", default=DEFAULT_INSIGHT_FILE)
+        parser.add_argument("--game-file", default=DEFAULT_GAME_FILE)
         parser.add_argument("--skip-photos", action="store_true")
         parser.add_argument("--skip-social", action="store_true")
         parser.add_argument("--skip-wishes", action="store_true")
         parser.add_argument("--skip-books", action="store_true")
+        parser.add_argument("--skip-games", action="store_true")
         parser.add_argument("--skip-quotes", action="store_true")
         parser.add_argument("--dry-run", action="store_true")
 
@@ -895,6 +1026,7 @@ class Command(BaseCommand):
                 for label, skip_flag in (
                     ("wishes", options["skip_wishes"]),
                     ("books", options["skip_books"]),
+                    ("games", options["skip_games"]),
                     ("social", options["skip_social"]),
                     ("quotes", options["skip_quotes"]),
                 )
@@ -917,6 +1049,7 @@ class Command(BaseCommand):
         wish_rel = f"{root}/{str(options['wish_file']).strip().lstrip('/')}"
         book_rel = f"{root}/{str(options['book_file']).strip().lstrip('/')}"
         insight_rel = f"{root}/{str(options['insight_file']).strip().lstrip('/')}"
+        game_rel = f"{root}/{str(options['game_file']).strip().lstrip('/')}"
 
         self.stdout.write(f"structured sync start: root={root}, target={target}, dry_run={options['dry_run']}")
 
@@ -930,6 +1063,12 @@ class Command(BaseCommand):
             stats = _sync_books(vault, book_rel, dry_run=bool(options["dry_run"]), stdout=self.stdout)
             self.stdout.write(
                 f"books: created={stats.created} updated={stats.updated} deactivated={stats.deactivated} skipped={stats.skipped}"
+            )
+
+        if not options["skip_games"]:
+            stats = _sync_games(vault, game_rel, dry_run=bool(options["dry_run"]), stdout=self.stdout)
+            self.stdout.write(
+                f"games: created={stats.created} updated={stats.updated} deactivated={stats.deactivated} skipped={stats.skipped}"
             )
 
         if not options["skip_social"]:
