@@ -126,11 +126,16 @@ export function HomePage() {
       return;
     }
 
-    const timerId = window.setTimeout(() => {
-      scrollToRouteAnchor(anchorId, "auto");
-    }, 80);
+    const followUpDelays = [80, 320, 900, 1800, 3200, 5200, 7600, 9800];
+    const timerIds = followUpDelays.map((delay) =>
+      window.setTimeout(() => {
+        scrollToRouteAnchor(anchorId, "auto");
+      }, delay),
+    );
 
-    return () => window.clearTimeout(timerId);
+    return () => {
+      timerIds.forEach((timerId) => window.clearTimeout(timerId));
+    };
   }, [loading, payload.games, payload.timeline, payload.travel]);
 
   const heroQuote = useMemo(
