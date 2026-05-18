@@ -336,9 +336,48 @@ class StructuredSiteSyncCommandTests(TestCase):
         self.assertIn("admin/obsidian-sync/photos/", upload_args.args[0])
         self.assertEqual(upload_args.kwargs["file_name"], "sample.jpg")
         self.assertEqual(upload_args.kwargs["file_content"], b"fake-jpg")
+        self.assertNotIn("captured_at", upload_args.args[2])
         reconcile_payload = remote_json.call_args.args[2]
         self.assertEqual(reconcile_payload["obsidian_path"], PHOTO_NOTE)
         self.assertEqual(len(reconcile_payload["active_sync_keys"]), 1)
+
+    def test_sync_site_structured_remote_mode_omits_empty_captured_at_for_remote_urls(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            vault = Path(tmp)
+            _write(
+                vault / PHOTO_NOTE,
+                """
+                # 照片墙
+
+                | 标题 | 图片 | 是否公开 |
+                | --- | --- | --- |
+                | 远端图片 | https://raw.githubusercontent.com/hqy2020/obsidian-images/main/gallery/remote.jpg | 是 |
+                """,
+            )
+
+            with patch.dict(os.environ, {"TEST_SYNC_TOKEN": "sync-token"}, clear=False):
+                with patch(
+                    "blog.management.commands.sync_site_structured._post_remote_json",
+                    side_effect=[{"action": "updated"}, {"action": "updated", "deactivated": 0}],
+                ) as remote_json:
+                    call_command(
+                        "sync_site_structured",
+                        "--vault",
+                        str(vault),
+                        "--target",
+                        "remote",
+                        "--remote-base-url",
+                        "https://example.com/api",
+                        "--remote-token-env",
+                        "TEST_SYNC_TOKEN",
+                        "--skip-social",
+                        "--skip-wishes",
+                        "--skip-books",
+                        "--skip-quotes",
+                    )
+
+        sync_payload = remote_json.call_args_list[0].args[2]
+        self.assertNotIn("captured_at", sync_payload)
 
 
 class SiteSyncPipelineCommandTests(TestCase):

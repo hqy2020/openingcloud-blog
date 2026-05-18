@@ -722,16 +722,18 @@ def _sync_photos_remote(
 
         sync_key = _cell(mapping, row, "同步键", "sync_key") or _build_photo_sync_key(note_rel, title, image_cell)
         active_sync_keys.append(sync_key)
+        captured_at = _as_date(_cell(mapping, row, "拍摄日期", "日期", "captured_at"))
         payload = {
             "title": title,
             "description": _cell(mapping, row, "描述", "说明", "description"),
-            "captured_at": _as_date(_cell(mapping, row, "拍摄日期", "日期", "captured_at")) or "",
             "is_public": "true" if _as_bool(_cell(mapping, row, "是否公开", "公开", "is_public"), True) else "false",
             "sort_order": str(_as_int(_cell(mapping, row, "排序", "sort_order"), index * 10)),
             "obsidian_path": note_rel,
             "sync_key": sync_key,
             "dry_run": "true" if dry_run else "false",
         }
+        if captured_at is not None:
+            payload["captured_at"] = captured_at.isoformat()
 
         image_ref = _extract_image_reference(image_cell)
         manual_source_url = _cell(mapping, row, "来源链接", "source_url", "原图链接")
