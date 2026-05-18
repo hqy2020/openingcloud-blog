@@ -89,7 +89,13 @@ export function GameVaultSection({ games = [], compact = false, embedded = false
   const platforms = Array.from(new Set(allGames.map((game) => game.platform).filter(Boolean)));
 
   return (
-    <section id="games" className={cn("scroll-mt-28", embedded ? "space-y-4" : "space-y-5")}>
+    <section
+      id="games"
+      className={cn(
+        "scroll-mt-28",
+        embedded ? "space-y-4 lg:-mt-52 lg:pt-52 xl:-mt-64 xl:pt-64" : "space-y-5",
+      )}
+    >
       <div className="rounded-[calc(var(--theme-radius)+8px)] border border-theme-line/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(246,247,248,0.92))] px-4 py-4 shadow-[0_16px_36px_rgba(15,23,42,0.06)] sm:px-5 sm:py-5">
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-2 rounded-full border border-theme-line bg-white/92 px-3 py-1 font-theme-sans text-[10px] font-semibold uppercase tracking-[0.24em] text-theme-soft">
