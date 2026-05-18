@@ -47,6 +47,10 @@ function scrollToAnchor(anchorId: string, behavior: ScrollBehavior) {
   return top;
 }
 
+export function scrollToRouteAnchor(anchorId: string, behavior: ScrollBehavior = "auto") {
+  return scrollToAnchor(anchorId, behavior);
+}
+
 export function useRouteHashScroll() {
   const location = useLocation();
 

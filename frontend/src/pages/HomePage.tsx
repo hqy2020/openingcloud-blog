@@ -28,6 +28,7 @@ import { SectionQuoteHighlight } from "../components/revamp/shared/SectionQuoteH
 import { SectionParallaxTransition } from "../components/motion/SectionParallaxTransition";
 import { SocialStatsCarousel } from "../components/home/SocialStatsCarousel";
 import { SafeBoundary } from "../components/ui/SafeBoundary";
+import { scrollToRouteAnchor } from "../hooks/useRouteHashScroll";
 import { useAsync } from "../hooks/useAsync";
 import { fallbackHomePayload } from "../data/fallback";
 import { siteUrl } from "../lib/site";
@@ -114,6 +115,24 @@ export function HomePage() {
       saveQuotesPool(payload.quotes_pool);
     }
   }, [payload.quotes_pool]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || loading) {
+      return;
+    }
+
+    const anchorId = window.location.hash.replace(/^#/, "");
+    if (!anchorId) {
+      return;
+    }
+
+    const timerId = window.setTimeout(() => {
+      scrollToRouteAnchor(anchorId, "auto");
+    }, 80);
+
+    return () => window.clearTimeout(timerId);
+  }, [loading, payload.games, payload.timeline, payload.travel]);
+
   const heroQuote = useMemo(
     () => pickRandomQuote(quotesPool, "creed") ?? pickRandomQuote(quotesPool),
     [quotesPool],
