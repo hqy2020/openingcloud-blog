@@ -772,4 +772,9 @@ class WikiQuoteAdmin(admin.ModelAdmin):
     list_display = ["text", "emphasis", "tier", "source", "sort_order", "is_active", "updated_at"]
     list_editable = ["emphasis", "tier", "sort_order", "is_active"]
     list_filter = ["tier", "is_active"]
-    search_fields = ["text", "emphasis", "source"]
+    search_fields = ["text", "emphasis", "source", "obsidian_path"]
+    fieldsets = (
+        ("基本信息", {"fields": ("text", "emphasis", "tier", "source")}),
+        ("同步信息", {"fields": ("obsidian_path",)}),
+        ("展示控制", {"fields": ("sort_order", "is_active")}),
+    )

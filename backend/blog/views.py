@@ -14,12 +14,13 @@ from django.db.models.expressions import RawSQL
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from rest_framework import generics, status
-from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from .image_bed import ImageBedUploadError, upload_photo_to_obsidian_images
 from .models import (
     BarrageComment,
     Book,
@@ -49,6 +50,8 @@ from .serializers import (
     BarrageCommentPublicSerializer,
     BarrageCommentSubmitSerializer,
     AdminImageUploadSerializer,
+    AdminObsidianPhotoReconcileRequestSerializer,
+    AdminObsidianPhotoSyncRequestSerializer,
     AdminObsidianReconcileRequestSerializer,
     AdminObsidianReconcileResponseSerializer,
     AdminObsidianSyncRequestSerializer,
@@ -172,6 +175,30 @@ def _normalize_remote_image_url(url: str) -> str:
         suffix = text.removeprefix(github_blob_prefix)
         return f"https://raw.githubusercontent.com/hqy2020/obsidian-images/{suffix}"
     return text
+
+
+def _resolve_photo_sync_source_url(image_url: str, source_url: str) -> str:
+    normalized_source = str(source_url or "").strip()
+    if normalized_source:
+        return normalized_source
+
+    normalized_image = _normalize_remote_image_url(image_url)
+    raw_prefix = "https://raw.githubusercontent.com/hqy2020/obsidian-images/"
+    if normalized_image.startswith(raw_prefix):
+        suffix = normalized_image.removeprefix(raw_prefix)
+        return f"{OBSIDIAN_IMAGES_REPO_URL}/blob/{suffix}"
+    return normalized_image or OBSIDIAN_IMAGES_REPO_URL
+
+
+def _find_photo_sync_candidate(sync_key: str, image_url: str, source_url: str) -> PhotoWallImage | None:
+    candidate = None
+    if sync_key:
+        candidate = PhotoWallImage.objects.filter(sync_key=sync_key).first()
+    if candidate is None and image_url:
+        candidate = PhotoWallImage.objects.filter(image_url=image_url).first()
+    if candidate is None and source_url:
+        candidate = PhotoWallImage.objects.filter(source_url=source_url).first()
+    return candidate
 
 
 class HealthCheckView(APIView):
@@ -836,6 +863,85 @@ class AdminPhotoDetailView(AdminDetailView):
         if "source_url" in serializer.validated_data:
             payload["source_url"] = _normalize_remote_image_url(serializer.validated_data.get("source_url", ""))
         serializer.save(**payload)
+
+
+class AdminObsidianPhotoSyncView(APIView):
+    permission_classes = [IsStaffOrSyncToken]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+    def post(self, request):
+        serializer = AdminObsidianPhotoSyncRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        payload = dict(serializer.validated_data)
+        dry_run = bool(payload.pop("dry_run", False))
+        upload = payload.pop("image_file", None)
+        sync_key = str(payload.get("sync_key") or "").strip()
+        normalized_image_url = _normalize_remote_image_url(payload.pop("image_url", ""))
+        normalized_source_url = _resolve_photo_sync_source_url(normalized_image_url, payload.pop("source_url", ""))
+        candidate = _find_photo_sync_candidate(sync_key, normalized_image_url, normalized_source_url)
+
+        if upload is not None:
+            if not dry_run:
+                try:
+                    result = upload_photo_to_obsidian_images(
+                        upload,
+                        operator=getattr(getattr(request, "user", None), "username", "") or "obsidian-sync",
+                    )
+                except ImageBedUploadError as exc:
+                    return api_error("image_upload_failed", str(exc), status.HTTP_400_BAD_REQUEST)
+                normalized_image_url = result.image_url
+                normalized_source_url = result.source_url
+
+        defaults = {
+            "title": str(payload.get("title") or "")[:120],
+            "description": str(payload.get("description") or ""),
+            "image_url": normalized_image_url,
+            "source_url": normalized_source_url[:800],
+            "captured_at": payload.get("captured_at"),
+            "is_public": bool(payload.get("is_public", True)),
+            "sort_order": int(payload.get("sort_order", 0)),
+            "obsidian_path": str(payload.get("obsidian_path") or ""),
+            "sync_key": sync_key,
+        }
+
+        action = "updated" if candidate is not None else "created"
+        if not dry_run:
+            if candidate is None:
+                candidate = PhotoWallImage.objects.create(**defaults)
+            else:
+                for field, value in defaults.items():
+                    setattr(candidate, field, value)
+                candidate.save()
+
+        return api_ok(
+            {
+                "action": action,
+                "image_url": normalized_image_url,
+                "source_url": normalized_source_url,
+                "photo_id": None if dry_run or candidate is None else candidate.id,
+            }
+        )
+
+
+class AdminObsidianPhotoReconcileView(APIView):
+    permission_classes = [IsStaffOrSyncToken]
+
+    def post(self, request):
+        serializer = AdminObsidianPhotoReconcileRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        obsidian_path = str(serializer.validated_data["obsidian_path"]).strip()
+        active_sync_keys = [str(item).strip() for item in serializer.validated_data.get("active_sync_keys", []) if str(item).strip()]
+        dry_run = bool(serializer.validated_data.get("dry_run", False))
+        queryset = PhotoWallImage.objects.filter(obsidian_path=obsidian_path, is_public=True)
+        if active_sync_keys:
+            queryset = queryset.exclude(sync_key__in=active_sync_keys)
+        matched = queryset.count()
+        if not dry_run and matched:
+            queryset.update(is_public=False, updated_at=timezone.now())
+
+        return api_ok({"action": "updated", "matched": matched, "deactivated": matched})
 
 
 class AdminReorderView(APIView):

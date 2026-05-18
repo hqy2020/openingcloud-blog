@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
@@ -8,7 +9,7 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
 
-from blog.models import Book, PhotoWallImage, SocialMediaStat, WishItem
+from blog.models import Book, PhotoWallImage, SocialMediaStat, WikiQuote, WishItem
 
 
 SYNC_ROOT = "2-Resource/90_网站同步"
@@ -16,6 +17,7 @@ PHOTO_NOTE = f"{SYNC_ROOT}/01_照片墙/照片墙.md"
 SOCIAL_NOTE = f"{SYNC_ROOT}/02_自媒体/平台数据.md"
 WISH_NOTE = f"{SYNC_ROOT}/03_愿望清单/愿望清单.md"
 BOOK_NOTE = f"{SYNC_ROOT}/04_书架/书架.md"
+INSIGHT_NOTE = f"{SYNC_ROOT}/05_人生感悟/人生感悟.md"
 
 
 def _write(path: Path, content: str):
@@ -67,6 +69,16 @@ class StructuredSiteSyncCommandTests(TestCase):
                 | 浙大 | https://raw.githubusercontent.com/hqy2020/obsidian-images/main/gallery/2026/02/demo.jpg | 校园照片 | 2026-02-01 | 是 |
                 """,
             )
+            _write(
+                vault / INSIGHT_NOTE,
+                """
+                # 人生感悟
+
+                | 感悟 | 高亮 | 来源 | 类型 | 是否启用 | 排序 |
+                | --- | --- | --- | --- | --- | --- |
+                | 学习的本质是构建模型而非记忆 | 构建模型 | Obsidian | insight | 是 | 10 |
+                """,
+            )
 
             call_command("sync_site_structured", "--vault", str(vault))
 
@@ -87,6 +99,11 @@ class StructuredSiteSyncCommandTests(TestCase):
         self.assertEqual(photo.obsidian_path, PHOTO_NOTE)
         self.assertTrue(photo.sync_key)
         self.assertEqual(photo.captured_at.isoformat(), "2026-02-01")
+
+        quote = WikiQuote.objects.get(text="学习的本质是构建模型而非记忆")
+        self.assertEqual(quote.obsidian_path, INSIGHT_NOTE)
+        self.assertEqual(quote.tier, WikiQuote.Tier.INSIGHT)
+        self.assertEqual(quote.emphasis, "构建模型")
 
     def test_sync_site_structured_deactivates_removed_items(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -134,6 +151,17 @@ class StructuredSiteSyncCommandTests(TestCase):
                 | 旧照片 | https://raw.githubusercontent.com/hqy2020/obsidian-images/main/gallery/old.jpg | 是 |
                 """,
             )
+            _write(
+                vault / INSIGHT_NOTE,
+                """
+                # 人生感悟
+
+                | 感悟 | 类型 | 是否启用 |
+                | --- | --- | --- |
+                | 保留感悟 | insight | 是 |
+                | 旧感悟 | insight | 是 |
+                """,
+            )
 
             call_command("sync_site_structured", "--vault", str(vault))
 
@@ -167,6 +195,16 @@ class StructuredSiteSyncCommandTests(TestCase):
                 | 保留照片 | https://raw.githubusercontent.com/hqy2020/obsidian-images/main/gallery/keep.jpg | 是 |
                 """,
             )
+            _write(
+                vault / INSIGHT_NOTE,
+                """
+                # 人生感悟
+
+                | 感悟 | 类型 | 是否启用 |
+                | --- | --- | --- |
+                | 保留感悟 | insight | 是 |
+                """,
+            )
 
             call_command("sync_site_structured", "--vault", str(vault))
 
@@ -176,6 +214,8 @@ class StructuredSiteSyncCommandTests(TestCase):
         self.assertFalse(Book.objects.get(title="旧书").is_active)
         self.assertTrue(PhotoWallImage.objects.get(title="保留照片").is_public)
         self.assertFalse(PhotoWallImage.objects.get(title="旧照片").is_public)
+        self.assertTrue(WikiQuote.objects.get(text="保留感悟").is_active)
+        self.assertFalse(WikiQuote.objects.get(text="旧感悟").is_active)
 
     @patch("blog.management.commands.sync_site_structured.upload_photo_to_obsidian_images")
     def test_sync_site_structured_uploads_local_photo_assets(self, mock_upload):
@@ -203,6 +243,7 @@ class StructuredSiteSyncCommandTests(TestCase):
             _write(vault / SOCIAL_NOTE, "# 平台数据")
             _write(vault / WISH_NOTE, "# 愿望清单")
             _write(vault / BOOK_NOTE, "# 书架")
+            _write(vault / INSIGHT_NOTE, "# 人生感悟")
 
             call_command("sync_site_structured", "--vault", str(vault))
 
@@ -210,6 +251,94 @@ class StructuredSiteSyncCommandTests(TestCase):
         self.assertEqual(photo.image_url, MockUploadResult.image_url)
         self.assertEqual(photo.source_url, MockUploadResult.source_url)
         self.assertEqual(mock_upload.call_count, 1)
+
+    @patch("blog.management.commands.sync_site_structured.upload_photo_to_obsidian_images")
+    def test_sync_site_structured_uploads_vault_repo_photo_urls_only_once(self, mock_upload):
+        class MockUploadResult:
+            image_url = "https://raw.githubusercontent.com/hqy2020/obsidian-images/main/gallery/vault-uploaded.jpg"
+            source_url = "https://github.com/hqy2020/obsidian-images/blob/main/gallery/vault-uploaded.jpg"
+
+        mock_upload.return_value = MockUploadResult()
+
+        with tempfile.TemporaryDirectory() as tmp:
+            vault = Path(tmp)
+            local_image = vault / SYNC_ROOT / "01_照片墙" / "assets" / "sample.jpg"
+            local_image.parent.mkdir(parents=True, exist_ok=True)
+            local_image.write_bytes(b"fake-jpg")
+            _write(
+                vault / PHOTO_NOTE,
+                """
+                # 照片墙
+
+                | 标题 | 图片 | 是否公开 |
+                | --- | --- | --- |
+                | 仓库图片 | https://raw.githubusercontent.com/hqy2020/GardenOfOpeningClouds/main/2-Resource/90_%E7%BD%91%E7%AB%99%E5%90%8C%E6%AD%A5/01_%E7%85%A7%E7%89%87%E5%A2%99/assets/sample.jpg | 是 |
+                """,
+            )
+            _write(vault / SOCIAL_NOTE, "# 平台数据")
+            _write(vault / WISH_NOTE, "# 愿望清单")
+            _write(vault / BOOK_NOTE, "# 书架")
+            _write(vault / INSIGHT_NOTE, "# 人生感悟")
+
+            call_command("sync_site_structured", "--vault", str(vault))
+            call_command("sync_site_structured", "--vault", str(vault))
+
+        photo = PhotoWallImage.objects.get(title="仓库图片")
+        self.assertEqual(photo.image_url, MockUploadResult.image_url)
+        self.assertEqual(photo.source_url, MockUploadResult.source_url)
+        self.assertEqual(mock_upload.call_count, 1)
+
+    def test_sync_site_structured_remote_mode_uploads_local_photo_asset(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            vault = Path(tmp)
+            local_image = vault / SYNC_ROOT / "01_照片墙" / "assets" / "sample.jpg"
+            local_image.parent.mkdir(parents=True, exist_ok=True)
+            local_image.write_bytes(b"fake-jpg")
+            _write(
+                vault / PHOTO_NOTE,
+                """
+                # 照片墙
+
+                | 标题 | 图片 | 是否公开 |
+                | --- | --- | --- |
+                | 远端本地图片 | ![[assets/sample.jpg]] | 是 |
+                """,
+            )
+
+            with patch.dict(os.environ, {"TEST_SYNC_TOKEN": "sync-token"}, clear=False):
+                with patch(
+                    "blog.management.commands.sync_site_structured._post_remote_multipart",
+                    return_value={"action": "created"},
+                ) as remote_upload:
+                    with patch(
+                        "blog.management.commands.sync_site_structured._post_remote_json",
+                        return_value={"action": "updated", "deactivated": 0},
+                    ) as remote_json:
+                        call_command(
+                            "sync_site_structured",
+                            "--vault",
+                            str(vault),
+                            "--target",
+                            "remote",
+                            "--remote-base-url",
+                            "https://example.com/api",
+                            "--remote-token-env",
+                            "TEST_SYNC_TOKEN",
+                            "--skip-social",
+                            "--skip-wishes",
+                            "--skip-books",
+                            "--skip-quotes",
+                        )
+
+        self.assertEqual(remote_upload.call_count, 1)
+        self.assertEqual(remote_json.call_count, 1)
+        upload_args = remote_upload.call_args
+        self.assertIn("admin/obsidian-sync/photos/", upload_args.args[0])
+        self.assertEqual(upload_args.kwargs["file_name"], "sample.jpg")
+        self.assertEqual(upload_args.kwargs["file_content"], b"fake-jpg")
+        reconcile_payload = remote_json.call_args.args[2]
+        self.assertEqual(reconcile_payload["obsidian_path"], PHOTO_NOTE)
+        self.assertEqual(len(reconcile_payload["active_sync_keys"]), 1)
 
 
 class SiteSyncPipelineCommandTests(TestCase):

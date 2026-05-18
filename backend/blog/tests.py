@@ -1001,6 +1001,68 @@ class AdminApiTests(TestCase):
         self.assertEqual(post.tags, ["kb"])
 
     @override_settings(OBSIDIAN_SYNC_TOKEN="sync-token")
+    def test_obsidian_photo_sync_uploads_local_asset_with_token(self):
+        upload = SimpleUploadedFile("sample.jpg", b"fake-jpg", content_type="image/jpeg")
+        with patch(
+            "blog.views.upload_photo_to_obsidian_images",
+            return_value=type(
+                "UploadResult",
+                (),
+                {
+                    "image_url": "https://raw.githubusercontent.com/hqy2020/obsidian-images/main/gallery/from-token.jpg",
+                    "source_url": "https://github.com/hqy2020/obsidian-images/blob/main/gallery/from-token.jpg",
+                },
+            )(),
+        ):
+            resp = self.client.post(
+                reverse("admin-obsidian-photo-sync"),
+                {
+                    "title": "Token 照片",
+                    "description": "from local asset",
+                    "image_file": upload,
+                    "obsidian_path": "2-Resource/90_网站同步/01_照片墙/照片墙.md",
+                    "sync_key": "photo-sync-key",
+                    "sort_order": "19",
+                    "is_public": "true",
+                },
+                format="multipart",
+                HTTP_X_OBSIDIAN_SYNC_TOKEN="sync-token",
+            )
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["data"]["action"], "created")
+        photo = PhotoWallImage.objects.get(sync_key="photo-sync-key")
+        self.assertEqual(photo.title, "Token 照片")
+        self.assertTrue(photo.image_url.endswith("/from-token.jpg"))
+        self.assertEqual(photo.obsidian_path, "2-Resource/90_网站同步/01_照片墙/照片墙.md")
+
+    @override_settings(OBSIDIAN_SYNC_TOKEN="sync-token")
+    def test_obsidian_photo_reconcile_deactivates_missing_rows(self):
+        PhotoWallImage.objects.create(
+            title="旧同步照片",
+            image_url="https://raw.githubusercontent.com/hqy2020/obsidian-images/main/gallery/old-sync.jpg",
+            source_url="https://github.com/hqy2020/obsidian-images/blob/main/gallery/old-sync.jpg",
+            is_public=True,
+            sort_order=9,
+            obsidian_path="2-Resource/90_网站同步/01_照片墙/照片墙.md",
+            sync_key="old-sync-key",
+        )
+
+        resp = self.client.post(
+            reverse("admin-obsidian-photo-reconcile"),
+            {
+                "obsidian_path": "2-Resource/90_网站同步/01_照片墙/照片墙.md",
+                "active_sync_keys": ["new-sync-key"],
+            },
+            format="json",
+            HTTP_X_OBSIDIAN_SYNC_TOKEN="sync-token",
+        )
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["data"]["deactivated"], 1)
+        self.assertFalse(PhotoWallImage.objects.get(sync_key="old-sync-key").is_public)
+
+    @override_settings(OBSIDIAN_SYNC_TOKEN="sync-token")
     def test_obsidian_sync_same_slug_different_path_creates_new_post(self):
         Post.objects.create(
             title="ThreadLocal A",

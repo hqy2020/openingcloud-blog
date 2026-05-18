@@ -843,6 +843,7 @@ class WikiQuote(TimeStampedModel):
     emphasis = models.CharField(max_length=64, blank=True, default="", help_text="金句中要被黄色滑动高亮的关键子串；留空则整句高亮")
     tier = models.CharField(max_length=16, choices=Tier.choices, default=Tier.INSIGHT, db_index=True)
     source = models.CharField(max_length=120, blank=True, default="", help_text="来源标注，如 WHOAMI 或 entity 文件名")
+    obsidian_path = models.CharField(max_length=500, blank=True, db_index=True, verbose_name="Obsidian 路径")
     sort_order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True, db_index=True)
 

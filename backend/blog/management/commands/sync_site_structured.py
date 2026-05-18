@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import mimetypes
 import os
 import re
@@ -8,14 +9,18 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
+from urllib.error import HTTPError, URLError
+from urllib.parse import unquote
+from urllib.request import Request, urlopen
 
+from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils.dateparse import parse_date
 
 from blog.image_bed import ImageBedUploadError, upload_photo_to_obsidian_images
-from blog.models import Book, PhotoWallImage, SocialMediaStat, WishItem
+from blog.models import Book, PhotoWallImage, SocialMediaStat, WikiQuote, WishItem
 
 
 DEFAULT_SYNC_ROOT = "2-Resource/90_网站同步"
@@ -23,6 +28,7 @@ DEFAULT_PHOTO_FILE = "01_照片墙/照片墙.md"
 DEFAULT_SOCIAL_FILE = "02_自媒体/平台数据.md"
 DEFAULT_WISH_FILE = "03_愿望清单/愿望清单.md"
 DEFAULT_BOOK_FILE = "04_书架/书架.md"
+DEFAULT_INSIGHT_FILE = "05_人生感悟/人生感悟.md"
 
 PLATFORM_ALIASES = {
     "bilibili": "bilibili",
@@ -205,6 +211,13 @@ def _normalize_status(value: str) -> str:
     return Book.Status.FINISHED
 
 
+def _normalize_quote_tier(value: str) -> str:
+    text = str(value or "").strip().lower()
+    if text in {"creed", "五信条", "信条"}:
+        return WikiQuote.Tier.CREED
+    return WikiQuote.Tier.INSIGHT
+
+
 def _normalize_platform(value: str) -> str:
     text = str(value or "").strip()
     if not text:
@@ -223,6 +236,38 @@ def _normalize_github_image_url(url: str) -> tuple[str, str]:
         suffix = text.removeprefix(GITHUB_RAW_PREFIX)
         return text, f"{GITHUB_BLOB_PREFIX}{suffix}"
     return text, ""
+
+
+def _build_repo_prefixes(repo_url: str, branch: str) -> tuple[str, str] | None:
+    text = str(repo_url or "").strip()
+    branch_name = str(branch or "").strip() or "main"
+    match = re.fullmatch(r"https://github\.com/(?P<owner>[^/]+)/(?P<repo>[^/]+?)(?:\.git)?/?", text)
+    if not match:
+        return None
+    owner = match.group("owner")
+    repo = match.group("repo")
+    return (
+        f"https://raw.githubusercontent.com/{owner}/{repo}/{branch_name}/",
+        f"https://github.com/{owner}/{repo}/blob/{branch_name}/",
+    )
+
+
+def _extract_vault_repo_relative_path(url: str) -> str:
+    prefixes = _build_repo_prefixes(
+        getattr(settings, "OBSIDIAN_VAULT_REPO_URL", ""),
+        getattr(settings, "OBSIDIAN_VAULT_REPO_BRANCH", "main"),
+    )
+    if not prefixes:
+        return ""
+
+    text = str(url or "").strip()
+    normalized_url, _ = _normalize_github_image_url(text)
+    raw_prefix, blob_prefix = prefixes
+    if normalized_url.startswith(raw_prefix):
+        return unquote(normalized_url.removeprefix(raw_prefix))
+    if text.startswith(blob_prefix):
+        return unquote(text.removeprefix(blob_prefix))
+    return ""
 
 
 def _extract_image_reference(value: str) -> str:
@@ -257,6 +302,101 @@ def _build_photo_sync_key(note_rel: str, title: str, image_ref: str) -> str:
     return hashlib.sha1(f"{note_rel}|{title}|{image_ref}".encode("utf-8")).hexdigest()
 
 
+def _upload_photo_asset(local_path: Path) -> tuple[str, str]:
+    content = local_path.read_bytes()
+    content_type = mimetypes.guess_type(local_path.name)[0] or "application/octet-stream"
+    upload = SimpleUploadedFile(local_path.name, content, content_type=content_type)
+    try:
+        result = upload_photo_to_obsidian_images(upload, operator="obsidian-sync")
+    except ImageBedUploadError as exc:
+        raise CommandError(str(exc)) from exc
+    return result.image_url, result.source_url
+
+
+def _build_remote_url(base_url: str, endpoint: str) -> str:
+    return f"{base_url.rstrip('/')}/{endpoint.lstrip('/')}"
+
+
+def _post_remote_json(url: str, token: str, payload: dict, timeout_seconds: int) -> dict:
+    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    request = Request(
+        url=url,
+        data=body,
+        method="POST",
+        headers={
+            "Content-Type": "application/json",
+            "X-Obsidian-Sync-Token": token,
+        },
+    )
+    try:
+        with urlopen(request, timeout=timeout_seconds) as response:  # noqa: S310
+            data = json.loads(response.read().decode("utf-8"))
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="ignore")
+        raise CommandError(f"remote request failed: {exc.code} {detail}") from exc
+    except URLError as exc:
+        raise CommandError(f"remote request failed: {exc.reason}") from exc
+
+    if not isinstance(data, dict) or not data.get("ok"):
+        raise CommandError(f"remote response invalid: {data}")
+    return data.get("data", {})
+
+
+def _post_remote_multipart(
+    url: str,
+    token: str,
+    fields: dict[str, str],
+    *,
+    file_field_name: str,
+    file_name: str,
+    file_content: bytes,
+    content_type: str,
+    timeout_seconds: int,
+) -> dict:
+    boundary = f"----openingcloud-sync-{hashlib.sha1(os.urandom(16)).hexdigest()}"
+    body = bytearray()
+
+    for key, value in fields.items():
+        body.extend(f"--{boundary}\r\n".encode("utf-8"))
+        body.extend(f'Content-Disposition: form-data; name="{key}"\r\n\r\n'.encode("utf-8"))
+        body.extend(str(value).encode("utf-8"))
+        body.extend(b"\r\n")
+
+    body.extend(f"--{boundary}\r\n".encode("utf-8"))
+    body.extend(
+        (
+            f'Content-Disposition: form-data; name="{file_field_name}"; '
+            f'filename="{file_name}"\r\n'
+        ).encode("utf-8")
+    )
+    body.extend(f"Content-Type: {content_type}\r\n\r\n".encode("utf-8"))
+    body.extend(file_content)
+    body.extend(b"\r\n")
+    body.extend(f"--{boundary}--\r\n".encode("utf-8"))
+
+    request = Request(
+        url=url,
+        data=bytes(body),
+        method="POST",
+        headers={
+            "Content-Type": f"multipart/form-data; boundary={boundary}",
+            "X-Obsidian-Sync-Token": token,
+        },
+    )
+    try:
+        with urlopen(request, timeout=timeout_seconds) as response:  # noqa: S310
+            data = json.loads(response.read().decode("utf-8"))
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="ignore")
+        raise CommandError(f"remote request failed: {exc.code} {detail}") from exc
+    except URLError as exc:
+        raise CommandError(f"remote request failed: {exc.reason}") from exc
+
+    if not isinstance(data, dict) or not data.get("ok"):
+        raise CommandError(f"remote response invalid: {data}")
+    return data.get("data", {})
+
+
 def _resolve_photo_urls(
     *,
     vault: Path,
@@ -269,6 +409,15 @@ def _resolve_photo_urls(
     if not image_ref:
         raise CommandError(f"照片墙缺少图片地址: {note_path}")
 
+    vault_repo_relative_path = _extract_vault_repo_relative_path(image_ref)
+    if vault_repo_relative_path:
+        if existing and existing.image_url and not _extract_vault_repo_relative_path(existing.image_url):
+            return existing.image_url, existing.source_url
+        if dry_run:
+            return "", ""
+        local_path = _resolve_local_media_path(vault, note_path, vault_repo_relative_path)
+        return _upload_photo_asset(local_path)
+
     normalized_remote_url, derived_source_url = _normalize_github_image_url(image_ref)
     if normalized_remote_url.startswith("http://") or normalized_remote_url.startswith("https://"):
         return normalized_remote_url, derived_source_url
@@ -280,14 +429,7 @@ def _resolve_photo_urls(
         return "", ""
 
     local_path = _resolve_local_media_path(vault, note_path, image_ref)
-    content = local_path.read_bytes()
-    content_type = mimetypes.guess_type(local_path.name)[0] or "application/octet-stream"
-    upload = SimpleUploadedFile(local_path.name, content, content_type=content_type)
-    try:
-        result = upload_photo_to_obsidian_images(upload, operator="obsidian-sync")
-    except ImageBedUploadError as exc:
-        raise CommandError(str(exc)) from exc
-    return result.image_url, result.source_url
+    return _upload_photo_asset(local_path)
 
 
 def _sync_wishes(vault: Path, note_rel: str, *, dry_run: bool, stdout) -> SyncStats:
@@ -544,20 +686,192 @@ def _sync_photos(vault: Path, note_rel: str, *, dry_run: bool, stdout) -> SyncSt
     return stats
 
 
+def _sync_photos_remote(
+    vault: Path,
+    note_rel: str,
+    *,
+    dry_run: bool,
+    stdout,
+    remote_base_url: str,
+    remote_token: str,
+    request_timeout: int,
+) -> SyncStats:
+    stats = SyncStats()
+    note_path = vault / note_rel
+    if not note_path.exists():
+        stdout.write(f"skip photos: {note_rel} not found")
+        return stats
+
+    tables = _clean_tables(note_path)
+    if not tables:
+        stdout.write(f"skip photos: no markdown table found in {note_rel}")
+        return stats
+
+    header, rows = tables[0]
+    mapping = _header_map(header)
+    active_sync_keys: list[str] = []
+    sync_endpoint = _build_remote_url(remote_base_url, "admin/obsidian-sync/photos/")
+    reconcile_endpoint = _build_remote_url(remote_base_url, "admin/obsidian-sync/photos/reconcile/")
+
+    for index, row in enumerate(rows, start=1):
+        title = _cell(mapping, row, "标题", "title")
+        image_cell = _cell(mapping, row, "图片", "图片链接", "image", "image_url")
+        if not image_cell:
+            stats.skipped += 1
+            continue
+
+        sync_key = _cell(mapping, row, "同步键", "sync_key") or _build_photo_sync_key(note_rel, title, image_cell)
+        active_sync_keys.append(sync_key)
+        payload = {
+            "title": title,
+            "description": _cell(mapping, row, "描述", "说明", "description"),
+            "captured_at": _as_date(_cell(mapping, row, "拍摄日期", "日期", "captured_at")) or "",
+            "is_public": "true" if _as_bool(_cell(mapping, row, "是否公开", "公开", "is_public"), True) else "false",
+            "sort_order": str(_as_int(_cell(mapping, row, "排序", "sort_order"), index * 10)),
+            "obsidian_path": note_rel,
+            "sync_key": sync_key,
+            "dry_run": "true" if dry_run else "false",
+        }
+
+        image_ref = _extract_image_reference(image_cell)
+        manual_source_url = _cell(mapping, row, "来源链接", "source_url", "原图链接")
+        normalized_source_url = _normalize_github_image_url(manual_source_url)[1] if manual_source_url else ""
+        vault_repo_relative_path = _extract_vault_repo_relative_path(image_ref)
+
+        if vault_repo_relative_path:
+            local_path = _resolve_local_media_path(vault, note_path, vault_repo_relative_path)
+            file_content = local_path.read_bytes()
+            content_type = mimetypes.guess_type(local_path.name)[0] or "application/octet-stream"
+            response = _post_remote_multipart(
+                sync_endpoint,
+                remote_token,
+                payload,
+                file_field_name="image_file",
+                file_name=local_path.name,
+                file_content=file_content,
+                content_type=content_type,
+                timeout_seconds=request_timeout,
+            )
+        else:
+            normalized_remote_url, derived_source_url = _normalize_github_image_url(image_ref)
+            if normalized_remote_url.startswith("http://") or normalized_remote_url.startswith("https://"):
+                payload["image_url"] = normalized_remote_url
+                payload["source_url"] = normalized_source_url or derived_source_url or manual_source_url
+                response = _post_remote_json(sync_endpoint, remote_token, payload, request_timeout)
+            else:
+                local_path = _resolve_local_media_path(vault, note_path, image_ref)
+                file_content = local_path.read_bytes()
+                content_type = mimetypes.guess_type(local_path.name)[0] or "application/octet-stream"
+                response = _post_remote_multipart(
+                    sync_endpoint,
+                    remote_token,
+                    payload,
+                    file_field_name="image_file",
+                    file_name=local_path.name,
+                    file_content=file_content,
+                    content_type=content_type,
+                    timeout_seconds=request_timeout,
+                )
+
+        action = str(response.get("action") or "")
+        if action == "created":
+            stats.created += 1
+        elif action == "updated":
+            stats.updated += 1
+        else:
+            stats.skipped += 1
+
+    reconcile = _post_remote_json(
+        reconcile_endpoint,
+        remote_token,
+        {
+            "obsidian_path": note_rel,
+            "active_sync_keys": active_sync_keys,
+            "dry_run": dry_run,
+        },
+        request_timeout,
+    )
+    stats.deactivated += int(reconcile.get("deactivated") or 0)
+    return stats
+
+
+def _sync_quotes(vault: Path, note_rel: str, *, dry_run: bool, stdout) -> SyncStats:
+    stats = SyncStats()
+    note_path = vault / note_rel
+    if not note_path.exists():
+        stdout.write(f"skip quotes: {note_rel} not found")
+        return stats
+
+    tables = _clean_tables(note_path)
+    if not tables:
+        stdout.write(f"skip quotes: no markdown table found in {note_rel}")
+        return stats
+
+    header, rows = tables[0]
+    mapping = _header_map(header)
+    active_texts: set[str] = set()
+
+    with transaction.atomic():
+        for index, row in enumerate(rows, start=1):
+            text = _cell(mapping, row, "感悟", "文案", "金句", "内容", "text", "quote")
+            if not text:
+                stats.skipped += 1
+                continue
+
+            active_texts.add(text)
+            defaults = {
+                "emphasis": _cell(mapping, row, "高亮", "强调", "emphasis")[:64],
+                "tier": _normalize_quote_tier(_cell(mapping, row, "类型", "tier", "分类")),
+                "source": (_cell(mapping, row, "来源", "source") or "90_网站同步/人生感悟")[:120],
+                "obsidian_path": note_rel,
+                "sort_order": _as_int(_cell(mapping, row, "排序", "sort_order"), index * 10),
+                "is_active": _as_bool(_cell(mapping, row, "是否启用", "启用", "is_active"), True),
+            }
+            existing = WikiQuote.objects.filter(text=text).first()
+            if dry_run:
+                stats.updated += int(existing is not None)
+                stats.created += int(existing is None)
+                continue
+            if existing is None:
+                WikiQuote.objects.create(text=text[:240], **defaults)
+                stats.created += 1
+            else:
+                for field, value in defaults.items():
+                    setattr(existing, field, value)
+                existing.text = text[:240]
+                existing.save()
+                stats.updated += 1
+
+        if not dry_run:
+            for existing in WikiQuote.objects.filter(obsidian_path=note_rel, is_active=True):
+                if existing.text not in active_texts:
+                    existing.is_active = False
+                    existing.save(update_fields=["is_active", "updated_at"])
+                    stats.deactivated += 1
+
+    return stats
+
+
 class Command(BaseCommand):
     help = "Sync structured website source files from a dedicated Obsidian folder"
 
     def add_arguments(self, parser):
         parser.add_argument("--vault", default=os.environ.get("OBSIDIAN_VAULT_PATH", "/app/data/knowledge"))
         parser.add_argument("--root", default=os.environ.get("OBSIDIAN_SITE_SYNC_ROOT", DEFAULT_SYNC_ROOT))
+        parser.add_argument("--target", choices=["local", "remote"], default="local")
+        parser.add_argument("--remote-base-url", default=os.environ.get("OBSIDIAN_SYNC_BASE_URL", "https://blog.openingclouds.xyz/api"))
+        parser.add_argument("--remote-token-env", default="OBSIDIAN_SYNC_TOKEN")
+        parser.add_argument("--request-timeout", type=int, default=30)
         parser.add_argument("--photo-file", default=DEFAULT_PHOTO_FILE)
         parser.add_argument("--social-file", default=DEFAULT_SOCIAL_FILE)
         parser.add_argument("--wish-file", default=DEFAULT_WISH_FILE)
         parser.add_argument("--book-file", default=DEFAULT_BOOK_FILE)
+        parser.add_argument("--insight-file", default=DEFAULT_INSIGHT_FILE)
         parser.add_argument("--skip-photos", action="store_true")
         parser.add_argument("--skip-social", action="store_true")
         parser.add_argument("--skip-wishes", action="store_true")
         parser.add_argument("--skip-books", action="store_true")
+        parser.add_argument("--skip-quotes", action="store_true")
         parser.add_argument("--dry-run", action="store_true")
 
     def handle(self, *args, **options):
@@ -565,16 +879,44 @@ class Command(BaseCommand):
         if not vault.exists() or not vault.is_dir():
             raise CommandError(f"Invalid vault path: {vault}")
 
+        target = str(options["target"]).strip()
         root = str(options["root"] or "").strip().strip("/")
         if not root:
             raise CommandError("Structured sync root cannot be empty")
+
+        remote_base_url = str(options["remote_base_url"] or "").strip()
+        remote_token = ""
+        request_timeout = int(options["request_timeout"])
+        if target == "remote":
+            unsupported_requested = [
+                label
+                for label, skip_flag in (
+                    ("wishes", options["skip_wishes"]),
+                    ("books", options["skip_books"]),
+                    ("social", options["skip_social"]),
+                    ("quotes", options["skip_quotes"]),
+                )
+                if not skip_flag
+            ]
+            if unsupported_requested:
+                raise CommandError(
+                    "remote target currently only supports photos; add "
+                    + " ".join(f"--skip-{name}" for name in unsupported_requested)
+                )
+            remote_token_env = str(options["remote_token_env"] or "").strip() or "OBSIDIAN_SYNC_TOKEN"
+            remote_token = str(os.getenv(remote_token_env, "")).strip()
+            if not remote_token:
+                raise CommandError(f"Missing remote sync token in env: {remote_token_env}")
+            if not remote_base_url:
+                raise CommandError("--remote-base-url is required for remote target")
 
         photo_rel = f"{root}/{str(options['photo_file']).strip().lstrip('/')}"
         social_rel = f"{root}/{str(options['social_file']).strip().lstrip('/')}"
         wish_rel = f"{root}/{str(options['wish_file']).strip().lstrip('/')}"
         book_rel = f"{root}/{str(options['book_file']).strip().lstrip('/')}"
+        insight_rel = f"{root}/{str(options['insight_file']).strip().lstrip('/')}"
 
-        self.stdout.write(f"structured sync start: root={root}, dry_run={options['dry_run']}")
+        self.stdout.write(f"structured sync start: root={root}, target={target}, dry_run={options['dry_run']}")
 
         if not options["skip_wishes"]:
             stats = _sync_wishes(vault, wish_rel, dry_run=bool(options["dry_run"]), stdout=self.stdout)
@@ -595,7 +937,24 @@ class Command(BaseCommand):
             )
 
         if not options["skip_photos"]:
-            stats = _sync_photos(vault, photo_rel, dry_run=bool(options["dry_run"]), stdout=self.stdout)
+            if target == "remote":
+                stats = _sync_photos_remote(
+                    vault,
+                    photo_rel,
+                    dry_run=bool(options["dry_run"]),
+                    stdout=self.stdout,
+                    remote_base_url=remote_base_url,
+                    remote_token=remote_token,
+                    request_timeout=request_timeout,
+                )
+            else:
+                stats = _sync_photos(vault, photo_rel, dry_run=bool(options["dry_run"]), stdout=self.stdout)
             self.stdout.write(
                 f"photos: created={stats.created} updated={stats.updated} deactivated={stats.deactivated} skipped={stats.skipped}"
+            )
+
+        if not options["skip_quotes"]:
+            stats = _sync_quotes(vault, insight_rel, dry_run=bool(options["dry_run"]), stdout=self.stdout)
+            self.stdout.write(
+                f"quotes: created={stats.created} updated={stats.updated} deactivated={stats.deactivated} skipped={stats.skipped}"
             )

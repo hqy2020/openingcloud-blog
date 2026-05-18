@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-WORKSPACE="/Users/openingcloud/openingcloud-blog"
+WORKSPACE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VAULT_PATH="/Users/openingcloud/Documents/GardenOfOpeningClouds"
 TOKEN_ENV="${OBSIDIAN_SYNC_TOKEN_ENV:-OBSIDIAN_SYNC_TOKEN}"
 LOG_DIR="${OBSIDIAN_SYNC_LOG_DIR:-$HOME/Library/Logs}"
@@ -36,5 +36,15 @@ fi
     --include-root "3-Knowledge（知识库）" \
     --include-root "2-Resource（参考资源）" \
     --unpublish-behavior draft
+  "$WORKSPACE/backend/.venv/bin/python" "$WORKSPACE/backend/manage.py" sync_site_structured \
+    --vault "$VAULT_PATH" \
+    --root "${OBSIDIAN_SITE_SYNC_ROOT:-2-Resource/90_网站同步}" \
+    --target remote \
+    --remote-base-url "$BASE_URL" \
+    --remote-token-env "$TOKEN_ENV" \
+    --skip-social \
+    --skip-wishes \
+    --skip-books \
+    --skip-quotes
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] finished obsidian remote sync"
 } >>"$LOG_FILE" 2>&1

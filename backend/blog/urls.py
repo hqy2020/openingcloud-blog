@@ -12,6 +12,8 @@ from .views import (
     AdminHighlightStageDetailView,
     AdminHighlightsView,
     AdminObsidianReconcileView,
+    AdminObsidianPhotoReconcileView,
+    AdminObsidianPhotoSyncView,
     AdminObsidianSyncView,
     AdminPingView,
     AdminPhotoDetailView,
@@ -143,6 +145,8 @@ urlpatterns = [
     path("admin/books/<int:book_id>/", AdminBookDetailView.as_view()),
     path("admin/obsidian-sync/", AdminObsidianSyncView.as_view(), name="admin-obsidian-sync"),
     path("admin/obsidian-sync/reconcile/", AdminObsidianReconcileView.as_view(), name="admin-obsidian-reconcile"),
+    path("admin/obsidian-sync/photos/", AdminObsidianPhotoSyncView.as_view(), name="admin-obsidian-photo-sync"),
+    path("admin/obsidian-sync/photos/reconcile/", AdminObsidianPhotoReconcileView.as_view(), name="admin-obsidian-photo-reconcile"),
     path("admin/analytics", AdminAnalyticsView.as_view(), name="admin-analytics"),
     path("admin/analytics/", AdminAnalyticsView.as_view()),
 

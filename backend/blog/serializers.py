@@ -711,6 +711,45 @@ class AdminImageUploadSerializer(serializers.Serializer):
         return value
 
 
+class AdminObsidianPhotoSyncRequestSerializer(serializers.Serializer):
+    title = serializers.CharField(required=False, allow_blank=True)
+    description = serializers.CharField(required=False, allow_blank=True, default="")
+    image_url = serializers.CharField(required=False, allow_blank=True, default="")
+    image_file = serializers.FileField(required=False)
+    source_url = serializers.CharField(required=False, allow_blank=True, default="")
+    captured_at = serializers.DateField(required=False, allow_null=True)
+    is_public = serializers.BooleanField(required=False, default=True)
+    sort_order = serializers.IntegerField(required=False, default=0, min_value=0)
+    obsidian_path = serializers.CharField(required=False, allow_blank=True, default="")
+    sync_key = serializers.CharField(required=False, allow_blank=True, default="")
+    dry_run = serializers.BooleanField(required=False, default=False)
+
+    def validate(self, attrs):
+        title = str(attrs.get("title") or "").strip()
+        image_url = str(attrs.get("image_url") or "").strip()
+        image_file = attrs.get("image_file")
+
+        if not title:
+            raise serializers.ValidationError("title 必填")
+        if not image_url and image_file is None:
+            raise serializers.ValidationError("image_url 或 image_file 至少提供一个")
+        if image_url and image_file is not None:
+            raise serializers.ValidationError("image_url 和 image_file 只能二选一")
+
+        attrs["title"] = title
+        attrs["image_url"] = image_url
+        attrs["source_url"] = str(attrs.get("source_url") or "").strip()
+        attrs["obsidian_path"] = str(attrs.get("obsidian_path") or "").strip()
+        attrs["sync_key"] = str(attrs.get("sync_key") or "").strip()
+        return attrs
+
+
+class AdminObsidianPhotoReconcileRequestSerializer(serializers.Serializer):
+    obsidian_path = serializers.CharField()
+    active_sync_keys = serializers.ListField(child=serializers.CharField(), default=list)
+    dry_run = serializers.BooleanField(required=False, default=False)
+
+
 class AdminObsidianSyncRequestSerializer(serializers.Serializer):
     title = serializers.CharField(required=False, allow_blank=True)
     slug = serializers.SlugField(required=False, allow_blank=True)
