@@ -22,7 +22,6 @@ const headerTabs = [
   { to: "/#achievements", label: "高光", anchorId: "achievements" },
   { to: "/#projects", label: "代码", anchorId: "projects" },
   { to: "/#life", label: "生活", anchorId: "life" },
-  { to: "/#games", label: "游戏", anchorId: "games" },
 ];
 
 const navbarShadow = "var(--theme-shadow-lifted)";
@@ -49,13 +48,6 @@ const mobileDockItems: DockItem[] = [
     href: "/#life",
     icon: <WishlistDockIcon />,
     matchHashes: ["life"],
-  },
-  {
-    id: "games",
-    label: "Games",
-    href: "/#games",
-    icon: <GamepadDockIcon />,
-    matchHashes: ["games"],
   },
   {
     id: "influence",
@@ -274,15 +266,6 @@ function WishlistDockIcon() {
   );
 }
 
-function GamepadDockIcon() {
-  return (
-    <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 9.25h10.5a3.5 3.5 0 0 1 3.43 4.2l-.86 4.03a2.5 2.5 0 0 1-3.98 1.47l-1.98-1.53a3 3 0 0 0-3.72 0l-1.98 1.53a2.5 2.5 0 0 1-3.98-1.47l-.86-4.03a3.5 3.5 0 0 1 3.43-4.2Z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 12.5v3m-1.5-1.5h3m6-1.25h.01m1.99 1.75h.01" />
-    </svg>
-  );
-}
-
 function HamburgerIcon() {
   return (
     <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
@@ -317,6 +300,7 @@ export function AppLayout() {
   const mobileMenuOpen = mobileMenuOwnerKey === locationKey;
   const { scrollY } = useScroll();
   const currentHash = location.hash.replace(/^#/, "");
+  const isHomePage = location.pathname === "/";
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     const nextCompact = latest > 80;
@@ -332,16 +316,25 @@ export function AppLayout() {
           <motion.div
             animate={{
               boxShadow: compactNavbar ? navbarShadow : "none",
-              borderColor: compactNavbar ? "rgb(var(--theme-line-strong) / 0.85)" : "rgb(var(--theme-line) / 0)",
+              borderColor: compactNavbar ? "rgb(var(--theme-line-strong) / 0.78)" : "rgb(var(--theme-line) / 0)",
             }}
             transition={{
               type: "spring",
               stiffness: 220,
               damping: 36,
             }}
-            className="relative z-[60] hidden w-full overflow-hidden border-y border-theme-line/70 px-4 py-2 isolate lg:grid lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center lg:gap-4 lg:px-8 lg:py-4 xl:gap-6"
+            className={`
+              relative z-[60] hidden w-full overflow-hidden px-4 py-2 isolate lg:grid lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center lg:gap-4 lg:px-8 lg:py-4 xl:gap-6
+              ${isHomePage ? "border-b border-t-0 border-theme-line/0" : "border-y border-theme-line/70"}
+            `}
           >
-            <DistortedGlassSurface intensity={compactNavbar ? "regular" : "soft"} className="absolute inset-0" />
+            <DistortedGlassSurface
+              intensity={compactNavbar ? "regular" : "soft"}
+              className={isHomePage && !compactNavbar ? "absolute inset-0 opacity-70" : "absolute inset-0"}
+            />
+            {isHomePage && !compactNavbar ? (
+              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.38),rgba(255,255,255,0.16)_58%,rgba(255,255,255,0.04))]" />
+            ) : null}
 
             <NavLink
               aria-label="返回首页"
@@ -411,16 +404,25 @@ export function AppLayout() {
           <motion.div
             animate={{
               boxShadow: compactNavbar ? navbarShadow : "none",
-              borderColor: compactNavbar ? "rgb(var(--theme-line-strong) / 0.85)" : "rgb(var(--theme-line) / 0)",
+              borderColor: compactNavbar ? "rgb(var(--theme-line-strong) / 0.78)" : "rgb(var(--theme-line) / 0)",
             }}
             transition={{
               type: "spring",
               stiffness: 220,
               damping: 36,
             }}
-            className="relative z-50 flex w-full flex-col overflow-hidden border-y border-theme-line/70 px-3 py-2 isolate lg:hidden"
+            className={`
+              relative z-50 flex w-full flex-col overflow-hidden px-3 py-2 isolate lg:hidden
+              ${isHomePage ? "border-b border-t-0 border-theme-line/0" : "border-y border-theme-line/70"}
+            `}
           >
-            <DistortedGlassSurface intensity={compactNavbar ? "regular" : "soft"} className="absolute inset-0" />
+            <DistortedGlassSurface
+              intensity={compactNavbar ? "regular" : "soft"}
+              className={isHomePage && !compactNavbar ? "absolute inset-0 opacity-70" : "absolute inset-0"}
+            />
+            {isHomePage && !compactNavbar ? (
+              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.42),rgba(255,255,255,0.18)_62%,rgba(255,255,255,0.04))]" />
+            ) : null}
 
             <div className="relative z-10 flex w-full items-center justify-between">
               <NavLink
@@ -487,7 +489,12 @@ export function AppLayout() {
         </div>
       </header>
 
-      <main className="mx-auto w-full flex-1 px-[5%] pb-28 pt-20 sm:pb-8 sm:pt-24 lg:pb-8 lg:pt-40">
+      <main
+        className={`
+          mx-auto w-full flex-1 px-[5%] pb-28 sm:pb-8 lg:pb-8
+          ${isHomePage ? "pt-0" : "pt-20 sm:pt-24 lg:pt-40"}
+        `}
+      >
         <Outlet />
       </main>
 

@@ -160,13 +160,14 @@ export function HomeHero({ hero, quoteText }: HomeHeroProps) {
     <section
       id="hero"
       ref={sectionRef}
-      className="relative left-1/2 w-screen -translate-x-1/2 overflow-hidden scroll-mt-28 px-2 sm:px-5"
+      className="relative left-1/2 w-screen -translate-x-1/2 overflow-hidden scroll-mt-28 px-0"
       style={heroLensStyle}
       onPointerMove={handlePointerMove}
       onPointerLeave={() => setLensActive(false)}
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_16%_12%,rgba(255,255,255,0.94),transparent_24%),radial-gradient(circle_at_50%_-6%,rgba(255,255,255,0.78),transparent_38%),radial-gradient(circle_at_82%_18%,rgba(247,146,55,0.18),transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.82),rgba(255,255,255,0)_44%,rgba(247,146,55,0.07)_100%)]" />
-      <div className="pointer-events-none absolute inset-0 opacity-[0.28] [background-image:radial-gradient(circle_at_center,rgba(247,146,55,0.26)_0,rgba(247,146,55,0.26)_1px,transparent_1.5px)] [background-size:2.1rem_2.1rem]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_16%_10%,rgba(255,255,255,0.94),transparent_22%),radial-gradient(circle_at_50%_-4%,rgba(255,255,255,0.82),transparent_34%),radial-gradient(circle_at_84%_16%,rgba(247,146,55,0.18),transparent_26%),linear-gradient(180deg,rgba(255,252,248,0.96),rgba(255,249,243,0.92)_24%,rgba(255,255,255,0.78)_46%,rgba(247,146,55,0.06)_100%)]" />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.2] [background-image:linear-gradient(to_right,rgba(17,24,39,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(17,24,39,0.04)_1px,transparent_1px),radial-gradient(circle_at_center,rgba(247,146,55,0.24)_0,rgba(247,146,55,0.24)_1px,transparent_1.6px)] [background-size:clamp(3rem,6vw,5rem)_clamp(3rem,6vw,5rem),clamp(3rem,6vw,5rem)_clamp(3rem,6vw,5rem),2.1rem_2.1rem]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[28vh] bg-[linear-gradient(180deg,rgba(255,255,255,0.48),rgba(255,255,255,0.08)_70%,transparent)]" />
       <div className="pointer-events-none absolute inset-0 hidden sm:block">
         <HeroBackdropLayer
           eyeTitle="Keyon"
@@ -193,8 +194,8 @@ export function HomeHero({ hero, quoteText }: HomeHeroProps) {
           variant="reveal"
         />
       </div>
-      <div className="relative min-h-[84vh] sm:min-h-[calc(100vh-5rem)]">
-        <div className="relative z-10 mx-auto flex min-h-[84vh] w-full max-w-7xl items-start justify-center px-2 pt-8 pb-44 sm:min-h-[calc(100vh-5rem)] sm:px-6 sm:pt-18 sm:pb-44 lg:pt-18 lg:pb-48">
+      <div className="relative min-h-[90vh] sm:min-h-screen">
+        <div className="relative z-10 mx-auto flex min-h-[90vh] w-full max-w-7xl items-start justify-center px-2 pt-18 pb-44 sm:min-h-screen sm:px-6 sm:pt-24 sm:pb-44 lg:pt-26 lg:pb-48">
           <motion.div
             initial={{ opacity: 0, y: 16, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -210,10 +211,10 @@ export function HomeHero({ hero, quoteText }: HomeHeroProps) {
           </motion.div>
         </div>
         <div className="absolute inset-x-4 bottom-6 z-20 sm:inset-x-8 lg:bottom-10">
-          <div className="mx-auto flex max-w-6xl flex-col gap-4 rounded-[1.75rem] border border-white/80 bg-white/78 px-4 py-4 shadow-[0_24px_64px_rgba(15,23,42,0.12)] backdrop-blur-xl sm:px-6 sm:py-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="mx-auto flex max-w-6xl flex-col gap-4 rounded-[1.75rem] border border-white/80 bg-white/74 px-4 py-4 shadow-[0_24px_64px_rgba(15,23,42,0.12)] backdrop-blur-xl sm:px-6 sm:py-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-3">
               <div className="flex flex-wrap gap-2">
-                {["MiMo Hero", "Hermes Rhythm", "Personal Homepage"].map((item) => (
+                {["MiMo Hero", "Hermes Field", "Personal Homepage"].map((item) => (
                   <span
                     key={item}
                     className="rounded-full border border-black/8 bg-black/[0.03] px-3 py-1 font-theme-sans text-[10px] font-semibold uppercase tracking-[0.24em] text-theme-soft"
@@ -222,7 +223,7 @@ export function HomeHero({ hero, quoteText }: HomeHeroProps) {
                   </span>
                 ))}
               </div>
-              <p className="max-w-2xl font-theme-body text-sm leading-7 text-theme-muted sm:text-[15px]">
+              <p className="max-w-2xl font-theme-body text-sm leading-6 text-theme-muted sm:text-[15px]">
                 {heroNarrative}
               </p>
             </div>

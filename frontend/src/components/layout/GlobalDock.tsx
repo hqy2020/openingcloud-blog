@@ -30,15 +30,6 @@ function ArticleIcon() {
   );
 }
 
-function GamepadIcon() {
-  return (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 9.25h10.5a3.5 3.5 0 0 1 3.43 4.2l-.86 4.03a2.5 2.5 0 0 1-3.98 1.47l-1.98-1.53a3 3 0 0 0-3.72 0l-1.98 1.53a2.5 2.5 0 0 1-3.98-1.47l-.86-4.03a3.5 3.5 0 0 1 3.43-4.2Z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 12.5v3m-1.5-1.5h3m6-1.25h.01m1.99 1.75h.01" />
-    </svg>
-  );
-}
-
 function AdminIcon() {
   return (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24">
@@ -212,9 +203,6 @@ export function GlobalDock() {
             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[rgb(var(--theme-surface-raised))] ring-2 ring-theme-accent" />
           </span>
         </span>
-      </DockIcon>
-      <DockIcon label="游戏" href="/#games">
-        <GamepadIcon />
       </DockIcon>
       {like.enabled ? (
         <DockIcon label={`点赞 ${like.count}`} onClick={like.toggle}>

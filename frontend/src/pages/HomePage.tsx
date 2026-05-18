@@ -187,10 +187,10 @@ export function HomePage() {
       {/* #6 Life Section (consolidated) */}
       <SectionParallaxTransition strength={26}>
         <SectionTitleCard
-          category="Life System"
+          category="Life"
           title="生活时间轴"
-          meta="Timeline • Travel • Game Log"
-          tagline="把时间、旅行、照片、关系和游戏放回同一个叙事里，让生活区真正像一张持续展开的首页。"
+          meta="Timeline • Travel"
+          tagline="把时间、旅行和偏好放回同一条生活线。"
         />
         <SectionCard
           id="life"
@@ -203,9 +203,7 @@ export function HomePage() {
               <TimeAreaSection timeline={timelineNodes} timeSeries={payload.time_series} />
             </SafeBoundary>
 
-            {/* Timeline + right column (2 columns) */}
-            <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_minmax(340px,0.92fr)]">
-              {/* Left: Timeline + Games */}
+            <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)]">
               <div className="space-y-6">
                 <SafeBoundary label="TimelineSection">
                   <TimelineSection nodes={timelineNodes} />
@@ -214,19 +212,7 @@ export function HomePage() {
                   <GameVaultSection games={payload.games ?? []} embedded compact />
                 </SafeBoundary>
               </div>
-              {/* Right: Travel + Social + Stats + Radar + Photo + Dream */}
               <div className="space-y-8">
-                <div className="rounded-[calc(var(--theme-radius)+10px)] border border-theme-line/80 bg-theme-surface px-6 py-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
-                  <p className="font-theme-sans text-[10px] font-semibold uppercase tracking-[0.28em] text-theme-soft">
-                    Life Dashboard
-                  </p>
-                  <h3 className="mt-3 font-theme-display text-2xl font-semibold leading-tight text-theme-ink md:text-[2rem]">
-                    时间轴之外，还有旅行、社交、照片、愿望与阅读在一起补全生活的纹理。
-                  </h3>
-                  <p className="mt-3 font-theme-body text-sm leading-7 text-theme-muted">
-                    这里不再把兴趣拆成孤立页面，而是让每一块内容都回到同一张生活首页里，保持你原来那种更完整、更有叙事感的首页节奏。
-                  </p>
-                </div>
                 <SafeBoundary label="TravelSection">
                   <TravelSection travel={payload.travel} />
                 </SafeBoundary>
