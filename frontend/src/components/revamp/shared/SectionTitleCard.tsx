@@ -24,56 +24,54 @@ export function SectionTitleCard({ category, title, tagline, meta }: SectionTitl
       initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
       animate={shouldAnimate ? { opacity: 1, y: 0 } : undefined}
       transition={{ duration: 0.5, ease }}
-      className="mb-5 flex w-full items-start gap-5 rounded-[var(--theme-radius)] border border-theme-line bg-theme-surface px-6 py-7 shadow-[var(--theme-shadow-whisper)] sm:px-8 sm:py-8"
+      className="group relative mb-5 overflow-hidden rounded-[calc(var(--theme-radius)+10px)] border border-theme-line/80 bg-theme-surface shadow-[0_18px_42px_rgba(15,23,42,0.08)] sm:shadow-[0_24px_60px_rgba(15,23,42,0.1)]"
     >
-      <motion.div
-        aria-hidden="true"
-        className="mt-1 h-14 w-[3px] flex-shrink-0 origin-top rounded-full bg-theme-accent sm:h-16"
-        initial={prefersReducedMotion ? false : { scaleY: 0 }}
-        animate={shouldAnimate ? { scaleY: 1 } : undefined}
-        transition={{ duration: 0.6, ease, delay: 0.05 }}
-      />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.88),transparent_28%),linear-gradient(135deg,rgba(255,255,255,0.18),transparent_54%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-theme-accent/40 to-transparent" />
 
-      <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
-        <div className="min-w-0 shrink-0">
+      <div className="relative flex min-w-0 flex-col gap-4 px-6 py-6 sm:px-8 sm:py-7 lg:flex-row lg:items-end lg:justify-between">
+        <div className="min-w-0">
           <motion.span
-            className="block font-theme-sans text-[10px] font-medium uppercase tracking-[0.5em] text-theme-soft"
-            initial={prefersReducedMotion ? false : { opacity: 0, x: -8 }}
-            animate={shouldAnimate ? { opacity: 1, x: 0 } : undefined}
-            transition={{ duration: 0.5, ease, delay: 0.15 }}
+            className="inline-flex items-center gap-2 rounded-full border border-theme-line bg-theme-surface-raised/90 px-3 py-1 font-theme-sans text-[10px] font-semibold uppercase tracking-[0.32em] text-theme-soft"
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
+            animate={shouldAnimate ? { opacity: 1, y: 0 } : undefined}
+            transition={{ duration: 0.45, ease, delay: 0.1 }}
           >
+            <span className="h-2 w-2 rounded-full bg-theme-accent" />
             {category}
           </motion.span>
           <motion.h2
-            className="mt-2 font-theme-display text-3xl font-medium leading-[1.1] tracking-normal text-theme-accent sm:text-4xl"
+            className="mt-4 font-theme-display text-3xl font-semibold leading-[1.02] tracking-[-0.03em] text-theme-ink sm:text-4xl xl:text-[3.2rem]"
             initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
             animate={shouldAnimate ? { opacity: 1, y: 0 } : undefined}
-            transition={{ duration: 0.55, ease, delay: 0.22 }}
+            transition={{ duration: 0.55, ease, delay: 0.18 }}
           >
             {title}
           </motion.h2>
-          {meta ? (
-            <motion.span
-              className="mt-2 block font-theme-sans text-xs font-normal text-theme-soft"
+          {tagline ? (
+            <motion.p
+              className="mt-3 max-w-2xl font-theme-body text-[15px] leading-7 text-theme-muted sm:text-base"
               initial={prefersReducedMotion ? false : { opacity: 0 }}
               animate={shouldAnimate ? { opacity: 1 } : undefined}
-              transition={{ duration: 0.5, ease, delay: 0.32 }}
+              transition={{ duration: 0.6, ease, delay: 0.28 }}
+            >
+              {tagline}
+            </motion.p>
+          ) : null}
+        </div>
+
+        <div className="flex shrink-0 flex-col gap-3 lg:items-end">
+          {meta ? (
+            <motion.span
+              className="inline-flex rounded-full border border-theme-line bg-theme-surface-raised/90 px-4 py-2 font-theme-sans text-[11px] font-semibold uppercase tracking-[0.28em] text-theme-soft"
+              initial={prefersReducedMotion ? false : { opacity: 0 }}
+              animate={shouldAnimate ? { opacity: 1 } : undefined}
+              transition={{ duration: 0.5, ease, delay: 0.34 }}
             >
               {meta}
             </motion.span>
           ) : null}
         </div>
-
-        {tagline ? (
-          <motion.p
-            className="max-w-md font-theme-body text-[15px] leading-[1.6] text-theme-muted sm:text-right"
-            initial={prefersReducedMotion ? false : { opacity: 0 }}
-            animate={shouldAnimate ? { opacity: 1 } : undefined}
-            transition={{ duration: 0.6, ease, delay: 0.35 }}
-          >
-            {tagline}
-          </motion.p>
-        ) : null}
       </div>
     </motion.div>
   );

@@ -9,16 +9,32 @@ export type DockItem = {
   icon: ReactNode;
   external?: boolean;
   matchPaths?: string[];
+  matchHashes?: string[];
 };
 
 type MagicDockProps = {
   items: DockItem[];
   pathname: string;
+  hash?: string;
   className?: string;
 };
 
-function isItemActive(item: DockItem, pathname: string) {
-  if (!item.matchPaths || item.matchPaths.length === 0) {
+function normalizeHash(hash?: string) {
+  return hash?.replace(/^#/, "") ?? "";
+}
+
+function isItemActive(item: DockItem, pathname: string, hash?: string) {
+  const currentHash = normalizeHash(hash);
+
+  if (pathname === "/" && currentHash) {
+    return Array.isArray(item.matchHashes) ? item.matchHashes.includes(currentHash) : false;
+  }
+
+  if (Array.isArray(item.matchHashes) && item.matchHashes.includes(currentHash) && pathname === "/") {
+    return true;
+  }
+
+  if (!Array.isArray(item.matchPaths) || item.matchPaths.length === 0) {
     return false;
   }
   return item.matchPaths.some((path) => path === pathname);
@@ -45,7 +61,7 @@ function ItemContent({ item, active }: { item: DockItem; active: boolean }) {
   );
 }
 
-export function MagicDock({ items, pathname, className }: MagicDockProps) {
+export function MagicDock({ items, pathname, hash, className }: MagicDockProps) {
   return (
     <nav
       aria-label="Dock 导航"
@@ -57,7 +73,7 @@ export function MagicDock({ items, pathname, className }: MagicDockProps) {
       >
         <ul className="flex items-center gap-2">
           {items.map((item) => {
-            const active = isItemActive(item, pathname);
+            const active = isItemActive(item, pathname, hash);
             const sharedClassName = "inline-flex items-center justify-center rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-line";
             return (
               <li key={item.id}>

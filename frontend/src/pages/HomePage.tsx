@@ -186,24 +186,47 @@ export function HomePage() {
 
       {/* #6 Life Section (consolidated) */}
       <SectionParallaxTransition strength={26}>
-        <SectionTitleCard category="Life" title="生活" accentColor="#c96442" tagline="记录走过的路、遇见的人、看过的风景。" />
-        <SectionCard id="life">
-          <div className="space-y-12">
+        <SectionTitleCard
+          category="Life System"
+          title="生活时间轴"
+          meta="Timeline • Travel • Game Log"
+          tagline="把时间、旅行、照片、关系和游戏放回同一个叙事里，让生活区真正像一张持续展开的首页。"
+        />
+        <SectionCard
+          id="life"
+          className="relative overflow-hidden rounded-[2.75rem] border border-theme-line/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(246,246,247,0.88))] px-3 py-4 shadow-[0_28px_70px_rgba(15,23,42,0.08)] md:px-5 md:py-6 lg:px-7"
+        >
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.9),transparent_26%),radial-gradient(circle_at_bottom_right,rgba(247,146,55,0.08),transparent_28%)]" />
+          <div className="relative space-y-12">
             {/* Time (full-width chart) */}
             <SafeBoundary label="TimeAreaSection">
               <TimeAreaSection timeline={timelineNodes} timeSeries={payload.time_series} />
             </SafeBoundary>
 
             {/* Timeline + right column (2 columns) */}
-            <div className="grid gap-8 lg:grid-cols-2">
-              {/* Left: Timeline (long list) */}
-              <div>
+            <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_minmax(340px,0.92fr)]">
+              {/* Left: Timeline + Games */}
+              <div className="space-y-6">
                 <SafeBoundary label="TimelineSection">
                   <TimelineSection nodes={timelineNodes} />
+                </SafeBoundary>
+                <SafeBoundary label="GameVaultSection">
+                  <GameVaultSection games={payload.games ?? []} embedded compact />
                 </SafeBoundary>
               </div>
               {/* Right: Travel + Social + Stats + Radar + Photo + Dream */}
               <div className="space-y-8">
+                <div className="rounded-[calc(var(--theme-radius)+10px)] border border-theme-line/80 bg-theme-surface px-6 py-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+                  <p className="font-theme-sans text-[10px] font-semibold uppercase tracking-[0.28em] text-theme-soft">
+                    Life Dashboard
+                  </p>
+                  <h3 className="mt-3 font-theme-display text-2xl font-semibold leading-tight text-theme-ink md:text-[2rem]">
+                    时间轴之外，还有旅行、社交、照片、愿望与阅读在一起补全生活的纹理。
+                  </h3>
+                  <p className="mt-3 font-theme-body text-sm leading-7 text-theme-muted">
+                    这里不再把兴趣拆成孤立页面，而是让每一块内容都回到同一张生活首页里，保持你原来那种更完整、更有叙事感的首页节奏。
+                  </p>
+                </div>
                 <SafeBoundary label="TravelSection">
                   <TravelSection travel={payload.travel} />
                 </SafeBoundary>
@@ -211,7 +234,6 @@ export function HomePage() {
                 <StatsSection stats={payload.stats} />
                 <DualRadarSection radarData={payload.radar_charts} />
                 <PhotoWallSection photos={photoWallItems} />
-                <GameVaultSection games={payload.games ?? []} compact showExplorerLink />
                 <DreamSection wishes={payload.wishes ?? []} />
                 <BookshelfSection books={payload.books ?? []} />
               </div>

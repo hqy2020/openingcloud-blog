@@ -25,7 +25,7 @@ type OrbitingBadge = {
   imageClassName?: string;
 };
 
-const ORBIT_RADIUS_SCALE = 0.82;
+const ORBIT_RADIUS_SCALE = 0.88;
 const ORBIT_ELLIPSE_X_SCALE = 1.0;
 const ORBIT_ELLIPSE_Y_SCALE = 1.0;
 
@@ -166,10 +166,10 @@ export function OrbitingProfileCard({
     <div
       className={cn("relative mx-auto", className)}
     >
-      <div className="absolute left-1/2 top-1/2 z-[1] aspect-square w-full -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-dashed border-theme-soft/50" />
-      <div className="absolute left-1/2 top-1/2 z-[1] aspect-square w-[94%] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-dashed border-theme-soft/40" />
+      <div className="absolute left-1/2 top-1/2 z-[1] aspect-square w-[108%] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-dashed border-theme-soft/50" />
+      <div className="absolute left-1/2 top-1/2 z-[1] aspect-square w-[100%] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-dashed border-theme-soft/40" />
 
-      <div className="absolute inset-0 scale-[0.5] sm:scale-[0.62] md:scale-[0.74] lg:scale-[0.82]">
+      <div className="absolute inset-0 scale-[0.58] sm:scale-[0.72] md:scale-[0.86] lg:scale-[0.94]">
         {orbitingBadges.map((badge) => (
           <OrbitingBadgeNode key={badge.id} badge={badge} reducedMotion={reduceMotion} />
         ))}

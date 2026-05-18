@@ -213,7 +213,7 @@ export function GlobalDock() {
           </span>
         </span>
       </DockIcon>
-      <DockIcon label="游戏" href="/games">
+      <DockIcon label="游戏" href="/#games">
         <GamepadIcon />
       </DockIcon>
       {like.enabled ? (

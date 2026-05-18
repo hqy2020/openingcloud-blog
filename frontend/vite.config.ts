@@ -85,7 +85,7 @@ export default defineConfig({
     }),
     vitePrerender({
       staticDir: path.join(currentDir, "dist"),
-      routes: ["/", "/tech", "/learning", "/life", "/games"],
+      routes: ["/", "/tech", "/learning", "/life"],
       renderer: new JSDOMRenderer({
         renderAfterTime: 250,
       }),

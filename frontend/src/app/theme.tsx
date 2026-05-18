@@ -15,7 +15,7 @@ type ThemeContextValue = {
 };
 
 const THEME_STORAGE_KEY = "oc-theme";
-const DEFAULT_THEME: ThemePalette = "operator";
+const DEFAULT_THEME: ThemePalette = "apple";
 
 export const THEME_PALETTES = [
   { id: "operator" as const, label: "Operator", swatch: "#7DFFDA", description: "终端绿 · 协议面板" },

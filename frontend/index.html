@@ -16,9 +16,9 @@
         try {
           var t = localStorage.getItem("oc-theme");
           document.documentElement.dataset.theme =
-            t === "apple" || t === "notion" ? t : "claude";
+            t === "operator" || t === "claude" || t === "apple" || t === "notion" ? t : "apple";
         } catch (e) {
-          document.documentElement.dataset.theme = "claude";
+          document.documentElement.dataset.theme = "apple";
         }
       })();
     </script>

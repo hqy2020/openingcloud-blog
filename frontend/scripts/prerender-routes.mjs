@@ -37,13 +37,6 @@ const routes = [
     canonical: `${siteOrigin}/life`,
   },
   {
-    route: "/games",
-    title: "游戏 | Keyon Blog ｜ 云际漫游者",
-    description: "Switch 游戏清单，区分想买与已买，并与 Obsidian 游戏库同步。",
-    marker: "游戏",
-    canonical: `${siteOrigin}/games`,
-  },
-  {
     route: "/influence",
     title: "影响力 | Keyon Blog ｜ 云际漫游者",
     description: "码阶客自媒体数据看板 — 实时追踪跨平台影响力",

@@ -11,16 +11,23 @@ type Props = {
 
 export function LifeInsightSection({ pool, count = 3, intervalMs = 10000 }: Props) {
   const [rotation, setRotation] = useState(0);
+  const { displayPool, displayTier } = useMemo(() => {
+    const filtered = Array.isArray(pool) ? pool.filter((item) => item.tier === "insight") : [];
+    if (filtered.length > 0) {
+      return { displayPool: filtered, displayTier: "insight" as const };
+    }
+    return { displayPool: pool, displayTier: undefined };
+  }, [pool]);
 
   useEffect(() => {
-    if (!pool || pool.length <= count) return;
+    if (!displayPool || displayPool.length <= count) return;
     const id = window.setInterval(() => setRotation((r) => r + 1), intervalMs);
     return () => window.clearInterval(id);
-  }, [pool, count, intervalMs]);
+  }, [displayPool, count, intervalMs]);
 
-  const picks = useMemo(() => pickRandomQuotes(pool, count), [pool, count, rotation]);
+  const picks = useMemo(() => pickRandomQuotes(displayPool, count, displayTier), [displayPool, count, displayTier, rotation]);
 
-  if (!pool || pool.length === 0 || picks.length === 0) return null;
+  if (!displayPool || displayPool.length === 0 || picks.length === 0) return null;
 
   return (
     <section className="rounded-[var(--theme-radius)] border border-theme-line bg-theme-surface p-6 shadow-[var(--theme-shadow-whisper)] md:p-8">

@@ -14,14 +14,15 @@ import { MultiFollowCursor } from "../ui/MultiFollowCursor";
 import { SafeBoundary } from "../ui/SafeBoundary";
 import { StripeBgGuides } from "../ui/StripeBgGuides";
 import { GlobalDock } from "./GlobalDock";
+import { useRouteHashScroll } from "../../hooks/useRouteHashScroll";
 
 const headerTabs = [
-  { to: "/#knowledge-graph", label: "知识库", nativeAnchor: true },
-  { to: "/#recommended", label: "文章", nativeAnchor: true },
-  { to: "/#achievements", label: "高光", nativeAnchor: true },
-  { to: "/#projects", label: "代码", nativeAnchor: true },
-  { to: "/games", label: "游戏" },
-  { to: "/#life", label: "生活", nativeAnchor: true },
+  { to: "/#knowledge-graph", label: "知识库", anchorId: "knowledge-graph" },
+  { to: "/#recommended", label: "文章", anchorId: "recommended" },
+  { to: "/#achievements", label: "高光", anchorId: "achievements" },
+  { to: "/#projects", label: "代码", anchorId: "projects" },
+  { to: "/#life", label: "生活", anchorId: "life" },
+  { to: "/#games", label: "游戏", anchorId: "games" },
 ];
 
 const navbarShadow = "var(--theme-shadow-lifted)";
@@ -47,14 +48,14 @@ const mobileDockItems: DockItem[] = [
     label: "Life",
     href: "/#life",
     icon: <WishlistDockIcon />,
-    matchPaths: [],
+    matchHashes: ["life"],
   },
   {
     id: "games",
     label: "Games",
-    href: "/games",
+    href: "/#games",
     icon: <GamepadDockIcon />,
-    matchPaths: ["/games"],
+    matchHashes: ["games"],
   },
   {
     id: "influence",
@@ -301,6 +302,7 @@ function CloseIcon() {
 export function AppLayout() {
   const location = useLocation();
   usePageVisitTracker();
+  useRouteHashScroll();
 
   const [mobileMenuOwnerKey, setMobileMenuOwnerKey] = useState<string | null>(null);
   const [hoveredNavIndex, setHoveredNavIndex] = useState<number | null>(null);
@@ -314,13 +316,14 @@ export function AppLayout() {
   const locationKey = location.key || `${location.pathname}${location.search}${location.hash}`;
   const mobileMenuOpen = mobileMenuOwnerKey === locationKey;
   const { scrollY } = useScroll();
+  const currentHash = location.hash.replace(/^#/, "");
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     const nextCompact = latest > 80;
     setCompactNavbar((current) => (current === nextCompact ? current : nextCompact));
   });
 
-  const activeDesktopIndex = headerTabs.findIndex((item) => !item.nativeAnchor && item.to === location.pathname);
+  const activeDesktopIndex = headerTabs.findIndex((item) => location.pathname === "/" && item.anchorId === currentHash);
 
   return (
     <DotBackground className="flex min-h-screen flex-col text-theme-ink">
@@ -376,20 +379,6 @@ export function AppLayout() {
                     <span className="relative z-10">{item.label}</span>
                   </>
                 );
-
-                if (item.nativeAnchor) {
-                  return (
-                    <a
-                      key={item.label}
-                      href={item.to}
-                      className="relative shrink-0 rounded-full px-3 py-1.5 text-theme-muted transition hover:text-theme-ink lg:px-3 lg:py-2 xl:px-5 xl:py-2.5"
-                      onFocus={() => setHoveredNavIndex(index)}
-                      onMouseEnter={() => setHoveredNavIndex(index)}
-                    >
-                      {content}
-                    </a>
-                  );
-                }
 
                 return (
                   <Link
@@ -469,27 +458,16 @@ export function AppLayout() {
                   <DistortedGlassSurface intensity="soft" className="absolute inset-0 rounded-2xl" />
 
                   <div className="relative z-10 flex flex-col gap-1">
-                    {headerTabs.map((item) =>
-                      item.nativeAnchor ? (
-                        <a
-                          key={item.label}
-                          href={item.to}
-                          className="theme-nav-tab rounded-xl px-3 py-2 text-sm text-theme-muted transition hover:bg-theme-surface"
-                          onClick={() => setMobileMenuOwnerKey(null)}
-                        >
-                          {item.label}
-                        </a>
-                      ) : (
-                        <Link
-                          key={item.label}
-                          to={item.to}
-                          className="theme-nav-tab rounded-xl px-3 py-2 text-sm text-theme-muted transition hover:bg-theme-surface"
-                          onClick={() => setMobileMenuOwnerKey(null)}
-                        >
-                          {item.label}
-                        </Link>
-                      ),
-                    )}
+                    {headerTabs.map((item) => (
+                      <Link
+                        key={item.label}
+                        to={item.to}
+                        className="theme-nav-tab rounded-xl px-3 py-2 text-sm text-theme-muted transition hover:bg-theme-surface"
+                        onClick={() => setMobileMenuOwnerKey(null)}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
 
                     <div className="mt-1 flex flex-wrap items-center gap-1 border-t border-theme-line pt-2">
                       <SocialLinksRow onClick={() => setMobileMenuOwnerKey(null)} />
@@ -539,7 +517,7 @@ export function AppLayout() {
         </div>
       </footer>
 
-      <MagicDock items={mobileDockItems} pathname={location.pathname} className="lg:hidden" />
+      <MagicDock items={mobileDockItems} pathname={location.pathname} hash={location.hash} className="lg:hidden" />
 
       <GlobalDock />
 
