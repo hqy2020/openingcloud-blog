@@ -84,6 +84,23 @@ function Kamdo({ pointerRef, ...props }: KamdoProps) {
 
 useGLTF.preload(MODEL_SRC);
 
+function StaticKamdoFallback() {
+  return (
+    <div className="absolute bottom-5 right-5 flex h-28 w-28 items-center justify-center sm:bottom-6 sm:right-8 sm:h-36 sm:w-36">
+      <div className="absolute inset-x-5 bottom-1 h-4 rounded-full bg-slate-950/18 blur-md" />
+      <div className="relative h-[74px] w-[82px] rounded-[24px] border border-white/70 bg-[linear-gradient(145deg,#121826,#273449)] shadow-[0_18px_38px_rgba(15,23,42,0.28)] sm:h-[96px] sm:w-[106px]">
+        <div className="absolute -top-8 left-1/2 h-10 w-[58px] -translate-x-1/2 rounded-[20px] border border-white/75 bg-[linear-gradient(145deg,#f8fafc,#cbd5e1)] shadow-[0_12px_26px_rgba(15,23,42,0.18)] sm:-top-10 sm:h-12 sm:w-[70px]">
+          <div className="absolute left-3 top-4 h-2.5 w-2.5 rounded-full bg-[#f79237] shadow-[0_0_14px_rgba(247,146,55,0.8)] sm:left-4 sm:top-5" />
+          <div className="absolute right-3 top-4 h-2.5 w-2.5 rounded-full bg-[#f79237] shadow-[0_0_14px_rgba(247,146,55,0.8)] sm:right-4 sm:top-5" />
+        </div>
+        <div className="absolute left-1/2 top-4 h-1.5 w-10 -translate-x-1/2 rounded-full bg-[#f79237] shadow-[0_0_18px_rgba(247,146,55,0.72)] sm:top-5 sm:w-12" />
+        <div className="absolute bottom-3 left-4 h-4 w-4 rounded-full border border-white/20 bg-slate-950/80" />
+        <div className="absolute bottom-3 right-4 h-4 w-4 rounded-full border border-white/20 bg-slate-950/80" />
+      </div>
+    </div>
+  );
+}
+
 export function BlogPetMachine() {
   const reduceMotion = Boolean(useReducedMotion());
   const [canRenderCanvas, setCanRenderCanvas] = useState(false);
@@ -99,7 +116,7 @@ export function BlogPetMachine() {
     const sync = () => {
       const lowMemory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
       const isLowMemory = typeof lowMemory === "number" && lowMemory <= 2;
-      setCanRenderCanvas(!media.matches && !isLowMemory && canUseWebGL());
+      setCanRenderCanvas(!isLowMemory && canUseWebGL());
     };
 
     sync();
@@ -132,10 +149,6 @@ export function BlogPetMachine() {
     };
   }, []);
 
-  if (reduceMotion || !canRenderCanvas) {
-    return null;
-  }
-
   return (
     <Link
       aria-label="进入 3D 世界"
@@ -143,31 +156,35 @@ export function BlogPetMachine() {
       to={worldHref}
       title="点击进入 3D 世界"
     >
-      <Canvas flat shadows camera={{ position: [-15, 0, 10], fov: 25 }} gl={{ alpha: true }} style={{ background: "transparent" }}>
-        <fog attach="fog" args={["black", 12, 20]} />
-        <Stage
-          adjustCamera={false}
-          environment={{ files: "/hdr/potsdamer_platz_1k.hdr" }}
-          intensity={0.5}
-          shadows={{ type: "accumulative", bias: -0.001, intensity: Math.PI }}
-        >
-          <Kamdo pointerRef={pointerRef} rotation={[0, Math.PI, 0]} />
-        </Stage>
-        <OrbitControls
-          autoRotate
-          autoRotateSpeed={0.05}
-          enablePan={false}
-          enableZoom={false}
-          makeDefault
-          maxPolarAngle={Math.PI / 2}
-          minPolarAngle={Math.PI / 2}
-        />
-        <EffectComposer enableNormalPass={false}>
-          <Bloom luminanceThreshold={4} mipmapBlur />
-          <ToneMapping />
-        </EffectComposer>
-        <Environment blur={0.5} files="/hdr/venice_sunset_1k.hdr" />
-      </Canvas>
+      {canRenderCanvas && !reduceMotion ? (
+        <Canvas flat shadows camera={{ position: [-15, 0, 10], fov: 25 }} gl={{ alpha: true }} style={{ background: "transparent" }}>
+          <fog attach="fog" args={["black", 12, 20]} />
+          <Stage
+            adjustCamera={false}
+            environment={{ files: "/hdr/potsdamer_platz_1k.hdr" }}
+            intensity={0.5}
+            shadows={{ type: "accumulative", bias: -0.001, intensity: Math.PI }}
+          >
+            <Kamdo pointerRef={pointerRef} rotation={[0, Math.PI, 0]} />
+          </Stage>
+          <OrbitControls
+            autoRotate
+            autoRotateSpeed={0.05}
+            enablePan={false}
+            enableZoom={false}
+            makeDefault
+            maxPolarAngle={Math.PI / 2}
+            minPolarAngle={Math.PI / 2}
+          />
+          <EffectComposer enableNormalPass={false}>
+            <Bloom luminanceThreshold={4} mipmapBlur />
+            <ToneMapping />
+          </EffectComposer>
+          <Environment blur={0.5} files="/hdr/venice_sunset_1k.hdr" />
+        </Canvas>
+      ) : (
+        <StaticKamdoFallback />
+      )}
     </Link>
   );
 }
