@@ -3,6 +3,7 @@ import { Canvas, useFrame, type ThreeElements } from "@react-three/fiber";
 import { Bloom, EffectComposer, ToneMapping } from "@react-three/postprocessing";
 import { useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState, type MutableRefObject } from "react";
+import { Link } from "react-router-dom";
 import * as THREE from "three";
 import type { GLTF } from "three-stdlib";
 
@@ -87,6 +88,7 @@ export function BlogPetMachine() {
   const reduceMotion = Boolean(useReducedMotion());
   const [canRenderCanvas, setCanRenderCanvas] = useState(false);
   const pointerRef = useRef<PointerState>({ x: 0, y: 0 });
+  const worldHref = import.meta.env.VITE_WORLD_URL ?? "/world/";
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -135,7 +137,12 @@ export function BlogPetMachine() {
   }
 
   return (
-    <div className="pointer-events-none fixed bottom-0 right-0 z-40 h-[220px] w-[min(88vw,420px)]">
+    <Link
+      aria-label="进入 3D 世界"
+      className="pointer-events-auto fixed bottom-0 right-0 z-40 block h-[220px] w-[min(88vw,420px)] cursor-pointer no-underline outline-none transition-transform duration-200 hover:scale-[1.01] focus-visible:scale-[1.01]"
+      to={worldHref}
+      title="点击进入 3D 世界"
+    >
       <Canvas flat shadows camera={{ position: [-15, 0, 10], fov: 25 }} gl={{ alpha: true }} style={{ background: "transparent" }}>
         <fog attach="fog" args={["black", 12, 20]} />
         <Stage
@@ -161,6 +168,6 @@ export function BlogPetMachine() {
         </EffectComposer>
         <Environment blur={0.5} files="/hdr/venice_sunset_1k.hdr" />
       </Canvas>
-    </div>
+    </Link>
   );
 }
