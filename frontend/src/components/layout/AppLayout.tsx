@@ -520,7 +520,7 @@ export function AppLayout() {
           <p className="min-w-0 flex-1">
             I&apos;m collaborating with individuals from diverse fields, which is precisely why I created this website. Feel free to contact me.
           </p>
-          <p className="shrink-0">- Keyon · 云际漫游者 · hqy200091@163.com</p>
+          <p className="shrink-0">- openingClouds · 云际漫游者 · hqy200091@163.com</p>
         </div>
       </footer>
 

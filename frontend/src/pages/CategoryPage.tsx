@@ -190,9 +190,9 @@ export function CategoryPage({ category, title }: CategoryPageProps) {
   return (
     <section className="relative overflow-hidden rounded-[28px] border border-theme-line/80 bg-theme-surface shadow-sm">
       <Helmet>
-        <title>{`${title} | Keyon Blog ｜ 云际漫游者`}</title>
+        <title>{`${title} | OpeningClouds Blog ｜ 云际漫游者`}</title>
         <meta content={categoryDescriptions[category]} name="description" />
-        <meta content={`${title} | Keyon Blog ｜ 云际漫游者`} property="og:title" />
+        <meta content={`${title} | OpeningClouds Blog ｜ 云际漫游者`} property="og:title" />
         <meta content={categoryDescriptions[category]} property="og:description" />
         <link href={siteUrl(`/${category}`)} rel="canonical" />
       </Helmet>

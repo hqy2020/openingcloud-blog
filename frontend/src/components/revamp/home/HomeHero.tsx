@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { coverHeroConfig } from "../../../data/revamp/coverHero";
 import { cn } from "../../../lib/utils";
 import { OrbitingProfileCard } from "./OrbitingProfileCard";
+import { HeroR3FScene } from "./HeroR3FScene";
 
 type HomeHeroProps = {
   hero: {
@@ -16,6 +17,14 @@ type HomeHeroProps = {
   quoteText?: string;
 };
 
+type HeroBackdropLayerProps = {
+  eyeTitle: string;
+  heroTitle: string;
+  heroSubtitle: string;
+  slogans: string[];
+  variant: "base" | "reveal";
+};
+
 const profileRoles = [
   "Software Engineer",
   "Zhejiang University MSc",
@@ -26,14 +35,6 @@ const profileRoles = [
   "AI Enthusiast",
   "Knowledge Management Researcher",
 ];
-
-type HeroBackdropLayerProps = {
-  eyeTitle: string;
-  heroTitle: string;
-  heroSubtitle: string;
-  slogans: string[];
-  variant: "base" | "reveal";
-};
 
 function HeroBackdropLayer({ eyeTitle, heroTitle, heroSubtitle, slogans, variant }: HeroBackdropLayerProps) {
   const repeatedTitle = Array.from({ length: 6 }, () => heroTitle.toUpperCase());
@@ -73,7 +74,7 @@ function HeroBackdropLayer({ eyeTitle, heroTitle, heroSubtitle, slogans, variant
             isReveal ? "text-[rgb(var(--theme-surface-raised))/0.74]" : "text-theme-muted/80",
           )}
         >
-          Hello, I&apos;m
+          {coverHeroConfig.my_name_is}
         </p>
         <h2
           className={cn(
@@ -123,6 +124,7 @@ export function HomeHero({ hero, quoteText }: HomeHeroProps) {
   const [lensActive, setLensActive] = useState(false);
   const heroNarrative = quoteText || hero.subtitle || coverHeroConfig.one_liner;
   const heroSignals = hero.slogans.slice(0, 3);
+  const worldHref = import.meta.env.VITE_WORLD_URL ?? "/world/";
   const heroLensStyle = {
     "--hero-lens-x": "50%",
     "--hero-lens-y": "36%",
@@ -195,6 +197,16 @@ export function HomeHero({ hero, quoteText }: HomeHeroProps) {
         />
       </div>
       <div className="relative min-h-[90vh] sm:min-h-screen">
+        <div className="absolute right-4 top-4 z-20 sm:right-8 sm:top-8 lg:right-10 lg:top-10">
+          <a
+            aria-label={`进入 ${hero.title || coverHeroConfig.spaced_name} 的 3D 世界`}
+            className="group block w-[clamp(10rem,18vw,15rem)] no-underline"
+            href={worldHref}
+            title="点击进入 3D 世界"
+          >
+            <HeroR3FScene className="aspect-[4/3] w-full" />
+          </a>
+        </div>
         <div className="relative z-10 mx-auto flex min-h-[90vh] w-full max-w-7xl items-start justify-center px-2 pt-18 pb-44 sm:min-h-screen sm:px-6 sm:pt-24 sm:pb-44 lg:pt-26 lg:pb-48">
           <motion.div
             initial={{ opacity: 0, y: 16, scale: 0.98 }}

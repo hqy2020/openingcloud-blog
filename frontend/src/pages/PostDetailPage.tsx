@@ -588,10 +588,10 @@ export function PostDetailPage() {
   return (
     <section className="relative overflow-hidden rounded-[28px] border border-theme-line/80 bg-theme-surface shadow-sm">
       <Helmet>
-        <title>{`${data.title} | Keyon Blog ｜ 云际漫游者`}</title>
-        <meta content={data.excerpt || "Keyon Blog ｜ 云际漫游者文章详情"} name="description" />
+        <title>{`${data.title} | OpeningClouds Blog ｜ 云际漫游者`}</title>
+        <meta content={data.excerpt || "OpeningClouds Blog ｜ 云际漫游者文章详情"} name="description" />
         <meta content={data.title} property="og:title" />
-        <meta content={data.excerpt || "Keyon Blog ｜ 云际漫游者文章详情"} property="og:description" />
+        <meta content={data.excerpt || "OpeningClouds Blog ｜ 云际漫游者文章详情"} property="og:description" />
         <meta content={detailCover || "/og-cloudscape-card.png"} property="og:image" />
         <link href={siteUrl(`/posts/${data.slug}`)} rel="canonical" />
       </Helmet>

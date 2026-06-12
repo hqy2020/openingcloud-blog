@@ -146,9 +146,9 @@ export function HomePage() {
   return (
     <section className="space-y-20">
       <Helmet>
-        <title>Keyon Blog ｜ 云际漫游者</title>
+        <title>OpeningClouds Blog ｜ 云际漫游者</title>
         <meta content="在云层之上，记录技术、效率与生活。" name="description" />
-        <meta content="Keyon Blog ｜ 云际漫游者" property="og:title" />
+        <meta content="OpeningClouds Blog ｜ 云际漫游者" property="og:title" />
         <meta content="在云层之上，记录技术、效率与生活。" property="og:description" />
         <meta content="/og-cloudscape-card.png" property="og:image" />
         <link href={siteUrl("/")} rel="canonical" />

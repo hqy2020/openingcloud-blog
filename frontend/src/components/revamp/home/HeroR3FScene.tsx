@@ -1,15 +1,26 @@
-import { Sparkles, useTexture } from "@react-three/drei";
+import { ContactShadows, useGLTF } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useReducedMotion } from "motion/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import * as THREE from "three";
+import type { GLTF } from "three-stdlib";
+
+import truckModelUrl from "../../../../world/static/vehicle/default.glb?url";
 
 type HeroR3FSceneProps = {
-  logoSrc?: string;
   className?: string;
 };
 
-const PLANET_ORBIT_RADIUS = 1.68;
+const TRUCK_MODEL_SRC = truckModelUrl;
+
+type PointerState = {
+  x: number;
+  y: number;
+};
+
+type TruckGLTF = GLTF & {
+  scene: THREE.Group;
+};
 
 function canUseWebGL() {
   if (typeof document === "undefined") {
@@ -23,82 +34,103 @@ function canUseWebGL() {
   }
 }
 
-function PlanetSystem({ hovered, reducedMotion, logoSrc }: { hovered: boolean; reducedMotion: boolean; logoSrc: string }) {
-  const orbitRef = useRef<THREE.Group>(null);
-  const planetRef = useRef<THREE.Mesh>(null);
-  const sunRef = useRef<THREE.Mesh>(null);
-  const logoTexture = useTexture(logoSrc);
+function TruckModel({
+  hovered,
+  reducedMotion,
+  pointerRef,
+}: {
+  hovered: boolean;
+  reducedMotion: boolean;
+  pointerRef: MutableRefObject<PointerState>;
+}) {
+  const truckRef = useRef<THREE.Group>(null);
+  const { scene } = useGLTF(TRUCK_MODEL_SRC) as unknown as TruckGLTF;
+  const baseYaw = Math.PI * 0.42;
+  const truckScene = useMemo(() => {
+    const clone = scene.clone(true);
+    clone.traverse((object) => {
+      if (!("isMesh" in object) || !object.isMesh) {
+        return;
+      }
+
+      object.castShadow = true;
+      object.receiveShadow = true;
+    });
+    return clone;
+  }, [scene]);
 
   useFrame((_, delta) => {
-    if (!reducedMotion && orbitRef.current) {
-      const orbitSpeed = hovered ? 1.18 : 0.84;
-      orbitRef.current.rotation.y += delta * orbitSpeed;
+    const truck = truckRef.current;
+    if (!truck) {
+      return;
     }
-    if (!reducedMotion && planetRef.current) {
-      const selfSpeed = hovered ? 2.16 : 1.62;
-      planetRef.current.rotation.y += delta * selfSpeed;
-    }
-    if (sunRef.current) {
-      sunRef.current.rotation.y += delta * 0.16;
-    }
+
+    const pointer = pointerRef.current;
+    const hoverBoost = hovered && !reducedMotion ? 1 : 0;
+    const targetYaw = baseYaw + pointer.x * 0.35 + hoverBoost * 0.08;
+    const targetPitch = -0.08 + pointer.y * 0.12 - hoverBoost * 0.025;
+    truck.rotation.y = THREE.MathUtils.damp(truck.rotation.y, targetYaw, 5.4, delta);
+    truck.rotation.x = THREE.MathUtils.damp(truck.rotation.x, targetPitch, 5.4, delta);
+    truck.rotation.z = THREE.MathUtils.damp(truck.rotation.z, pointer.x * -0.05, 5.4, delta);
+    truck.position.y = THREE.MathUtils.damp(
+      truck.position.y,
+      Math.sin(performance.now() * 0.0014) * 0.03 + hoverBoost * 0.045,
+      3.2,
+      delta,
+    );
+    truck.position.x = THREE.MathUtils.damp(truck.position.x, hoverBoost * -0.03, 3.2, delta);
   });
 
   return (
-    <>
-      <mesh ref={sunRef} position={[0, 0, 0]}>
-        <sphereGeometry args={[0.48, 48, 48]} />
-        <meshStandardMaterial color="#FDBA74" emissive="#FB923C" emissiveIntensity={hovered ? 1.06 : 0.78} roughness={0.25} metalness={0.08} />
-      </mesh>
-
-      <mesh position={[0, 0, -0.02]}>
-        <torusGeometry args={[PLANET_ORBIT_RADIUS, 0.018, 20, 144]} />
-        <meshBasicMaterial color="#BFDBFE" transparent opacity={hovered ? 0.8 : 0.62} />
-      </mesh>
-
-      <mesh position={[0, 0, 0]}>
-        <sphereGeometry args={[0.78, 40, 40]} />
-        <meshBasicMaterial color="#F59E0B" transparent opacity={hovered ? 0.12 : 0.08} />
-      </mesh>
-
-      <group ref={orbitRef}>
-        <mesh ref={planetRef} position={[PLANET_ORBIT_RADIUS, 0, 0]}>
-          <sphereGeometry args={[0.33, 40, 40]} />
-          <meshStandardMaterial map={logoTexture} roughness={0.35} metalness={0.22} />
-        </mesh>
-      </group>
-
-      <Sparkles count={hovered ? 38 : 26} speed={hovered ? 0.95 : 0.58} size={3.2} opacity={0.6} scale={[5.2, 2.8, 1.6]} color="#FDE68A" />
-    </>
+    <group ref={truckRef} position={[0, -0.72, 0]} scale={1.58} rotation={[0, baseYaw, 0]}>
+      <primitive object={truckScene} />
+      <ContactShadows
+        blur={2.8}
+        color="#0f172a"
+        far={5}
+        opacity={0.34}
+        resolution={256}
+        scale={8.5}
+        position={[0, -1.45, 0]}
+      />
+    </group>
   );
 }
 
-function FallbackOrbit({ logoSrc, reducedMotion }: { logoSrc: string; reducedMotion: boolean }) {
+function FallbackTruck({ reducedMotion, className }: { reducedMotion: boolean; className?: string }) {
+  const rootClassName = className ?? "aspect-[4/3] w-full";
+
   return (
-    <div className="relative mx-auto h-[270px] w-[270px] rounded-[36px] border border-theme-line/70 bg-theme-surface shadow-[0_18px_44px_rgba(15,23,42,0.14)]">
-      <div className="absolute left-1/2 top-1/2 h-[210px] w-[210px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-theme-line-strong/75" />
-      <div className="absolute left-1/2 top-1/2 h-[76px] w-[76px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,#fde68a,#fb923c)] shadow-[0_0_32px_rgba(251,146,60,0.55)]" />
-      <div
-        className="absolute left-1/2 top-1/2 h-0 w-0"
-        style={{
-          animation: reducedMotion ? undefined : "revamp-orbit 8.4s linear infinite",
-        }}
-      >
-        <img
-          alt="Logo orbit"
-          src={logoSrc}
-          className="absolute h-16 w-16 -translate-y-1/2 rounded-full border border-theme-line/80 bg-theme-surface object-contain p-1.5 shadow-[0_10px_20px_rgba(15,23,42,0.18)]"
-          style={{ transform: `translateX(${PLANET_ORBIT_RADIUS * 48}px) translateY(-50%)` }}
-        />
+    <div className={`relative overflow-hidden rounded-[2rem] border border-white/75 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(248,250,252,0.98))] shadow-[0_18px_44px_rgba(15,23,42,0.14)] ${rootClassName}`}>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_28%_18%,rgba(247,146,55,0.16),transparent_26%),radial-gradient(circle_at_76%_20%,rgba(59,130,246,0.12),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.78),rgba(245,247,250,0.95))]" />
+      <div className="absolute inset-x-8 top-8 h-px bg-[linear-gradient(90deg,transparent,rgba(15,23,42,0.16),transparent)]" />
+      <div className="absolute inset-x-6 bottom-10 h-2 rounded-full bg-[linear-gradient(90deg,rgba(15,23,42,0.04),rgba(15,23,42,0.12),rgba(15,23,42,0.04))] blur-[1px]" />
+      <div className="absolute left-1/2 top-1/2 h-[104px] w-[196px] -translate-x-1/2 -translate-y-[45%]">
+        <div className="absolute left-0 top-8 h-[60px] w-[98px] rounded-[1.4rem] border border-slate-300/80 bg-[linear-gradient(135deg,#0f172a,#334155)] shadow-[0_18px_32px_rgba(15,23,42,0.24)]" />
+        <div className="absolute left-[84px] top-[18px] h-[56px] w-[86px] rounded-[1.3rem] border border-slate-300/80 bg-[linear-gradient(135deg,#ffffff,#dbe4f0)] shadow-[0_18px_32px_rgba(15,23,42,0.14)]" />
+        <div className="absolute left-[17px] top-[48px] h-[15px] w-[20px] rounded-full bg-[#f79237] shadow-[0_0_18px_rgba(247,146,55,0.55)]" />
+        <div className="absolute left-[131px] top-[48px] h-[15px] w-[20px] rounded-full bg-[#f79237] shadow-[0_0_18px_rgba(247,146,55,0.55)]" />
+        <div className="absolute bottom-0 left-[12px] h-8 w-8 rounded-full border border-slate-700/90 bg-slate-950" />
+        <div className="absolute bottom-0 left-[134px] h-8 w-8 rounded-full border border-slate-700/90 bg-slate-950" />
       </div>
+      <div
+        className="absolute inset-0"
+        style={{
+          animation: reducedMotion ? undefined : "revamp-orbit 8.8s linear infinite",
+        }}
+      />
     </div>
   );
 }
 
-export function HeroR3FScene({ logoSrc = "/brand/logo-icon-ink.png", className }: HeroR3FSceneProps) {
+useGLTF.preload(TRUCK_MODEL_SRC);
+
+export function HeroR3FScene({ className }: HeroR3FSceneProps) {
   const reduceMotion = Boolean(useReducedMotion());
   const [hovered, setHovered] = useState(false);
   const [coarsePointer, setCoarsePointer] = useState(false);
   const canRenderCanvas = useMemo(() => !reduceMotion && canUseWebGL(), [reduceMotion]);
+  const pointerRef = useRef<PointerState>({ x: 0, y: 0 });
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -114,23 +146,45 @@ export function HeroR3FScene({ logoSrc = "/brand/logo-icon-ink.png", className }
   const enableHover = !coarsePointer && canRenderCanvas;
 
   if (!canRenderCanvas) {
-    return <FallbackOrbit logoSrc={logoSrc} reducedMotion={reduceMotion} />;
+    return <FallbackTruck reducedMotion={reduceMotion} className={className} />;
   }
+
+  const rootClassName = className ?? "aspect-[4/3] w-full";
 
   return (
     <div
-      className={`relative mx-auto h-[270px] w-[270px] overflow-hidden rounded-[36px] border border-theme-line/70 bg-theme-surface shadow-[0_18px_44px_rgba(15,23,42,0.14)] ${className ?? ""}`}
+      className={`relative overflow-hidden rounded-[2rem] border border-white/75 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(244,246,250,0.98))] shadow-[0_18px_44px_rgba(15,23,42,0.14)] ${rootClassName}`}
       onMouseEnter={enableHover ? () => setHovered(true) : undefined}
       onMouseLeave={enableHover ? () => setHovered(false) : undefined}
+      onPointerMove={
+        enableHover
+          ? (event) => {
+              const rect = event.currentTarget.getBoundingClientRect();
+              pointerRef.current.x = THREE.MathUtils.clamp(((event.clientX - rect.left) / Math.max(rect.width, 1)) * 2 - 1, -1, 1);
+              pointerRef.current.y = THREE.MathUtils.clamp(((event.clientY - rect.top) / Math.max(rect.height, 1)) * 2 - 1, -1, 1);
+            }
+          : undefined
+      }
+      onPointerLeave={
+        enableHover
+          ? () => {
+              setHovered(false);
+              pointerRef.current.x = 0;
+              pointerRef.current.y = 0;
+            }
+          : undefined
+      }
     >
-      <Canvas dpr={[1, 1.5]} camera={{ fov: 34, position: [0, 0.2, 5.8] }}>
-        <color attach="background" args={["#F8FAFF"]} />
-        <ambientLight intensity={0.88} />
-        <directionalLight position={[2.6, 2.6, 2.8]} intensity={1.05} color="#FFF7ED" />
-        <directionalLight position={[-2.2, -1.4, -2.3]} intensity={0.42} color="#DBEAFE" />
-        <PlanetSystem hovered={hovered && enableHover} reducedMotion={reduceMotion} logoSrc={logoSrc} />
+      <Canvas dpr={[1, 1.5]} camera={{ fov: 32, position: [0, 1.5, 6.5] }} gl={{ antialias: true, alpha: true }}>
+        <color attach="background" args={["#f8fafc"]} />
+        <fog attach="fog" args={["#f8fafc", 9, 18]} />
+        <ambientLight intensity={1.08} />
+        <hemisphereLight args={["#f8fbff", "#cbd5e1", 1.2]} />
+        <directionalLight position={[4, 5, 4]} intensity={1.6} color="#fff4e6" />
+        <directionalLight position={[-4, 1.5, -5]} intensity={0.42} color="#cbd5e1" />
+        <TruckModel hovered={hovered && enableHover} reducedMotion={reduceMotion} pointerRef={pointerRef} />
       </Canvas>
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_4%,rgba(255,255,255,0.72),transparent_40%),radial-gradient(circle_at_84%_24%,rgba(79,106,229,0.16),transparent_46%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,rgba(255,255,255,0.84),transparent_30%),radial-gradient(circle_at_78%_22%,rgba(247,146,55,0.12),transparent_26%),linear-gradient(180deg,transparent,rgba(255,255,255,0.24))]" />
     </div>
   );
 }
